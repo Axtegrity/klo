@@ -192,7 +192,7 @@ export function assessmentReportEmail(
     maturityColor = "#22C55E";
   } else if (clampedScore >= 60) {
     maturityLevel = "Advanced";
-    maturityColor = "#3B82F6";
+    maturityColor = "#D4A853";
   } else if (clampedScore >= 40) {
     maturityLevel = "Developing";
     maturityColor = BRAND.gold;
@@ -401,7 +401,7 @@ export function weeklyDigestEmail(
   posts: { title: string; category: string; excerpt: string }[]
 ): { subject: string; html: string } {
   const categoryColors: Record<string, string> = {
-    Strategy: "#3B82F6",
+    Strategy: "#D4A853",
     Technology: "#8B5CF6",
     Leadership: BRAND.gold,
     Research: "#22C55E",
@@ -460,7 +460,7 @@ export function upgradeEmail(
   tier: "pro" | "executive"
 ): { subject: string; html: string } {
   const tierLabel = tier === "pro" ? "Pro" : "Executive";
-  const tierColor = tier === "pro" ? "#3B82F6" : BRAND.gold;
+  const tierColor = tier === "pro" ? BRAND.gold : "#E8D5A0";
 
   const featuresMap: Record<string, string[]> = {
     pro: [

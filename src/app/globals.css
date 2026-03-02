@@ -18,7 +18,7 @@
   --color-slate: #1E293B;
   --color-text: #F1F5F9;
   --color-muted: #94A3B8;
-  --color-accent: #3B82F6;
+  --color-accent: #D4A853;
 
   /* Surfaces */
   --background: #0A1628;
@@ -34,7 +34,7 @@
   --color-slate: #1E293B;
   --color-text: #F1F5F9;
   --color-muted: #94A3B8;
-  --color-accent: #3B82F6;
+  --color-accent: #D4A853;
 
   /* KLO-prefixed brand aliases */
   --color-klo-gold: #C8A84E;
@@ -44,7 +44,7 @@
   --color-klo-slate: #1E293B;
   --color-klo-text: #F1F5F9;
   --color-klo-muted: #94A3B8;
-  --color-klo-accent: #3B82F6;
+  --color-klo-accent: #D4A853;
 
   /* Semantic surfaces */
   --color-background: var(--background);
