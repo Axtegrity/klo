@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Calendar, Users, ArrowRight, Shield } from "lucide-react";
 
@@ -32,12 +33,14 @@ export default function UpcomingStrategyRoom() {
         viewport={{ once: true, margin: "-60px" }}
         transition={{ duration: 0.5, ease: "easeOut" as const }}
       >
-        <div className="relative bg-[#161B22] border border-[#21262D] rounded-2xl overflow-hidden">
-          <div className="flex flex-col sm:flex-row">
-            {/* Cyan left accent bar */}
-            <div className="hidden sm:block w-1.5 bg-gradient-to-b from-[#2764FF] to-[#21B8CD] shrink-0" />
-            {/* Mobile top accent bar */}
-            <div className="sm:hidden h-1 bg-gradient-to-r from-[#2764FF] to-[#21B8CD]" />
+        <div className="group relative bg-[#161B22] border border-[#21262D] rounded-xl overflow-hidden transition-all duration-300 hover:border-[#2764FF]/30 hover:shadow-[0_0_30px_rgba(39,100,255,0.1)]">
+          {/* Subtle background watermark image */}
+          <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
+            <Image src="/images/keith/c.jpg" alt="" fill className="object-cover" />
+          </div>
+          {/* Left accent bar */}
+          <div className="absolute left-0 top-8 bottom-8 w-0.5 bg-gradient-to-b from-[#2764FF] to-[#21B8CD] rounded-full opacity-50 group-hover:opacity-100 transition-opacity" />
+          <div className="relative z-10 flex flex-col sm:flex-row">
 
             {/* Content */}
             <div className="flex-1 p-6 sm:p-8 lg:p-10">

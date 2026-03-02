@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Church, Brain, Shield, Lock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -14,6 +15,7 @@ interface AssessmentCard {
   accentColor: string;
   hoverBorder: string;
   hoverShadow: string;
+  bgImage: string;
 }
 
 const assessments: AssessmentCard[] = [
@@ -27,6 +29,7 @@ const assessments: AssessmentCard[] = [
     accentColor: "text-[#2764FF]",
     hoverBorder: "group-hover:border-[#2764FF]/40",
     hoverShadow: "group-hover:shadow-[0_0_24px_rgba(39,100,255,0.15)]",
+    bgImage: "/images/keith/a.jpg",
   },
   {
     icon: Brain,
@@ -38,6 +41,7 @@ const assessments: AssessmentCard[] = [
     accentColor: "text-[#21B8CD]",
     hoverBorder: "group-hover:border-[#21B8CD]/40",
     hoverShadow: "group-hover:shadow-[0_0_24px_rgba(33,184,205,0.15)]",
+    bgImage: "/images/keith/b.jpg",
   },
   {
     icon: Shield,
@@ -49,6 +53,7 @@ const assessments: AssessmentCard[] = [
     accentColor: "text-[#C8A84E]",
     hoverBorder: "group-hover:border-[#C8A84E]/40",
     hoverShadow: "group-hover:shadow-[0_0_24px_rgba(200,168,78,0.15)]",
+    bgImage: "/images/keith/c.jpg",
   },
   {
     icon: Lock,
@@ -60,6 +65,7 @@ const assessments: AssessmentCard[] = [
     accentColor: "text-[#F77A81]",
     hoverBorder: "group-hover:border-[#F77A81]/40",
     hoverShadow: "group-hover:shadow-[0_0_24px_rgba(247,122,129,0.15)]",
+    bgImage: "/images/keith/d.jpg",
   },
 ];
 
@@ -109,20 +115,26 @@ export default function QuickAssessmentCTA() {
             <motion.div key={item.title} variants={cardVariants}>
               <Link href={item.href} className="block group h-full">
                 <div
-                  className={`h-full ${item.gradient} border border-[#21262D] rounded-2xl p-6 transition-all duration-300 group-hover:-translate-y-1 ${item.hoverBorder} ${item.hoverShadow}`}
+                  className={`relative h-full ${item.gradient} border border-[#21262D] rounded-xl p-6 transition-all duration-300 group-hover:-translate-y-1 ${item.hoverBorder} ${item.hoverShadow} overflow-hidden`}
                 >
+                  {/* Subtle background watermark image */}
+                  <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
+                    <Image src={item.bgImage} alt="" fill className="object-cover" />
+                  </div>
+                  {/* Left accent bar */}
+                  <div className="absolute left-0 top-8 bottom-8 w-0.5 bg-gradient-to-b from-[#2764FF] to-[#21B8CD] rounded-full opacity-50 group-hover:opacity-100 transition-opacity" />
                   {/* Icon */}
-                  <div className="w-11 h-11 flex items-center justify-center rounded-xl bg-[#0D1117]/50 mb-4 transition-colors duration-300 group-hover:bg-[#0D1117]/80">
+                  <div className="relative z-10 w-11 h-11 flex items-center justify-center rounded-xl bg-[#0D1117]/50 mb-4 transition-colors duration-300 group-hover:bg-[#0D1117]/80">
                     <Icon className={`w-5 h-5 ${item.accentColor}`} />
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-base font-semibold text-[#E6EDF3] mb-2 group-hover:text-[#21B8CD] transition-colors duration-200">
+                  <h3 className="relative z-10 text-base font-semibold text-[#E6EDF3] mb-2 group-hover:text-[#21B8CD] transition-colors duration-200">
                     {item.title}
                   </h3>
 
                   {/* Description */}
-                  <p className="text-xs text-[#8B949E] leading-relaxed">
+                  <p className="relative z-10 text-xs text-[#8B949E] leading-relaxed">
                     {item.description}
                   </p>
                 </div>

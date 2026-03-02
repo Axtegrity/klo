@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { TrendingUp } from "lucide-react";
 
@@ -30,8 +31,14 @@ export default function TrendingTopics() {
         viewport={{ once: true, margin: "-60px" }}
         transition={{ duration: 0.5, ease: "easeOut" as const }}
       >
-        <div className="bg-[#161B22] border border-[#21262D] rounded-2xl p-6 sm:p-8">
-          <div className="flex items-center gap-2 mb-5">
+        <div className="group relative bg-[#161B22] border border-[#21262D] rounded-xl p-6 sm:p-8 overflow-hidden transition-all duration-300 hover:border-[#2764FF]/30 hover:shadow-[0_0_30px_rgba(39,100,255,0.1)]">
+          {/* Subtle background watermark image */}
+          <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
+            <Image src="/images/keith/a.jpg" alt="" fill className="object-cover" />
+          </div>
+          {/* Left accent bar */}
+          <div className="absolute left-0 top-8 bottom-8 w-0.5 bg-gradient-to-b from-[#2764FF] to-[#21B8CD] rounded-full opacity-50 group-hover:opacity-100 transition-opacity" />
+          <div className="relative z-10 flex items-center gap-2 mb-5">
             <TrendingUp className="w-4 h-4 text-[#21B8CD]" />
             <p className="text-xs font-semibold text-[#8B949E] uppercase tracking-wider">
               Popular this week
@@ -39,7 +46,7 @@ export default function TrendingTopics() {
           </div>
 
           {/* Mobile: horizontal scroll / Desktop: flex wrap grid */}
-          <div className="flex gap-3 overflow-x-auto pb-2 sm:pb-0 sm:flex-wrap scrollbar-thin">
+          <div className="relative z-10 flex gap-3 overflow-x-auto pb-2 sm:pb-0 sm:flex-wrap scrollbar-thin">
             {trendingTopics.map((topic) => (
               <Link
                 key={topic.category}

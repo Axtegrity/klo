@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { FileText, ArrowRight } from "lucide-react";
 
@@ -31,8 +32,14 @@ export default function LatestBrief() {
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
         <Link href={mockBrief.slug} className="block group">
-          <div className="bg-[#161B22] border border-[#21262D] border-l-2 border-l-[#2764FF] rounded-2xl p-6 sm:p-8 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg group-hover:shadow-[#2764FF]/10 group-hover:border-[#2764FF]/30">
-            <div className="flex items-start gap-4">
+          <div className="relative bg-[#161B22] border border-[#21262D] rounded-xl p-6 sm:p-8 transition-all duration-300 group-hover:-translate-y-1 hover:border-[#2764FF]/30 hover:shadow-[0_0_30px_rgba(39,100,255,0.1)] overflow-hidden">
+            {/* Subtle background watermark image */}
+            <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
+              <Image src="/images/keith/b.jpg" alt="" fill className="object-cover" />
+            </div>
+            {/* Left accent bar */}
+            <div className="absolute left-0 top-8 bottom-8 w-0.5 bg-gradient-to-b from-[#2764FF] to-[#21B8CD] rounded-full opacity-50 group-hover:opacity-100 transition-opacity" />
+            <div className="relative z-10 flex items-start gap-4">
               {/* Icon */}
               <div className="hidden sm:flex shrink-0 w-12 h-12 items-center justify-center rounded-xl bg-[#21262D]">
                 <FileText className="w-5 h-5 text-[#21B8CD]" />

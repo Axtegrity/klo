@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import {
   Monitor,
   BriefcaseBusiness,
@@ -43,6 +44,7 @@ interface ServiceCard {
   title: string;
   description: string;
   badge: string;
+  bgImage: string;
 }
 
 const services: ServiceCard[] = [
@@ -52,6 +54,7 @@ const services: ServiceCard[] = [
     description:
       "Enterprise technology strategy, infrastructure modernization, and digital transformation guidance tailored for organizations seeking sustainable growth.",
     badge: "Strategy",
+    bgImage: "/images/keith/a.jpg",
   },
   {
     icon: BriefcaseBusiness,
@@ -59,6 +62,7 @@ const services: ServiceCard[] = [
     description:
       "Fractional and full-engagement CTO leadership, aligning technology vision with business objectives and driving innovation across the organization.",
     badge: "Leadership",
+    bgImage: "/images/keith/b.jpg",
   },
   {
     icon: FolderKanban,
@@ -66,6 +70,7 @@ const services: ServiceCard[] = [
     description:
       "End-to-end program delivery using agile and hybrid methodologies, ensuring complex initiatives ship on time and within budget.",
     badge: "Delivery",
+    bgImage: "/images/keith/c.jpg",
   },
   {
     icon: Mic2,
@@ -73,6 +78,7 @@ const services: ServiceCard[] = [
     description:
       "Compelling keynotes and workshops at the intersection of faith, technology, and leadership that inspire audiences to take bold action.",
     badge: "Speaking",
+    bgImage: "/images/keith/d.jpg",
   },
 ];
 
@@ -138,7 +144,7 @@ export default function AboutPage() {
 
           {/* Keith Hero Image */}
         <div className="mb-10 flex justify-center">
-          <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-2xl border-2 border-[#21262D] hover:shadow-[0_0_30px_rgba(39,100,255,0.1)] transition-shadow duration-300 group">
+          <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-xl overflow-hidden border-2 border-[#21262D] hover:border-[#2764FF]/30 hover:shadow-[0_0_30px_rgba(39,100,255,0.15)] transition-all duration-300 group">
             <AnimatedImage
               src="/images/keith/KO.jpg"
               alt="Keith L. Odom"
@@ -256,8 +262,14 @@ export default function AboutPage() {
               const Icon = service.icon;
               return (
                 <motion.div key={service.title} variants={fadeUp} custom={i + 1}>
-                  <Card hoverable className="h-full">
-                    <div className="flex items-start gap-4">
+                  <div className="group relative h-full bg-[#161B22] border border-[#21262D] rounded-xl p-8 overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:border-[#2764FF]/30 hover:shadow-[0_0_30px_rgba(39,100,255,0.1)]">
+                    {/* Subtle background watermark image */}
+                    <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
+                      <Image src={service.bgImage} alt="" fill className="object-cover" />
+                    </div>
+                    {/* Left accent bar */}
+                    <div className="absolute left-0 top-8 bottom-8 w-0.5 bg-gradient-to-b from-[#2764FF] to-[#21B8CD] rounded-full opacity-50 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative z-10 flex items-start gap-4">
                       <div className="shrink-0 w-12 h-12 rounded-lg bg-[#2764FF]/10 flex items-center justify-center">
                         <Icon size={22} className="text-[#2764FF]" />
                       </div>
@@ -273,7 +285,7 @@ export default function AboutPage() {
                         </p>
                       </div>
                     </div>
-                  </Card>
+                  </div>
                 </motion.div>
               );
             })}

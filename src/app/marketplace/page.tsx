@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { ShoppingBag, Check, Sparkles } from "lucide-react";
 import {
@@ -57,7 +58,15 @@ const typeBadgeClasses: Record<string, string> = {
 /*  Product Card                                                       */
 /* ------------------------------------------------------------------ */
 
+const productBgImages = [
+  "/images/keith/a.jpg",
+  "/images/keith/b.jpg",
+  "/images/keith/c.jpg",
+  "/images/keith/d.jpg",
+];
+
 function ProductCard({ product, index }: { product: MarketplaceProduct; index: number }) {
+  const bgImage = productBgImages[index % productBgImages.length];
   return (
     <motion.div
       custom={index}
@@ -65,8 +74,14 @@ function ProductCard({ product, index }: { product: MarketplaceProduct; index: n
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-40px" }}
-      className="relative group bg-[#161B22] border border-[#21262D] rounded-2xl p-6 flex flex-col hover:border-[#2764FF]/40 transition-colors duration-300"
+      className="relative group bg-[#161B22] border border-[#21262D] rounded-xl p-6 flex flex-col hover:border-[#2764FF]/30 hover:shadow-[0_0_30px_rgba(39,100,255,0.1)] transition-all duration-300 overflow-hidden"
     >
+      {/* Subtle background watermark image */}
+      <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
+        <Image src={bgImage} alt="" fill className="object-cover" />
+      </div>
+      {/* Left accent bar */}
+      <div className="absolute left-0 top-8 bottom-8 w-0.5 bg-gradient-to-b from-[#2764FF] to-[#21B8CD] rounded-full opacity-50 group-hover:opacity-100 transition-opacity" />
       {/* Popular badge */}
       {product.popular && (
         <div className="absolute -top-3 right-5 flex items-center gap-1.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
@@ -76,7 +91,7 @@ function ProductCard({ product, index }: { product: MarketplaceProduct; index: n
       )}
 
       {/* Header: emoji + badges */}
-      <div className="flex items-start justify-between mb-4">
+      <div className="relative z-10 flex items-start justify-between mb-4">
         <span className="text-4xl leading-none" role="img" aria-hidden="true">
           {product.imageTag}
         </span>
@@ -95,15 +110,15 @@ function ProductCard({ product, index }: { product: MarketplaceProduct; index: n
       </div>
 
       {/* Title & description */}
-      <h3 className="font-display text-lg font-bold text-klo-text mb-2 group-hover:text-[#2764FF] transition-colors duration-200">
+      <h3 className="relative z-10 font-display text-lg font-bold text-klo-text mb-2 group-hover:text-[#2764FF] transition-colors duration-200">
         {product.title}
       </h3>
-      <p className="text-sm text-klo-muted leading-relaxed mb-5 line-clamp-3">
+      <p className="relative z-10 text-sm text-klo-muted leading-relaxed mb-5 line-clamp-3">
         {product.description}
       </p>
 
       {/* Features */}
-      <ul className="flex-1 space-y-2 mb-6">
+      <ul className="relative z-10 flex-1 space-y-2 mb-6">
         {product.features.map((feature) => (
           <li key={feature} className="flex items-start gap-2 text-sm text-klo-text">
             <Check size={14} className="text-[#2764FF] mt-0.5 shrink-0" />
@@ -113,7 +128,7 @@ function ProductCard({ product, index }: { product: MarketplaceProduct; index: n
       </ul>
 
       {/* Price + CTA */}
-      <div className="flex items-center justify-between pt-4 border-t border-klo-slate/50">
+      <div className="relative z-10 flex items-center justify-between pt-4 border-t border-klo-slate/50">
         <span className="font-display text-2xl font-bold text-klo-text">
           ${product.price.toFixed(2)}
         </span>

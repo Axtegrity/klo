@@ -29,21 +29,18 @@ export default function UpcomingKeynote() {
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
         <div
-          className="relative rounded-2xl overflow-hidden border border-[#21262D]"
+          className="group relative rounded-xl overflow-hidden border border-[#21262D] transition-all duration-300 hover:border-[#2764FF]/30 hover:shadow-[0_0_30px_rgba(39,100,255,0.1)]"
         >
-          {/* Background image with Ken Burns */}
-          <div
-            className="absolute inset-0 bg-cover bg-center animate-kenburns"
+          {/* Subtle background watermark image */}
+          <div className="absolute inset-0 opacity-[0.06] group-hover:opacity-[0.12] transition-opacity duration-500 bg-cover bg-center"
             style={{ backgroundImage: "url(/images/keith/c.jpg)" }}
           />
           {/* Overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#0D1117]/95 via-[#0D1117]/85 to-[#0D1117]/70" />
+          {/* Left accent bar */}
+          <div className="absolute left-0 top-8 bottom-8 w-0.5 bg-gradient-to-b from-[#2764FF] to-[#21B8CD] rounded-full opacity-50 group-hover:opacity-100 transition-opacity z-20" />
 
           <div className="relative z-10 flex flex-col sm:flex-row">
-            {/* Cyan left accent bar */}
-            <div className="hidden sm:block w-1.5 bg-gradient-to-b from-[#2764FF] to-[#21B8CD] shrink-0" />
-            {/* Mobile top accent bar */}
-            <div className="sm:hidden h-1 bg-gradient-to-r from-[#2764FF] to-[#21B8CD]" />
 
             {/* Content */}
             <div className="flex-1 p-8 sm:p-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
