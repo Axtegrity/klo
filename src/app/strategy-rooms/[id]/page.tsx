@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, useCallback, use } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   Calendar,
@@ -19,6 +19,9 @@ import {
   MessageSquare,
   Zap,
   ArrowRight,
+  X,
+  ShieldCheck,
+  CalendarCheck,
 } from "lucide-react";
 import Badge from "@/components/shared/Badge";
 import Button from "@/components/shared/Button";
@@ -30,6 +33,7 @@ import {
   type StrategySession,
   type DiscussionComment,
 } from "@/lib/strategy-rooms-data";
+import { useSubscription, type SubscriptionTier } from "@/hooks/useSubscription";
 
 // ── Animation Variants ───────────────────────────────────────────────────────
 
@@ -179,6 +183,198 @@ function RelatedSessionCard({ session }: { session: StrategySession }) {
   );
 }
 
+// ── localStorage helpers ─────────────────────────────────────────────────────
+
+const REGISTRATION_PREFIX = "klo-strategy-room-reg-";
+
+function getRegistration(roomId: string): boolean {
+  try {
+    return localStorage.getItem(`${REGISTRATION_PREFIX}${roomId}`) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function setRegistration(roomId: string, value: boolean) {
+  try {
+    if (value) {
+      localStorage.setItem(`${REGISTRATION_PREFIX}${roomId}`, "true");
+    } else {
+      localStorage.removeItem(`${REGISTRATION_PREFIX}${roomId}`);
+    }
+  } catch {
+    // localStorage unavailable
+  }
+}
+
+// ── Modal overlay animation ─────────────────────────────────────────────────
+
+const overlayVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.2, ease: [0.4, 0, 0.2, 1] as const } },
+  exit: { opacity: 0, transition: { duration: 0.15, ease: [0.4, 0, 0.2, 1] as const } },
+};
+
+const modalVariants = {
+  hidden: { opacity: 0, scale: 0.92, y: 20 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { duration: 0.25, ease: [0.4, 0, 0.2, 1] as const },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.95,
+    y: 10,
+    transition: { duration: 0.15, ease: [0.4, 0, 0.2, 1] as const },
+  },
+};
+
+// ── Registration Confirmation Modal ─────────────────────────────────────────
+
+function RegistrationModal({
+  session,
+  onConfirm,
+  onClose,
+}: {
+  session: StrategySession;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      variants={overlayVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Modal */}
+      <motion.div
+        variants={modalVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        className="relative w-full max-w-md bg-klo-navy border border-klo-slate rounded-2xl p-6 shadow-2xl"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-klo-muted hover:text-klo-text transition-colors cursor-pointer"
+        >
+          <X size={18} />
+        </button>
+
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-klo-gold/10 border border-klo-gold/20 flex items-center justify-center">
+            <CalendarCheck size={20} className="text-klo-gold" />
+          </div>
+          <h2 className="font-display text-lg font-bold text-klo-text">
+            Confirm Registration
+          </h2>
+        </div>
+
+        <p className="text-sm text-klo-muted leading-relaxed mb-4">
+          You are about to register for:
+        </p>
+
+        <div className="bg-klo-dark rounded-xl border border-klo-slate p-4 mb-5">
+          <h3 className="font-display text-sm font-bold text-klo-text mb-2">
+            {session.title}
+          </h3>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-klo-muted">
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar size={12} className="text-klo-gold" />
+              {session.date}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Clock size={12} className="text-klo-gold" />
+              {session.time}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <Button variant="ghost" size="sm" onClick={onClose} className="flex-1">
+            Cancel
+          </Button>
+          <Button variant="primary" size="sm" onClick={onConfirm} className="flex-1">
+            <CheckCircle size={14} />
+            Confirm Registration
+          </Button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ── Tier Gate Modal ─────────────────────────────────────────────────────────
+
+function TierGateModal({
+  requiredTier,
+  onClose,
+}: {
+  requiredTier: "pro" | "executive";
+  onClose: () => void;
+}) {
+  const tierLabel = requiredTier === "executive" ? "Executive" : "Pro";
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      variants={overlayVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Modal */}
+      <motion.div
+        variants={modalVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        className="relative w-full max-w-md bg-klo-navy border border-klo-slate rounded-2xl p-6 shadow-2xl"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-klo-muted hover:text-klo-text transition-colors cursor-pointer"
+        >
+          <X size={18} />
+        </button>
+
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-klo-gold/10 border border-klo-gold/20 flex items-center justify-center">
+            <ShieldCheck size={20} className="text-klo-gold" />
+          </div>
+          <h2 className="font-display text-lg font-bold text-klo-text">
+            {tierLabel} Access Required
+          </h2>
+        </div>
+
+        <p className="text-sm text-klo-muted leading-relaxed mb-5">
+          This strategy room session is available to <span className="text-klo-gold font-medium">{tierLabel}</span> members.
+          Upgrade your plan to register and join exclusive sessions led by Keith L. Odom.
+        </p>
+
+        <div className="flex gap-3">
+          <Button variant="ghost" size="sm" onClick={onClose} className="flex-1">
+            Maybe Later
+          </Button>
+          <Button variant="primary" size="sm" href="/pricing" className="flex-1">
+            <Crown size={14} />
+            Upgrade to {tierLabel}
+          </Button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ── Main Page Component ──────────────────────────────────────────────────────
 
 export default function StrategyRoomDetailPage({
@@ -190,11 +386,45 @@ export default function StrategyRoomDetailPage({
   const session = getSessionById(id);
   const related = getRelatedSessions(id, 3);
 
+  const { tier: userTier, canAccess } = useSubscription();
+
   const [registered, setRegistered] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showTierGateModal, setShowTierGateModal] = useState(false);
   const [comments, setComments] = useState<DiscussionComment[]>(
     sampleDiscussionComments
   );
   const [newComment, setNewComment] = useState("");
+
+  // Hydrate registration from localStorage
+  useEffect(() => {
+    if (session) {
+      setRegistered(getRegistration(session.id));
+    }
+  }, [session?.id]);
+
+  const handleRegisterClick = useCallback(() => {
+    if (!session) return;
+    // Tier gate: pro/executive rooms require matching tier
+    if (!canAccess(session.tier)) {
+      setShowTierGateModal(true);
+      return;
+    }
+    setShowConfirmModal(true);
+  }, [session, canAccess]);
+
+  const handleConfirmRegistration = useCallback(() => {
+    if (!session) return;
+    setRegistration(session.id, true);
+    setRegistered(true);
+    setShowConfirmModal(false);
+  }, [session]);
+
+  const handleUnregister = useCallback(() => {
+    if (!session) return;
+    setRegistration(session.id, false);
+    setRegistered(false);
+  }, [session]);
 
   if (!session) {
     return (
@@ -331,7 +561,7 @@ export default function StrategyRoomDetailPage({
                         {registered ? (
                           <Button
                             variant="secondary"
-                            onClick={() => setRegistered(false)}
+                            onClick={handleUnregister}
                           >
                             <CheckCircle size={16} />
                             Registered
@@ -339,12 +569,12 @@ export default function StrategyRoomDetailPage({
                         ) : (
                           <Button
                             variant="primary"
-                            onClick={() => setRegistered(true)}
+                            onClick={handleRegisterClick}
                           >
                             Register for Session
                           </Button>
                         )}
-                        <Button variant="ghost" disabled>
+                        <Button variant="ghost" disabled={!registered}>
                           <Zap size={16} />
                           Join Session
                         </Button>
@@ -623,6 +853,27 @@ export default function StrategyRoomDetailPage({
             </motion.aside>
           </div>
         </motion.div>
+
+        {/* Registration Confirmation Modal */}
+        <AnimatePresence>
+          {showConfirmModal && session && (
+            <RegistrationModal
+              session={session}
+              onConfirm={handleConfirmRegistration}
+              onClose={() => setShowConfirmModal(false)}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Tier Gate Modal */}
+        <AnimatePresence>
+          {showTierGateModal && session && (
+            <TierGateModal
+              requiredTier={session.tier}
+              onClose={() => setShowTierGateModal(false)}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const socialLinks = [
   { label: "LinkedIn", href: "https://linkedin.com" },
@@ -13,6 +14,7 @@ const quickLinks = [
   { label: "Assessments", href: "/assessments" },
   { label: "Vault", href: "/vault" },
   { label: "Booking", href: "/booking" },
+  { label: "Conference", href: "/conference" },
 ];
 
 export default function Footer() {
@@ -27,7 +29,13 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {/* Branding */}
           <div className="space-y-4">
-            <h3 className="font-display text-2xl font-bold text-klo-gold">KLO</h3>
+            <Image
+              src="/logo-white.png"
+              alt="KLO - Keith L. Odom"
+              width={160}
+              height={40}
+              className="h-8 w-auto"
+            />
             <p className="text-klo-muted text-sm leading-relaxed">
               Keith L. Odom — Technology Innovator, Speaker &amp; Pastor.
               Empowering transformation through faith, leadership, and innovation.

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import UserMenu from "@/components/layout/UserMenu";
@@ -17,6 +18,7 @@ const navLinks: NavLink[] = [
   { label: "AI Advisor", href: "/advisor" },
   { label: "Assessments", href: "/assessments" },
   { label: "Vault", href: "/vault" },
+  { label: "Marketplace", href: "/marketplace" },
   { label: "Strategy Rooms", href: "/strategy-rooms" },
   { label: "Booking", href: "/booking" },
 ];
@@ -85,8 +87,15 @@ export default function TopNav() {
         className="fixed top-0 left-0 right-0 z-50 h-16 bg-klo-navy/95 backdrop-blur-md border-b border-klo-slate flex items-center justify-between px-6"
       >
         {/* Logo */}
-        <Link href="/" className="font-display text-2xl font-bold text-klo-gold tracking-wide">
-          KLO
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/logo-white.png"
+            alt="KLO - Keith L. Odom"
+            width={160}
+            height={40}
+            className="h-8 w-auto"
+            priority
+          />
         </Link>
 
         {/* Desktop nav links */}

@@ -22,15 +22,15 @@ interface SuggestedPrompt {
 
 const PROMPTS: SuggestedPrompt[] = [
   {
-    text: "How should my church approach AI adoption?",
+    text: "Build an AI policy for a church",
     icon: Church,
   },
   {
-    text: "What does a strong IT governance framework look like?",
+    text: "Evaluate our digital readiness",
     icon: ShieldCheck,
   },
   {
-    text: "Help me assess our cybersecurity posture",
+    text: "What are the risks of AI in business?",
     icon: ShieldAlert,
   },
   {

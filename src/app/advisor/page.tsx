@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Bot, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Bot, Trash2, FileText } from "lucide-react";
 import { useChat } from "@/hooks/useChat";
 import ChatInterface from "@/components/advisor/ChatInterface";
 import SuggestedPrompts from "@/components/advisor/SuggestedPrompts";
@@ -61,29 +62,41 @@ export default function AdvisorPage() {
                 custom={1}
                 className="font-display text-xl font-bold text-klo-text leading-tight"
               >
-                AI Strategic Advisor
+                Ask Keith
               </motion.h1>
               <motion.p
                 variants={fadeUp}
                 custom={2}
                 className="text-xs text-klo-muted"
               >
-                Ask Keith
+                AI Strategic Advisor
               </motion.p>
             </div>
           </div>
 
-          {hasMessages && (
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              onClick={clearChat}
-              title="Clear conversation"
-              className="w-9 h-9 flex items-center justify-center rounded-lg text-klo-muted hover:text-klo-text hover:bg-white/5 transition-colors cursor-pointer"
-            >
-              <Trash2 size={16} />
-            </motion.button>
-          )}
+          <div className="flex items-center gap-2">
+            <motion.div variants={fadeUp} custom={3}>
+              <Link
+                href="/advisor/policy-builder"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-klo-gold/10 text-klo-gold border border-klo-gold/20 hover:bg-klo-gold/20 transition-colors"
+              >
+                <FileText size={13} />
+                AI Policy Builder
+              </Link>
+            </motion.div>
+
+            {hasMessages && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                onClick={clearChat}
+                title="Clear conversation"
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-klo-muted hover:text-klo-text hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <Trash2 size={16} />
+              </motion.button>
+            )}
+          </div>
         </div>
 
         {/* Disclaimer */}
