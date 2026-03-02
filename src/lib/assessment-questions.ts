@@ -23,7 +23,7 @@ export interface AssessmentQuestionSet {
 // Shared option scales
 // ------------------------------------------------------------
 
-const maturityScale: AssessmentQuestionOption[] = [
+export const maturityScale: AssessmentQuestionOption[] = [
   { label: "Not started — we have nothing in place", value: 1 },
   { label: "Exploring — we are aware but haven't acted", value: 2 },
   { label: "Developing — initial efforts are underway", value: 3 },

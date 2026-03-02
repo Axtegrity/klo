@@ -240,13 +240,11 @@ export default function ConferencePage() {
   }, []);
 
   /* ---------- Notes state with localStorage ---------- */
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("klo-conference-notes") ?? "";
+  });
   const [notesSaved, setNotesSaved] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("klo-conference-notes");
-    if (saved) setNotes(saved);
-  }, []);
 
   useEffect(() => {
     if (notes === "") return;

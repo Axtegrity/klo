@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import type { AssessmentQuestion } from "@/lib/assessment-questions";
 
 // ------------------------------------------------------------
@@ -85,17 +85,9 @@ export function useAssessment(
   const [isComplete, setIsComplete] = useState(false);
   const [score, setScore] = useState(0);
   const [previousResult, setPreviousResult] =
-    useState<AssessmentSavedResult | null>(null);
+    useState<AssessmentSavedResult | null>(() => getSavedResult(assessmentId));
 
   const maxScore = questions.length * 5;
-
-  // Load previous result on mount
-  useEffect(() => {
-    const saved = getSavedResult(assessmentId);
-    if (saved) {
-      setPreviousResult(saved);
-    }
-  }, [assessmentId]);
 
   const answerQuestion = useCallback((questionId: string, value: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));

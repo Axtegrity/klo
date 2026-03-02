@@ -9,7 +9,6 @@ import {
   Mic2,
   ArrowRight,
 } from "lucide-react";
-import Card from "@/components/shared/Card";
 import Badge from "@/components/shared/Badge";
 import Button from "@/components/shared/Button";
 import AffiliationStrip from "@/components/affiliations/AffiliationStrip";

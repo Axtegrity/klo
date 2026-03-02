@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, use } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -33,7 +33,7 @@ import {
   type StrategySession,
   type DiscussionComment,
 } from "@/lib/strategy-rooms-data";
-import { useSubscription, type SubscriptionTier } from "@/hooks/useSubscription";
+import { useSubscription } from "@/hooks/useSubscription";
 
 // ── Animation Variants ───────────────────────────────────────────────────────
 
@@ -386,9 +386,11 @@ export default function StrategyRoomDetailPage({
   const session = getSessionById(id);
   const related = getRelatedSessions(id, 3);
 
-  const { tier: userTier, canAccess } = useSubscription();
+  const { canAccess } = useSubscription();
 
-  const [registered, setRegistered] = useState(false);
+  const [registered, setRegistered] = useState(() =>
+    session ? getRegistration(session.id) : false
+  );
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showTierGateModal, setShowTierGateModal] = useState(false);
   const [comments, setComments] = useState<DiscussionComment[]>(
@@ -396,14 +398,7 @@ export default function StrategyRoomDetailPage({
   );
   const [newComment, setNewComment] = useState("");
 
-  // Hydrate registration from localStorage
-  useEffect(() => {
-    if (session) {
-      setRegistered(getRegistration(session.id));
-    }
-  }, [session]);
-
-  const handleRegisterClick = useCallback(() => {
+  function handleRegisterClick() {
     if (!session) return;
     // Tier gate: pro/executive rooms require matching tier
     if (!canAccess(session.tier)) {
@@ -411,20 +406,20 @@ export default function StrategyRoomDetailPage({
       return;
     }
     setShowConfirmModal(true);
-  }, [session, canAccess]);
+  }
 
-  const handleConfirmRegistration = useCallback(() => {
+  function handleConfirmRegistration() {
     if (!session) return;
     setRegistration(session.id, true);
     setRegistered(true);
     setShowConfirmModal(false);
-  }, [session]);
+  }
 
-  const handleUnregister = useCallback(() => {
+  function handleUnregister() {
     if (!session) return;
     setRegistration(session.id, false);
     setRegistered(false);
-  }, [session]);
+  }
 
   if (!session) {
     return (

@@ -52,20 +52,19 @@ function isValidTier(value: string): value is SubscriptionTier {
 }
 
 export function useSubscription(): SubscriptionState {
-  const [tier, setTier] = useState<SubscriptionTier>("free");
-
-  // Load cached value from localStorage immediately, then validate with server
-  useEffect(() => {
+  const [tier, setTier] = useState<SubscriptionTier>(() => {
+    if (typeof window === "undefined") return "free";
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored && isValidTier(stored)) {
-        setTier(stored);
-      }
+      if (stored && isValidTier(stored)) return stored;
     } catch {
       // localStorage unavailable
     }
+    return "free";
+  });
 
-    // Fetch authoritative tier from server
+  // Validate with server on mount
+  useEffect(() => {
     fetch("/api/subscription")
       .then((res) => {
         if (!res.ok) return null;

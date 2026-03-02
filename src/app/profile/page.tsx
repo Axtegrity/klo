@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  User,
   BarChart3,
   Bookmark,
   Settings,
@@ -185,11 +184,9 @@ function OverviewTab() {
 }
 
 function AssessmentsTab() {
-  const [results, setResults] = useState<AssessmentResult[]>([]);
-
-  useEffect(() => {
+  const [results] = useState<AssessmentResult[]>(() => {
+    if (typeof window === "undefined") return [];
     try {
-      if (typeof window === "undefined" || typeof localStorage === "undefined") return;
       const keys = Object.keys(localStorage);
       const assessmentResults: AssessmentResult[] = [];
       for (const key of keys) {
@@ -200,11 +197,11 @@ function AssessmentsTab() {
           }
         }
       }
-      setResults(assessmentResults);
+      return assessmentResults;
     } catch {
-      // localStorage unavailable
+      return [];
     }
-  }, []);
+  });
 
   if (results.length === 0) {
     return (

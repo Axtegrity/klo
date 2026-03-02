@@ -8,7 +8,7 @@ import {
   marketplaceProducts,
   MARKETPLACE_CATEGORIES,
 } from "@/lib/marketplace-data";
-import type { MarketplaceCategory, MarketplaceProduct } from "@/lib/marketplace-data";
+import type { MarketplaceProduct } from "@/lib/marketplace-data";
 
 /* ------------------------------------------------------------------ */
 /*  Animation variants                                                 */

@@ -153,19 +153,15 @@ export default function Testimonials() {
   // Responsive detection
   useEffect(() => {
     function handleResize() {
-      setPerPage(window.innerWidth >= 768 ? 3 : 1);
+      const newPerPage = window.innerWidth >= 768 ? 3 : 1;
+      setPerPage(newPerPage);
+      const newTotalPages = Math.ceil(testimonials.length / newPerPage);
+      setPage((prev) => (prev >= newTotalPages ? 0 : prev));
     }
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  // Reset page if perPage changes and page is out of bounds
-  useEffect(() => {
-    if (page >= totalPages) {
-      setPage(0);
-    }
-  }, [perPage, page, totalPages]);
 
   // Auto-rotate every 6 seconds
   const nextPage = useCallback(() => {

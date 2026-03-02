@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, X, Crown, Sparkles, ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
@@ -85,20 +85,16 @@ export default function UpgradePrompt({
   currentTier,
   variant = "inline",
 }: UpgradePromptProps) {
-  const [isDismissed, setIsDismissed] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
+  const [isDismissed, setIsDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
     try {
       const key = getDismissKey(feature, variant);
-      if (sessionStorage.getItem(key) === "true") {
-        setIsDismissed(true);
-      }
+      return sessionStorage.getItem(key) === "true";
     } catch {
-      // sessionStorage unavailable
+      return false;
     }
-  }, [feature, variant]);
+  });
+  const [mounted] = useState(() => typeof window !== "undefined");
 
   function dismiss() {
     setIsDismissed(true);

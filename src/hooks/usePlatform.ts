@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export type Platform = "ios" | "android" | "web";
 
@@ -12,21 +12,20 @@ interface PlatformInfo {
   isWeb: boolean;
 }
 
+function detectPlatform(): Platform {
+  if (typeof window === "undefined") return "web";
+  const ua = navigator.userAgent.toLowerCase();
+  const isCapacitor = !!(window as unknown as Record<string, unknown>).Capacitor;
+
+  if (isCapacitor) {
+    if (/iphone|ipad|ipod/.test(ua)) return "ios";
+    if (/android/.test(ua)) return "android";
+  }
+  return "web";
+}
+
 export function usePlatform(): PlatformInfo {
-  const [platform, setPlatform] = useState<Platform>("web");
-
-  useEffect(() => {
-    const ua = navigator.userAgent.toLowerCase();
-    const isCapacitor = typeof window !== "undefined" && !!(window as unknown as Record<string, unknown>).Capacitor;
-
-    if (isCapacitor) {
-      if (/iphone|ipad|ipod/.test(ua)) {
-        setPlatform("ios");
-      } else if (/android/.test(ua)) {
-        setPlatform("android");
-      }
-    }
-  }, []);
+  const [platform] = useState<Platform>(detectPlatform);
 
   return {
     platform,

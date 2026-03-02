@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Church, BrainCircuit, ShieldCheck, ShieldAlert } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -42,10 +42,8 @@ const staggerContainer = {
 // ------------------------------------------------------------
 
 export default function AssessmentsPage() {
-  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
-
-  // Check localStorage for completed assessments
-  useEffect(() => {
+  const [completedIds] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set<string>();
     const ids = new Set<string>();
     for (const assessment of ASSESSMENTS) {
       const key = `klo-assessment-${assessment.id}`;
@@ -57,8 +55,8 @@ export default function AssessmentsPage() {
         // Ignore
       }
     }
-    setCompletedIds(ids);
-  }, []);
+    return ids;
+  });
 
   return (
     <div className="min-h-screen px-6 py-24 md:py-32">

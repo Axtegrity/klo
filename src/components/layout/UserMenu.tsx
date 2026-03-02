@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Settings, LogOut } from "lucide-react";
 
@@ -62,9 +63,11 @@ export default function UserMenu() {
         aria-label="User menu"
       >
         {session.user?.image ? (
-          <img
+          <Image
             src={session.user.image}
             alt=""
+            width={36}
+            height={36}
             className="w-full h-full rounded-full object-cover"
           />
         ) : (
