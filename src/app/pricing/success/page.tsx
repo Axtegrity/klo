@@ -110,14 +110,14 @@ function SuccessContent() {
             {/* Pulsing Ring */}
             <motion.div
               variants={ringVariants}
-              className="absolute inset-0 rounded-full border-2 border-[#68E9FA]"
+              className="absolute inset-0 rounded-full border-2 border-[#2764FF]"
             />
             {/* Check Circle */}
             <motion.div
               variants={checkVariants}
-              className="relative flex items-center justify-center w-24 h-24 rounded-full bg-[#68E9FA]/15 border-2 border-[#68E9FA]"
+              className="relative flex items-center justify-center w-24 h-24 rounded-full bg-[#2764FF]/15 border-2 border-[#2764FF]"
             >
-              <CheckCircle className="h-12 w-12 text-[#68E9FA]" />
+              <CheckCircle className="h-12 w-12 text-[#2764FF]" />
             </motion.div>
           </div>
         </motion.div>
@@ -141,7 +141,7 @@ function SuccessContent() {
         {/* Unlocked Features */}
         <motion.div
           variants={itemVariants}
-          className="bg-[#011A5E] border border-[#0E3783] rounded-2xl p-6 mb-8 text-left"
+          className="bg-[#161B22] border border-[#21262D] rounded-2xl p-6 mb-8 text-left"
         >
           <ul className="space-y-3">
             {info.unlocked.map((feature, i) => (
@@ -156,7 +156,7 @@ function SuccessContent() {
                 }}
                 className="flex items-start gap-3 text-sm"
               >
-                <CheckCircle className="h-4 w-4 text-[#68E9FA] shrink-0 mt-0.5" />
+                <CheckCircle className="h-4 w-4 text-[#2764FF] shrink-0 mt-0.5" />
                 <span className="text-klo-text">{feature}</span>
               </motion.li>
             ))}
@@ -190,7 +190,7 @@ function SuccessContent() {
           You are covered by our 30-day money-back guarantee. Questions?{" "}
           <a
             href="mailto:info@keithlodom.io"
-            className="text-[#68E9FA] hover:underline"
+            className="text-[#2764FF] hover:underline"
           >
             Reach out anytime.
           </a>

@@ -265,7 +265,7 @@ export default function ConferencePage() {
       <section className="relative overflow-hidden py-20 md:py-28 px-6">
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-klo-gold/5 via-transparent to-transparent pointer-events-none" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#68E9FA]/3 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#2764FF]/3 blur-[120px] rounded-full pointer-events-none" />
 
         <motion.div
           initial="hidden"
@@ -308,15 +308,15 @@ export default function ConferencePage() {
             className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-klo-muted"
           >
             <span className="inline-flex items-center gap-2">
-              <CalendarDays size={16} className="text-[#68E9FA]" />
+              <CalendarDays size={16} className="text-[#2764FF]" />
               March 15, 2026
             </span>
             <span className="inline-flex items-center gap-2">
-              <Clock size={16} className="text-[#68E9FA]" />
+              <Clock size={16} className="text-[#2764FF]" />
               9:00 AM - 4:00 PM
             </span>
             <span className="inline-flex items-center gap-2">
-              <MapPin size={16} className="text-[#68E9FA]" />
+              <MapPin size={16} className="text-[#2764FF]" />
               Atlanta Convention Center
             </span>
           </motion.div>
@@ -334,8 +334,8 @@ export default function ConferencePage() {
         >
           <motion.div variants={fadeUp} custom={0} className="mb-10">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-[#68E9FA]/10 flex items-center justify-center">
-                <Clock size={20} className="text-[#68E9FA]" />
+              <div className="w-10 h-10 rounded-lg bg-[#2764FF]/10 flex items-center justify-center">
+                <Clock size={20} className="text-[#2764FF]" />
               </div>
               <h2 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
                 Session Schedule
@@ -352,7 +352,7 @@ export default function ConferencePage() {
                 <Card
                   className={`relative overflow-hidden ${
                     session.isActive
-                      ? "border-[#68E9FA]/40 shadow-lg shadow-[#68E9FA]/5"
+                      ? "border-[#2764FF]/40 shadow-lg shadow-[#2764FF]/5"
                       : ""
                   }`}
                 >
@@ -363,7 +363,7 @@ export default function ConferencePage() {
                     <div className="shrink-0 md:w-44">
                       <div className="flex items-center gap-2">
                         {session.isActive && (
-                          <Radio size={14} className="text-[#68E9FA]" />
+                          <Radio size={14} className="text-[#2764FF]" />
                         )}
                         <span
                           className={`text-sm font-semibold ${
@@ -392,11 +392,11 @@ export default function ConferencePage() {
                       </p>
                       <div className="flex items-center gap-4 text-xs text-klo-muted pt-1">
                         <span className="inline-flex items-center gap-1.5">
-                          <User size={12} className="text-[#68E9FA]/70" />
+                          <User size={12} className="text-[#2764FF]/70" />
                           {session.speaker}
                         </span>
                         <span className="inline-flex items-center gap-1.5">
-                          <MapPin size={12} className="text-[#68E9FA]/70" />
+                          <MapPin size={12} className="text-[#2764FF]/70" />
                           {session.room}
                         </span>
                       </div>
@@ -420,8 +420,8 @@ export default function ConferencePage() {
         >
           <motion.div variants={fadeUp} custom={0} className="mb-10">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-[#68E9FA]/10 flex items-center justify-center">
-                <MessageSquare size={20} className="text-[#68E9FA]" />
+              <div className="w-10 h-10 rounded-lg bg-[#2764FF]/10 flex items-center justify-center">
+                <MessageSquare size={20} className="text-[#2764FF]" />
               </div>
               <h2 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
                 Live Q&amp;A
@@ -443,12 +443,12 @@ export default function ConferencePage() {
                   onChange={(e) => setQuestionInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && submitQuestion()}
                   placeholder="Type your question for the speaker..."
-                  className="flex-1 bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-3 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#68E9FA]/50 focus:ring-1 focus:ring-[#68E9FA]/20 transition-colors"
+                  className="flex-1 bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-3 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50 focus:ring-1 focus:ring-[#2764FF]/20 transition-colors"
                 />
                 <button
                   onClick={submitQuestion}
                   disabled={!questionInput.trim()}
-                  className="shrink-0 inline-flex items-center gap-2 px-5 py-3 bg-[#68E9FA] text-[#022886] font-semibold text-sm rounded-lg hover:bg-[#68E9FA]/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="shrink-0 inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Send size={16} />
                   Submit
@@ -472,11 +472,11 @@ export default function ConferencePage() {
                   <Card className="flex items-start gap-4">
                     <button
                       onClick={() => upvoteQuestion(q.id)}
-                      className="shrink-0 flex flex-col items-center gap-1 px-2 py-1 rounded-lg hover:bg-[#68E9FA]/10 transition-colors group"
+                      className="shrink-0 flex flex-col items-center gap-1 px-2 py-1 rounded-lg hover:bg-[#2764FF]/10 transition-colors group"
                     >
                       <ChevronRight
                         size={16}
-                        className="text-klo-muted -rotate-90 group-hover:text-[#68E9FA] transition-colors"
+                        className="text-klo-muted -rotate-90 group-hover:text-[#2764FF] transition-colors"
                       />
                       <span className="text-xs font-semibold text-klo-gold">
                         {q.upvotes}
@@ -504,8 +504,8 @@ export default function ConferencePage() {
         >
           <motion.div variants={fadeUp} custom={0} className="mb-10">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-[#68E9FA]/10 flex items-center justify-center">
-                <StickyNote size={20} className="text-[#68E9FA]" />
+              <div className="w-10 h-10 rounded-lg bg-[#2764FF]/10 flex items-center justify-center">
+                <StickyNote size={20} className="text-[#2764FF]" />
               </div>
               <h2 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
                 Session Notes
@@ -525,7 +525,7 @@ export default function ConferencePage() {
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Start typing your notes here... Your notes are automatically saved to your browser."
                   rows={10}
-                  className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-3 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#68E9FA]/50 focus:ring-1 focus:ring-[#68E9FA]/20 transition-colors resize-y leading-relaxed"
+                  className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-3 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50 focus:ring-1 focus:ring-[#2764FF]/20 transition-colors resize-y leading-relaxed"
                 />
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-klo-muted">
@@ -564,8 +564,8 @@ export default function ConferencePage() {
         >
           <motion.div variants={fadeUp} custom={0} className="mb-10">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-[#68E9FA]/10 flex items-center justify-center">
-                <Lightbulb size={20} className="text-[#68E9FA]" />
+              <div className="w-10 h-10 rounded-lg bg-[#2764FF]/10 flex items-center justify-center">
+                <Lightbulb size={20} className="text-[#2764FF]" />
               </div>
               <h2 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
                 Key Takeaways
@@ -587,8 +587,8 @@ export default function ConferencePage() {
                 >
                   <Card hoverable className="h-full">
                     <div className="space-y-3">
-                      <div className="w-10 h-10 rounded-lg bg-[#68E9FA]/10 flex items-center justify-center">
-                        <Icon size={18} className="text-[#68E9FA]" />
+                      <div className="w-10 h-10 rounded-lg bg-[#2764FF]/10 flex items-center justify-center">
+                        <Icon size={18} className="text-[#2764FF]" />
                       </div>
                       <h3 className="text-base font-semibold text-klo-text">
                         {takeaway.title}
@@ -617,11 +617,11 @@ export default function ConferencePage() {
           <motion.div variants={fadeUp} custom={0}>
             <Card className="relative overflow-hidden">
               {/* Accent glow */}
-              <div className="absolute -top-20 -right-20 w-60 h-60 bg-[#68E9FA]/5 blur-[80px] rounded-full pointer-events-none" />
+              <div className="absolute -top-20 -right-20 w-60 h-60 bg-[#2764FF]/5 blur-[80px] rounded-full pointer-events-none" />
 
               <div className="relative flex flex-col md:flex-row items-center gap-6 md:gap-8">
-                <div className="shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-[#68E9FA]/20 to-[#68E9FA]/5 border border-[#68E9FA]/20 flex items-center justify-center">
-                  <Bot size={28} className="text-[#68E9FA]" />
+                <div className="shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2764FF]/20 to-[#2764FF]/5 border border-[#2764FF]/20 flex items-center justify-center">
+                  <Bot size={28} className="text-[#2764FF]" />
                 </div>
                 <div className="flex-1 text-center md:text-left">
                   <h3 className="font-display text-2xl font-bold text-klo-text mb-2">
@@ -635,7 +635,7 @@ export default function ConferencePage() {
                   </p>
                   <Link
                     href="/advisor"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#68E9FA] text-[#022886] font-semibold text-sm rounded-lg hover:bg-[#68E9FA]/90 transition-colors"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors"
                   >
                     <Bot size={16} />
                     Launch AI Advisor
@@ -659,8 +659,8 @@ export default function ConferencePage() {
         >
           <motion.div variants={fadeUp} custom={0} className="mb-10">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-[#68E9FA]/10 flex items-center justify-center">
-                <FileDown size={20} className="text-[#68E9FA]" />
+              <div className="w-10 h-10 rounded-lg bg-[#2764FF]/10 flex items-center justify-center">
+                <FileDown size={20} className="text-[#2764FF]" />
               </div>
               <h2 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
                 Resource Downloads
@@ -677,14 +677,14 @@ export default function ConferencePage() {
                 <a href={resource.href} download>
                   <Card hoverable className="group">
                     <div className="flex items-start gap-4">
-                      <div className="shrink-0 w-12 h-12 rounded-lg bg-[#68E9FA]/10 flex items-center justify-center group-hover:bg-[#68E9FA]/20 transition-colors">
+                      <div className="shrink-0 w-12 h-12 rounded-lg bg-[#2764FF]/10 flex items-center justify-center group-hover:bg-[#2764FF]/20 transition-colors">
                         <FileDown
                           size={20}
-                          className="text-[#68E9FA]"
+                          className="text-[#2764FF]"
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-klo-text group-hover:text-[#68E9FA] transition-colors">
+                        <h3 className="text-sm font-semibold text-klo-text group-hover:text-[#2764FF] transition-colors">
                           {resource.title}
                         </h3>
                         <p className="text-xs text-klo-muted mt-1 leading-relaxed">
@@ -729,19 +729,19 @@ export default function ConferencePage() {
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/assessments"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#68E9FA] text-[#022886] font-semibold text-sm rounded-lg hover:bg-[#68E9FA]/90 transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors"
             >
               Take an Assessment
             </Link>
             <Link
               href="/vault"
-              className="inline-flex items-center gap-2 px-5 py-2.5 border border-klo-slate text-klo-text font-semibold text-sm rounded-lg hover:border-[#68E9FA]/30 hover:text-[#68E9FA] transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 border border-klo-slate text-klo-text font-semibold text-sm rounded-lg hover:border-[#2764FF]/30 hover:text-[#2764FF] transition-colors"
             >
               Explore the Vault
             </Link>
             <Link
               href="/booking"
-              className="inline-flex items-center gap-2 px-5 py-2.5 border border-klo-slate text-klo-text font-semibold text-sm rounded-lg hover:border-[#68E9FA]/30 hover:text-[#68E9FA] transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 border border-klo-slate text-klo-text font-semibold text-sm rounded-lg hover:border-[#2764FF]/30 hover:text-[#2764FF] transition-colors"
             >
               Book Keith
             </Link>

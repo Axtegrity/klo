@@ -17,19 +17,19 @@ type ButtonProps = ButtonBaseProps &
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-gradient-to-r from-[#68E9FA] to-[#37B1FF] text-[#022886] font-bold uppercase tracking-wider rounded-full hover:brightness-110 active:brightness-95 shadow-lg shadow-[#68E9FA]/20",
+    "bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-bold uppercase tracking-wider rounded-lg hover:shadow-[0_0_30px_rgba(39,100,255,0.25)] active:brightness-95 shadow-lg shadow-[#2764FF]/20",
   secondary:
-    "border-2 border-[#68E9FA] text-[#68E9FA] bg-transparent rounded-full uppercase tracking-wider hover:bg-[#68E9FA]/10 active:bg-[#68E9FA]/20",
+    "border border-[#21262D] bg-[#161B22] text-[#E6EDF3] rounded-lg uppercase tracking-wider hover:bg-[#1C2128] hover:border-[#2764FF]/30 active:bg-[#21262D]",
   ghost:
-    "text-white bg-transparent rounded-full uppercase tracking-wider hover:bg-white/5 active:bg-white/10",
+    "text-[#E6EDF3] bg-transparent rounded-lg uppercase tracking-wider hover:bg-white/5 active:bg-white/10",
   gold:
-    "bg-klo-gold text-[#022886] font-bold uppercase tracking-wider rounded-full hover:brightness-110 active:brightness-95 shadow-lg shadow-klo-gold/20",
+    "bg-[#C8A84E] text-[#0D1117] font-bold uppercase tracking-wider rounded-lg hover:brightness-110 active:brightness-95 shadow-lg shadow-[#C8A84E]/20",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: "px-4 py-2 text-sm rounded-full",
-  md: "px-8 py-3.5 text-sm rounded-full",
-  lg: "px-10 py-4.5 text-base rounded-full",
+  sm: "px-4 py-2 text-sm rounded-lg",
+  md: "px-8 py-3.5 text-sm rounded-lg",
+  lg: "px-10 py-4.5 text-base rounded-lg",
 };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -45,7 +45,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#68E9FA] focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+      "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2764FF] focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
 
     const combinedStyles = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
 

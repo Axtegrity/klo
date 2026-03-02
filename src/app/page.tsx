@@ -14,7 +14,7 @@ export default function Home() {
       <HeroBanner />
 
       {/* Remaining sections — contained and spaced */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-[#0D1117]">
         <div className="py-16 space-y-20">
           <LatestBrief />
           <TrendingTopics />

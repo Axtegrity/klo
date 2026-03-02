@@ -23,10 +23,10 @@ const assessments: AssessmentCard[] = [
     description:
       "Evaluate your ministry's digital maturity and readiness for technology-driven transformation.",
     href: "/assessments/church-readiness",
-    gradient: "bg-gradient-to-br from-[#8840FF]/20 to-[#8840FF]/5",
-    accentColor: "text-[#8840FF]",
-    hoverBorder: "group-hover:border-[#8840FF]/40",
-    hoverShadow: "group-hover:shadow-[0_0_24px_rgba(136,64,255,0.15)]",
+    gradient: "bg-gradient-to-br from-[#2764FF]/20 to-[#2764FF]/5",
+    accentColor: "text-[#2764FF]",
+    hoverBorder: "group-hover:border-[#2764FF]/40",
+    hoverShadow: "group-hover:shadow-[0_0_24px_rgba(39,100,255,0.15)]",
   },
   {
     icon: Brain,
@@ -34,10 +34,10 @@ const assessments: AssessmentCard[] = [
     description:
       "Gauge your organization's preparedness to adopt and scale artificial intelligence initiatives.",
     href: "/assessments/ai-readiness",
-    gradient: "bg-gradient-to-br from-[#68E9FA]/20 to-[#68E9FA]/5",
-    accentColor: "text-[#68E9FA]",
-    hoverBorder: "group-hover:border-[#68E9FA]/40",
-    hoverShadow: "group-hover:shadow-[0_0_24px_rgba(104,233,250,0.15)]",
+    gradient: "bg-gradient-to-br from-[#21B8CD]/20 to-[#21B8CD]/5",
+    accentColor: "text-[#21B8CD]",
+    hoverBorder: "group-hover:border-[#21B8CD]/40",
+    hoverShadow: "group-hover:shadow-[0_0_24px_rgba(33,184,205,0.15)]",
   },
   {
     icon: Shield,
@@ -86,12 +86,12 @@ export default function QuickAssessmentCTA() {
     <section>
       {/* Section heading */}
       <div className="flex items-center gap-4 mb-3">
-        <span className="w-10 h-1 bg-gradient-to-r from-[#68E9FA] to-[#37B1FF] rounded-full" />
-        <h2 className="font-display text-3xl sm:text-4xl font-bold text-white uppercase tracking-wide">
+        <span className="w-10 h-1 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] rounded-full" />
+        <h2 className="font-display text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#E6EDF3] to-[#8B949E] bg-clip-text text-transparent uppercase tracking-wide">
           Assess Your Readiness
         </h2>
       </div>
-      <p className="text-sm text-white/50 mb-10 ml-14">
+      <p className="text-sm text-[#8B949E] mb-10 ml-14">
         Quick, targeted assessments to benchmark where you stand.
       </p>
 
@@ -109,20 +109,20 @@ export default function QuickAssessmentCTA() {
             <motion.div key={item.title} variants={cardVariants}>
               <Link href={item.href} className="block group h-full">
                 <div
-                  className={`h-full ${item.gradient} border border-[#0E3783] rounded-2xl p-6 transition-all duration-300 group-hover:-translate-y-1 ${item.hoverBorder} ${item.hoverShadow}`}
+                  className={`h-full ${item.gradient} border border-[#21262D] rounded-2xl p-6 transition-all duration-300 group-hover:-translate-y-1 ${item.hoverBorder} ${item.hoverShadow}`}
                 >
                   {/* Icon */}
-                  <div className={`w-11 h-11 flex items-center justify-center rounded-xl bg-white/5 mb-4 transition-colors duration-300 group-hover:bg-white/10`}>
+                  <div className="w-11 h-11 flex items-center justify-center rounded-xl bg-[#0D1117]/50 mb-4 transition-colors duration-300 group-hover:bg-[#0D1117]/80">
                     <Icon className={`w-5 h-5 ${item.accentColor}`} />
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-base font-semibold text-white mb-2 group-hover:text-[#68E9FA] transition-colors duration-200">
+                  <h3 className="text-base font-semibold text-[#E6EDF3] mb-2 group-hover:text-[#21B8CD] transition-colors duration-200">
                     {item.title}
                   </h3>
 
                   {/* Description */}
-                  <p className="text-xs text-white/55 leading-relaxed">
+                  <p className="text-xs text-[#8B949E] leading-relaxed">
                     {item.description}
                   </p>
                 </div>

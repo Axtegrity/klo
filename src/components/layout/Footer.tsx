@@ -20,9 +20,9 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="hidden md:block bg-[#011A5E] border-t border-[#0E3783]">
-      {/* Accent line - cyan gradient */}
-      <div className="h-0.5 bg-gradient-to-r from-transparent via-[#68E9FA] to-transparent" />
+    <footer className="hidden md:block bg-[#0D1117] border-t border-[#21262D]">
+      {/* Accent line - blue to cyan gradient */}
+      <div className="h-0.5 bg-gradient-to-r from-transparent via-[#2764FF] to-[#21B8CD]" />
 
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -51,7 +51,7 @@ export default function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-klo-muted text-sm hover:text-[#68E9FA] transition-colors duration-200"
+                    className="text-klo-muted text-sm hover:text-[#2764FF] transition-colors duration-200"
                   >
                     {link.label}
                   </Link>
@@ -72,7 +72,7 @@ export default function Footer() {
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-klo-muted text-sm hover:text-[#68E9FA] transition-colors duration-200"
+                    className="text-klo-muted text-sm hover:text-[#2764FF] transition-colors duration-200"
                   >
                     {link.label}
                   </a>
@@ -83,7 +83,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-10 pt-6 border-t border-[#0E3783]/50 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="mt-10 pt-6 border-t border-[#21262D]/50 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-klo-muted text-xs">
             &copy; {currentYear} Keith L. Odom. All rights reserved.
           </p>

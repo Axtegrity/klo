@@ -3,7 +3,7 @@
 /* ============================================================
    KLO Brand Design System
    Keith L. Odom - Technology Innovator, Speaker, Pastor
-   Tony Robbins-inspired aesthetic
+   Hybrid dark design — electric blue + cyan gradient system
    ============================================================ */
 
 :root {
@@ -14,53 +14,53 @@
   /* Brand palette */
   --color-gold: #C8A84E;
   --color-gold-light: #E8D5A0;
-  --color-navy: #022886;
-  --color-dark: #011A5E;
-  --color-slate: #0E3783;
-  --color-text: #FFFFFF;
-  --color-muted: #8BA3D4;
-  --color-accent: #68E9FA;
+  --color-navy: #161B22;
+  --color-dark: #0D1117;
+  --color-slate: #21262D;
+  --color-text: #E6EDF3;
+  --color-muted: #8B949E;
+  --color-accent: #2764FF;
 
   /* Surfaces */
-  --background: #022886;
-  --foreground: #FFFFFF;
+  --background: #0D1117;
+  --foreground: #E6EDF3;
 }
 
 @theme inline {
   /* Brand colors */
   --color-gold: #C8A84E;
   --color-gold-light: #E8D5A0;
-  --color-navy: #022886;
-  --color-dark: #011A5E;
-  --color-slate: #0E3783;
-  --color-text: #FFFFFF;
-  --color-muted: #8BA3D4;
-  --color-accent: #68E9FA;
+  --color-navy: #161B22;
+  --color-dark: #0D1117;
+  --color-slate: #21262D;
+  --color-text: #E6EDF3;
+  --color-muted: #8B949E;
+  --color-accent: #2764FF;
 
   /* KLO-prefixed brand aliases */
   --color-klo-gold: #C8A84E;
   --color-klo-gold-light: #E8D5A0;
-  --color-klo-navy: #022886;
-  --color-klo-dark: #011A5E;
-  --color-klo-slate: #0E3783;
-  --color-klo-text: #FFFFFF;
-  --color-klo-muted: #8BA3D4;
-  --color-klo-accent: #68E9FA;
+  --color-klo-navy: #161B22;
+  --color-klo-dark: #0D1117;
+  --color-klo-slate: #21262D;
+  --color-klo-text: #E6EDF3;
+  --color-klo-muted: #8B949E;
+  --color-klo-accent: #2764FF;
 
   /* Energetic section colors */
   --color-klo-purple: #8840FF;
   --color-klo-lime: #6ECF55;
   --color-klo-magenta: #F77A81;
   --color-klo-yellow: #FBF073;
-  --color-klo-cyan: #68E9FA;
+  --color-klo-cyan: #21B8CD;
 
   /* Semantic surfaces */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-surface: #0E3783;
-  --color-surface-hover: #1A4A9E;
-  --color-border: #0E3783;
-  --color-border-subtle: #0A2F6E;
+  --color-surface: #161B22;
+  --color-surface-hover: #1C2128;
+  --color-border: #21262D;
+  --color-border-subtle: #1C2128;
 
   /* Fonts */
   --font-sans: var(--font-geist-sans), "Inter", ui-sans-serif, system-ui,
@@ -96,7 +96,7 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #0E3783 transparent;
+  scrollbar-color: #21262D transparent;
 }
 
 *::-webkit-scrollbar {
@@ -109,12 +109,12 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #0E3783;
+  background-color: #21262D;
   border-radius: 9999px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: #1A4A9E;
+  background-color: #1C2128;
 }
 
 /* ============================================================
@@ -143,8 +143,8 @@ body {
    ============================================================ */
 
 ::selection {
-  background-color: rgba(104, 233, 250, 0.3);
-  color: #FFFFFF;
+  background-color: rgba(39, 100, 255, 0.3);
+  color: #E6EDF3;
 }
 
 :focus-visible {
@@ -167,8 +167,8 @@ body {
   }
 
   .cyan-glow {
-    box-shadow: 0 0 20px rgba(104, 233, 250, 0.2),
-      0 0 60px rgba(104, 233, 250, 0.08);
+    box-shadow: 0 0 20px rgba(33, 184, 205, 0.2),
+      0 0 60px rgba(33, 184, 205, 0.08);
   }
 
   .gold-border-glow {
@@ -177,21 +177,42 @@ body {
   }
 
   .glass {
-    background: rgba(14, 55, 131, 0.6);
+    background: rgba(22, 27, 34, 0.6);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(104, 233, 250, 0.08);
+    border: 1px solid rgba(33, 38, 45, 0.5);
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, #68E9FA, #C8A84E);
+    background: linear-gradient(135deg, #2764FF, #21B8CD);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .bg-gradient-hero {
-    background: linear-gradient(180deg, #011A5E 0%, #022886 100%);
+    background: linear-gradient(180deg, #0D1117 0%, #161B22 100%);
+  }
+
+  /* New utility: gradient text for headings */
+  .gradient-text {
+    background: linear-gradient(to right, #2764FF, #21B8CD);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* New utility: glow hover effect */
+  .glow-hover {
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .glow-hover:hover {
+    box-shadow: 0 0 30px rgba(39, 100, 255, 0.15);
+  }
+
+  /* New utility: left accent bar */
+  .accent-bar {
+    border-left: 2px solid #2764FF;
   }
 
   .fade-in {
@@ -224,5 +245,23 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes kenburns {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  25% {
+    transform: scale(1.1) translate(-2%, -1%);
+  }
+  50% {
+    transform: scale(1.15) translate(1%, -3%);
+  }
+  75% {
+    transform: scale(1.1) translate(-1%, 2%);
+  }
+  100% {
+    transform: scale(1) translate(0, 0);
   }
 }

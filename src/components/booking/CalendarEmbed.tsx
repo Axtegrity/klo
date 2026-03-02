@@ -81,10 +81,10 @@ export default function CalendarEmbed() {
   };
 
   return (
-    <Card className="border-[#68E9FA]/20">
+    <Card className="border-[#2764FF]/20">
       <div className="text-center mb-8">
-        <div className="w-14 h-14 rounded-full bg-[#68E9FA]/10 flex items-center justify-center mx-auto mb-5">
-          <Calendar size={24} className="text-[#68E9FA]" />
+        <div className="w-14 h-14 rounded-full bg-[#2764FF]/10 flex items-center justify-center mx-auto mb-5">
+          <Calendar size={24} className="text-[#2764FF]" />
         </div>
         <h3 className="font-display text-2xl md:text-3xl font-bold text-klo-text mb-3">
           Schedule a Discovery Call
@@ -105,8 +105,8 @@ export default function CalendarEmbed() {
           }}
           className="text-center py-8"
         >
-          <div className="w-16 h-16 rounded-full bg-[#68E9FA]/15 flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 size={32} className="text-[#68E9FA]" />
+          <div className="w-16 h-16 rounded-full bg-[#2764FF]/15 flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 size={32} className="text-[#2764FF]" />
           </div>
           <h4 className="font-display text-xl font-bold text-klo-text mb-2">
             Call Scheduled
@@ -135,8 +135,8 @@ export default function CalendarEmbed() {
                 }}
                 className={`flex flex-col items-center px-4 py-3 rounded-xl border transition-all duration-200 cursor-pointer ${
                   selectedDate === day.date
-                    ? "border-[#68E9FA] bg-[#68E9FA]/10 text-[#68E9FA]"
-                    : "border-klo-slate bg-klo-navy/40 text-klo-muted hover:border-[#68E9FA]/30 hover:text-klo-text"
+                    ? "border-[#2764FF] bg-[#2764FF]/10 text-[#2764FF]"
+                    : "border-klo-slate bg-klo-navy/40 text-klo-muted hover:border-[#2764FF]/30 hover:text-klo-text"
                 }`}
               >
                 <span className="text-xs font-medium uppercase tracking-wider">
@@ -173,8 +173,8 @@ export default function CalendarEmbed() {
                     onClick={() => setSelectedTime(time)}
                     className={`flex items-center gap-2 px-5 py-2.5 rounded-lg border text-sm font-medium transition-all duration-200 cursor-pointer ${
                       selectedTime === time
-                        ? "border-[#68E9FA] bg-[#68E9FA]/10 text-[#68E9FA]"
-                        : "border-klo-slate bg-klo-navy/40 text-klo-muted hover:border-[#68E9FA]/30 hover:text-klo-text"
+                        ? "border-[#2764FF] bg-[#2764FF]/10 text-[#2764FF]"
+                        : "border-klo-slate bg-klo-navy/40 text-klo-muted hover:border-[#2764FF]/30 hover:text-klo-text"
                     }`}
                   >
                     <Clock size={14} />

@@ -154,7 +154,7 @@ function FeedCard({ post, index }: { post: FeedPost; index: number }) {
             {hasMoreContent && (
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="mt-3 inline-flex items-center gap-1.5 text-[#68E9FA] text-sm font-medium hover:brightness-110 transition-all cursor-pointer"
+                className="mt-3 inline-flex items-center gap-1.5 text-[#2764FF] text-sm font-medium hover:brightness-110 transition-all cursor-pointer"
               >
                 {expanded ? (
                   <>
@@ -199,8 +199,8 @@ export default function FeedPage() {
             custom={0}
             className="flex items-center gap-3 mb-4"
           >
-            <div className="w-12 h-12 rounded-xl bg-[#68E9FA]/10 flex items-center justify-center">
-              <Rss size={22} className="text-[#68E9FA]" />
+            <div className="w-12 h-12 rounded-xl bg-[#2764FF]/10 flex items-center justify-center">
+              <Rss size={22} className="text-[#2764FF]" />
             </div>
             <div>
               <h1 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
@@ -224,8 +224,8 @@ export default function FeedPage() {
                 onClick={() => setActiveCategory(cat)}
                 className={`whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full border transition-all duration-200 cursor-pointer ${
                   activeCategory === cat
-                    ? "bg-[#68E9FA] text-[#022886] border-[#68E9FA]"
-                    : "bg-[#011A5E] text-[#8BA3D4] border-[#0E3783] hover:border-[#68E9FA]/30 hover:text-klo-text"
+                    ? "bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white border-[#2764FF]"
+                    : "bg-[#161B22] text-[#8B949E] border-[#21262D] hover:border-[#2764FF]/30 hover:text-klo-text"
                 }`}
               >
                 {cat}

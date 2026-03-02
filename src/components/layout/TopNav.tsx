@@ -84,7 +84,7 @@ export default function TopNav() {
     <>
       <nav
         aria-label="Primary navigation"
-        className="fixed top-0 left-0 right-0 z-50 h-[72px] bg-[#022886]/95 backdrop-blur-md border-b border-[#0E3783] flex items-center justify-between px-6"
+        className="fixed top-0 left-0 right-0 z-50 h-[72px] bg-[#0D1117]/95 backdrop-blur-md border-b border-[#21262D] flex items-center justify-between px-6"
       >
         {/* Logo */}
         <Link href="/" className="flex items-center">
@@ -107,15 +107,15 @@ export default function TopNav() {
                 aria-current={isActive(link.href) ? "page" : undefined}
                 className={`relative text-sm font-medium transition-colors duration-200 pb-1 ${
                   isActive(link.href)
-                    ? "text-[#68E9FA]"
-                    : "text-klo-text hover:text-[#68E9FA]"
+                    ? "text-[#2764FF]"
+                    : "text-[#8B949E] hover:text-[#2764FF]"
                 }`}
               >
                 {link.label}
                 {isActive(link.href) && (
                   <motion.span
                     layoutId="nav-underline"
-                    className="absolute left-0 right-0 -bottom-0.5 h-0.5 bg-[#68E9FA] rounded-full"
+                    className="absolute left-0 right-0 -bottom-0.5 h-0.5 bg-[#2764FF] rounded-full"
                   />
                 )}
               </Link>
@@ -131,7 +131,7 @@ export default function TopNav() {
           <button
             ref={hamburgerRef}
             onClick={toggleMenu}
-            className="md:hidden text-klo-text hover:text-[#68E9FA] transition-colors duration-200"
+            className="md:hidden text-[#E6EDF3] hover:text-[#2764FF] transition-colors duration-200"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-nav-menu"
@@ -153,7 +153,7 @@ export default function TopNav() {
             animate={{ y: 0 }}
             exit={{ y: "-100%" }}
             transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
-            className="fixed inset-0 z-40 bg-[#022886]/98 backdrop-blur-lg pt-20 px-8 md:hidden"
+            className="fixed inset-0 z-40 bg-[#0D1117]/98 backdrop-blur-lg pt-20 px-8 md:hidden"
           >
             <ul className="flex flex-col gap-6">
               {navLinks.map((link, index) => (
@@ -167,10 +167,10 @@ export default function TopNav() {
                     href={link.href}
                     onClick={closeMenu}
                     aria-current={isActive(link.href) ? "page" : undefined}
-                    className={`block text-xl font-medium py-2 border-b border-[#0E3783]/30 transition-colors duration-200 ${
+                    className={`block text-xl font-medium py-2 border-b border-[#21262D]/30 transition-colors duration-200 ${
                       isActive(link.href)
-                        ? "text-[#68E9FA] border-[#68E9FA]/50"
-                        : "text-klo-text hover:text-[#68E9FA]"
+                        ? "text-[#2764FF] border-[#2764FF]/50"
+                        : "text-[#E6EDF3] hover:text-[#2764FF]"
                     }`}
                   >
                     {link.label}

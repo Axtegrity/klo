@@ -161,13 +161,13 @@ export default function InquiryForm() {
           initial="hidden"
           animate="visible"
         >
-          <div className="w-20 h-20 rounded-full bg-[#68E9FA]/15 flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 rounded-full bg-[#2764FF]/15 flex items-center justify-center mx-auto mb-6">
             <motion.svg
               width="40"
               height="40"
               viewBox="0 0 40 40"
               fill="none"
-              className="text-[#68E9FA]"
+              className="text-[#2764FF]"
             >
               <motion.path
                 d="M10 20L17 27L30 13"
@@ -195,7 +195,7 @@ export default function InquiryForm() {
 
   /* ---- Form styles ---- */
   const inputBase =
-    "w-full bg-[#011A5E] border border-[#0E3783] rounded-lg px-4 py-3 text-white text-sm placeholder:text-klo-muted/50 focus:border-[#68E9FA] focus:ring-1 focus:ring-[#68E9FA]/30 focus:outline-none transition-colors duration-200";
+    "w-full bg-[#161B22] border border-[#21262D] rounded-lg px-4 py-3 text-white text-sm placeholder:text-klo-muted/50 focus:border-[#2764FF] focus:ring-1 focus:ring-[#2764FF]/30 focus:outline-none transition-colors duration-200";
 
   const inputError = "border-red-500/60 focus:border-red-500/80 focus:ring-red-500/30";
 
@@ -228,7 +228,7 @@ export default function InquiryForm() {
               htmlFor="name"
               className="block text-sm font-medium text-white mb-1.5"
             >
-              Full Name <span className="text-[#68E9FA]">*</span>
+              Full Name <span className="text-[#2764FF]">*</span>
             </label>
             <input
               id="name"
@@ -248,7 +248,7 @@ export default function InquiryForm() {
               htmlFor="email"
               className="block text-sm font-medium text-white mb-1.5"
             >
-              Email <span className="text-[#68E9FA]">*</span>
+              Email <span className="text-[#2764FF]">*</span>
             </label>
             <input
               id="email"
@@ -289,7 +289,7 @@ export default function InquiryForm() {
               htmlFor="eventName"
               className="block text-sm font-medium text-white mb-1.5"
             >
-              Event Name <span className="text-[#68E9FA]">*</span>
+              Event Name <span className="text-[#2764FF]">*</span>
             </label>
             <input
               id="eventName"
@@ -329,7 +329,7 @@ export default function InquiryForm() {
               htmlFor="eventType"
               className="block text-sm font-medium text-white mb-1.5"
             >
-              Event Type <span className="text-[#68E9FA]">*</span>
+              Event Type <span className="text-[#2764FF]">*</span>
             </label>
             <select
               id="eventType"

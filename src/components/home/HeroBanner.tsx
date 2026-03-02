@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 const containerVariants = {
@@ -8,7 +9,7 @@ const containerVariants = {
   visible: {
     transition: {
       staggerChildren: 0.15,
-      delayChildren: 0.2,
+      delayChildren: 0.3,
     },
   },
 };
@@ -24,128 +25,105 @@ const fadeUp = {
 
 export default function HeroBanner() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#011A5E] via-[#022886] to-[#022886]">
-      {/* Animated gradient orb - cyan */}
-      <motion.div
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full opacity-20 blur-[140px] pointer-events-none"
+    <section className="relative min-h-screen flex items-center overflow-hidden bg-[#0D1117]">
+      {/* Background image with Ken Burns animation */}
+      <div className="absolute inset-0 animate-kenburns">
+        <Image
+          src="/images/keith/KO.jpg"
+          alt="Keith L. Odom"
+          fill
+          priority
+          className="object-cover object-center"
+          sizes="100vw"
+        />
+      </div>
+
+      {/* Dark gradient overlay */}
+      <div
+        className="absolute inset-0 z-[1]"
         style={{
           background:
-            "radial-gradient(circle, rgba(104,233,250,0.45) 0%, rgba(104,233,250,0.12) 40%, transparent 70%)",
-        }}
-        animate={{
-          scale: [1, 1.18, 1],
-          opacity: [0.15, 0.28, 0.15],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
+            "linear-gradient(to right, rgba(13,17,23,0.95) 0%, rgba(13,17,23,0.7) 50%, rgba(13,17,23,0.3) 100%)",
         }}
       />
 
-      {/* Secondary orb - purple */}
-      <motion.div
-        className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full opacity-15 blur-[120px] pointer-events-none"
+      {/* Bottom fade to page background */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-32 z-[2]"
         style={{
           background:
-            "radial-gradient(circle, rgba(136,64,255,0.35) 0%, transparent 70%)",
+            "linear-gradient(to top, #0D1117 0%, transparent 100%)",
         }}
-        animate={{
-          scale: [1, 1.12, 1],
-          x: [0, 40, 0],
-        }}
-        transition={{
-          duration: 10,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-
-      {/* Subtle particle/light dots */}
-      <motion.div
-        className="absolute top-[15%] left-[10%] w-2 h-2 rounded-full bg-[#68E9FA]/30 blur-[1px] pointer-events-none"
-        animate={{ opacity: [0.2, 0.6, 0.2], y: [0, -20, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute top-[30%] right-[15%] w-1.5 h-1.5 rounded-full bg-[#68E9FA]/25 blur-[1px] pointer-events-none"
-        animate={{ opacity: [0.15, 0.5, 0.15], y: [0, -15, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute bottom-[25%] left-[20%] w-1 h-1 rounded-full bg-[#8840FF]/30 blur-[1px] pointer-events-none"
-        animate={{ opacity: [0.1, 0.4, 0.1], y: [0, -12, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute top-[50%] right-[25%] w-1.5 h-1.5 rounded-full bg-[#68E9FA]/20 blur-[1px] pointer-events-none"
-        animate={{ opacity: [0.1, 0.45, 0.1], y: [0, -18, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute bottom-[40%] right-[8%] w-1 h-1 rounded-full bg-[#C8A84E]/20 blur-[1px] pointer-events-none"
-        animate={{ opacity: [0.15, 0.5, 0.15], y: [0, -10, 0] }}
-        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
 
       {/* Content */}
       <motion.div
-        className="relative z-10 max-w-5xl mx-auto px-4 text-center"
+        className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 w-full"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Overline accent - cyan bar */}
-        <motion.div variants={fadeUp} className="flex justify-center mb-8">
-          <span className="inline-block w-16 h-1 bg-gradient-to-r from-[#68E9FA] to-[#37B1FF] rounded-full" />
-        </motion.div>
-
-        {/* Main heading */}
-        <motion.h1
-          variants={fadeUp}
-          className="font-display text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-wider text-white uppercase mb-6"
-        >
-          KEITH L. ODOM
-        </motion.h1>
-
-        {/* Subtitle */}
-        <motion.p
-          variants={fadeUp}
-          className="text-lg sm:text-xl md:text-2xl text-white/80 font-medium tracking-wide mb-4"
-        >
-          Technology Innovator{" "}
-          <span className="text-[#68E9FA]/60 mx-1">&bull;</span> Speaker{" "}
-          <span className="text-[#68E9FA]/60 mx-1">&bull;</span> Pastor
-        </motion.p>
-
-        {/* Tagline */}
-        <motion.p
-          variants={fadeUp}
-          className="max-w-2xl mx-auto text-base sm:text-lg text-white/60 leading-relaxed mb-12"
-        >
-          Empowering leaders and organizations at the intersection of
-          technology, faith, and strategy.
-        </motion.p>
-
-        {/* CTA buttons */}
-        <motion.div
-          variants={fadeUp}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
-        >
-          <Link
-            href="/vault"
-            className="inline-flex items-center justify-center px-10 py-4 bg-gradient-to-r from-[#68E9FA] to-[#37B1FF] text-[#022886] font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-[#68E9FA]/25 hover:scale-105 active:scale-[0.98] w-full sm:w-auto"
+        <div className="max-w-2xl">
+          {/* Label */}
+          <motion.p
+            variants={fadeUp}
+            className="text-xs sm:text-sm uppercase tracking-[0.2em] text-[#8B949E] font-medium mb-6"
           >
-            Explore the Vault
-          </Link>
-          <Link
-            href="/advisor"
-            className="inline-flex items-center justify-center px-10 py-4 border-2 border-white/30 text-white font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:border-white/60 hover:bg-white/5 active:scale-[0.98] w-full sm:w-auto"
+            Technology Innovator &bull; Strategic Advisor &bull; Speaker
+          </motion.p>
+
+          {/* Name */}
+          <motion.h1
+            variants={fadeUp}
+            className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] bg-clip-text text-transparent"
           >
-            Ask the AI Advisor
-          </Link>
-        </motion.div>
+            Keith L. Odom
+          </motion.h1>
+
+          {/* Tagline */}
+          <motion.p
+            variants={fadeUp}
+            className="text-lg sm:text-xl text-[#E6EDF3] leading-relaxed mb-10 max-w-xl"
+          >
+            Empowering organizations with AI-driven strategy and digital
+            transformation
+          </motion.p>
+
+          {/* CTA buttons */}
+          <motion.div
+            variants={fadeUp}
+            className="flex flex-col sm:flex-row items-start gap-4"
+          >
+            <Link
+              href="/advisor"
+              className="inline-flex items-center justify-center px-10 py-4 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-[#2764FF]/25 hover:scale-105 active:scale-[0.98] w-full sm:w-auto"
+            >
+              Explore AI Advisor
+            </Link>
+            <Link
+              href="/booking"
+              className="inline-flex items-center justify-center px-10 py-4 border-2 border-[#E6EDF3]/30 text-[#E6EDF3] font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:border-[#E6EDF3]/60 hover:bg-[#E6EDF3]/5 active:scale-[0.98] w-full sm:w-auto"
+            >
+              Book a Consultation
+            </Link>
+          </motion.div>
+        </div>
       </motion.div>
+
+      {/* Ken Burns keyframes injected via style tag */}
+      <style jsx global>{`
+        @keyframes kenburns {
+          0% {
+            transform: scale(1);
+          }
+          100% {
+            transform: scale(1.08);
+          }
+        }
+        .animate-kenburns {
+          animation: kenburns 20s ease-out forwards;
+        }
+      `}</style>
     </section>
   );
 }

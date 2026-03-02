@@ -88,7 +88,7 @@ export default function SignUpPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="bg-[#011A5E] border border-[#0E3783] rounded-2xl p-8"
+          className="bg-[#161B22] border border-[#21262D] rounded-2xl p-8"
         >
           {/* Error display */}
           {error && (
@@ -145,7 +145,7 @@ export default function SignUpPage() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your full name"
                   required
-                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-klo-navy border border-klo-slate text-klo-text placeholder-klo-muted/50 focus:outline-none focus:border-[#68E9FA]/50 focus:ring-1 focus:ring-[#68E9FA]/30 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-klo-navy border border-klo-slate text-klo-text placeholder-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50 focus:ring-1 focus:ring-[#2764FF]/30 transition-colors"
                 />
               </div>
             </div>
@@ -163,7 +163,7 @@ export default function SignUpPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-klo-navy border border-klo-slate text-klo-text placeholder-klo-muted/50 focus:outline-none focus:border-[#68E9FA]/50 focus:ring-1 focus:ring-[#68E9FA]/30 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-klo-navy border border-klo-slate text-klo-text placeholder-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50 focus:ring-1 focus:ring-[#2764FF]/30 transition-colors"
                 />
               </div>
             </div>
@@ -181,7 +181,7 @@ export default function SignUpPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Create a password"
                   required
-                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-klo-navy border border-klo-slate text-klo-text placeholder-klo-muted/50 focus:outline-none focus:border-[#68E9FA]/50 focus:ring-1 focus:ring-[#68E9FA]/30 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-klo-navy border border-klo-slate text-klo-text placeholder-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50 focus:ring-1 focus:ring-[#2764FF]/30 transition-colors"
                 />
               </div>
             </div>
@@ -191,12 +191,12 @@ export default function SignUpPage() {
               <div
                 className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${
                   agreed
-                    ? "bg-[#68E9FA] border-[#68E9FA]"
-                    : "border-[#0E3783] group-hover:border-[#68E9FA]/50"
+                    ? "bg-gradient-to-r from-[#2764FF] to-[#21B8CD] border-[#2764FF]"
+                    : "border-[#21262D] group-hover:border-[#2764FF]/50"
                 }`}
                 onClick={() => setAgreed(!agreed)}
               >
-                {agreed && <Check size={14} className="text-[#022886]" />}
+                {agreed && <Check size={14} className="text-white" />}
               </div>
               <input
                 type="checkbox"
@@ -206,15 +206,15 @@ export default function SignUpPage() {
               />
               <span className="text-sm text-klo-muted leading-snug">
                 I agree to the{" "}
-                <span className="text-[#68E9FA] hover:underline">Terms of Service</span> and{" "}
-                <span className="text-[#68E9FA] hover:underline">Privacy Policy</span>
+                <span className="text-[#2764FF] hover:underline">Terms of Service</span> and{" "}
+                <span className="text-[#2764FF] hover:underline">Privacy Policy</span>
               </span>
             </label>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-[#68E9FA] text-[#022886] font-semibold py-3 rounded-full hover:brightness-110 active:brightness-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold py-3 rounded-full hover:brightness-110 active:brightness-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? "Creating account..." : "Create Account"}
               {!loading && <ArrowRight size={18} />}
@@ -231,12 +231,12 @@ export default function SignUpPage() {
         >
           <p className="text-sm text-klo-muted">
             Already have an account?{" "}
-            <Link href="/auth/signin" className="text-[#68E9FA] hover:underline">
+            <Link href="/auth/signin" className="text-[#2764FF] hover:underline font-medium">
               Sign in
             </Link>
           </p>
           <p className="text-xs text-klo-muted/60">
-            Demo mode: use any email with password <code className="text-[#68E9FA]/70">demo123</code>
+            Demo mode: use any email with password <code className="text-[#2764FF]/70">demo123</code>
           </p>
         </motion.div>
       </motion.div>

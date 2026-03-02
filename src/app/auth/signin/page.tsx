@@ -109,7 +109,7 @@ function SignInContent() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="bg-[#011A5E] border border-[#0E3783] rounded-2xl p-8"
+          className="bg-[#161B22] border border-[#21262D] rounded-2xl p-8"
         >
           {/* Error display */}
           {(error || errorParam) && (
@@ -133,7 +133,7 @@ function SignInContent() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-klo-navy border border-klo-slate text-klo-text placeholder-klo-muted/50 focus:outline-none focus:border-[#68E9FA]/50 focus:ring-1 focus:ring-[#68E9FA]/30 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-klo-navy border border-klo-slate text-klo-text placeholder-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50 focus:ring-1 focus:ring-[#2764FF]/30 transition-colors"
                 />
               </div>
             </div>
@@ -151,7 +151,7 @@ function SignInContent() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
-                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-klo-navy border border-klo-slate text-klo-text placeholder-klo-muted/50 focus:outline-none focus:border-[#68E9FA]/50 focus:ring-1 focus:ring-[#68E9FA]/30 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-klo-navy border border-klo-slate text-klo-text placeholder-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50 focus:ring-1 focus:ring-[#2764FF]/30 transition-colors"
                 />
               </div>
             </div>
@@ -159,7 +159,7 @@ function SignInContent() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-[#68E9FA] text-[#022886] font-semibold py-3 rounded-full hover:brightness-110 active:brightness-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold py-3 rounded-full hover:brightness-110 active:brightness-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? "Signing in..." : "Sign In"}
               {!loading && <ArrowRight size={18} />}
@@ -202,7 +202,7 @@ function SignInContent() {
           {/* Magic link section */}
           <div className="mt-6 pt-6 border-t border-klo-slate">
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles size={16} className="text-[#68E9FA]" />
+              <Sparkles size={16} className="text-[#2764FF]" />
               <span className="text-sm text-klo-muted">Passwordless sign-in</span>
             </div>
             {magicSent ? (
@@ -217,11 +217,11 @@ function SignInContent() {
                   onChange={(e) => setMagicEmail(e.target.value)}
                   placeholder="Email for magic link"
                   required
-                  className="flex-1 px-4 py-2.5 rounded-lg bg-klo-navy border border-klo-slate text-klo-text text-sm placeholder-klo-muted/50 focus:outline-none focus:border-[#68E9FA]/50 transition-colors"
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-klo-navy border border-klo-slate text-klo-text text-sm placeholder-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50 transition-colors"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2.5 rounded-lg border border-[#68E9FA] text-[#68E9FA] text-sm font-medium hover:bg-[#68E9FA]/10 transition-colors cursor-pointer whitespace-nowrap"
+                  className="px-4 py-2.5 rounded-lg border border-[#2764FF] text-[#2764FF] text-sm font-medium hover:bg-[#2764FF]/10 transition-colors cursor-pointer whitespace-nowrap"
                 >
                   Send Link
                 </button>
@@ -239,12 +239,12 @@ function SignInContent() {
         >
           <p className="text-sm text-klo-muted">
             Don&apos;t have an account?{" "}
-            <Link href="/auth/signup" className="text-[#68E9FA] hover:underline">
+            <Link href="/auth/signup" className="text-[#2764FF] hover:underline">
               Create one
             </Link>
           </p>
           <p className="text-xs text-klo-muted/60">
-            Demo mode: use any email with password <code className="text-[#68E9FA]/70">demo123</code>
+            Demo mode: use any email with password <code className="text-[#2764FF]/70">demo123</code>
           </p>
         </motion.div>
       </motion.div>

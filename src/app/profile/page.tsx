@@ -352,7 +352,7 @@ function SettingsTab() {
   };
 
   const inputClasses =
-    "w-full bg-[#011A5E] border border-[#0E3783] rounded-lg px-4 py-3 text-sm text-klo-text placeholder:text-[#8BA3D4]/50 focus:outline-none focus:ring-2 focus:ring-[#68E9FA]/50 focus:border-[#68E9FA]/50 transition-all";
+    "w-full bg-[#161B22] border border-[#21262D] rounded-lg px-4 py-3 text-sm text-klo-text placeholder:text-[#8B949E]/50 focus:outline-none focus:ring-2 focus:ring-[#2764FF]/50 focus:border-[#2764FF]/50 transition-all";
 
   return (
     <motion.div
@@ -498,7 +498,7 @@ function SettingsTab() {
                     })
                   }
                   className={`relative w-11 h-6 rounded-full transition-colors duration-200 cursor-pointer ${
-                    notifications[pref.key] ? "bg-[#68E9FA]" : "bg-klo-slate"
+                    notifications[pref.key] ? "bg-[#2764FF]" : "bg-klo-slate"
                   }`}
                 >
                   <span
@@ -553,8 +553,8 @@ export default function ProfilePage() {
             className="flex flex-col sm:flex-row items-center sm:items-start gap-6"
           >
             {/* Avatar */}
-            <div className="w-20 h-20 rounded-full bg-[#68E9FA]/15 border-2 border-[#68E9FA]/30 flex items-center justify-center shrink-0">
-              <span className="font-display text-3xl font-bold text-[#68E9FA]">
+            <div className="w-20 h-20 rounded-full bg-[#2764FF]/15 border-2 border-[#2764FF]/30 flex items-center justify-center shrink-0">
+              <span className="font-display text-3xl font-bold text-[#2764FF]">
                 K
               </span>
             </div>
@@ -591,8 +591,8 @@ export default function ProfilePage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 whitespace-nowrap px-4 py-2.5 text-sm font-medium rounded-t-lg transition-all duration-200 cursor-pointer border-b-2 -mb-[1px] ${
                   activeTab === tab.id
-                    ? "text-[#68E9FA] border-[#68E9FA] bg-[#68E9FA]/5"
-                    : "text-[#8BA3D4] border-transparent hover:text-klo-text hover:bg-white/5"
+                    ? "text-[#2764FF] border-[#2764FF] bg-[#2764FF]/5"
+                    : "text-[#8B949E] border-transparent hover:text-klo-text hover:bg-white/5"
                 }`}
               >
                 {tab.icon}

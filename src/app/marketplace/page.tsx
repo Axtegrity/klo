@@ -65,11 +65,11 @@ function ProductCard({ product, index }: { product: MarketplaceProduct; index: n
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-40px" }}
-      className="relative group bg-[#011A5E] border border-[#0E3783] rounded-2xl p-6 flex flex-col hover:border-[#68E9FA]/40 transition-colors duration-300"
+      className="relative group bg-[#161B22] border border-[#21262D] rounded-2xl p-6 flex flex-col hover:border-[#2764FF]/40 transition-colors duration-300"
     >
       {/* Popular badge */}
       {product.popular && (
-        <div className="absolute -top-3 right-5 flex items-center gap-1.5 bg-[#68E9FA] text-[#022886] text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+        <div className="absolute -top-3 right-5 flex items-center gap-1.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
           <Sparkles size={12} />
           Popular
         </div>
@@ -81,7 +81,7 @@ function ProductCard({ product, index }: { product: MarketplaceProduct; index: n
           {product.imageTag}
         </span>
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-[#68E9FA]/10 text-[#68E9FA] border border-[#68E9FA]/20">
+          <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-[#2764FF]/10 text-[#2764FF] border border-[#2764FF]/20">
             {product.category}
           </span>
           <span
@@ -95,7 +95,7 @@ function ProductCard({ product, index }: { product: MarketplaceProduct; index: n
       </div>
 
       {/* Title & description */}
-      <h3 className="font-display text-lg font-bold text-klo-text mb-2 group-hover:text-[#68E9FA] transition-colors duration-200">
+      <h3 className="font-display text-lg font-bold text-klo-text mb-2 group-hover:text-[#2764FF] transition-colors duration-200">
         {product.title}
       </h3>
       <p className="text-sm text-klo-muted leading-relaxed mb-5 line-clamp-3">
@@ -106,7 +106,7 @@ function ProductCard({ product, index }: { product: MarketplaceProduct; index: n
       <ul className="flex-1 space-y-2 mb-6">
         {product.features.map((feature) => (
           <li key={feature} className="flex items-start gap-2 text-sm text-klo-text">
-            <Check size={14} className="text-[#68E9FA] mt-0.5 shrink-0" />
+            <Check size={14} className="text-[#2764FF] mt-0.5 shrink-0" />
             <span>{feature}</span>
           </li>
         ))}
@@ -117,7 +117,7 @@ function ProductCard({ product, index }: { product: MarketplaceProduct; index: n
         <span className="font-display text-2xl font-bold text-klo-text">
           ${product.price.toFixed(2)}
         </span>
-        <button className="px-5 py-2.5 bg-[#68E9FA] text-[#022886] text-sm font-bold rounded-full hover:bg-[#68E9FA]/90 active:scale-[0.97] transition-all duration-200 cursor-pointer">
+        <button className="px-5 py-2.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white text-sm font-bold rounded-full hover:brightness-110 active:scale-[0.97] transition-all duration-200 cursor-pointer">
           Purchase
         </button>
       </div>
@@ -154,13 +154,13 @@ export default function MarketplacePage() {
           className="mb-12"
         >
           <motion.div variants={fadeUp} custom={0} className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-[#68E9FA]/10 flex items-center justify-center">
-              <ShoppingBag size={24} className="text-[#68E9FA]" />
+            <div className="w-12 h-12 rounded-xl bg-[#2764FF]/10 flex items-center justify-center">
+              <ShoppingBag size={24} className="text-[#2764FF]" />
             </div>
             <div>
               <h1 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
                 Digital Resource{" "}
-                <span className="text-[#68E9FA]">Marketplace</span>
+                <span className="text-[#2764FF]">Marketplace</span>
               </h1>
             </div>
           </motion.div>
@@ -192,8 +192,8 @@ export default function MarketplacePage() {
                 onClick={() => setActiveCategory(cat)}
                 className={`px-4 py-2 text-sm font-medium rounded-full border transition-all duration-200 cursor-pointer ${
                   activeCategory === cat
-                    ? "bg-[#68E9FA] text-[#022886] border-[#68E9FA]"
-                    : "bg-[#011A5E] text-[#8BA3D4] border-[#0E3783] hover:text-klo-text hover:border-[#68E9FA]/40"
+                    ? "bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white border-[#2764FF]"
+                    : "bg-[#161B22] text-[#8B949E] border-[#21262D] hover:text-klo-text hover:border-[#2764FF]/40"
                 }`}
               >
                 {cat}
@@ -245,7 +245,7 @@ export default function MarketplacePage() {
             </p>
             <button
               onClick={() => setActiveCategory("All")}
-              className="text-sm text-[#68E9FA] hover:text-[#68E9FA]/80 transition-colors cursor-pointer font-medium"
+              className="text-sm text-[#2764FF] hover:text-[#2764FF]/80 transition-colors cursor-pointer font-medium"
             >
               View all resources
             </button>

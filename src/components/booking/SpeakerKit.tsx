@@ -83,13 +83,13 @@ export default function SpeakerKit() {
       variants={staggerContainer}
     >
       <motion.div variants={fadeUp} custom={0}>
-        <Card className="border-[#68E9FA]/20 overflow-hidden">
-          {/* Cyan accent bar */}
-          <div className="h-1 bg-gradient-to-r from-[#68E9FA]/80 via-[#68E9FA] to-[#68E9FA]/80 -mt-6 -mx-6 mb-8" />
+        <Card className="border-[#2764FF]/20 overflow-hidden">
+          {/* Gradient accent bar */}
+          <div className="h-1 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] -mt-6 -mx-6 mb-8" />
 
           <div className="text-center mb-10">
-            <div className="w-14 h-14 rounded-full bg-[#68E9FA]/10 flex items-center justify-center mx-auto mb-5">
-              <Download size={24} className="text-[#68E9FA]" />
+            <div className="w-14 h-14 rounded-full bg-[#2764FF]/10 flex items-center justify-center mx-auto mb-5">
+              <Download size={24} className="text-[#2764FF]" />
             </div>
             <h3 className="font-display text-2xl md:text-3xl font-bold text-klo-text mb-3">
               Speaker Kit
@@ -111,8 +111,8 @@ export default function SpeakerKit() {
                   custom={i + 1}
                   className="flex items-start gap-3 bg-klo-navy/40 rounded-lg p-4 border border-klo-slate/50"
                 >
-                  <div className="w-9 h-9 rounded-md bg-[#68E9FA]/10 flex items-center justify-center shrink-0">
-                    <Icon size={18} className="text-[#68E9FA]" />
+                  <div className="w-9 h-9 rounded-md bg-[#2764FF]/10 flex items-center justify-center shrink-0">
+                    <Icon size={18} className="text-[#2764FF]" />
                   </div>
                   <div>
                     <p className="text-klo-text text-sm font-semibold">

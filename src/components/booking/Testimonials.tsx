@@ -98,30 +98,34 @@ const slideVariants = {
 
 function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
   return (
-    <Card className="h-full flex flex-col">
-      <div className="flex gap-1 mb-4">
-        {Array.from({ length: 5 }).map((_, idx) => (
-          <Star
-            key={idx}
-            size={16}
-            className={
-              idx < testimonial.rating
-                ? "text-[#68E9FA] fill-[#68E9FA]"
-                : "text-klo-slate"
-            }
-          />
-        ))}
-      </div>
-      <blockquote className="text-klo-muted text-sm leading-relaxed flex-1">
-        &ldquo;{testimonial.quote}&rdquo;
-      </blockquote>
-      <div className="mt-6 pt-4 border-t border-klo-slate/50">
+    <Card className="h-full flex flex-col relative overflow-hidden">
+      {/* Left accent bar */}
+      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#2764FF] to-[#21B8CD]" />
+      <div className="pl-3">
+        <div className="flex gap-1 mb-4">
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <Star
+              key={idx}
+              size={16}
+              className={
+                idx < testimonial.rating
+                  ? "text-[#C8A84E] fill-[#C8A84E]"
+                  : "text-klo-slate"
+              }
+            />
+          ))}
+        </div>
+        <blockquote className="text-klo-muted text-sm leading-relaxed flex-1">
+          &ldquo;{testimonial.quote}&rdquo;
+        </blockquote>
+        <div className="mt-6 pt-4 border-t border-[#21262D]">
         <p className="text-klo-text text-sm font-semibold">
           {testimonial.name}
         </p>
         <p className="text-klo-muted text-xs mt-0.5">
           {testimonial.title}, {testimonial.org}
         </p>
+        </div>
       </div>
     </Card>
   );
@@ -190,7 +194,7 @@ export default function Testimonials() {
         <button
           onClick={prevPage}
           aria-label="Previous testimonials"
-          className="absolute -left-4 md:-left-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-[#011A5E] border border-[#0E3783] flex items-center justify-center text-klo-muted hover:text-[#68E9FA] hover:border-[#68E9FA]/40 transition-colors duration-200 cursor-pointer"
+          className="absolute -left-4 md:-left-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-[#161B22] border border-[#21262D] flex items-center justify-center text-klo-muted hover:text-[#2764FF] hover:border-[#2764FF]/40 transition-colors duration-200 cursor-pointer"
         >
           <ChevronLeft size={20} />
         </button>
@@ -200,7 +204,7 @@ export default function Testimonials() {
             setPage((prev) => (prev + 1) % totalPages);
           }}
           aria-label="Next testimonials"
-          className="absolute -right-4 md:-right-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-[#011A5E] border border-[#0E3783] flex items-center justify-center text-klo-muted hover:text-[#68E9FA] hover:border-[#68E9FA]/40 transition-colors duration-200 cursor-pointer"
+          className="absolute -right-4 md:-right-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-[#161B22] border border-[#21262D] flex items-center justify-center text-klo-muted hover:text-[#2764FF] hover:border-[#2764FF]/40 transition-colors duration-200 cursor-pointer"
         >
           <ChevronRight size={20} />
         </button>
@@ -234,7 +238,7 @@ export default function Testimonials() {
             aria-label={`Go to page ${idx + 1}`}
             className={`w-2.5 h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
               idx === page
-                ? "bg-[#68E9FA] w-6"
+                ? "bg-[#2764FF] w-6"
                 : "bg-klo-slate hover:bg-klo-muted"
             }`}
           />

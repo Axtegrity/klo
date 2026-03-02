@@ -23,14 +23,14 @@ export default function UsageMeter({
           {usageCount} of {usageLimit} queries used this month
         </span>
         {atLimit && (
-          <Zap size={12} className="text-[#68E9FA] animate-pulse" />
+          <Zap size={12} className="text-[#2764FF] animate-pulse" />
         )}
       </div>
 
       {/* Progress bar */}
       <div className="h-1.5 w-full bg-klo-dark rounded-full overflow-hidden">
         <motion.div
-          className="h-full rounded-full bg-[#68E9FA]"
+          className="h-full rounded-full bg-[#2764FF]"
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.5, ease: "easeOut" }}
@@ -40,7 +40,7 @@ export default function UsageMeter({
       {atLimit && (
         <div className="mt-3 flex items-center justify-between gap-3">
           <p className="text-xs text-klo-muted leading-snug">
-            Upgrade to <strong className="text-[#68E9FA]">Pro</strong> for 50
+            Upgrade to <strong className="text-[#2764FF]">Pro</strong> for 50
             queries/month
           </p>
           <Button size="sm" href="/pricing" className="text-xs shrink-0">

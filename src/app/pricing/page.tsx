@@ -133,7 +133,7 @@ function FAQAccordion({ item }: { item: FAQItem }) {
         aria-expanded={open}
         className="flex items-center justify-between w-full py-5 text-left gap-4 group cursor-pointer"
       >
-        <span className="font-display text-base font-semibold text-klo-text group-hover:text-[#68E9FA] transition-colors">
+        <span className="font-display text-base font-semibold text-klo-text group-hover:text-[#2764FF] transition-colors">
           {item.question}
         </span>
         <motion.div
@@ -176,7 +176,7 @@ function FAQAccordion({ item }: { item: FAQItem }) {
 
 function ComparisonCell({ value }: { value: string | boolean }) {
   if (value === true) {
-    return <Check className="h-4 w-4 text-[#68E9FA] mx-auto" />;
+    return <Check className="h-4 w-4 text-[#2764FF] mx-auto" />;
   }
   if (value === false) {
     return <Minus className="h-4 w-4 text-klo-muted/40 mx-auto" />;
@@ -233,7 +233,7 @@ export default function PricingPage() {
       {/*  Hero Header                                                */}
       {/* ---------------------------------------------------------- */}
       <section className="relative overflow-hidden pt-24 pb-14 px-4">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#68E9FA]/5 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#2764FF]/5 via-transparent to-transparent pointer-events-none" />
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -245,7 +245,7 @@ export default function PricingPage() {
             className="font-display text-5xl sm:text-6xl font-bold text-klo-text mb-4"
           >
             Choose Your{" "}
-            <span className="text-[#68E9FA]">Plan</span>
+            <span className="bg-gradient-to-r from-[#2764FF] to-[#21B8CD] bg-clip-text text-transparent">Plan</span>
           </motion.h1>
           <motion.p
             variants={fadeUp}
@@ -301,7 +301,7 @@ export default function PricingPage() {
                     <th
                       key={t.slug}
                       className={`py-4 px-3 text-center font-display font-bold ${
-                        t.highlighted ? "text-[#68E9FA]" : "text-klo-text"
+                        t.highlighted ? "text-[#2764FF]" : "text-klo-text"
                       }`}
                     >
                       {t.name}
@@ -368,8 +368,8 @@ export default function PricingPage() {
         className="px-4 pb-24"
       >
         <div className="max-w-xl mx-auto text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#68E9FA]/15 border border-[#68E9FA]/30 mb-4">
-            <ShieldCheck className="h-7 w-7 text-[#68E9FA]" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#2764FF]/15 border border-[#2764FF]/30 mb-4">
+            <ShieldCheck className="h-7 w-7 text-[#2764FF]" />
           </div>
           <h3 className="font-display text-xl font-bold text-klo-text mb-2">
             30-Day Money-Back Guarantee

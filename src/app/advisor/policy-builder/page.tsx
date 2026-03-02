@@ -11,7 +11,7 @@ export default function PolicyBuilderPage() {
         {/* Back link */}
         <Link
           href="/advisor"
-          className="inline-flex items-center gap-2 text-sm text-[#8BA3D4] hover:text-[#68E9FA] transition-colors mb-8"
+          className="inline-flex items-center gap-2 text-sm text-[#8B949E] hover:text-[#2764FF] transition-colors mb-8"
         >
           <ArrowLeft size={16} />
           Back to Advisor

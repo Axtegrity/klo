@@ -7,12 +7,12 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  gold: "bg-klo-gold/15 text-klo-gold border-klo-gold/30",
-  cyan: "bg-[#68E9FA]/15 text-[#68E9FA] border-[#68E9FA]/30",
-  blue: "bg-[#68E9FA]/15 text-[#68E9FA] border-[#68E9FA]/30",
+  gold: "bg-[#C8A84E]/15 text-[#C8A84E] border-[#C8A84E]/30",
+  cyan: "bg-[#21B8CD]/15 text-[#21B8CD] border-[#21B8CD]/30",
+  blue: "bg-[#2764FF]/15 text-[#2764FF] border-[#2764FF]/30",
   green: "bg-[#6ECF55]/15 text-[#6ECF55] border-[#6ECF55]/30",
   lime: "bg-[#6ECF55]/15 text-[#6ECF55] border-[#6ECF55]/30",
-  muted: "bg-white/5 text-[#8BA3D4] border-white/10",
+  muted: "bg-white/5 text-[#8B949E] border-white/10",
   purple: "bg-[#8840FF]/15 text-[#8840FF] border-[#8840FF]/30",
   magenta: "bg-[#F77A81]/15 text-[#F77A81] border-[#F77A81]/30",
 };

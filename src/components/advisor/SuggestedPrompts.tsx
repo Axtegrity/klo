@@ -97,10 +97,10 @@ export default function SuggestedPrompts({ onSelect }: SuggestedPromptsProps) {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onSelect(prompt.text)}
-              className="flex items-start gap-3 text-left bg-[#011A5E] border border-[#0E3783] rounded-xl px-4 py-3 hover:border-[#68E9FA]/40 transition-colors cursor-pointer group"
+              className="flex items-start gap-3 text-left bg-[#161B22] border border-[#21262D] rounded-xl px-4 py-3 hover:border-[#2764FF]/40 transition-colors cursor-pointer group"
             >
-              <div className="w-8 h-8 rounded-lg bg-[#68E9FA]/10 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-[#68E9FA]/20 transition-colors">
-                <Icon size={16} className="text-[#68E9FA]" />
+              <div className="w-8 h-8 rounded-lg bg-[#2764FF]/10 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-[#2764FF]/20 transition-colors">
+                <Icon size={16} className="text-[#2764FF]" />
               </div>
               <span className="text-sm text-klo-text leading-snug">
                 {prompt.text}

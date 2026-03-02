@@ -83,8 +83,8 @@ export default function VaultPage() {
           className="mb-10"
         >
           <motion.div variants={fadeUp} custom={0} className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-[#68E9FA]/10 flex items-center justify-center">
-              <BookOpen size={24} className="text-[#68E9FA]" />
+            <div className="w-12 h-12 rounded-xl bg-[#2764FF]/10 flex items-center justify-center">
+              <BookOpen size={24} className="text-[#2764FF]" />
             </div>
             <div>
               <h1 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
@@ -121,7 +121,7 @@ export default function VaultPage() {
               placeholder="Search resources..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[#011A5E] border border-[#0E3783] rounded-xl pl-11 pr-10 py-3 text-sm text-klo-text placeholder:text-[#8BA3D4] focus:outline-none focus:ring-2 focus:ring-[#68E9FA]/50 focus:border-[#68E9FA]/50 transition-all duration-200"
+              className="w-full bg-[#161B22] border border-[#21262D] rounded-xl pl-11 pr-10 py-3 text-sm text-klo-text placeholder:text-[#8B949E] focus:outline-none focus:ring-2 focus:ring-[#2764FF]/50 focus:border-[#2764FF]/50 transition-all duration-200"
             />
             {search && (
               <button
@@ -186,7 +186,7 @@ export default function VaultPage() {
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="text-sm text-[#68E9FA] hover:text-[#68E9FA]/80 transition-colors cursor-pointer"
+              className="text-sm text-[#2764FF] hover:text-[#2764FF]/80 transition-colors cursor-pointer"
             >
               Clear all filters
             </button>

@@ -19,8 +19,8 @@ export default function AIToolOfTheWeek() {
     <section>
       {/* Section heading */}
       <div className="flex items-center gap-4 mb-8">
-        <span className="w-10 h-1 bg-gradient-to-r from-[#68E9FA] to-[#37B1FF] rounded-full" />
-        <h2 className="font-display text-3xl sm:text-4xl font-bold text-white uppercase tracking-wide">
+        <span className="w-10 h-1 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] rounded-full" />
+        <h2 className="font-display text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#E6EDF3] to-[#8B949E] bg-clip-text text-transparent uppercase tracking-wide">
           AI Tool of the Week
         </h2>
       </div>
@@ -32,22 +32,22 @@ export default function AIToolOfTheWeek() {
         viewport={{ once: true, margin: "-60px" }}
         transition={{ duration: 0.5, ease: "easeOut" as const }}
       >
-        <div className="relative bg-[#011A5E] border border-[#0E3783] rounded-2xl p-6 sm:p-8 lg:p-10 overflow-hidden">
+        <div className="relative bg-[#161B22] border border-[#21262D] rounded-2xl p-6 sm:p-8 lg:p-10 overflow-hidden">
           {/* Decorative gradient corner */}
-          <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-[#68E9FA]/5 to-transparent rounded-bl-full pointer-events-none" />
+          <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-[#2764FF]/5 to-transparent rounded-bl-full pointer-events-none" />
 
           <div className="relative z-10">
             {/* Header row */}
             <div className="flex items-start gap-4 mb-5">
               {/* Icon */}
-              <div className="hidden sm:flex shrink-0 w-12 h-12 items-center justify-center rounded-xl bg-[#0E3783]">
-                <Wrench className="w-5 h-5 text-[#68E9FA]" />
+              <div className="hidden sm:flex shrink-0 w-12 h-12 items-center justify-center rounded-xl bg-[#21262D]">
+                <Wrench className="w-5 h-5 text-[#21B8CD]" />
               </div>
 
               <div className="flex-1 min-w-0">
                 {/* Badges row */}
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="inline-flex items-center px-3 py-1 text-xs font-semibold tracking-wide uppercase rounded-full bg-[#0E3783] text-[#68E9FA]">
+                  <span className="inline-flex items-center px-3 py-1 text-xs font-semibold tracking-wide uppercase rounded-full bg-[#21262D] text-[#21B8CD]">
                     {mockTool.category}
                   </span>
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold tracking-wide uppercase rounded-full bg-[#C8A84E]/15 text-[#C8A84E] border border-[#C8A84E]/20">
@@ -57,23 +57,23 @@ export default function AIToolOfTheWeek() {
                 </div>
 
                 {/* Tool name */}
-                <h3 className="text-xl sm:text-2xl font-semibold text-white leading-snug">
+                <h3 className="text-xl sm:text-2xl font-semibold text-[#E6EDF3] leading-snug">
                   {mockTool.name}
                 </h3>
               </div>
             </div>
 
             {/* Description */}
-            <p className="text-sm sm:text-base text-white/60 leading-relaxed mb-4 max-w-3xl">
+            <p className="text-sm sm:text-base text-[#8B949E] leading-relaxed mb-4 max-w-3xl">
               {mockTool.description}
             </p>
 
             {/* Why it matters */}
-            <div className="bg-[#022886]/60 border border-[#0E3783]/50 rounded-xl p-4 mb-6">
-              <p className="text-xs font-semibold text-[#68E9FA] uppercase tracking-wider mb-1.5">
+            <div className="bg-[#0D1117]/60 border border-[#21262D]/50 rounded-xl p-4 mb-6">
+              <p className="text-xs font-semibold text-[#21B8CD] uppercase tracking-wider mb-1.5">
                 Why It Matters
               </p>
-              <p className="text-sm text-white/55 leading-relaxed">
+              <p className="text-sm text-[#8B949E] leading-relaxed">
                 {mockTool.whyItMatters}
               </p>
             </div>
@@ -81,7 +81,7 @@ export default function AIToolOfTheWeek() {
             {/* CTA */}
             <Link
               href={mockTool.link}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-[#68E9FA] hover:underline hover:gap-2.5 transition-all duration-200"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-[#2764FF] hover:underline hover:gap-2.5 transition-all duration-200"
             >
               Learn More
               <ArrowRight className="w-4 h-4" />

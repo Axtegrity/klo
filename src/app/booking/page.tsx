@@ -56,8 +56,8 @@ const keynotes: Keynote[] = [
     description:
       "How artificial intelligence is redefining executive decision-making, organizational strategy, and what it means to lead in the age of intelligent systems.",
     audiences: ["C-Suite", "Conferences", "Corporate"],
-    accent: "text-[#68E9FA]",
-    accentBg: "bg-[#68E9FA]/10",
+    accent: "text-[#2764FF]",
+    accentBg: "bg-[#2764FF]/10",
   },
   {
     icon: Church,
@@ -130,7 +130,7 @@ export default function BookingPage() {
     <div className="min-h-screen">
       {/* ====== Hero ====== */}
       <section className="relative overflow-hidden py-24 md:py-32 px-6">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#68E9FA]/5 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#2764FF]/5 via-transparent to-transparent pointer-events-none" />
 
         <motion.div
           initial="hidden"
@@ -178,10 +178,10 @@ export default function BookingPage() {
               return (
                 <motion.div key={stat.label} variants={fadeUp} custom={i}>
                   <Card className="text-center py-6 md:py-8">
-                    <div className="w-10 h-10 rounded-lg bg-[#68E9FA]/10 flex items-center justify-center mx-auto mb-3">
-                      <Icon size={20} className="text-[#68E9FA]" />
+                    <div className="w-10 h-10 rounded-lg bg-[#2764FF]/10 flex items-center justify-center mx-auto mb-3">
+                      <Icon size={20} className="text-[#2764FF]" />
                     </div>
-                    <p className="font-display text-2xl md:text-3xl font-bold text-[#68E9FA]">
+                    <p className="font-display text-2xl md:text-3xl font-bold text-[#2764FF]">
                       {stat.value}
                     </p>
                     <p className="text-klo-muted text-xs md:text-sm mt-1">

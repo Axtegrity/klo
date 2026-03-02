@@ -19,8 +19,8 @@ export default function UpcomingStrategyRoom() {
     <section>
       {/* Section heading */}
       <div className="flex items-center gap-4 mb-8">
-        <span className="w-10 h-1 bg-gradient-to-r from-[#68E9FA] to-[#37B1FF] rounded-full" />
-        <h2 className="font-display text-3xl sm:text-4xl font-bold text-white uppercase tracking-wide">
+        <span className="w-10 h-1 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] rounded-full" />
+        <h2 className="font-display text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#E6EDF3] to-[#8B949E] bg-clip-text text-transparent uppercase tracking-wide">
           Next Strategy Room
         </h2>
       </div>
@@ -32,12 +32,12 @@ export default function UpcomingStrategyRoom() {
         viewport={{ once: true, margin: "-60px" }}
         transition={{ duration: 0.5, ease: "easeOut" as const }}
       >
-        <div className="relative bg-[#011A5E] border border-[#0E3783] rounded-2xl overflow-hidden">
+        <div className="relative bg-[#161B22] border border-[#21262D] rounded-2xl overflow-hidden">
           <div className="flex flex-col sm:flex-row">
             {/* Cyan left accent bar */}
-            <div className="hidden sm:block w-1.5 bg-gradient-to-b from-[#68E9FA] to-[#37B1FF] shrink-0" />
+            <div className="hidden sm:block w-1.5 bg-gradient-to-b from-[#2764FF] to-[#21B8CD] shrink-0" />
             {/* Mobile top accent bar */}
-            <div className="sm:hidden h-1 bg-gradient-to-r from-[#68E9FA] to-[#37B1FF]" />
+            <div className="sm:hidden h-1 bg-gradient-to-r from-[#2764FF] to-[#21B8CD]" />
 
             {/* Content */}
             <div className="flex-1 p-6 sm:p-8 lg:p-10">
@@ -46,7 +46,7 @@ export default function UpcomingStrategyRoom() {
                 <div className="space-y-4 flex-1 min-w-0">
                   {/* Badges row */}
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 text-sm text-[#68E9FA] font-medium">
+                    <div className="flex items-center gap-2 text-sm text-[#21B8CD] font-medium">
                       <Calendar className="w-4 h-4" />
                       <span className="font-mono tracking-wide">{mockSession.date}</span>
                     </div>
@@ -57,20 +57,20 @@ export default function UpcomingStrategyRoom() {
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-lg sm:text-xl font-semibold text-white leading-snug">
+                  <h3 className="text-lg sm:text-xl font-semibold text-[#E6EDF3] leading-snug">
                     {mockSession.title}
                   </h3>
 
                   {/* Description */}
-                  <p className="text-sm text-white/55 leading-relaxed max-w-2xl">
+                  <p className="text-sm text-[#8B949E] leading-relaxed max-w-2xl">
                     {mockSession.description}
                   </p>
 
                   {/* Seats indicator */}
                   <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-white/50" />
-                    <span className="text-sm text-white/50">
-                      <span className="text-[#68E9FA] font-semibold">
+                    <Users className="w-4 h-4 text-[#8B949E]" />
+                    <span className="text-sm text-[#8B949E]">
+                      <span className="text-[#21B8CD] font-semibold">
                         {mockSession.seatsRemaining}
                       </span>{" "}
                       of {mockSession.totalSeats} seats remaining
@@ -81,7 +81,7 @@ export default function UpcomingStrategyRoom() {
                 {/* CTA */}
                 <Link
                   href="/strategy-rooms"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-[#68E9FA] to-[#37B1FF] text-[#022886] font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-[#68E9FA]/25 hover:scale-105 active:scale-[0.98] shrink-0 w-full sm:w-auto lg:w-auto"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-[#2764FF]/25 hover:scale-105 active:scale-[0.98] shrink-0 w-full sm:w-auto lg:w-auto"
                 >
                   Register
                   <ArrowRight className="w-4 h-4" />

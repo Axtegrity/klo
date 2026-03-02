@@ -70,9 +70,9 @@ export default function AdvisorPage() {
             <motion.div
               variants={fadeUp}
               custom={0}
-              className="w-10 h-10 rounded-xl bg-[#68E9FA]/10 flex items-center justify-center"
+              className="w-10 h-10 rounded-xl bg-[#2764FF]/10 flex items-center justify-center"
             >
-              <Bot size={22} className="text-[#68E9FA]" />
+              <Bot size={22} className="text-[#2764FF]" />
             </motion.div>
             <div>
               <motion.h1
@@ -85,7 +85,7 @@ export default function AdvisorPage() {
               <motion.p
                 variants={fadeUp}
                 custom={2}
-                className="text-xs text-[#8BA3D4]"
+                className="text-xs text-[#8B949E]"
               >
                 AI Strategic Advisor
               </motion.p>
@@ -96,7 +96,7 @@ export default function AdvisorPage() {
             <motion.div variants={fadeUp} custom={3}>
               <Link
                 href="/advisor/policy-builder"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#68E9FA]/10 text-[#68E9FA] border border-[#68E9FA]/20 hover:bg-[#68E9FA]/20 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#2764FF]/10 text-[#2764FF] border border-[#2764FF]/20 hover:bg-[#2764FF]/20 transition-colors"
               >
                 <FileText size={13} />
                 AI Policy Builder
@@ -121,7 +121,7 @@ export default function AdvisorPage() {
         <motion.p
           variants={fadeUp}
           custom={3}
-          className="max-w-3xl mx-auto text-[11px] text-[#8BA3D4] mt-2 leading-snug"
+          className="max-w-3xl mx-auto text-[11px] text-[#8B949E] mt-2 leading-snug"
         >
           AI-generated guidance based on Keith L. Odom&apos;s frameworks. Not
           professional advice.
@@ -141,7 +141,7 @@ export default function AdvisorPage() {
               onSubmit={handleInitialSubmit}
               className="px-4 pb-4 pt-2 border-t border-klo-slate"
             >
-              <div className="flex items-end gap-2 bg-[#011A5E] border border-[#0E3783] rounded-xl px-3 py-2 focus-within:border-[#68E9FA]/40 transition-colors">
+              <div className="flex items-end gap-2 bg-[#161B22] border border-[#21262D] rounded-xl px-3 py-2 focus-within:border-[#2764FF]/40 transition-colors">
                 <textarea
                   ref={initialInputRef}
                   rows={1}
@@ -157,7 +157,7 @@ export default function AdvisorPage() {
                 <button
                   type="submit"
                   disabled={isLoading || atLimit}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-[#68E9FA] text-[#022886] hover:brightness-110 active:brightness-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white hover:brightness-110 active:brightness-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                 >
                   <Send size={16} />
                 </button>

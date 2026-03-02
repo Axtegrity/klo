@@ -33,7 +33,7 @@ export default function BottomNav() {
     <nav
       role="navigation"
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-50 h-[72px] bg-[#022886]/95 backdrop-blur-md border-t border-[#0E3783] md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 h-[72px] bg-[#0D1117]/95 backdrop-blur-md border-t border-[#21262D] md:hidden"
     >
       <ul className="flex items-center justify-around h-full px-2">
         {navItems.map((item) => {
@@ -56,12 +56,12 @@ export default function BottomNav() {
                     size={22}
                     aria-hidden="true"
                     className={`transition-colors duration-200 ${
-                      active ? "text-[#68E9FA]" : "text-[#8BA3D4]"
+                      active ? "text-[#2764FF]" : "text-[#8B949E]"
                     }`}
                   />
                   <span
                     className={`text-[10px] font-medium transition-colors duration-200 ${
-                      active ? "text-[#68E9FA]" : "text-[#8BA3D4]"
+                      active ? "text-[#2764FF]" : "text-[#8B949E]"
                     }`}
                   >
                     {item.label}
