@@ -21,9 +21,10 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/profile/:path*",
-    "/strategy-rooms/:path*",
-    "/vault/:path*",
-    "/advisor/:path*",
+    // Temporarily disabled for demo preview
+    // "/profile/:path*",
+    // "/strategy-rooms/:path*",
+    // "/vault/:path*",
+    // "/advisor/:path*",
   ],
 };
