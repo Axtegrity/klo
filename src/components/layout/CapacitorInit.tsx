@@ -16,8 +16,9 @@ export default function CapacitorInit() {
         // Configure status bar
         const { StatusBar, Style } = await import("@capacitor/status-bar");
         await StatusBar.setStyle({ style: Style.Dark });
+        await StatusBar.setOverlaysWebView({ overlay: true });
         if (Capacitor.getPlatform() === "android") {
-          await StatusBar.setBackgroundColor({ color: "#0D1117" });
+          await StatusBar.setBackgroundColor({ color: "#00000000" });
         }
 
         // Handle Android back button
