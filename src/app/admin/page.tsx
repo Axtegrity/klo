@@ -37,6 +37,7 @@ import type {
   AdminActivityData,
   AdminUser,
 } from "@/types";
+import ConferenceAdminTab from "@/features/conference/admin/ConferenceAdminTab";
 
 // ------------------------------------------------------------
 // Animation variants
@@ -108,13 +109,14 @@ function StatCard({
 // Tab definitions
 // ------------------------------------------------------------
 
-type TabId = "overview" | "users" | "content" | "revenue";
+type TabId = "overview" | "users" | "content" | "revenue" | "conference";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "users", label: "Users" },
   { id: "content", label: "Content" },
   { id: "revenue", label: "Revenue" },
+  { id: "conference", label: "Conference" },
 ];
 
 // ------------------------------------------------------------
@@ -821,6 +823,10 @@ export default function AdminPage() {
               </motion.div>
             </div>
           </div>
+        )}
+        {/* CONFERENCE TAB */}
+        {activeTab === "conference" && (
+          <ConferenceAdminTab />
         )}
       </motion.div>
     </div>

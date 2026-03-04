@@ -21,6 +21,7 @@ const navLinks: NavLink[] = [
   { label: "Vault", href: "/vault" },
   { label: "Marketplace", href: "/marketplace" },
   { label: "Strategy Rooms", href: "/strategy-rooms" },
+  { label: "Conference", href: "/conference" },
   { label: "Booking", href: "/booking" },
 ];
 

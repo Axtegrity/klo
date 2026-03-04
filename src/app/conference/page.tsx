@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import Card from "@/components/shared/Card";
 import Badge from "@/components/shared/Badge";
+import SeminarModeGate from "@/features/conference/components/SeminarModeGate";
+import ConferenceToolsTabs from "@/features/conference/components/ConferenceToolsTabs";
 
 /* ------------------------------------------------------------------ */
 /*  Animation helpers                                                   */
@@ -317,6 +319,38 @@ export default function ConferencePage() {
               <MapPin size={16} className="text-[#2764FF]" />
               Atlanta Convention Center
             </span>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* ====== Interactive Conference Tools ====== */}
+      <section className="px-6 py-16 md:py-24 bg-klo-dark/40">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={staggerContainer}
+          className="max-w-4xl mx-auto"
+        >
+          <motion.div variants={fadeUp} custom={0} className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-[#2764FF]/10 flex items-center justify-center">
+                <Sparkles size={20} className="text-[#2764FF]" />
+              </div>
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
+                Interactive Tools
+              </h2>
+            </div>
+            <p className="text-klo-muted">
+              Participate in live polls, ask questions, and contribute to the word
+              cloud.
+            </p>
+          </motion.div>
+
+          <motion.div variants={fadeUp} custom={1}>
+            <SeminarModeGate>
+              <ConferenceToolsTabs />
+            </SeminarModeGate>
           </motion.div>
         </motion.div>
       </section>
