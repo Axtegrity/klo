@@ -4,15 +4,15 @@
 
 -- App-wide settings (key-value store)
 create table if not exists app_settings (
-  key   text primary key,
+  "key" text primary key,
   value jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default now()
 );
 
 -- Seed seminar_mode setting
-insert into app_settings (key, value)
+insert into app_settings ("key", value)
 values ('seminar_mode', '{"active": false}'::jsonb)
-on conflict (key) do nothing;
+on conflict ("key") do nothing;
 
 -- Conference polls
 create table if not exists conference_polls (
