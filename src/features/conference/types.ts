@@ -56,6 +56,10 @@ export interface ConferenceSession {
   is_active: boolean;
   qa_enabled: boolean;
   release_mode: "all" | "single" | "hide_all";
+  speaker: string | null;
+  room: string | null;
+  time_label: string | null;
+  sort_order: number;
   created_at: string;
 }
 

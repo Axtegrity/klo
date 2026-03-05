@@ -12,10 +12,8 @@ import {
   Globe,
   Brain,
   ChevronDown,
-  ArrowRight,
 } from "lucide-react";
 import Badge from "@/components/shared/Badge";
-import Button from "@/components/shared/Button";
 import Card from "@/components/shared/Card";
 import FadeInOnScroll from "@/components/shared/FadeInOnScroll";
 import ConsultIntakeForm from "@/components/consult/ConsultIntakeForm";
@@ -371,34 +369,6 @@ export default function ConsultPage() {
         </section>
       </FadeInOnScroll>
 
-      {/* ====== Bottom CTA ====== */}
-      <FadeInOnScroll delay={0.1}>
-        <section className="px-6 py-16 md:py-24">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={staggerContainer}
-            className="max-w-2xl mx-auto text-center"
-          >
-            <motion.div variants={fadeUp} custom={0}>
-              <Card className="border-[#C8A84E]/20 py-10 md:py-12">
-                <h3 className="font-display text-2xl md:text-3xl font-bold text-klo-text mb-4">
-                  Looking for a Speaking Engagement?
-                </h3>
-                <p className="text-klo-muted mb-8 max-w-md mx-auto">
-                  For keynotes, conferences, workshops, and longer-term advisory
-                  engagements, visit the booking page.
-                </p>
-                <Button variant="gold" size="lg" href="/booking">
-                  View Speaking &amp; Booking
-                  <ArrowRight size={16} />
-                </Button>
-              </Card>
-            </motion.div>
-          </motion.div>
-        </section>
-      </FadeInOnScroll>
     </div>
   );
 }

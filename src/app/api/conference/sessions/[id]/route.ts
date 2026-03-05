@@ -22,6 +22,10 @@ export async function PUT(
   if (typeof body.is_active === "boolean") updates.is_active = body.is_active;
   if (typeof body.qa_enabled === "boolean") updates.qa_enabled = body.qa_enabled;
   if (typeof body.release_mode === "string") updates.release_mode = body.release_mode;
+  if (typeof body.speaker === "string") updates.speaker = body.speaker.trim() || null;
+  if (typeof body.room === "string") updates.room = body.room.trim() || null;
+  if (typeof body.time_label === "string") updates.time_label = body.time_label.trim() || null;
+  if (typeof body.sort_order === "number") updates.sort_order = body.sort_order;
 
   // If activating this session, deactivate all others first
   if (body.is_active === true) {

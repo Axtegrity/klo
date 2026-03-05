@@ -23,6 +23,7 @@ import Card from "@/components/shared/Card";
 import Badge from "@/components/shared/Badge";
 import SeminarModeGate from "@/features/conference/components/SeminarModeGate";
 import ConferenceToolsTabs from "@/features/conference/components/ConferenceToolsTabs";
+import { useSessions } from "@/features/conference/hooks/useSessions";
 
 /* ------------------------------------------------------------------ */
 /*  Animation helpers                                                   */
@@ -45,15 +46,6 @@ const staggerContainer = {
 /* ------------------------------------------------------------------ */
 /*  Data types                                                          */
 /* ------------------------------------------------------------------ */
-
-interface Session {
-  time: string;
-  title: string;
-  speaker: string;
-  room: string;
-  description: string;
-  isActive?: boolean;
-}
 
 interface QueuedQuestion {
   id: string;
@@ -79,42 +71,6 @@ interface Resource {
 /* ------------------------------------------------------------------ */
 /*  Sample data                                                         */
 /* ------------------------------------------------------------------ */
-
-const sessions: Session[] = [
-  {
-    time: "9:00 AM - 10:15 AM",
-    title: "Opening Keynote: AI and the Future of Leadership",
-    speaker: "Keith L. Odom",
-    room: "Grand Ballroom A",
-    description:
-      "An inspiring opening exploring how artificial intelligence is reshaping executive decision-making and what it means to lead with vision in the age of intelligent systems.",
-    isActive: true,
-  },
-  {
-    time: "10:30 AM - 11:45 AM",
-    title: "Digital Governance Frameworks for the Modern Enterprise",
-    speaker: "Keith L. Odom",
-    room: "Conference Room 201",
-    description:
-      "Practical frameworks for building robust digital governance structures and cybersecurity strategies that protect organizations and build stakeholder trust.",
-  },
-  {
-    time: "1:00 PM - 2:15 PM",
-    title: "Faith Meets Innovation: The TechChurch Blueprint",
-    speaker: "Keith L. Odom",
-    room: "Grand Ballroom B",
-    description:
-      "How faith-based organizations can harness technology to deepen community engagement, expand reach, and steward resources effectively.",
-  },
-  {
-    time: "2:30 PM - 3:45 PM",
-    title: "Interactive Workshop: Building Your AI Strategy",
-    speaker: "Keith L. Odom",
-    room: "Workshop Hall C",
-    description:
-      "A hands-on workshop where attendees collaborate to build actionable AI integration strategies tailored to their organizations.",
-  },
-];
 
 const keyTakeaways: Takeaway[] = [
   {
@@ -201,6 +157,9 @@ function LiveBadge() {
 /* ------------------------------------------------------------------ */
 
 export default function ConferencePage() {
+  /* ---------- Sessions from DB ---------- */
+  const { sessions, loading: sessionsLoading } = useSessions();
+
   /* ---------- Q&A state ---------- */
   const [questions, setQuestions] = useState<QueuedQuestion[]>([
     {
@@ -379,64 +338,84 @@ export default function ConferencePage() {
           </motion.div>
 
           <div className="space-y-4">
-            {sessions.map((session, i) => (
-              <motion.div key={session.title} variants={fadeUp} custom={i + 1}>
-                <Card
-                  className={`relative overflow-hidden ${
-                    session.isActive
-                      ? "border-[#2764FF]/40 shadow-lg shadow-[#2764FF]/5"
-                      : ""
-                  }`}
-                >
-                  {session.isActive && (
-                    <div className="absolute top-0 left-0 w-1 h-full bg-klo-gold rounded-l-xl" />
-                  )}
-                  <div className="flex flex-col md:flex-row md:items-start gap-4">
-                    <div className="shrink-0 md:w-44">
-                      <div className="flex items-center gap-2">
-                        {session.isActive && (
-                          <Radio size={14} className="text-[#2764FF]" />
+            {sessionsLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="w-6 h-6 border-2 border-[#2764FF]/30 border-t-[#2764FF] rounded-full animate-spin" />
+              </div>
+            ) : sessions.length === 0 ? (
+              <Card>
+                <p className="text-klo-muted text-sm text-center py-4">
+                  No sessions scheduled yet. Check back soon!
+                </p>
+              </Card>
+            ) : (
+              sessions.map((session, i) => (
+                <motion.div key={session.id} variants={fadeUp} custom={i + 1}>
+                  <Card
+                    className={`relative overflow-hidden ${
+                      session.is_active
+                        ? "border-[#2764FF]/40 shadow-lg shadow-[#2764FF]/5"
+                        : ""
+                    }`}
+                  >
+                    {session.is_active && (
+                      <div className="absolute top-0 left-0 w-1 h-full bg-klo-gold rounded-l-xl" />
+                    )}
+                    <div className="flex flex-col md:flex-row md:items-start gap-4">
+                      {session.time_label && (
+                        <div className="shrink-0 md:w-44">
+                          <div className="flex items-center gap-2">
+                            {session.is_active && (
+                              <Radio size={14} className="text-[#2764FF]" />
+                            )}
+                            <span
+                              className={`text-sm font-semibold ${
+                                session.is_active
+                                  ? "text-klo-gold"
+                                  : "text-klo-muted"
+                              }`}
+                            >
+                              {session.time_label}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-start justify-between gap-4">
+                          <h3 className="text-lg font-semibold text-klo-text">
+                            {session.title}
+                          </h3>
+                          {session.is_active && (
+                            <Badge variant="green" className="shrink-0">
+                              Now
+                            </Badge>
+                          )}
+                        </div>
+                        {session.description && (
+                          <p className="text-klo-muted text-sm leading-relaxed">
+                            {session.description}
+                          </p>
                         )}
-                        <span
-                          className={`text-sm font-semibold ${
-                            session.isActive
-                              ? "text-klo-gold"
-                              : "text-klo-muted"
-                          }`}
-                        >
-                          {session.time}
-                        </span>
+                        <div className="flex items-center gap-4 text-xs text-klo-muted pt-1">
+                          {session.speaker && (
+                            <span className="inline-flex items-center gap-1.5">
+                              <User size={12} className="text-[#2764FF]/70" />
+                              {session.speaker}
+                            </span>
+                          )}
+                          {session.room && (
+                            <span className="inline-flex items-center gap-1.5">
+                              <MapPin size={12} className="text-[#2764FF]/70" />
+                              {session.room}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-start justify-between gap-4">
-                        <h3 className="text-lg font-semibold text-klo-text">
-                          {session.title}
-                        </h3>
-                        {session.isActive && (
-                          <Badge variant="green" className="shrink-0">
-                            Now
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-klo-muted text-sm leading-relaxed">
-                        {session.description}
-                      </p>
-                      <div className="flex items-center gap-4 text-xs text-klo-muted pt-1">
-                        <span className="inline-flex items-center gap-1.5">
-                          <User size={12} className="text-[#2764FF]/70" />
-                          {session.speaker}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <MapPin size={12} className="text-[#2764FF]/70" />
-                          {session.room}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
+                  </Card>
+                </motion.div>
+              ))
+            )}
           </div>
         </motion.div>
       </section>

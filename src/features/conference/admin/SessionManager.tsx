@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Power, Trash2, MessageSquare, Eye } from "lucide-react";
+import { Plus, Power, Trash2, MessageSquare, Eye, Clock, MapPin, User, RefreshCw } from "lucide-react";
 import type { ConferenceSession } from "../types";
 
 export default function SessionManager() {
@@ -9,7 +9,12 @@ export default function SessionManager() {
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [speaker, setSpeaker] = useState("");
+  const [room, setRoom] = useState("");
+  const [timeLabel, setTimeLabel] = useState("");
   const [creating, setCreating] = useState(false);
+  const [autoFetch, setAutoFetch] = useState(false);
+  const [autoFetchLoading, setAutoFetchLoading] = useState(true);
 
   const fetchSessions = useCallback(async () => {
     try {
@@ -20,9 +25,32 @@ export default function SessionManager() {
     }
   }, []);
 
+  const fetchAutoFetchSetting = useCallback(async () => {
+    try {
+      const res = await fetch("/api/conference/settings?key=auto_fetch_schedule");
+      if (res.ok) {
+        const data = await res.json();
+        setAutoFetch(data.value === "true");
+      }
+    } finally {
+      setAutoFetchLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchSessions();
-  }, [fetchSessions]);
+    fetchAutoFetchSetting();
+  }, [fetchSessions, fetchAutoFetchSetting]);
+
+  const toggleAutoFetch = async () => {
+    const newValue = !autoFetch;
+    setAutoFetch(newValue);
+    await fetch("/api/conference/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: "auto_fetch_schedule", value: String(newValue) }),
+    });
+  };
 
   const createSession = async () => {
     if (!title.trim()) return;
@@ -31,11 +59,20 @@ export default function SessionManager() {
       const res = await fetch("/api/conference/sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description }),
+        body: JSON.stringify({
+          title,
+          description,
+          speaker: speaker || undefined,
+          room: room || undefined,
+          time_label: timeLabel || undefined,
+        }),
       });
       if (res.ok) {
         setTitle("");
         setDescription("");
+        setSpeaker("");
+        setRoom("");
+        setTimeLabel("");
         fetchSessions();
       }
     } finally {
@@ -85,6 +122,31 @@ export default function SessionManager() {
 
   return (
     <div className="space-y-4">
+      {/* Auto-fetch toggle */}
+      {!autoFetchLoading && (
+        <div className="glass rounded-2xl p-4 border border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <RefreshCw size={16} className="text-[#2764FF]" />
+            <div>
+              <p className="text-sm font-medium text-klo-text">Auto-fetch schedule from web</p>
+              <p className="text-xs text-klo-muted">Syncs every 7 days via n8n automation</p>
+            </div>
+          </div>
+          <button
+            onClick={toggleAutoFetch}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              autoFetch ? "bg-emerald-500" : "bg-klo-slate"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+                autoFetch ? "translate-x-5" : ""
+              }`}
+            />
+          </button>
+        </div>
+      )}
+
       {/* Create form */}
       <div className="glass rounded-2xl p-4 border border-white/5 space-y-3">
         <input
@@ -101,6 +163,29 @@ export default function SessionManager() {
           placeholder="Description (optional)..."
           className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50"
         />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <input
+            type="text"
+            value={speaker}
+            onChange={(e) => setSpeaker(e.target.value)}
+            placeholder="Speaker name..."
+            className="bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50"
+          />
+          <input
+            type="text"
+            value={room}
+            onChange={(e) => setRoom(e.target.value)}
+            placeholder="Room..."
+            className="bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50"
+          />
+          <input
+            type="text"
+            value={timeLabel}
+            onChange={(e) => setTimeLabel(e.target.value)}
+            placeholder="Time (e.g. 9:00 AM - 10:15 AM)..."
+            className="bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50"
+          />
+        </div>
         <button
           onClick={createSession}
           disabled={!title.trim() || creating}
@@ -132,7 +217,25 @@ export default function SessionManager() {
               {s.description && (
                 <p className="text-xs text-klo-muted mt-1">{s.description}</p>
               )}
-              <div className="flex items-center gap-3 mt-2 text-xs text-klo-muted">
+              <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-klo-muted">
+                {s.time_label && (
+                  <span className="flex items-center gap-1">
+                    <Clock size={12} />
+                    {s.time_label}
+                  </span>
+                )}
+                {s.speaker && (
+                  <span className="flex items-center gap-1">
+                    <User size={12} />
+                    {s.speaker}
+                  </span>
+                )}
+                {s.room && (
+                  <span className="flex items-center gap-1">
+                    <MapPin size={12} />
+                    {s.room}
+                  </span>
+                )}
                 <span className="flex items-center gap-1">
                   <MessageSquare size={12} />
                   Q&A: {s.qa_enabled ? "On" : "Off"}

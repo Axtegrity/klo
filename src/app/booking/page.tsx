@@ -10,9 +10,7 @@ import {
 import Card from "@/components/shared/Card";
 import Badge from "@/components/shared/Badge";
 import InquiryForm from "@/components/booking/InquiryForm";
-import SpeakerKit from "@/components/booking/SpeakerKit";
 import Testimonials from "@/components/booking/Testimonials";
-import CalendarEmbed from "@/components/booking/CalendarEmbed";
 import FadeInOnScroll from "@/components/shared/FadeInOnScroll";
 import type { LucideIcon } from "lucide-react";
 
@@ -170,23 +168,6 @@ export default function BookingPage() {
       </section>
       </FadeInOnScroll>
 
-      {/* ====== Calendar Embed ====== */}
-      <FadeInOnScroll delay={0.05}>
-      <section className="px-6 py-16 md:py-24">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="max-w-3xl mx-auto"
-        >
-          <motion.div variants={fadeUp} custom={0}>
-            <CalendarEmbed />
-          </motion.div>
-        </motion.div>
-      </section>
-      </FadeInOnScroll>
-
       {/* ====== Testimonials ====== */}
       <FadeInOnScroll delay={0.1}>
       <section className="px-6 py-16 md:py-24 bg-klo-dark/40">
@@ -210,20 +191,6 @@ export default function BookingPage() {
       </section>
       </FadeInOnScroll>
 
-      {/* ====== Speaker Kit ====== */}
-      <FadeInOnScroll delay={0.05}>
-      <section className="px-6 py-16 md:py-20">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="max-w-3xl mx-auto"
-        >
-          <SpeakerKit />
-        </motion.div>
-      </section>
-      </FadeInOnScroll>
     </div>
   );
 }

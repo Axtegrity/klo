@@ -2,8 +2,23 @@ import { NextResponse } from "next/server";
 import { verifyConferenceRole } from "@/lib/conference-auth";
 import { getServiceSupabase } from "@/lib/supabase";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const key = searchParams.get("key");
+
   const supabase = getServiceSupabase();
+
+  // If a specific conference_settings key is requested
+  if (key) {
+    const { data } = await supabase
+      .from("conference_settings")
+      .select("value")
+      .eq("key", key)
+      .maybeSingle();
+
+    return NextResponse.json({ key, value: data?.value ?? null });
+  }
+
   const { data, error } = await supabase
     .from("app_settings")
     .select("value")
@@ -35,6 +50,18 @@ export async function PUT(request: Request) {
 
   const body = await request.json();
   const supabase = getServiceSupabase();
+
+  // Update conference_settings key-value
+  if (typeof body.key === "string" && typeof body.value === "string") {
+    const { error } = await supabase
+      .from("conference_settings")
+      .upsert({ key: body.key, value: body.value, updated_at: new Date().toISOString() });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ success: true });
+  }
 
   // Update seminar mode
   if (typeof body.active === "boolean") {

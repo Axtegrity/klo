@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { History, CalendarClock } from "lucide-react";
 
 const containerVariants = {
   hidden: {},
@@ -112,16 +111,14 @@ export default function HeroBanner() {
             </Link>
             <Link
               href="/vault?tab=Previous+Events"
-              className="inline-flex items-center justify-center gap-2 px-6 py-4 border-2 border-[#E6EDF3]/30 text-[#E6EDF3] font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:border-[#E6EDF3]/60 hover:bg-[#E6EDF3]/5 active:scale-[0.98] text-center"
+              className="inline-flex items-center justify-center px-6 py-4 border-2 border-[#E6EDF3]/30 text-[#E6EDF3] font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:border-[#E6EDF3]/60 hover:bg-[#E6EDF3]/5 active:scale-[0.98] text-center"
             >
-              <History size={16} />
               Previous Events
             </Link>
             <Link
               href="/vault?tab=Current+Events"
-              className="inline-flex items-center justify-center gap-2 px-6 py-4 border-2 border-[#E6EDF3]/30 text-[#E6EDF3] font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:border-[#E6EDF3]/60 hover:bg-[#E6EDF3]/5 active:scale-[0.98] text-center"
+              className="inline-flex items-center justify-center px-6 py-4 border-2 border-[#E6EDF3]/30 text-[#E6EDF3] font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:border-[#E6EDF3]/60 hover:bg-[#E6EDF3]/5 active:scale-[0.98] text-center"
             >
-              <CalendarClock size={16} />
               Current Events
             </Link>
           </motion.div>
