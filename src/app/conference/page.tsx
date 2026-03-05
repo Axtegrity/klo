@@ -468,7 +468,7 @@ export default function ConferencePage() {
           {/* Question input */}
           <motion.div variants={fadeUp} custom={1}>
             <Card className="mb-6">
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="text"
                   value={questionInput}
@@ -480,7 +480,7 @@ export default function ConferencePage() {
                 <button
                   onClick={submitQuestion}
                   disabled={!questionInput.trim()}
-                  className="shrink-0 inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Send size={16} />
                   Submit

@@ -84,25 +84,27 @@ export default function EventPresentation({ item }: { item: VaultItem }) {
               return (
                 <div
                   key={file.id}
-                  className="flex items-center gap-4 px-6 py-4 hover:bg-white/[0.02] transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 hover:bg-white/[0.02] transition-colors"
                 >
-                  <div className="p-2 rounded-lg bg-white/5">
-                    <FileIcon size={18} className="text-klo-muted" />
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="p-2 rounded-lg bg-white/5 shrink-0">
+                      <FileIcon size={18} className="text-klo-muted" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-klo-text font-medium truncate">
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-klo-muted">{file.size}</p>
+                    </div>
+                    <Badge variant={config.variant}>{config.label}</Badge>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-klo-text font-medium truncate">
-                      {file.name}
-                    </p>
-                    <p className="text-xs text-klo-muted">{file.size}</p>
-                  </div>
-                  <Badge variant={config.variant}>{config.label}</Badge>
                   {isAuthenticated ? (
                     <a
                       href={file.url}
                       download
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white hover:opacity-90 transition-opacity"
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white hover:opacity-90 transition-opacity shrink-0 w-full sm:w-auto"
                     >
                       <Download size={14} />
                       Download
@@ -110,10 +112,10 @@ export default function EventPresentation({ item }: { item: VaultItem }) {
                   ) : (
                     <Link
                       href="/auth/signin"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg border border-[#E6EDF3]/20 text-klo-muted hover:text-klo-text hover:border-[#E6EDF3]/40 transition-colors"
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg border border-[#E6EDF3]/20 text-klo-muted hover:text-klo-text hover:border-[#E6EDF3]/40 transition-colors shrink-0 w-full sm:w-auto"
                     >
                       <LogIn size={14} />
-                      Sign in to download
+                      Sign in
                     </Link>
                   )}
                 </div>
