@@ -112,7 +112,7 @@ export default function TopNav() {
         </Link>
 
         {/* Desktop nav links */}
-        <ul className="hidden md:flex items-center gap-8">
+        <ul className="hidden lg:flex items-center gap-8">
           {activeNavLinks.map((link) => (
             <li key={link.href}>
               <Link
@@ -144,7 +144,7 @@ export default function TopNav() {
           <button
             ref={hamburgerRef}
             onClick={toggleMenu}
-            className="md:hidden text-[#E6EDF3] hover:text-[#2764FF] transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            className="lg:hidden text-[#E6EDF3] hover:text-[#2764FF] transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-nav-menu"
@@ -166,7 +166,7 @@ export default function TopNav() {
             animate={{ y: 0 }}
             exit={{ y: "-100%" }}
             transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
-            className="fixed inset-0 z-40 bg-[#0D1117]/98 backdrop-blur-lg pt-20 px-8 md:hidden"
+            className="fixed inset-0 z-40 bg-[#0D1117]/98 backdrop-blur-lg pt-20 px-8 lg:hidden"
           >
             <ul className="flex flex-col gap-6">
               {activeNavLinks.map((link, index) => (

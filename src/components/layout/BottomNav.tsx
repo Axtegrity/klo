@@ -33,7 +33,7 @@ export default function BottomNav() {
     <nav
       role="navigation"
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-50 bg-[#0D1117]/95 backdrop-blur-md border-t border-[#21262D] md:hidden hide-on-keyboard no-select transition-all duration-200"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-[#0D1117]/95 backdrop-blur-md border-t border-[#21262D] lg:hidden hide-on-keyboard no-select transition-all duration-200"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <ul className="flex items-center justify-around h-[72px] px-2">
