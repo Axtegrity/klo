@@ -92,7 +92,7 @@ export default function HeroBanner() {
           {/* CTA buttons */}
           <motion.div
             variants={fadeUp}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+            className="flex flex-col sm:flex-row gap-3"
           >
             <Link
               href="/advisor"
@@ -108,18 +108,6 @@ export default function HeroBanner() {
               className="inline-flex items-center justify-center px-6 py-4 border-2 border-[#E6EDF3]/30 text-[#E6EDF3] font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:border-[#E6EDF3]/60 hover:bg-[#E6EDF3]/5 active:scale-[0.98] text-center"
             >
               Book a Consultation
-            </Link>
-            <Link
-              href="/vault?tab=Previous+Events"
-              className="inline-flex items-center justify-center px-6 py-4 border-2 border-[#E6EDF3]/30 text-[#E6EDF3] font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:border-[#E6EDF3]/60 hover:bg-[#E6EDF3]/5 active:scale-[0.98] text-center"
-            >
-              Previous Events
-            </Link>
-            <Link
-              href="/vault?tab=Current+Events"
-              className="inline-flex items-center justify-center px-6 py-4 border-2 border-[#E6EDF3]/30 text-[#E6EDF3] font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:border-[#E6EDF3]/60 hover:bg-[#E6EDF3]/5 active:scale-[0.98] text-center"
-            >
-              Current Events
             </Link>
           </motion.div>
         </div>
