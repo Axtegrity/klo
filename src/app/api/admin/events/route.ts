@@ -7,7 +7,7 @@ async function verifyAdmin() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;
   const role = (session.user as { role?: string }).role;
-  if (role !== "admin") return null;
+  if (!["owner", "admin"].includes(role ?? "")) return null;
   return session;
 }
 

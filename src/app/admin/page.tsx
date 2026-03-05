@@ -162,8 +162,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isAdmin =
-    (session?.user as { role?: string } | undefined)?.role === "admin";
+  const userRole = (session?.user as { role?: string } | undefined)?.role;
+  const isAdmin = ["owner", "admin"].includes(userRole ?? "");
 
   // Redirect non-admins
   useEffect(() => {

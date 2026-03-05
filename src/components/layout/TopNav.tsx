@@ -28,7 +28,8 @@ export default function TopNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { data: session } = useSession();
-  const isAdmin = (session?.user as { role?: string } | undefined)?.role === "admin";
+  const userRole = (session?.user as { role?: string } | undefined)?.role;
+  const isAdmin = ["owner", "admin"].includes(userRole ?? "");
 
   const activeNavLinks = useMemo(
     () =>

@@ -4,9 +4,37 @@ import AppleProvider from "next-auth/providers/apple";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getServiceSupabase } from "@/lib/supabase";
 
-// Owner account — Keith Odom (full unlimited access)
+// Credential accounts
 const OWNER_EMAIL = "keith@keithlodom.io";
 const OWNER_ID = "00000000-0000-0000-0000-000000000001";
+const ADMIN_EMAIL = "admin@keithlodom.io";
+const ADMIN_ID = "00000000-0000-0000-0000-000000000002";
+const MODERATOR_EMAIL = "moderator@keithlodom.io";
+const MODERATOR_ID = "00000000-0000-0000-0000-000000000003";
+
+const CREDENTIAL_ACCOUNTS = [
+  {
+    email: OWNER_EMAIL,
+    id: OWNER_ID,
+    name: "Keith L. Odom",
+    envVar: "OWNER_PASSWORD",
+    role: "owner" as const,
+  },
+  {
+    email: ADMIN_EMAIL,
+    id: ADMIN_ID,
+    name: "KLO Admin",
+    envVar: "ADMIN_PASSWORD",
+    role: "admin" as const,
+  },
+  {
+    email: MODERATOR_EMAIL,
+    id: MODERATOR_ID,
+    name: "KLO Moderator",
+    envVar: "MODERATOR_PASSWORD",
+    role: "moderator" as const,
+  },
+];
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -20,43 +48,31 @@ export const authOptions: NextAuthOptions = {
   },
 
   providers: [
-    // Owner login — Keith Odom
     CredentialsProvider({
-      id: "owner-login",
-      name: "Owner Login",
+      id: "credentials",
+      name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const ownerPassword = process.env.OWNER_PASSWORD;
-        if (!ownerPassword) return null;
+        if (!credentials?.email || !credentials?.password) return null;
 
-        if (
-          credentials?.email === OWNER_EMAIL &&
-          credentials?.password === ownerPassword
-        ) {
-          return {
-            id: OWNER_ID,
-            name: "Keith L. Odom",
-            email: OWNER_EMAIL,
-          };
+        for (const account of CREDENTIAL_ACCOUNTS) {
+          const password = process.env[account.envVar];
+          if (
+            credentials.email === account.email &&
+            password &&
+            credentials.password === password
+          ) {
+            return {
+              id: account.id,
+              name: account.name,
+              email: account.email,
+            };
+          }
         }
         return null;
-      },
-    }),
-
-    // Dev-only credential login (bypasses OAuth)
-    CredentialsProvider({
-      id: "dev-admin",
-      name: "Dev Admin",
-      credentials: {},
-      async authorize() {
-        return {
-          id: "36af99e8-9207-4393-b63f-122d11ed26aa",
-          name: "Keith (Dev)",
-          email: "admin@klo.dev",
-        };
       },
     }),
 
@@ -79,16 +95,12 @@ export const authOptions: NextAuthOptions = {
         token.role = "user";
       }
 
-      // Owner bypass — Keith Odom gets unlimited access
-      if (token.email === OWNER_EMAIL) {
-        token.role = "admin";
-        token.subscriptionTier = "executive";
-        return token;
-      }
-
-      // Dev admin bypass
-      if (token.email === "admin@klo.dev") {
-        token.role = "admin";
+      // Credential account role mapping
+      const credAccount = CREDENTIAL_ACCOUNTS.find(
+        (a) => a.email === token.email
+      );
+      if (credAccount) {
+        token.role = credAccount.role;
         token.subscriptionTier = "executive";
         return token;
       }

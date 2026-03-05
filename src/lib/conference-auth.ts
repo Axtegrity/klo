@@ -14,8 +14,8 @@ export async function verifyConferenceRole(
   const appRole = (session.user as { role?: string }).role;
   if (!userId) return null;
 
-  // App-level admin always passes
-  if (appRole === "admin") return { userId, role: "admin" };
+  // App-level admin/owner always passes
+  if (appRole === "admin" || appRole === "owner") return { userId, role: "admin" };
 
   // Check conference-specific role
   const supabase = getServiceSupabase();

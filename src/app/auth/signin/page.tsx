@@ -29,7 +29,7 @@ function SignInContent() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    const result = await signIn("owner-login", {
+    const result = await signIn("credentials", {
       email,
       password,
       redirect: false,
