@@ -271,7 +271,7 @@ export async function POST(req: NextRequest) {
       // Send notification to Keith
       await resend.emails.send({
         from: "KLO Advisory <info@keithlodom.io>",
-        to: "info@keithlodom.io",
+        to: "kodom@techchurch.io",
         subject: `New Consultation Request — ${parsed.areaOfInterest}`,
         html: `
           <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0B0F1A;padding:32px;border-radius:12px;">
@@ -361,7 +361,7 @@ export async function POST(req: NextRequest) {
     // Send notification to Keith
     await resend.emails.send({
       from: "KLO Advisory <info@keithlodom.io>",
-      to: "info@keithlodom.io",
+      to: "kodom@techchurch.io",
       subject: `New Booking Inquiry — ${parsed.eventName}`,
       html: `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0B0F1A;padding:32px;border-radius:12px;">
