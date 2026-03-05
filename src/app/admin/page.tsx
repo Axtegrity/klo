@@ -299,8 +299,8 @@ export default function AdminPage() {
           </motion.div>
         )}
 
-        {/* Loading state */}
-        {loading && (
+        {/* Loading state (only for data-dependent tabs) */}
+        {loading && activeTab !== "conference" && (
           <div className="flex items-center justify-center py-20">
             <RefreshCw className="w-8 h-8 text-klo-gold animate-spin" />
           </div>

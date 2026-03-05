@@ -97,6 +97,19 @@ function SignInContent() {
 
           {/* OAuth buttons */}
           <div className="space-y-3">
+            {/* Dev-only admin login */}
+            <button
+              onClick={() => signIn("dev-admin", { callbackUrl })}
+              className="w-full flex items-center justify-center gap-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 py-3 rounded-xl hover:bg-emerald-500/20 transition-all duration-200 cursor-pointer text-sm font-semibold"
+            >
+              Dev Admin Login
+            </button>
+
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10" /></div>
+              <div className="relative flex justify-center text-xs"><span className="bg-[#161B22] px-2 text-klo-muted">or</span></div>
+            </div>
+
             <button
               onClick={handleGoogleSignIn}
               className="w-full flex items-center justify-center gap-3 border border-klo-slate text-klo-text py-3 rounded-xl hover:bg-white/5 active:bg-white/10 transition-all duration-200 cursor-pointer"

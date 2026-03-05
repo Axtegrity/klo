@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import AppleProvider from "next-auth/providers/apple";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { getServiceSupabase } from "@/lib/supabase";
 
 export const authOptions: NextAuthOptions = {
@@ -15,6 +16,20 @@ export const authOptions: NextAuthOptions = {
   },
 
   providers: [
+    // Dev-only credential login (bypasses OAuth)
+    CredentialsProvider({
+      id: "dev-admin",
+      name: "Dev Admin",
+      credentials: {},
+      async authorize() {
+        return {
+          id: "36af99e8-9207-4393-b63f-122d11ed26aa",
+          name: "Keith (Dev)",
+          email: "admin@klo.dev",
+        };
+      },
+    }),
+
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
@@ -32,6 +47,13 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.subscriptionTier = "free";
         token.role = "user";
+      }
+
+      // Dev admin bypass
+      if (token.email === "admin@klo.dev") {
+        token.role = "admin";
+        token.subscriptionTier = "executive";
+        return token;
       }
 
       // Refresh role from DB on every token refresh (cached in JWT)
