@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Download, RotateCcw, Calendar } from "lucide-react";
+import { Download, RotateCcw, Calendar, FileText, Presentation } from "lucide-react";
 import Button from "@/components/shared/Button";
 import Badge from "@/components/shared/Badge";
 import Card from "@/components/shared/Card";
@@ -261,6 +261,40 @@ export default function ScoreReport({
     () => getRecommendations(categoryScores, assessmentTitle),
     [categoryScores, assessmentTitle],
   );
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  const handleDownload = useCallback(async (format: "pdf" | "docx" | "pptx") => {
+    setDownloading(format);
+    try {
+      const res = await fetch(`/api/assessments/download/${format}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `${assessmentTitle} Assessment`,
+          score,
+          maxScore,
+          percentage,
+          recommendations,
+        }),
+      });
+      if (res.status === 401) {
+        alert("Please sign in to download reports. Create a free account to unlock downloads.");
+        return;
+      }
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${assessmentTitle.toLowerCase().replace(/\s+/g, "-")}-assessment.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Download failed. Please try again.");
+    } finally {
+      setDownloading(null);
+    }
+  }, [assessmentTitle, score, maxScore, percentage, recommendations]);
 
   return (
     <motion.div
@@ -343,29 +377,47 @@ export default function ScoreReport({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1 }}
-        className="flex flex-col sm:flex-row items-center justify-center gap-4"
+        className="space-y-4"
       >
-        <Button variant="primary" size="lg" href="/booking">
-          <Calendar size={18} />
-          Book a Strategy Session with Keith
-        </Button>
-        <Button variant="secondary" size="md" onClick={onRetake}>
-          <RotateCcw size={16} />
-          Retake Assessment
-        </Button>
-        <Button
-          variant="ghost"
-          size="md"
-          onClick={() => {
-            /* Placeholder for download functionality */
-            alert(
-              "Report download will be available soon. Book a strategy session with Keith for a detailed analysis.",
-            );
-          }}
-        >
-          <Download size={16} />
-          Download Report
-        </Button>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Button variant="primary" size="lg" href="/booking">
+            <Calendar size={18} />
+            Book a Strategy Session with Keith
+          </Button>
+          <Button variant="secondary" size="md" onClick={onRetake}>
+            <RotateCcw size={16} />
+            Retake Assessment
+          </Button>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDownload("pdf")}
+            disabled={downloading !== null}
+          >
+            <Download size={14} />
+            {downloading === "pdf" ? "Generating..." : "PDF"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDownload("docx")}
+            disabled={downloading !== null}
+          >
+            <FileText size={14} />
+            {downloading === "docx" ? "Generating..." : "Word"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDownload("pptx")}
+            disabled={downloading !== null}
+          >
+            <Presentation size={14} />
+            {downloading === "pptx" ? "Generating..." : "PowerPoint"}
+          </Button>
+        </div>
       </motion.div>
     </motion.div>
   );

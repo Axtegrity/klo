@@ -63,6 +63,25 @@ function saveResult(result: AssessmentSavedResult): void {
   }
 }
 
+async function persistToServer(result: AssessmentSavedResult): Promise<void> {
+  try {
+    await fetch("/api/assessments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        assessment_type: result.assessmentId,
+        score: result.score,
+        answers: Object.fromEntries(
+          result.answers.map((a) => [a.questionId, a.value])
+        ),
+        recommendations: [],
+      }),
+    });
+  } catch {
+    // Silently fail — localStorage is the primary store
+  }
+}
+
 function clearResult(assessmentId: string): void {
   if (typeof window === "undefined") return;
   try {
@@ -125,6 +144,9 @@ export function useAssessment(
 
     saveResult(result);
     setPreviousResult(result);
+
+    // Also persist to Supabase if user is logged in
+    persistToServer(result);
 
     return result;
   }, [answers, assessmentId, maxScore, questions]);

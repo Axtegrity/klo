@@ -184,7 +184,8 @@ function OverviewTab() {
 }
 
 function AssessmentsTab() {
-  const [results] = useState<AssessmentResult[]>(() => {
+  const [results, setResults] = useState<AssessmentResult[]>(() => {
+    // Start with localStorage results
     if (typeof window === "undefined") return [];
     try {
       const keys = Object.keys(localStorage);
@@ -201,6 +202,31 @@ function AssessmentsTab() {
     } catch {
       return [];
     }
+  });
+
+  // Also fetch from Supabase for server-persisted results
+  useState(() => {
+    fetch("/api/assessments")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((serverResults: Array<{ assessment_type: string; score: number; created_at: string }>) => {
+        if (serverResults && serverResults.length > 0) {
+          const mapped: AssessmentResult[] = serverResults.map((r) => ({
+            assessmentId: r.assessment_type,
+            assessmentTitle: r.assessment_type.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
+            score: r.score,
+            totalQuestions: 10,
+            completedAt: r.created_at,
+            maturityLevel: r.score >= 43 ? "Leading" : r.score >= 36 ? "Advanced" : r.score >= 26 ? "Established" : r.score >= 16 ? "Developing" : "Emerging",
+          }));
+          setResults((prev) => {
+            // Merge: prefer server results, deduplicate by assessmentId
+            const existing = new Set(prev.map((p) => p.assessmentId));
+            const newResults = mapped.filter((m) => !existing.has(m.assessmentId));
+            return [...prev, ...newResults];
+          });
+        }
+      })
+      .catch(() => { /* localStorage results are fallback */ });
   });
 
   if (results.length === 0) {
