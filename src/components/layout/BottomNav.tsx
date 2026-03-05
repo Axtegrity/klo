@@ -17,7 +17,7 @@ const navItems: NavItem[] = [
   { label: "KLO Intel", href: "/advisor", icon: MessageSquare },
   { label: "Assess", href: "/assessments", icon: ClipboardCheck },
   { label: "Vault", href: "/vault", icon: BookOpen },
-  { label: "Rooms", href: "/strategy-rooms", icon: Users },
+  { label: "Consult", href: "/consult", icon: Users },
   { label: "Profile", href: "/profile", icon: User },
 ];
 

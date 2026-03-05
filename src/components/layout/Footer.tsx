@@ -13,6 +13,7 @@ const quickLinks = [
   { label: "Assessments", href: "/assessments" },
   { label: "Vault", href: "/vault" },
   { label: "Booking", href: "/booking" },
+  { label: "Consult with Keith", href: "/consult" },
   { label: "Conference", href: "/conference" },
 ];
 

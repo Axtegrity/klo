@@ -19,8 +19,7 @@ const navLinks: NavLink[] = [
   { label: "KLO Intelligence", href: "/advisor" },
   { label: "Assessments", href: "/assessments" },
   { label: "Vault", href: "/vault" },
-  { label: "Marketplace", href: "/marketplace" },
-  { label: "Strategy Rooms", href: "/strategy-rooms" },
+  { label: "Consult with Keith", href: "/consult" },
   { label: "Conference", href: "/conference" },
   { label: "Booking", href: "/booking" },
 ];

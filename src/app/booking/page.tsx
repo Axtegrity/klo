@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   Mic2,
@@ -49,7 +48,6 @@ interface Keynote {
   audiences: string[];
   accent: string;
   accentBg: string;
-  bgImage: string;
 }
 
 const keynotes: Keynote[] = [
@@ -61,7 +59,6 @@ const keynotes: Keynote[] = [
     audiences: ["C-Suite", "Conferences", "Corporate"],
     accent: "text-[#2764FF]",
     accentBg: "bg-[#2764FF]/10",
-    bgImage: "/images/keith/IMG_01.jpg",
   },
   {
     icon: Church,
@@ -71,7 +68,6 @@ const keynotes: Keynote[] = [
     audiences: ["Churches", "Ministries", "Nonprofits"],
     accent: "text-[#8840FF]",
     accentBg: "bg-[#8840FF]/10",
-    bgImage: "/images/keith/IMG_02.jpg",
   },
   {
     icon: ShieldCheck,
@@ -81,7 +77,6 @@ const keynotes: Keynote[] = [
     audiences: ["Boards", "IT Leaders", "Enterprises"],
     accent: "text-[#C8A84E]",
     accentBg: "bg-[#C8A84E]/10",
-    bgImage: "/images/keith/IMG_03.jpg",
   },
   {
     icon: Mic2,
@@ -91,7 +86,6 @@ const keynotes: Keynote[] = [
     audiences: ["Pastors", "Church Leaders", "Denominations"],
     accent: "text-[#6ECF55]",
     accentBg: "bg-[#6ECF55]/10",
-    bgImage: "/images/keith/IMG_04.jpg",
   },
 ];
 
@@ -230,10 +224,6 @@ export default function BookingPage() {
               return (
                 <motion.div key={keynote.title} variants={fadeUp} custom={i + 1}>
                   <div className="group relative h-full bg-[#161B22] border border-[#21262D] rounded-xl p-8 overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:border-[#2764FF]/30 hover:shadow-[0_0_30px_rgba(39,100,255,0.1)]">
-                    {/* Subtle background watermark image */}
-                    <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
-                      <Image src={keynote.bgImage} alt="" fill className="object-cover" />
-                    </div>
                     {/* Left accent bar */}
                     <div className="absolute left-0 top-8 bottom-8 w-0.5 bg-gradient-to-b from-[#2764FF] to-[#21B8CD] rounded-full opacity-50 group-hover:opacity-100 transition-opacity" />
                     <div className="relative z-10 space-y-4">
