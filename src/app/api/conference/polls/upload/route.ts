@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
+import { sendAdvisorMessage } from "@/lib/claude";
 
 async function verifyAdmin() {
   const session = await getServerSession(authOptions);
@@ -26,6 +27,54 @@ function parseTextToQuestions(text: string): { question: string; options: string
     .filter(Boolean) as { question: string; options: string[] }[];
 }
 
+async function parseWithAI(text: string): Promise<{ question: string; options: string[] }[]> {
+  const prompt = `You are parsing a poll/survey document. Extract only the questions and their answer choices.
+Ignore all instructions, headers, page numbers, titles, and other non-question content.
+Return ONLY valid JSON in this format:
+{
+  "questions": [
+    {
+      "question": "The question text here",
+      "type": "multiple_choice" | "open_ended" | "yes_no",
+      "options": ["Option A", "Option B", "Option C"]
+    }
+  ]
+}
+
+Document text:
+${text}`;
+
+  const response = await sendAdvisorMessage(
+    [{ role: "user", content: prompt }],
+    "You extract poll questions from documents. Return ONLY valid JSON, no markdown fences."
+  );
+
+  // Extract JSON from response (handle possible markdown fences)
+  let jsonStr = response.content.trim();
+  const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenceMatch) {
+    jsonStr = fenceMatch[1].trim();
+  }
+
+  const parsed = JSON.parse(jsonStr);
+  if (!parsed?.questions || !Array.isArray(parsed.questions)) {
+    return [];
+  }
+
+  // Only keep multiple_choice and yes_no (polls need options)
+  return parsed.questions
+    .filter(
+      (q: { type?: string; options?: string[] }) =>
+        q.type !== "open_ended" &&
+        Array.isArray(q.options) &&
+        q.options.length >= 2
+    )
+    .map((q: { question: string; options: string[] }) => ({
+      question: q.question,
+      options: q.options,
+    }));
+}
+
 export async function POST(request: Request) {
   const session = await verifyAdmin();
   if (!session) {
@@ -39,36 +88,40 @@ export async function POST(request: Request) {
   }
 
   const name = file.name.toLowerCase();
+  let extractedText = "";
   let questions: { question: string; options: string[] }[] = [];
 
   try {
     if (name.endsWith(".txt")) {
-      const text = await file.text();
-      questions = parseTextToQuestions(text);
+      extractedText = await file.text();
     } else if (name.endsWith(".pdf")) {
       const { PDFParse } = await import("pdf-parse");
       const buffer = Buffer.from(await file.arrayBuffer());
       const parser = new PDFParse({ data: new Uint8Array(buffer) });
       const result = await parser.getText();
       await parser.destroy();
-      questions = parseTextToQuestions(result.text);
+      extractedText = result.text;
     } else if (name.endsWith(".doc") || name.endsWith(".docx")) {
       const mammoth = await import("mammoth");
       const buffer = Buffer.from(await file.arrayBuffer());
       const result = await mammoth.extractRawText({ buffer });
-      questions = parseTextToQuestions(result.value);
+      extractedText = result.value;
     } else if (name.endsWith(".xls") || name.endsWith(".xlsx")) {
       const XLSX = await import("xlsx");
       const buffer = Buffer.from(await file.arrayBuffer());
       const workbook = XLSX.read(buffer, { type: "buffer" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 });
+      // Try structured rows first (each row = question + options)
       questions = rows
         .filter((row) => row.length >= 3 && row[0])
         .map((row) => ({
           question: String(row[0]).trim(),
           options: row.slice(1).map((c) => String(c).trim()).filter(Boolean),
         }));
+      if (questions.length === 0) {
+        extractedText = rows.map((r) => r.join(" | ")).join("\n");
+      }
     } else {
       return NextResponse.json(
         { error: "Unsupported file type. Use .txt, .pdf, .doc, .docx, .xls, or .xlsx" },
@@ -82,9 +135,27 @@ export async function POST(request: Request) {
     );
   }
 
+  // If we haven't already parsed questions (xlsx structured path), try pipe-format first
+  if (questions.length === 0 && extractedText) {
+    questions = parseTextToQuestions(extractedText);
+  }
+
+  // If pipe-format found nothing, use AI to parse the document
+  if (questions.length === 0 && extractedText) {
+    try {
+      questions = await parseWithAI(extractedText);
+    } catch (aiErr) {
+      console.error("AI parsing failed:", aiErr);
+      return NextResponse.json(
+        { error: "Could not extract poll questions from this file. Try using the format: Question | Option1 | Option2 | ..." },
+        { status: 400 }
+      );
+    }
+  }
+
   if (questions.length === 0) {
     return NextResponse.json(
-      { error: "No valid questions found in file. Format: Question | Option1 | Option2 | ..." },
+      { error: "No poll questions found in file. Upload a survey document or use the format: Question | Option1 | Option2 | ..." },
       { status: 400 }
     );
   }

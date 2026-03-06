@@ -314,7 +314,7 @@ export default function PollManager() {
             />
           </label>
           <span className="ml-3 text-xs text-klo-muted">
-            .txt, .pdf, .doc, .docx, .xls, .xlsx
+            Upload any survey or poll document (.txt, .pdf, .doc, .docx, .xls, .xlsx)
           </span>
         </div>
       </div>
