@@ -97,7 +97,7 @@ export default function QuestionList({
                 {/* Question content */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-klo-text leading-relaxed">{q.text}</p>
-                  <div className="flex items-center gap-3 mt-2">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
                     <span className="text-xs text-klo-muted">{q.author_name}</span>
                     {q.is_answered && (
                       <span className="inline-flex items-center gap-1 text-xs text-emerald-400">

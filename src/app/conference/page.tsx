@@ -638,22 +638,22 @@ export default function ConferencePage() {
             Continue your journey with Keith&apos;s resources, assessments, and
             AI-powered tools on the KLO platform.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3">
             <Link
               href="/assessments"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors"
             >
               Take an Assessment
             </Link>
             <Link
               href="/vault"
-              className="inline-flex items-center gap-2 px-5 py-2.5 border border-klo-slate text-klo-text font-semibold text-sm rounded-lg hover:border-[#2764FF]/30 hover:text-[#2764FF] transition-colors"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 border border-klo-slate text-klo-text font-semibold text-sm rounded-lg hover:border-[#2764FF]/30 hover:text-[#2764FF] transition-colors"
             >
               Explore the Vault
             </Link>
             <Link
               href="/consult"
-              className="inline-flex items-center gap-2 px-5 py-2.5 border border-klo-slate text-klo-text font-semibold text-sm rounded-lg hover:border-[#2764FF]/30 hover:text-[#2764FF] transition-colors"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 border border-klo-slate text-klo-text font-semibold text-sm rounded-lg hover:border-[#2764FF]/30 hover:text-[#2764FF] transition-colors"
             >
               Book A Consultation
             </Link>

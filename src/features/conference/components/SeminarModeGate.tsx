@@ -25,7 +25,7 @@ export default function SeminarModeGate({ children }: SeminarModeGateProps) {
           {children}
         </div>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="glass rounded-2xl p-8 border border-white/10 text-center max-w-md mx-auto">
+          <div className="glass rounded-2xl p-6 sm:p-8 border border-white/10 text-center w-[calc(100%-2rem)] max-w-md mx-auto">
             <div className="w-14 h-14 rounded-2xl bg-[#2764FF]/10 flex items-center justify-center mx-auto mb-4">
               <Clock size={28} className="text-[#2764FF]" />
             </div>

@@ -71,7 +71,7 @@ export default function PollResults({ poll }: PollResultsProps) {
                 dataKey="name"
                 stroke="#8B949E"
                 tick={{ fontSize: 12 }}
-                width={120}
+                width={80}
               />
               <Bar dataKey="votes" radius={[0, 6, 6, 0]}>
                 {data.map((_, idx) => (

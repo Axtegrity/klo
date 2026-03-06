@@ -183,7 +183,7 @@ export default function EventsPage() {
                     {featuredKeynote.description}
                   </p>
                 )}
-                <div className="flex items-center gap-4 text-xs text-klo-muted pt-1">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-klo-muted pt-1">
                   <span className="inline-flex items-center gap-1.5">
                     <Calendar size={14} className="text-[#2764FF]" />
                     {formatDate(featuredKeynote.event_date)}
@@ -354,7 +354,7 @@ function EventCard({ event, isPast }: { event: EventItem; isPast?: boolean }) {
                 {event.description}
               </p>
             )}
-            <div className="flex items-center gap-4 text-xs text-klo-muted pt-1">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-klo-muted pt-1">
               <span className="inline-flex items-center gap-1.5">
                 <Calendar size={12} className="text-[#2764FF]/70" />
                 {formatDate(event.event_date)}
@@ -399,7 +399,7 @@ function EventCard({ event, isPast }: { event: EventItem; isPast?: boolean }) {
                   >
                     {file.file_type}
                   </span>
-                  <span className="text-xs text-klo-muted group-hover:text-klo-text transition-colors truncate max-w-[200px]">
+                  <span className="text-xs text-klo-muted group-hover:text-klo-text transition-colors truncate max-w-[140px] sm:max-w-[200px]">
                     {file.file_name}
                   </span>
                   {file.file_size && (
