@@ -4,6 +4,17 @@ import { useState, useEffect, useCallback } from "react";
 import { useConferenceRealtime } from "./useConferenceRealtime";
 import type { PollWithVotes } from "../types";
 
+function getVoterId(): string {
+  const KEY = "klo-voter-id";
+  if (typeof window === "undefined") return "";
+  let id = sessionStorage.getItem(KEY);
+  if (!id) {
+    id = crypto.randomUUID() + crypto.randomUUID();
+    sessionStorage.setItem(KEY, id);
+  }
+  return id;
+}
+
 export function usePolls() {
   const [polls, setPolls] = useState<PollWithVotes[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +64,7 @@ export function usePolls() {
         const res = await fetch(`/api/conference/polls/${pollId}/vote`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ option_index: optionIndex }),
+          body: JSON.stringify({ option_index: optionIndex, voter_id: getVoterId() }),
         });
 
         if (res.ok || res.status === 409) {

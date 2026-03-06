@@ -1,35 +1,40 @@
 import { NextResponse } from "next/server";
-import { createHash } from "crypto";
 import { getServiceSupabase } from "@/lib/supabase";
-
-function getFingerprint(req: Request): string {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
-  const ua = req.headers.get("user-agent") || "unknown";
-  return createHash("sha256").update(`${ip}:${ua}`).digest("hex");
-}
 
 export async function GET() {
   const supabase = getServiceSupabase();
-  const { data, error } = await supabase
-    .from("conference_word_cloud")
-    .select("word");
+
+  // Use SQL-side aggregation instead of fetching all rows
+  const { data, error } = await supabase.rpc("get_word_cloud_counts");
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // Fallback to client-side aggregation if RPC doesn't exist yet
+    const { data: rawData, error: rawError } = await supabase
+      .from("conference_word_cloud")
+      .select("word");
+
+    if (rawError) {
+      return NextResponse.json({ error: rawError.message }, { status: 500 });
+    }
+
+    const counts: Record<string, number> = {};
+    for (const row of rawData || []) {
+      const w = row.word.toLowerCase();
+      counts[w] = (counts[w] || 0) + 1;
+    }
+
+    const entries = Object.entries(counts)
+      .map(([word, count]) => ({ word, count }))
+      .sort((a, b) => b.count - a.count);
+
+    return NextResponse.json(entries, {
+      headers: { "Cache-Control": "public, s-maxage=2, stale-while-revalidate=5" },
+    });
   }
 
-  // Aggregate word counts
-  const counts: Record<string, number> = {};
-  for (const row of data || []) {
-    const w = row.word.toLowerCase();
-    counts[w] = (counts[w] || 0) + 1;
-  }
-
-  const entries = Object.entries(counts)
-    .map(([word, count]) => ({ word, count }))
-    .sort((a, b) => b.count - a.count);
-
-  return NextResponse.json(entries);
+  return NextResponse.json(data || [], {
+    headers: { "Cache-Control": "public, s-maxage=2, stale-while-revalidate=5" },
+  });
 }
 
 export async function POST(request: Request) {
@@ -43,12 +48,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const fingerprint = getFingerprint(request);
   const supabase = getServiceSupabase();
 
   const { error } = await supabase
     .from("conference_word_cloud")
-    .insert({ word: word.trim().toLowerCase(), voter_fingerprint: fingerprint });
+    .insert({ word: word.trim().toLowerCase() });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

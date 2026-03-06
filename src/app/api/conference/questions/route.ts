@@ -30,7 +30,8 @@ export async function GET(request: Request) {
     .select("*")
     .order("likes", { ascending: false })
     .order("upvotes", { ascending: false })
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(100);
 
   // Filter by session if specified
   if (sessionId) {
@@ -54,7 +55,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(data, {
+    headers: { "Cache-Control": "public, s-maxage=2, stale-while-revalidate=5" },
+  });
 }
 
 export async function POST(request: Request) {

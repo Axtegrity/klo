@@ -14,20 +14,34 @@ async function verifyAdmin() {
 export async function GET() {
   const supabase = getServiceSupabase();
 
-  const [pollsRes, votesRes] = await Promise.all([
+  // Fetch polls and pre-aggregated vote counts in two queries
+  // (avoids fetching every individual vote row)
+  const [pollsRes, voteCountsRes] = await Promise.all([
     supabase.from("conference_polls").select("*").order("created_at", { ascending: false }),
-    supabase.from("conference_poll_votes").select("poll_id, option_index"),
+    supabase.rpc("get_poll_vote_counts"),
   ]);
 
   if (pollsRes.error) {
     return NextResponse.json({ error: pollsRes.error.message }, { status: 500 });
   }
 
-  // Aggregate votes per poll per option
+  // Build lookup from RPC results: { poll_id: { option_index: count } }
   const voteCounts: Record<string, Record<number, number>> = {};
-  for (const v of votesRes.data || []) {
-    if (!voteCounts[v.poll_id]) voteCounts[v.poll_id] = {};
-    voteCounts[v.poll_id][v.option_index] = (voteCounts[v.poll_id][v.option_index] || 0) + 1;
+
+  if (!voteCountsRes.error && voteCountsRes.data) {
+    for (const row of voteCountsRes.data as { poll_id: string; option_index: number; cnt: number }[]) {
+      if (!voteCounts[row.poll_id]) voteCounts[row.poll_id] = {};
+      voteCounts[row.poll_id][row.option_index] = row.cnt;
+    }
+  } else {
+    // Fallback if RPC doesn't exist yet — fetch all votes
+    const { data: votes } = await supabase
+      .from("conference_poll_votes")
+      .select("poll_id, option_index");
+    for (const v of votes || []) {
+      if (!voteCounts[v.poll_id]) voteCounts[v.poll_id] = {};
+      voteCounts[v.poll_id][v.option_index] = (voteCounts[v.poll_id][v.option_index] || 0) + 1;
+    }
   }
 
   const enriched = pollsRes.data.map((poll) => {
@@ -38,7 +52,9 @@ export async function GET() {
     return { ...poll, votes, totalVotes };
   });
 
-  return NextResponse.json(enriched);
+  return NextResponse.json(enriched, {
+    headers: { "Cache-Control": "public, s-maxage=2, stale-while-revalidate=5" },
+  });
 }
 
 export async function POST(request: Request) {

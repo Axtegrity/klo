@@ -1,12 +1,5 @@
 import { NextResponse } from "next/server";
-import { createHash } from "crypto";
 import { getServiceSupabase } from "@/lib/supabase";
-
-function getFingerprint(req: Request): string {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
-  const ua = req.headers.get("user-agent") || "unknown";
-  return createHash("sha256").update(`${ip}:${ua}`).digest("hex");
-}
 
 export async function POST(
   request: Request,
@@ -14,13 +7,19 @@ export async function POST(
 ) {
   const { id } = await params;
   const body = await request.json();
-  const { option_index } = body;
+  const { option_index, voter_id } = body;
 
   if (typeof option_index !== "number" || option_index < 0) {
     return NextResponse.json({ error: "Valid option_index required" }, { status: 400 });
   }
 
-  const fingerprint = getFingerprint(request);
+  if (!voter_id || typeof voter_id !== "string" || voter_id.length < 16) {
+    return NextResponse.json({ error: "Valid voter_id required" }, { status: 400 });
+  }
+
+  // Use client-generated session ID instead of IP-based fingerprint
+  // This allows all users on shared WiFi to vote independently
+  const fingerprint = voter_id.slice(0, 64);
   const supabase = getServiceSupabase();
 
   // Verify poll exists and is active

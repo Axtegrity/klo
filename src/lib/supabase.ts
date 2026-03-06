@@ -102,20 +102,25 @@ export const supabase = new Proxy({} as SupabaseClient, {
 /*  Server-side admin client (service role key)                        */
 /* ------------------------------------------------------------------ */
 
+let _serviceSupabase: SupabaseClient | null = null;
+
 export function getServiceSupabase(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!_serviceSupabase) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!url || !serviceRoleKey) {
-    throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set. This function can only be called on the server."
-    );
+    if (!url || !serviceRoleKey) {
+      throw new Error(
+        "NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set. This function can only be called on the server."
+      );
+    }
+
+    _serviceSupabase = createClient(url, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
   }
-
-  return createClient(url, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+  return _serviceSupabase;
 }

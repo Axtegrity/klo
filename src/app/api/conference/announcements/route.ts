@@ -23,7 +23,9 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(data, {
+    headers: { "Cache-Control": "public, s-maxage=3, stale-while-revalidate=10" },
+  });
 }
 
 export async function POST(request: Request) {
