@@ -44,7 +44,7 @@ export default function ConclusionCTA({ conclusion }: ConclusionCTAProps) {
             </div>
             <Button
               variant="primary"
-              href="/booking"
+              href="/consult"
               size="md"
               className="shrink-0"
             >

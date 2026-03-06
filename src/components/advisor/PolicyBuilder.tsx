@@ -886,7 +886,7 @@ export default function PolicyBuilder() {
             <ChevronLeft className="w-4 h-4" /> Edit Preferences
           </Button>
           <div className="flex-1" />
-          <Button href="/booking">
+          <Button href="/consult">
             <CalendarCheck className="w-4 h-4" /> Request Custom Review by
             Keith L. Odom
           </Button>

@@ -652,10 +652,10 @@ export default function ConferencePage() {
               Explore the Vault
             </Link>
             <Link
-              href="/booking"
+              href="/consult"
               className="inline-flex items-center gap-2 px-5 py-2.5 border border-klo-slate text-klo-text font-semibold text-sm rounded-lg hover:border-[#2764FF]/30 hover:text-[#2764FF] transition-colors"
             >
-              Book Keith
+              Book A Consultation
             </Link>
           </div>
         </motion.div>

@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     x: 0.5, y: 1.5, w: 9, h: 1,
     fontSize: 32, bold: true, color: "E6EDF3", fontFace: "Arial", align: "center",
   });
-  slide4.addText("Book a strategy session at klo-app.vercel.app/booking", {
+  slide4.addText("Book a consultation at klo-app.vercel.app/consult", {
     x: 0.5, y: 2.8, w: 9, h: 0.6,
     fontSize: 18, color: "C8A84E", fontFace: "Arial", align: "center",
   });

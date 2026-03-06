@@ -269,7 +269,7 @@ export function assessmentReportEmail(
       </tr>
       <tr>
         <td align="center">
-          ${secondaryButton("Book a Strategy Session", "https://keithlodom.io/booking")}
+          ${secondaryButton("Book A Consultation", "https://keithlodom.io/consult")}
         </td>
       </tr>
     </table>
@@ -487,7 +487,7 @@ export function upgradeEmail(
       { title: "Chat Unlimited", desc: "Ask the AI Advisor anything — no more monthly limits.", href: "https://keithlodom.io/advisor" },
     ],
     executive: [
-      { title: "Book Your Advisory Session", desc: "Schedule your first 1-on-1 session with Keith L. Odom.", href: "https://keithlodom.io/booking" },
+      { title: "Book Your Advisory Session", desc: "Schedule your first 1-on-1 session with Keith L. Odom.", href: "https://keithlodom.io/consult" },
       { title: "Set Up Your Dashboard", desc: "Configure your organization-wide analytics dashboard.", href: "https://keithlodom.io/profile" },
       { title: "Access Executive Briefings", desc: "Download your first tailored executive briefing document.", href: "https://keithlodom.io/vault" },
     ],

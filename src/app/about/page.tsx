@@ -295,7 +295,7 @@ export default function AboutPage() {
             custom={6}
             className="mt-10 text-center"
           >
-            <Button variant="secondary" size="lg" href="/booking">
+            <Button variant="secondary" size="lg" href="/consult">
               Work With Keith
               <ArrowRight size={16} />
             </Button>

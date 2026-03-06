@@ -384,11 +384,11 @@ export default function ManageSubscriptionPage() {
                       info@keithlodom.io
                     </a>
                     <Link
-                      href="/booking"
+                      href="/consult"
                       className="inline-flex items-center gap-1.5 text-[#2764FF] hover:underline"
                     >
                       <Crown className="w-3.5 h-3.5" />
-                      Book a Call
+                      Book A Consultation
                     </Link>
                   </div>
                 </div>
