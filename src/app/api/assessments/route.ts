@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
+import { resend } from "@/lib/email";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -36,6 +37,30 @@ export async function POST(request: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Notify Keith + Tim of new assessment completion
+  try {
+    const userName = session.user?.name ?? session.user?.email ?? "Unknown";
+    const userEmail = session.user?.email ?? "N/A";
+    await resend.emails.send({
+      from: "KLO Advisory <info@keithlodom.io>",
+      to: ["kodom@techchurch.io", "timjeromeadams@gmail.com"],
+      subject: `New Assessment Completed — ${assessment_type}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0B0F1A;padding:32px;border-radius:12px;">
+          <h1 style="color:#C9A84C;font-size:24px;">New Assessment Completed</h1>
+          <table style="width:100%;border-collapse:collapse;margin-top:16px;">
+            <tr><td style="padding:6px 12px;font-weight:600;color:#999;">User</td><td style="padding:6px 12px;color:#fff;">${userName}</td></tr>
+            <tr><td style="padding:6px 12px;font-weight:600;color:#999;">Email</td><td style="padding:6px 12px;color:#fff;">${userEmail}</td></tr>
+            <tr><td style="padding:6px 12px;font-weight:600;color:#999;">Assessment</td><td style="padding:6px 12px;color:#fff;">${assessment_type}</td></tr>
+            <tr><td style="padding:6px 12px;font-weight:600;color:#999;">Score</td><td style="padding:6px 12px;color:#fff;">${score}%</td></tr>
+          </table>
+        </div>
+      `,
+    });
+  } catch {
+    // Don't fail the assessment save if email fails
   }
 
   return NextResponse.json(data);

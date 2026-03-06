@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { getServiceSupabase } from "@/lib/supabase";
+import { resend } from "@/lib/email";
 import crypto from "crypto";
 
 export async function POST(request: Request) {
@@ -62,6 +63,26 @@ export async function POST(request: Request) {
         { error: "Failed to create account" },
         { status: 500 }
       );
+    }
+
+    // Notify Keith + Tim of new sign-up
+    try {
+      await resend.emails.send({
+        from: "KLO Advisory <info@keithlodom.io>",
+        to: ["kodom@techchurch.io", "timjeromeadams@gmail.com"],
+        subject: `New User Sign-Up — ${email.toLowerCase()}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0B0F1A;padding:32px;border-radius:12px;">
+            <h1 style="color:#C9A84C;font-size:24px;">New User Registration</h1>
+            <table style="width:100%;border-collapse:collapse;margin-top:16px;">
+              <tr><td style="padding:6px 12px;font-weight:600;color:#999;">Name</td><td style="padding:6px 12px;color:#fff;">${full_name?.trim() || "Not provided"}</td></tr>
+              <tr><td style="padding:6px 12px;font-weight:600;color:#999;">Email</td><td style="padding:6px 12px;color:#fff;">${email.toLowerCase()}</td></tr>
+            </table>
+          </div>
+        `,
+      });
+    } catch {
+      // Don't fail registration if email fails
     }
 
     return NextResponse.json({ success: true }, { status: 201 });

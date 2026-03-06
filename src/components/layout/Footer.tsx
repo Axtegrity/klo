@@ -14,7 +14,7 @@ const quickLinks = [
   { label: "Vault", href: "/vault" },
   { label: "Invite Keith To Speak", href: "/booking" },
   { label: "Book A Consultation", href: "/consult" },
-  { label: "Conference", href: "/conference" },
+  { label: "Events", href: "/conference" },
 ];
 
 export default function Footer() {
