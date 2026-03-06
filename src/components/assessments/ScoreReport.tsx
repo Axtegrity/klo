@@ -147,7 +147,7 @@ function getRecommendations(
 
   // Add a general recommendation
   recommendations.push(
-    `Schedule a strategy session with Keith to create a personalized ${assessmentTitle.toLowerCase()} improvement roadmap for your organization.`,
+    `Book a consultation with Keith to create a personalized ${assessmentTitle.toLowerCase()} improvement roadmap for your organization.`,
   );
 
   return recommendations;
@@ -380,9 +380,9 @@ export default function ScoreReport({
         className="space-y-4"
       >
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button variant="primary" size="lg" href="/booking">
+          <Button variant="primary" size="lg" href="/consult">
             <Calendar size={18} />
-            Book a Strategy Session with Keith
+            Book A Consultation
           </Button>
           <Button variant="secondary" size="md" onClick={onRetake}>
             <RotateCcw size={16} />
