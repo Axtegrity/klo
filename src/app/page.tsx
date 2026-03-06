@@ -21,22 +21,22 @@ export default function Home() {
         <div className="absolute top-[85%] -left-20 h-60 w-60 rounded-full bg-[#8840FF]/[0.05] blur-[100px]" />
         <div className="py-16 space-y-20">
           <FadeInOnScroll delay={0}>
+            <UpcomingKeynote />
+          </FadeInOnScroll>
+          <FadeInOnScroll delay={0.05}>
             <LatestBrief />
           </FadeInOnScroll>
-          <FadeInOnScroll delay={0.05}>
+          <FadeInOnScroll delay={0.1}>
             <TrendingTopics />
           </FadeInOnScroll>
-          <FadeInOnScroll delay={0.1}>
+          <FadeInOnScroll delay={0.05}>
             <FeaturedInsight />
           </FadeInOnScroll>
-          <FadeInOnScroll delay={0.05}>
+          <FadeInOnScroll delay={0.1}>
             <AIToolOfTheWeek />
           </FadeInOnScroll>
-          <FadeInOnScroll delay={0.1}>
-            <QuickAssessmentCTA />
-          </FadeInOnScroll>
           <FadeInOnScroll delay={0.05}>
-            <UpcomingKeynote />
+            <QuickAssessmentCTA />
           </FadeInOnScroll>
         </div>
       </div>
