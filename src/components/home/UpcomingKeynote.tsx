@@ -18,7 +18,7 @@ const fallbackEvent: FeaturedEvent = {
   id: "fallback",
   title: "New Life Leadership Conference — AI and the Future of Ministry",
   conference_name: "New Life Leadership Conference",
-  conference_location: "Atlanta, GA",
+  conference_location: "Montgomery, AL",
   event_date: "2026-03-07",
   description: null,
 };

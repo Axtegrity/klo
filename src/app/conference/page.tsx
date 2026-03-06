@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -8,8 +8,6 @@ import {
   Clock,
   MapPin,
   CalendarDays,
-  MessageSquare,
-  Send,
   StickyNote,
   Lightbulb,
   Bot,
@@ -46,13 +44,6 @@ const staggerContainer = {
 /* ------------------------------------------------------------------ */
 /*  Data types                                                          */
 /* ------------------------------------------------------------------ */
-
-interface QueuedQuestion {
-  id: string;
-  text: string;
-  timestamp: Date;
-  upvotes: number;
-}
 
 interface Takeaway {
   icon: typeof Lightbulb;
@@ -160,46 +151,6 @@ export default function ConferencePage() {
   /* ---------- Sessions from DB ---------- */
   const { sessions, loading: sessionsLoading } = useSessions();
 
-  /* ---------- Q&A state ---------- */
-  const [questions, setQuestions] = useState<QueuedQuestion[]>([
-    {
-      id: "seed-1",
-      text: "How do you recommend small organizations begin their AI journey with limited budgets?",
-      timestamp: new Date(),
-      upvotes: 12,
-    },
-    {
-      id: "seed-2",
-      text: "What are the biggest governance pitfalls you've seen in enterprise AI adoption?",
-      timestamp: new Date(),
-      upvotes: 8,
-    },
-  ]);
-  const [questionInput, setQuestionInput] = useState("");
-
-  const submitQuestion = useCallback(() => {
-    const trimmed = questionInput.trim();
-    if (!trimmed) return;
-    setQuestions((prev) => [
-      {
-        id: Date.now().toString(),
-        text: trimmed,
-        timestamp: new Date(),
-        upvotes: 0,
-      },
-      ...prev,
-    ]);
-    setQuestionInput("");
-  }, [questionInput]);
-
-  const upvoteQuestion = useCallback((id: string) => {
-    setQuestions((prev) =>
-      prev
-        .map((q) => (q.id === id ? { ...q, upvotes: q.upvotes + 1 } : q))
-        .sort((a, b) => b.upvotes - a.upvotes)
-    );
-  }, []);
-
   /* ---------- Notes state with localStorage ---------- */
   const [notes, setNotes] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -276,7 +227,7 @@ export default function ConferencePage() {
             </span>
             <span className="inline-flex items-center gap-2">
               <MapPin size={16} className="text-[#2764FF]" />
-              Atlanta Convention Center
+              Montgomery, AL
             </span>
           </motion.div>
         </motion.div>
@@ -417,90 +368,6 @@ export default function ConferencePage() {
               ))
             )}
           </div>
-        </motion.div>
-      </section>
-
-      {/* ====== Live Q&A ====== */}
-      <section className="px-6 py-16 md:py-24 bg-klo-dark/40">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="max-w-4xl mx-auto"
-        >
-          <motion.div variants={fadeUp} custom={0} className="mb-10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-[#2764FF]/10 flex items-center justify-center">
-                <MessageSquare size={20} className="text-[#2764FF]" />
-              </div>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
-                Live Q&amp;A
-              </h2>
-            </div>
-            <p className="text-klo-muted">
-              Submit your questions for the current session. Popular questions
-              rise to the top.
-            </p>
-          </motion.div>
-
-          {/* Question input */}
-          <motion.div variants={fadeUp} custom={1}>
-            <Card className="mb-6">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input
-                  type="text"
-                  value={questionInput}
-                  onChange={(e) => setQuestionInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && submitQuestion()}
-                  placeholder="Type your question for the speaker..."
-                  className="flex-1 bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-3 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50 focus:ring-1 focus:ring-[#2764FF]/20 transition-colors"
-                />
-                <button
-                  onClick={submitQuestion}
-                  disabled={!questionInput.trim()}
-                  className="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <Send size={16} />
-                  Submit
-                </button>
-              </div>
-            </Card>
-          </motion.div>
-
-          {/* Queued questions */}
-          <motion.div variants={fadeUp} custom={2} className="space-y-3" aria-live="polite">
-            <AnimatePresence mode="popLayout">
-              {questions.map((q) => (
-                <motion.div
-                  key={q.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.3, ease: "easeOut" as const }}
-                >
-                  <Card className="flex items-start gap-4">
-                    <button
-                      onClick={() => upvoteQuestion(q.id)}
-                      className="shrink-0 flex flex-col items-center gap-1 px-2 py-1 rounded-lg hover:bg-[#2764FF]/10 transition-colors group"
-                    >
-                      <ChevronRight
-                        size={16}
-                        className="text-klo-muted -rotate-90 group-hover:text-[#2764FF] transition-colors"
-                      />
-                      <span className="text-xs font-semibold text-klo-gold">
-                        {q.upvotes}
-                      </span>
-                    </button>
-                    <p className="text-sm text-klo-text leading-relaxed pt-1">
-                      {q.text}
-                    </p>
-                  </Card>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
         </motion.div>
       </section>
 
