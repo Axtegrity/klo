@@ -29,6 +29,8 @@ export default function PollManager() {
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const fetchPolls = useCallback(async () => {
     try {
@@ -52,11 +54,18 @@ export default function PollManager() {
     setOptions((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const showSuccess = (msg: string) => {
+    setSuccessMsg(msg);
+    setError(null);
+    setTimeout(() => setSuccessMsg(null), 4000);
+  };
+
   const createSinglePoll = async () => {
     const validOptions = options.filter((o) => o.trim());
     if (!question.trim() || validOptions.length < 2) return;
 
     setCreating(true);
+    setError(null);
     try {
       const res = await fetch("/api/conference/polls", {
         method: "POST",
@@ -67,7 +76,14 @@ export default function PollManager() {
         setQuestion("");
         setOptions(["", ""]);
         fetchPolls();
+        showSuccess("Poll created and added to queue!");
+      } else {
+        const data = await res.json().catch(() => null);
+        setError(data?.error || `Failed to create poll (${res.status})`);
       }
+    } catch (err) {
+      setError("Network error — check your connection and try again.");
+      console.error("Create poll error:", err);
     } finally {
       setCreating(false);
     }
@@ -86,9 +102,13 @@ export default function PollManager() {
       })
       .filter(Boolean) as { question: string; options: string[] }[];
 
-    if (questions.length === 0) return;
+    if (questions.length === 0) {
+      setError("No valid questions found. Use the format: Question | Option1 | Option2");
+      return;
+    }
 
     setCreating(true);
+    setError(null);
     try {
       const res = await fetch("/api/conference/polls", {
         method: "POST",
@@ -98,7 +118,14 @@ export default function PollManager() {
       if (res.ok) {
         setBatchText("");
         fetchPolls();
+        showSuccess(`${questions.length} poll${questions.length > 1 ? "s" : ""} created and added to queue!`);
+      } else {
+        const data = await res.json().catch(() => null);
+        setError(data?.error || `Failed to create batch (${res.status})`);
       }
+    } catch (err) {
+      setError("Network error — check your connection and try again.");
+      console.error("Batch create error:", err);
     } finally {
       setCreating(false);
     }
@@ -158,6 +185,18 @@ export default function PollManager() {
 
   return (
     <div className="space-y-6">
+      {/* Feedback messages */}
+      {error && (
+        <div className="rounded-xl p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
+      {successMsg && (
+        <div className="rounded-xl p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
+          {successMsg}
+        </div>
+      )}
+
       {/* Create section */}
       <div className="glass rounded-2xl p-6 border border-white/5">
         <div className="flex items-center justify-between mb-4">
