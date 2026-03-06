@@ -13,6 +13,8 @@ import {
   FileText,
   RefreshCw,
   Star,
+  Globe,
+  GlobeOff,
 } from "lucide-react";
 
 interface EventFile {
@@ -144,6 +146,15 @@ export default function EventsAdminTab() {
     fetchEvents();
   };
 
+  const handleTogglePublish = async (eventId: string, currentlyPublished: boolean) => {
+    await fetch(`/api/admin/events/${eventId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_published: !currentlyPublished }),
+    });
+    fetchEvents();
+  };
+
   const currentEvents = events.filter((e) => e.event_category === "Current Events");
   const previousEvents = events.filter((e) => e.event_category === "Previous Events");
 
@@ -184,8 +195,31 @@ export default function EventsAdminTab() {
                         <FileText size={12} />
                         {event.event_files?.length ?? 0} files
                       </span>
+                      <span
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                          event.is_published
+                            ? "bg-emerald-500/10 text-emerald-400"
+                            : "bg-white/5 text-klo-muted"
+                        }`}
+                      >
+                        {event.is_published ? "Published" : "Draft"}
+                      </span>
                     </div>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTogglePublish(event.id, event.is_published);
+                    }}
+                    className={`p-2 rounded-lg transition-colors ${
+                      event.is_published
+                        ? "text-emerald-400 bg-emerald-400/10"
+                        : "text-klo-muted hover:text-emerald-400 hover:bg-emerald-400/10"
+                    }`}
+                    title={event.is_published ? "Unpublish (hide from Events page)" : "Publish (show on Events page)"}
+                  >
+                    {event.is_published ? <Globe size={16} /> : <GlobeOff size={16} />}
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -227,7 +261,7 @@ export default function EventsAdminTab() {
                         <input
                           type="file"
                           className="hidden"
-                          accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+                          accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.ppt,.pptx"
                           disabled={uploading === event.id}
                           onChange={(e) => {
                             const f = e.target.files?.[0];

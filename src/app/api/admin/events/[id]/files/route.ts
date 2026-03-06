@@ -29,7 +29,7 @@ export async function POST(
   }
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-  const allowedTypes = ["pdf", "doc", "docx", "xls", "xlsx", "txt"];
+  const allowedTypes = ["pdf", "doc", "docx", "xls", "xlsx", "txt", "ppt", "pptx"];
   if (!allowedTypes.includes(ext)) {
     return NextResponse.json(
       { error: `File type .${ext} not allowed. Allowed: ${allowedTypes.join(", ")}` },
