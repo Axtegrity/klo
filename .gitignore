@@ -48,3 +48,6 @@ playwright/.cache/
 # capacitor native platforms
 /ios/
 /android/
+
+# sensitive slides
+public/credentials-slide.*

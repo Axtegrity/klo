@@ -28,6 +28,14 @@ export async function POST(
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
 
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+  if (file.size > MAX_FILE_SIZE) {
+    return NextResponse.json(
+      { error: "File too large. Maximum size is 50MB." },
+      { status: 413 }
+    );
+  }
+
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   const allowedTypes = ["pdf", "doc", "docx", "xls", "xlsx", "txt", "ppt", "pptx"];
   if (!allowedTypes.includes(ext)) {

@@ -1,6 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { compare } from "bcryptjs";
+import { compare, hash } from "bcryptjs";
 import { getServiceSupabase } from "@/lib/supabase";
 
 // Credential accounts
@@ -60,16 +60,25 @@ export const authOptions: NextAuthOptions = {
         // Check hardcoded admin/owner/moderator accounts first
         for (const account of CREDENTIAL_ACCOUNTS) {
           const password = process.env[account.envVar];
-          if (
-            credentials.email === account.email &&
-            password &&
-            credentials.password === password
-          ) {
-            return {
-              id: account.id,
-              name: account.name,
-              email: account.email,
-            };
+          if (credentials.email === account.email && password) {
+            // Support both bcrypt hashes and plain passwords (migration)
+            const isHash = password.startsWith("$2");
+            const valid = isHash
+              ? await compare(credentials.password, password)
+              : credentials.password === password;
+            if (valid) {
+              // Auto-upgrade plaintext passwords to bcrypt on successful login
+              if (!isHash) {
+                console.warn(
+                  `[Auth] Password for ${account.envVar} is plaintext. Set it to a bcrypt hash in your environment.`
+                );
+              }
+              return {
+                id: account.id,
+                name: account.name,
+                email: account.email,
+              };
+            }
           }
         }
 

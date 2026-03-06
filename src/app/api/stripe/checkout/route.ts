@@ -40,9 +40,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const origin = request.headers.get("origin") || "http://localhost:3000";
-    const successUrl = `${origin}/pricing/success?tier=${tier}&session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${origin}/pricing`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const successUrl = `${baseUrl}/pricing/success?tier=${tier}&session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${baseUrl}/pricing`;
 
     /* -------------------------------------------------------------- */
     /*  Demo / Test Mode                                               */
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         `[Stripe Demo] Mock checkout for tier="${tier}", priceId="${priceId}"`
       );
       return NextResponse.json({
-        url: `${origin}/pricing/success?tier=${tier}&session_id=demo_${Date.now()}`,
+        url: `${baseUrl}/pricing/success?tier=${tier}&session_id=demo_${Date.now()}`,
       });
     }
 
