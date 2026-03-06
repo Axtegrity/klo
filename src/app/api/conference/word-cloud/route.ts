@@ -52,7 +52,7 @@ export async function POST(request: Request) {
 
   const { error } = await supabase
     .from("conference_word_cloud")
-    .insert({ word: word.trim().toLowerCase() });
+    .insert({ word: word.trim().toLowerCase(), voter_fingerprint: "anonymous" });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
