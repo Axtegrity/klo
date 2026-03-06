@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resend } from "@/lib/email";
+import { getServiceSupabase } from "@/lib/supabase";
 
 /* ------------------------------------------------------------------ */
 /*  Simple in-memory rate limiter: 3 submissions per hour per IP       */
@@ -236,6 +237,29 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // Save to database (non-blocking — log errors but continue)
+      try {
+        const supabase = getServiceSupabase();
+        await supabase.from("inquiries").insert({
+          type: "consultation",
+          name: parsed.name,
+          email: parsed.email,
+          phone: parsed.phone,
+          organization: parsed.organizationName,
+          industry: parsed.industry,
+          location: parsed.location ?? null,
+          area_of_interest: parsed.areaOfInterest,
+          organization_size: parsed.organizationSize,
+          current_challenge: parsed.currentChallenge,
+          timeline: parsed.timeline,
+          previous_consultant: parsed.previousConsultant,
+          additional_details: parsed.additionalDetails ?? null,
+          ip_address: ip,
+        });
+      } catch (dbErr) {
+        console.error("Failed to save consultation inquiry to DB:", dbErr);
+      }
+
       // Demo mode
       if (!process.env.RESEND_API_KEY) {
         return NextResponse.json({
@@ -321,6 +345,26 @@ export async function POST(req: NextRequest) {
         { success: false, message: errors.join(" ") },
         { status: 400 }
       );
+    }
+
+    // Save to database (non-blocking — log errors but continue)
+    try {
+      const supabase = getServiceSupabase();
+      await supabase.from("inquiries").insert({
+        type: "booking",
+        name: parsed.name,
+        email: parsed.email,
+        organization: parsed.organization ?? null,
+        event_name: parsed.eventName,
+        event_date: parsed.eventDate ?? null,
+        event_type: parsed.eventType,
+        budget_range: parsed.budgetRange ?? null,
+        audience_size: parsed.audienceSize ?? null,
+        message: parsed.message ?? null,
+        ip_address: ip,
+      });
+    } catch (dbErr) {
+      console.error("Failed to save booking inquiry to DB:", dbErr);
     }
 
     // Demo mode — skip sending if no API key configured

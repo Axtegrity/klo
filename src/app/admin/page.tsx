@@ -21,6 +21,7 @@ import {
   AlertTriangle,
   BarChart3,
   Vote,
+  Inbox,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import {
@@ -46,6 +47,7 @@ import type {
 import { ASSESSMENTS } from "@/lib/constants";
 import ConferenceAdminTab from "@/features/conference/admin/ConferenceAdminTab";
 import EventsAdminTab from "@/features/admin/EventsAdminTab";
+import InquiriesAdminTab from "@/features/admin/InquiriesAdminTab";
 
 // ------------------------------------------------------------
 // Animation variants
@@ -117,7 +119,7 @@ function StatCard({
 // Tab definitions
 // ------------------------------------------------------------
 
-type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "events" | "tools";
+type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "events" | "inquiries" | "tools";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -126,6 +128,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "revenue", label: "Revenue" },
   { id: "conference", label: "Conference" },
   { id: "events", label: "Events" },
+  { id: "inquiries", label: "Inquiries" },
   { id: "tools", label: "Tools" },
 ];
 
@@ -174,6 +177,7 @@ export default function AdminPage() {
   const [assessmentSearch, setAssessmentSearch] = useState("");
   const [assessmentTypeFilter, setAssessmentTypeFilter] = useState("all");
   const [pollStats, setPollStats] = useState<{ total: number; totalVotes: number; active: number }>({ total: 0, totalVotes: 0, active: 0 });
+  const [inquiriesNewCount, setInquiriesNewCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -200,10 +204,11 @@ export default function AdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const [statsRes, activityRes, pollsRes] = await Promise.all([
+      const [statsRes, activityRes, pollsRes, inquiriesRes] = await Promise.all([
         fetch("/api/admin/stats"),
         fetch("/api/admin/activity"),
         fetch("/api/conference/polls"),
+        fetch("/api/admin/inquiries?limit=1"),
       ]);
       if (!statsRes.ok || !activityRes.ok) {
         throw new Error("Failed to load dashboard data");
@@ -217,6 +222,10 @@ export default function AdminPage() {
           totalVotes: pollsData.reduce((sum: number, p: { totalVotes: number }) => sum + p.totalVotes, 0),
           active: pollsData.filter((p: { is_active: boolean; is_deployed: boolean }) => p.is_active && p.is_deployed).length,
         });
+      }
+      if (inquiriesRes.ok) {
+        const inquiriesData = await inquiriesRes.json();
+        setInquiriesNewCount(inquiriesData.newCount ?? 0);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -378,6 +387,11 @@ export default function AdminPage() {
                 }`}
               >
                 {tab.label}
+                {tab.id === "inquiries" && inquiriesNewCount > 0 && (
+                  <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] font-bold">
+                    {inquiriesNewCount}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -395,7 +409,7 @@ export default function AdminPage() {
         )}
 
         {/* Loading state (only for data-dependent tabs) */}
-        {loading && activeTab !== "conference" && activeTab !== "events" && activeTab !== "tools" && (
+        {loading && activeTab !== "conference" && activeTab !== "events" && activeTab !== "inquiries" && activeTab !== "tools" && (
           <div className="flex items-center justify-center py-20">
             <RefreshCw className="w-8 h-8 text-klo-gold animate-spin" />
           </div>
@@ -1094,6 +1108,11 @@ export default function AdminPage() {
         {/* EVENTS TAB */}
         {activeTab === "events" && (
           <EventsAdminTab />
+        )}
+
+        {/* INQUIRIES TAB */}
+        {activeTab === "inquiries" && (
+          <InquiriesAdminTab />
         )}
 
         {/* TOOLS TAB */}

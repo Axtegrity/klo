@@ -301,3 +301,29 @@ export interface AdminActivityData {
   assessments: AdminTimeSeriesPoint[];
   subscriptionConversions: AdminTimeSeriesPoint[];
 }
+
+export interface AdminInquiry {
+  id: string;
+  type: "booking" | "consultation";
+  status: "new" | "reviewed" | "contacted" | "archived";
+  name: string;
+  email: string;
+  phone: string | null;
+  organization: string | null;
+  event_name: string | null;
+  event_date: string | null;
+  event_type: string | null;
+  budget_range: string | null;
+  audience_size: string | null;
+  message: string | null;
+  industry: string | null;
+  location: string | null;
+  area_of_interest: string | null;
+  organization_size: string | null;
+  current_challenge: string | null;
+  timeline: string | null;
+  previous_consultant: string | null;
+  additional_details: string | null;
+  ip_address: string | null;
+  created_at: string;
+}
