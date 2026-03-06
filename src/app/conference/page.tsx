@@ -147,9 +147,49 @@ function LiveBadge() {
 /*  Page component                                                      */
 /* ------------------------------------------------------------------ */
 
+interface FeaturedEvent {
+  id: string;
+  title: string;
+  conference_name: string;
+  conference_location: string;
+  event_date: string;
+  description: string | null;
+}
+
+const fallbackEvent: FeaturedEvent = {
+  id: "fallback",
+  title: "New Life Leadership Conference — AI and the Future of Ministry",
+  conference_name: "New Life Leadership Conference",
+  conference_location: "Montgomery, AL",
+  event_date: "2026-03-07",
+  description: null,
+};
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr + "T12:00:00");
+  return d.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export default function ConferencePage() {
   /* ---------- Sessions from DB ---------- */
   const { sessions, loading: sessionsLoading } = useSessions();
+
+  /* ---------- Featured event ---------- */
+  const [event, setEvent] = useState<FeaturedEvent>(fallbackEvent);
+
+  useEffect(() => {
+    fetch("/api/featured-keynote")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) setEvent(data);
+      })
+      .catch(() => {});
+  }, []);
 
   /* ---------- Notes state with localStorage ---------- */
   const [notes, setNotes] = useState(() => {
@@ -198,7 +238,7 @@ export default function ConferencePage() {
             custom={1}
             className="font-display text-4xl md:text-6xl font-bold text-klo-text leading-tight"
           >
-            KLO Leadership &amp; Innovation Summit
+            {event.conference_name}
           </motion.h1>
 
           <motion.p
@@ -206,9 +246,7 @@ export default function ConferencePage() {
             custom={2}
             className="mt-6 text-lg md:text-xl text-klo-muted max-w-2xl mx-auto leading-relaxed"
           >
-            Your interactive companion for today&apos;s event. Access schedules,
-            submit questions, take notes, and download resources — all in one
-            place.
+            {event.title}
           </motion.p>
 
           {/* Event details */}
@@ -219,15 +257,11 @@ export default function ConferencePage() {
           >
             <span className="inline-flex items-center gap-2">
               <CalendarDays size={16} className="text-[#2764FF]" />
-              March 15, 2026
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <Clock size={16} className="text-[#2764FF]" />
-              9:00 AM - 4:00 PM
+              {formatDate(event.event_date)}
             </span>
             <span className="inline-flex items-center gap-2">
               <MapPin size={16} className="text-[#2764FF]" />
-              Montgomery, AL
+              {event.conference_location}
             </span>
           </motion.div>
         </motion.div>
