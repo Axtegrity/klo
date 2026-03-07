@@ -48,6 +48,7 @@ import { ASSESSMENTS } from "@/lib/constants";
 import ConferenceAdminTab from "@/features/conference/admin/ConferenceAdminTab";
 import EventsAdminTab from "@/features/admin/EventsAdminTab";
 import InquiriesAdminTab from "@/features/admin/InquiriesAdminTab";
+import PresentationsAdminTab from "@/features/admin/PresentationsAdminTab";
 
 // ------------------------------------------------------------
 // Animation variants
@@ -119,7 +120,7 @@ function StatCard({
 // Tab definitions
 // ------------------------------------------------------------
 
-type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "events" | "inquiries" | "tools";
+type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "presentations" | "events" | "inquiries" | "tools";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -127,6 +128,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "content", label: "Content" },
   { id: "revenue", label: "Revenue" },
   { id: "conference", label: "Conference" },
+  { id: "presentations", label: "Presentations" },
   { id: "events", label: "Events" },
   { id: "inquiries", label: "Inquiries" },
   { id: "tools", label: "Tools" },
@@ -1103,6 +1105,11 @@ export default function AdminPage() {
         {/* CONFERENCE TAB */}
         {activeTab === "conference" && (
           <ConferenceAdminTab />
+        )}
+
+        {/* PRESENTATIONS TAB */}
+        {activeTab === "presentations" && (
+          <PresentationsAdminTab />
         )}
 
         {/* EVENTS TAB */}

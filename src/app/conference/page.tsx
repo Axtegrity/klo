@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -16,6 +17,8 @@ import {
   User,
   CheckCircle2,
   Sparkles,
+  Lock,
+  Download,
 } from "lucide-react";
 import Card from "@/components/shared/Card";
 import Badge from "@/components/shared/Badge";
@@ -51,12 +54,20 @@ interface Takeaway {
   detail: string;
 }
 
-interface Resource {
+interface PresentationFile {
+  id: string;
+  file_name: string;
+  file_type: string;
+  file_url: string;
+  file_size: string;
+}
+
+interface ConferencePresentation {
+  id: string;
   title: string;
-  description: string;
-  type: string;
-  size: string;
-  href: string;
+  description: string | null;
+  category: string;
+  conference_presentation_files: PresentationFile[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -90,36 +101,16 @@ const keyTakeaways: Takeaway[] = [
   },
 ];
 
-const resources: Resource[] = [
-  {
-    title: "Keynote Slides: AI & Leadership",
-    description: "Full slide deck from the opening keynote session",
-    type: "PDF",
-    size: "4.2 MB",
-    href: "#",
-  },
-  {
-    title: "AI Strategy Workshop Handout",
-    description: "Step-by-step worksheet for building your AI roadmap",
-    type: "PDF",
-    size: "1.8 MB",
-    href: "#",
-  },
-  {
-    title: "Digital Governance Checklist",
-    description: "Comprehensive governance framework assessment tool",
-    type: "PDF",
-    size: "920 KB",
-    href: "#",
-  },
-  {
-    title: "TechChurch Blueprint Guide",
-    description: "Complete guide to integrating technology in faith organizations",
-    type: "PDF",
-    size: "3.1 MB",
-    href: "#",
-  },
-];
+const FILE_TYPE_COLORS: Record<string, string> = {
+  pdf: "bg-red-500/20 text-red-400",
+  doc: "bg-blue-500/20 text-blue-400",
+  docx: "bg-blue-500/20 text-blue-400",
+  ppt: "bg-orange-500/20 text-orange-400",
+  pptx: "bg-orange-500/20 text-orange-400",
+  xls: "bg-green-500/20 text-green-400",
+  xlsx: "bg-green-500/20 text-green-400",
+  txt: "bg-zinc-500/20 text-zinc-400",
+};
 
 /* ------------------------------------------------------------------ */
 /*  Live badge component                                                */
@@ -176,8 +167,22 @@ function formatDate(dateStr: string): string {
 }
 
 export default function ConferencePage() {
+  /* ---------- Auth ---------- */
+  const { data: session } = useSession();
+  const isAuthenticated = !!(session?.user as { id?: string } | undefined)?.id;
+
   /* ---------- Sessions from DB ---------- */
   const { sessions, loading: sessionsLoading } = useSessions();
+
+  /* ---------- Presentations ---------- */
+  const [presentations, setPresentations] = useState<ConferencePresentation[]>([]);
+
+  useEffect(() => {
+    fetch("/api/conference/presentations")
+      .then((res) => res.json())
+      .then((data) => { if (Array.isArray(data)) setPresentations(data); })
+      .catch(() => {});
+  }, []);
 
   /* ---------- Featured event ---------- */
   const [event, setEvent] = useState<FeaturedEvent>(fallbackEvent);
@@ -560,7 +565,7 @@ export default function ConferencePage() {
         </motion.div>
       </section>
 
-      {/* ====== Resource Downloads ====== */}
+      {/* ====== Conference Presentations ====== */}
       <section className="px-6 py-16 md:py-24 bg-klo-dark/40">
         <motion.div
           initial="hidden"
@@ -575,46 +580,93 @@ export default function ConferencePage() {
                 <FileDown size={20} className="text-[#2764FF]" />
               </div>
               <h2 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
-                Resource Downloads
+                Conference Presentations
               </h2>
             </div>
             <p className="text-klo-muted">
-              Session materials, slides, and handouts available for download.
+              Session materials, slides, and handouts from the seminar.
+              {!isAuthenticated && " Sign in to download files."}
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {resources.map((resource, i) => (
-              <motion.div key={resource.title} variants={fadeUp} custom={i + 1}>
-                <a href={resource.href} download>
-                  <Card hoverable className="group">
-                    <div className="flex items-start gap-4">
-                      <div className="shrink-0 w-12 h-12 rounded-lg bg-[#2764FF]/10 flex items-center justify-center group-hover:bg-[#2764FF]/20 transition-colors">
-                        <FileDown
-                          size={20}
-                          className="text-[#2764FF]"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-klo-text group-hover:text-[#2764FF] transition-colors">
-                          {resource.title}
-                        </h3>
-                        <p className="text-xs text-klo-muted mt-1 leading-relaxed">
-                          {resource.description}
-                        </p>
-                        <div className="flex items-center gap-3 mt-2">
-                          <Badge variant="muted">{resource.type}</Badge>
-                          <span className="text-xs text-klo-muted">
-                            {resource.size}
-                          </span>
+          {presentations.length === 0 ? (
+            <motion.div variants={fadeUp} custom={1}>
+              <Card>
+                <p className="text-klo-muted text-sm text-center py-4">
+                  Presentation materials will be available here during the conference.
+                </p>
+              </Card>
+            </motion.div>
+          ) : (
+            <div className="space-y-4">
+              {presentations.map((pres, i) => (
+                <motion.div key={pres.id} variants={fadeUp} custom={i + 1}>
+                  <Card>
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="text-base font-semibold text-klo-text">
+                            {pres.title}
+                          </h3>
+                          {pres.description && (
+                            <p className="text-sm text-klo-muted mt-1 leading-relaxed">
+                              {pres.description}
+                            </p>
+                          )}
                         </div>
+                        <Badge variant="muted">{pres.category}</Badge>
                       </div>
+
+                      {pres.conference_presentation_files.length > 0 && (
+                        <div className="space-y-2 pt-2 border-t border-klo-slate/50">
+                          {pres.conference_presentation_files.map((f) => (
+                            <div key={f.id} className="flex items-center gap-3">
+                              <span className={`text-xs font-mono px-2 py-0.5 rounded ${FILE_TYPE_COLORS[f.file_type] || "bg-zinc-500/20 text-zinc-400"}`}>
+                                {f.file_type.toUpperCase()}
+                              </span>
+                              <span className="flex-1 text-sm text-klo-text truncate">
+                                {f.file_name}
+                              </span>
+                              <span className="text-xs text-klo-muted shrink-0">{f.file_size}</span>
+                              {isAuthenticated ? (
+                                <a
+                                  href={f.file_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  download
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2764FF]/10 text-[#2764FF] text-xs font-medium rounded-lg hover:bg-[#2764FF]/20 transition"
+                                >
+                                  <Download size={12} />
+                                  Download
+                                </a>
+                              ) : (
+                                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-klo-slate/30 text-klo-muted text-xs rounded-lg">
+                                  <Lock size={12} />
+                                  Sign in
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {!isAuthenticated && pres.conference_presentation_files.length > 0 && (
+                        <div className="pt-2">
+                          <Link
+                            href="/auth/signin"
+                            className="inline-flex items-center gap-2 text-xs text-[#2764FF] hover:underline"
+                          >
+                            <Lock size={12} />
+                            Create an account or sign in to download materials
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   </Card>
-                </a>
-              </motion.div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </motion.div>
       </section>
 

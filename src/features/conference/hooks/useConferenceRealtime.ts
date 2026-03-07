@@ -40,6 +40,15 @@ const subscribers = new Set<{ current: RealtimeCallbacks }>();
 const debounceTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 const DEBOUNCE_MS = 500;
 
+// High-frequency tables get a longer debounce to prevent mass refetches
+const HIGH_FREQ_TABLES = new Set([
+  "conference_poll_votes",
+  "conference_question_upvotes",
+  "conference_question_likes",
+  "conference_word_cloud",
+]);
+const HIGH_FREQ_DEBOUNCE_MS = 2000;
+
 function notifySubscribers(table: string) {
   // Clear any existing debounce for this table
   if (debounceTimers[table]) {
@@ -53,7 +62,7 @@ function notifySubscribers(table: string) {
     for (const ref of subscribers) {
       ref.current[callbackKey]?.();
     }
-  }, DEBOUNCE_MS);
+  }, HIGH_FREQ_TABLES.has(table) ? HIGH_FREQ_DEBOUNCE_MS : DEBOUNCE_MS);
 }
 
 function ensureChannel() {

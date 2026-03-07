@@ -71,6 +71,25 @@ export async function POST(request: Request) {
   const fingerprint = getFingerprint(request);
   const supabase = getServiceSupabase();
 
+  // Rate limit: max 3 submissions per fingerprint per 60 seconds
+  const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
+  const { count: recentCount, error: rlError } = await supabase
+    .from("conference_questions")
+    .select("*", { count: "exact", head: true })
+    .eq("fingerprint", fingerprint)
+    .gte("created_at", oneMinuteAgo);
+
+  if (rlError) {
+    return NextResponse.json({ error: "Rate limit check failed" }, { status: 500 });
+  }
+
+  if ((recentCount ?? 0) >= 3) {
+    return NextResponse.json(
+      { error: "Please wait before submitting another question." },
+      { status: 429 }
+    );
+  }
+
   // Use profanity-checking RPC
   const { data, error } = await supabase.rpc("submit_conference_question", {
     p_text: text.trim(),
