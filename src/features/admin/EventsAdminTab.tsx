@@ -151,8 +151,14 @@ export default function EventsAdminTab() {
         body: JSON.stringify({ ...ev, title: ev.title || ev.conference_name }),
       });
       if (res.ok) {
-        setParsedEvents((prev) => prev.filter((_, i) => i !== index));
+        const remaining = parsedEvents.filter((_, i) => i !== index);
+        setParsedEvents(remaining);
         fetchEvents();
+        // Close form when last parsed event is created
+        if (remaining.length === 0) {
+          resetForm();
+          setShowForm(false);
+        }
       }
     } finally {
       setCreatingIndex(null);
