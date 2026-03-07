@@ -3,17 +3,24 @@
 import { useState, useEffect } from "react";
 import { Radio } from "lucide-react";
 
-export default function SeminarModeToggle() {
+interface SeminarModeToggleProps {
+  eventId?: string;
+}
+
+export default function SeminarModeToggle({ eventId }: SeminarModeToggleProps = {}) {
   const [active, setActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
 
   useEffect(() => {
-    fetch("/api/conference/settings")
+    const url = eventId
+      ? `/api/conference/settings?event_id=${eventId}`
+      : "/api/conference/settings";
+    fetch(url)
       .then((r) => r.json())
       .then((data) => setActive(data.active ?? false))
       .finally(() => setLoading(false));
-  }, []);
+  }, [eventId]);
 
   const toggle = async () => {
     setToggling(true);
@@ -21,7 +28,7 @@ export default function SeminarModeToggle() {
       const res = await fetch("/api/conference/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active: !active }),
+        body: JSON.stringify({ active: !active, ...(eventId ? { event_id: eventId } : {}) }),
       });
       if (res.ok) {
         setActive(!active);

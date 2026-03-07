@@ -15,13 +15,18 @@ import {
   Download,
 } from "lucide-react";
 import PollResults from "../components/PollResults";
+import CollectiveResultsChart from "../components/CollectiveResultsChart";
 import { useConferenceRealtime } from "../hooks/useConferenceRealtime";
 import { useSessions } from "../hooks/useSessions";
 import type { PollWithVotes, ConferenceSession } from "../types";
 
 type InputMode = "single" | "batch";
 
-export default function PollManager() {
+interface PollManagerProps {
+  eventId?: string;
+}
+
+export default function PollManager({ eventId }: PollManagerProps = {}) {
   const [polls, setPolls] = useState<PollWithVotes[]>([]);
   const [loading, setLoading] = useState(true);
   const [question, setQuestion] = useState("");
@@ -35,16 +40,20 @@ export default function PollManager() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [filterSessionId, setFilterSessionId] = useState<string>("all");
   const [exporting, setExporting] = useState(false);
+  const [showCollective, setShowCollective] = useState(false);
   const { sessions } = useSessions();
 
   const fetchPolls = useCallback(async () => {
     try {
-      const res = await fetch("/api/conference/polls");
+      const url = eventId
+        ? `/api/conference/polls?event_id=${eventId}`
+        : "/api/conference/polls";
+      const res = await fetch(url);
       if (res.ok) setPolls(await res.json());
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [eventId]);
 
   useConferenceRealtime({ onPollsChange: fetchPolls, onVotesChange: fetchPolls });
 
@@ -81,6 +90,7 @@ export default function PollManager() {
           question: question.trim(),
           options: validOptions,
           ...(filterSessionId !== "all" ? { session_id: filterSessionId } : {}),
+          ...(eventId ? { event_id: eventId } : {}),
         }),
       });
       if (res.ok) {
@@ -127,6 +137,7 @@ export default function PollManager() {
         body: JSON.stringify({
           questions,
           ...(filterSessionId !== "all" ? { session_id: filterSessionId } : {}),
+          ...(eventId ? { event_id: eventId } : {}),
         }),
       });
       if (res.ok) {
@@ -484,16 +495,38 @@ export default function PollManager() {
                 Deployed Polls ({deployedPolls.length})
               </h3>
               {deployedPolls.length > 0 && (
-                <button
-                  onClick={handleExportPDF}
-                  disabled={exporting}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2764FF]/10 text-[#2764FF] hover:bg-[#2764FF]/20 transition-colors text-xs font-medium disabled:opacity-40"
-                >
-                  <Download size={14} />
-                  {exporting ? "Exporting..." : "Download PDF"}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowCollective(!showCollective)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      showCollective
+                        ? "bg-[#2764FF]/10 text-[#2764FF]"
+                        : "text-klo-muted hover:text-klo-text hover:bg-white/5"
+                    }`}
+                  >
+                    <BarChart3 size={14} />
+                    {showCollective ? "Hide Collective" : "Collective Results"}
+                  </button>
+                  <button
+                    onClick={handleExportPDF}
+                    disabled={exporting}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2764FF]/10 text-[#2764FF] hover:bg-[#2764FF]/20 transition-colors text-xs font-medium disabled:opacity-40"
+                  >
+                    <Download size={14} />
+                    {exporting ? "Exporting..." : "Download PDF"}
+                  </button>
+                </div>
               )}
             </div>
+
+            {/* Collective results chart — aggregated view across all deployed polls */}
+            {showCollective && deployedPolls.length > 0 && (
+              <div className="glass rounded-2xl p-5 border border-[#2764FF]/20">
+                <h4 className="text-sm font-semibold text-klo-text mb-4">All Poll Results</h4>
+                <CollectiveResultsChart polls={deployedPolls} />
+              </div>
+            )}
+
             {deployedPolls.map((poll) => (
               <div key={poll.id} className="glass rounded-2xl p-4 border border-white/5">
                 <div className="flex items-start justify-between gap-3">

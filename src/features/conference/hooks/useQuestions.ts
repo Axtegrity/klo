@@ -6,6 +6,7 @@ import type { Question, ProfanityCheckResult } from "../types";
 
 interface UseQuestionsOptions {
   sessionId?: string | null;
+  eventId?: string;
 }
 
 export function useQuestions(options?: UseQuestionsOptions) {
@@ -16,11 +17,13 @@ export function useQuestions(options?: UseQuestionsOptions) {
   const [profanityError, setProfanityError] = useState<string[] | null>(null);
 
   const sessionId = options?.sessionId;
+  const eventId = options?.eventId;
 
   const fetchQuestions = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (sessionId) params.set("session_id", sessionId);
+      if (eventId) params.set("event_id", eventId);
       const url = `/api/conference/questions${params.toString() ? `?${params}` : ""}`;
       const res = await fetch(url);
       if (!res.ok) return;
@@ -31,7 +34,7 @@ export function useQuestions(options?: UseQuestionsOptions) {
     } finally {
       setLoading(false);
     }
-  }, [sessionId]);
+  }, [sessionId, eventId]);
 
   useEffect(() => {
     fetchQuestions();

@@ -2,13 +2,22 @@ import { NextResponse } from "next/server";
 import { verifyConferenceRole } from "@/lib/conference-auth";
 import { getServiceSupabase } from "@/lib/supabase";
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = getServiceSupabase();
-  const { data, error } = await supabase
+  const { searchParams } = new URL(request.url);
+  const eventId = searchParams.get("event_id");
+
+  let query = supabase
     .from("conference_sessions")
     .select("*")
     .order("sort_order", { ascending: true })
     .order("scheduled_at", { ascending: true });
+
+  if (eventId) {
+    query = query.eq("event_id", eventId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -26,7 +35,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { title, description, scheduled_at, qa_enabled, release_mode, speaker, room, time_label, sort_order } = body;
+  const { title, description, scheduled_at, qa_enabled, release_mode, speaker, room, time_label, sort_order, event_id } = body;
 
   if (!title?.trim()) {
     return NextResponse.json({ error: "Title required" }, { status: 400 });
@@ -45,6 +54,7 @@ export async function POST(request: Request) {
       room: room?.trim() || null,
       time_label: time_label?.trim() || null,
       sort_order: sort_order ?? 0,
+      ...(event_id ? { event_id } : {}),
     })
     .select()
     .single();

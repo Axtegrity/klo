@@ -44,6 +44,8 @@ interface Event {
   event_timezone: string | null;
   is_published: boolean;
   is_featured: boolean;
+  access_code: string | null;
+  seminar_mode: boolean;
   event_files: EventFile[];
 }
 
@@ -225,6 +227,13 @@ export default function EventsAdminTab() {
     }
   };
 
+  const generateAccessCode = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = "";
+    for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  };
+
   const handleStartEdit = (event: Event) => {
     setEditingEvent(event.id);
     setEditFields({
@@ -236,6 +245,7 @@ export default function EventsAdminTab() {
       event_timezone: event.event_timezone || "America/Chicago",
       event_category: event.event_category,
       description: event.description || "",
+      access_code: event.access_code || "",
     });
   };
 
@@ -306,8 +316,15 @@ export default function EventsAdminTab() {
     fetchEvents();
   };
 
-  const currentEvents = events.filter((e) => e.event_category === "Current Events");
-  const previousEvents = events.filter((e) => e.event_category === "Previous Events");
+  // Auto-classify by date: past events go to "Previous" regardless of manual category
+  const isEventPast = (dateStr: string, eventTime?: string | null) => {
+    if (!dateStr || dateStr === "SAVE THE DATE") return false;
+    const timeSuffix = eventTime ? `T${eventTime}:00` : "T23:59:59";
+    return new Date(dateStr + timeSuffix) < new Date();
+  };
+
+  const currentEvents = events.filter((e) => !isEventPast(e.event_date, e.event_time));
+  const previousEvents = events.filter((e) => isEventPast(e.event_date, e.event_time));
 
   const inputClass =
     "w-full px-4 py-2.5 rounded-xl bg-klo-dark border border-white/10 text-klo-text placeholder:text-klo-muted text-sm focus:outline-none focus:border-klo-gold/50";
@@ -356,6 +373,16 @@ export default function EventsAdminTab() {
                       >
                         {event.is_published ? "Published" : "Draft"}
                       </span>
+                      {event.access_code && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-[#2764FF]/10 text-[#2764FF]">
+                          {event.access_code}
+                        </span>
+                      )}
+                      {event.seminar_mode && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400">
+                          Seminar Live
+                        </span>
+                      )}
                     </div>
                   </div>
                   <button
@@ -491,6 +518,22 @@ export default function EventsAdminTab() {
                         <option value="Current Events">Current Events</option>
                         <option value="Previous Events">Previous Events</option>
                       </select>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Access Code (e.g. NEWLIFE26)"
+                          value={(editFields as Record<string, unknown>).access_code as string ?? ""}
+                          onChange={(e) => setEditFields({ ...editFields, access_code: e.target.value.toUpperCase() })}
+                          className={`${inputClass} flex-1 font-mono tracking-widest uppercase`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setEditFields({ ...editFields, access_code: generateAccessCode() })}
+                          className="px-3 rounded-xl text-[10px] font-medium whitespace-nowrap border border-white/10 text-klo-muted hover:text-klo-gold hover:border-klo-gold/30 transition-colors"
+                        >
+                          Generate
+                        </button>
+                      </div>
                     </div>
                     <textarea
                       placeholder="Description"

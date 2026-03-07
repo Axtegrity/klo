@@ -15,6 +15,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const isAdminRequest = searchParams.get("admin") === "true";
   const sessionId = searchParams.get("session_id");
+  const eventId = searchParams.get("event_id");
   const showArchived = searchParams.get("archived") === "true";
 
   // Check if caller is admin/moderator
@@ -33,8 +34,10 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false })
     .limit(100);
 
-  // Filter by session if specified
-  if (sessionId) {
+  // Filter by event or session
+  if (eventId) {
+    query = query.eq("event_id", eventId);
+  } else if (sessionId) {
     query = query.eq("session_id", sessionId);
   }
 

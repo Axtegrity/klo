@@ -19,6 +19,21 @@ export async function GET(request: Request) {
     return NextResponse.json({ key, value: data?.value ?? null });
   }
 
+  // Per-event seminar mode
+  const eventId = searchParams.get("event_id");
+  if (eventId) {
+    const { data: eventData } = await supabase
+      .from("event_presentations")
+      .select("seminar_mode")
+      .eq("id", eventId)
+      .single();
+
+    return NextResponse.json({
+      active: eventData?.seminar_mode ?? false,
+    });
+  }
+
+  // Global seminar mode (fallback)
   const { data, error } = await supabase
     .from("app_settings")
     .select("value")
@@ -63,15 +78,28 @@ export async function PUT(request: Request) {
     return NextResponse.json({ success: true });
   }
 
-  // Update seminar mode
+  // Update seminar mode — per-event or global
   if (typeof body.active === "boolean") {
-    const { error } = await supabase
-      .from("app_settings")
-      .update({ value: { active: body.active }, updated_at: new Date().toISOString() })
-      .eq("key", "seminar_mode");
+    if (body.event_id) {
+      // Per-event seminar mode
+      const { error } = await supabase
+        .from("event_presentations")
+        .update({ seminar_mode: body.active, updated_at: new Date().toISOString() })
+        .eq("id", body.event_id);
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+    } else {
+      // Global seminar mode
+      const { error } = await supabase
+        .from("app_settings")
+        .update({ value: { active: body.active }, updated_at: new Date().toISOString() })
+        .eq("key", "seminar_mode");
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
     }
   }
 

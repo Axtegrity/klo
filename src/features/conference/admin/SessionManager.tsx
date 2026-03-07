@@ -18,7 +18,11 @@ import {
 } from "lucide-react";
 import type { ConferenceSession } from "../types";
 
-export default function SessionManager() {
+interface SessionManagerProps {
+  eventId?: string;
+}
+
+export default function SessionManager({ eventId }: SessionManagerProps = {}) {
   const [sessions, setSessions] = useState<ConferenceSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
@@ -42,12 +46,15 @@ export default function SessionManager() {
 
   const fetchSessions = useCallback(async () => {
     try {
-      const res = await fetch("/api/conference/sessions");
+      const url = eventId
+        ? `/api/conference/sessions?event_id=${eventId}`
+        : "/api/conference/sessions";
+      const res = await fetch(url);
       if (res.ok) setSessions(await res.json());
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [eventId]);
 
   const fetchAutoFetchSetting = useCallback(async () => {
     try {
@@ -89,6 +96,7 @@ export default function SessionManager() {
           speaker: speaker || undefined,
           room: room || undefined,
           time_label: timeLabel || undefined,
+          ...(eventId ? { event_id: eventId } : {}),
         }),
       });
       if (res.ok) {

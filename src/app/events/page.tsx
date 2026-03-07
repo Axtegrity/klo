@@ -18,6 +18,7 @@ import Card from "@/components/shared/Card";
 interface FeaturedKeynote {
   id: string;
   title: string;
+  slug: string;
   conference_name: string;
   conference_location: string;
   event_date: string;
@@ -50,12 +51,14 @@ interface EventFile {
 interface EventItem {
   id: string;
   title: string;
+  slug: string;
   conference_name: string;
   conference_location: string;
   event_date: string;
   event_time: string | null;
   description: string | null;
   is_featured: boolean;
+  access_code: string | null;
   event_files: EventFile[];
 }
 
@@ -77,9 +80,10 @@ function formatTime(time: string): string {
   return `${hour}:${String(m).padStart(2, "0")} ${suffix}`;
 }
 
-function isUpcoming(dateStr: string): boolean {
+function isUpcoming(dateStr: string, eventTime?: string | null): boolean {
   if (dateStr === "SAVE THE DATE") return true;
-  const eventDate = new Date(dateStr + "T23:59:59");
+  const timeSuffix = eventTime ? `T${eventTime}:00` : "T23:59:59";
+  const eventDate = new Date(dateStr + timeSuffix);
   return eventDate >= new Date();
 }
 
@@ -124,10 +128,10 @@ export default function EventsPage() {
 
   const sortDate = (d: string) => d === "SAVE THE DATE" ? Infinity : new Date(d).getTime();
   const upcomingEvents = events
-    .filter((e) => isUpcoming(e.event_date) && e.id !== featuredKeynote?.id)
+    .filter((e) => isUpcoming(e.event_date, e.event_time) && e.id !== featuredKeynote?.id)
     .sort((a, b) => sortDate(a.event_date) - sortDate(b.event_date));
   const pastEvents = events
-    .filter((e) => !isUpcoming(e.event_date))
+    .filter((e) => !isUpcoming(e.event_date, e.event_time))
     .sort((a, b) => sortDate(b.event_date) - sortDate(a.event_date));
 
   return (
@@ -208,7 +212,7 @@ export default function EventsPage() {
                 </div>
                 <div className="pt-2">
                   <Link
-                    href="/conference"
+                    href={featuredKeynote.slug ? `/conference/${featuredKeynote.slug}` : "/conference"}
                     className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors"
                   >
                     View Details
@@ -393,7 +397,7 @@ function EventCard({ event, isPast }: { event: EventItem; isPast?: boolean }) {
           </div>
           {!isPast && (
             <Link
-              href="/conference"
+              href={event.slug ? `/conference/${event.slug}` : "/conference"}
               className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors"
             >
               Join Event

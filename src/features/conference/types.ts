@@ -94,3 +94,13 @@ export interface ProfanityCheckResult {
   reason?: string;
   flagged?: string[];
 }
+
+// Guest sign-in types
+export interface ConferenceGuest {
+  id: string;
+  event_id: string;
+  display_name: string;
+  access_code: string;
+  guest_token: string;
+  created_at: string;
+}

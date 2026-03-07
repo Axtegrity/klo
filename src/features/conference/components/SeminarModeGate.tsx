@@ -5,10 +5,11 @@ import { useSeminarMode } from "../hooks/useSeminarMode";
 
 interface SeminarModeGateProps {
   children: React.ReactNode;
+  eventId?: string;
 }
 
-export default function SeminarModeGate({ children }: SeminarModeGateProps) {
-  const { seminarMode, loading } = useSeminarMode();
+export default function SeminarModeGate({ children, eventId }: SeminarModeGateProps) {
+  const { seminarMode, loading } = useSeminarMode(eventId);
 
   if (loading) {
     return (

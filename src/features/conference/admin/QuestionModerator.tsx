@@ -5,7 +5,11 @@ import { CheckCircle2, EyeOff, Trash2, Archive, RotateCcw, Eye } from "lucide-re
 import { useConferenceRealtime } from "../hooks/useConferenceRealtime";
 import type { Question } from "../types";
 
-export default function QuestionModerator() {
+interface QuestionModeratorProps {
+  eventId?: string;
+}
+
+export default function QuestionModerator({ eventId }: QuestionModeratorProps = {}) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [archivedQuestions, setArchivedQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,21 +17,25 @@ export default function QuestionModerator() {
 
   const fetchQuestions = useCallback(async () => {
     try {
-      const res = await fetch("/api/conference/questions?admin=true");
+      const params = new URLSearchParams({ admin: "true" });
+      if (eventId) params.set("event_id", eventId);
+      const res = await fetch(`/api/conference/questions?${params}`);
       if (res.ok) setQuestions(await res.json());
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [eventId]);
 
   const fetchArchived = useCallback(async () => {
     try {
-      const res = await fetch("/api/conference/questions?admin=true&archived=true");
+      const params = new URLSearchParams({ admin: "true", archived: "true" });
+      if (eventId) params.set("event_id", eventId);
+      const res = await fetch(`/api/conference/questions?${params}`);
       if (res.ok) setArchivedQuestions(await res.json());
     } catch {
       // ignore
     }
-  }, []);
+  }, [eventId]);
 
   useConferenceRealtime({
     onQuestionsChange: fetchQuestions,

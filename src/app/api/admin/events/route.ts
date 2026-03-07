@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     event_timezone,
   } = body;
 
-  if (!title || !conference_name || !conference_location || !event_category || !event_date) {
+  if (!title || !conference_name || !conference_location || !event_date) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       slug,
       conference_name,
       conference_location,
-      event_category,
+      event_category: event_category || "Current Events",
       description: description || null,
       event_date,
       event_time: event_time || null,

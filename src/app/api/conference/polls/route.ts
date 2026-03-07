@@ -15,11 +15,14 @@ export async function GET(request: Request) {
   const supabase = getServiceSupabase();
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get("session_id");
+  const eventId = searchParams.get("event_id");
 
   // Fetch polls and pre-aggregated vote counts in two queries
   // (avoids fetching every individual vote row)
   let pollsQuery = supabase.from("conference_polls").select("*").order("created_at", { ascending: false });
-  if (sessionId) {
+  if (eventId) {
+    pollsQuery = pollsQuery.eq("event_id", eventId);
+  } else if (sessionId) {
     pollsQuery = pollsQuery.or(`session_id.eq.${sessionId},session_id.is.null`);
   }
 
@@ -96,6 +99,7 @@ export async function POST(request: Request) {
         is_active: false,
         is_deployed: false,
         ...(body.session_id ? { session_id: body.session_id } : {}),
+        ...(body.event_id ? { event_id: body.event_id } : {}),
       });
     }
     const { data, error } = await supabase
@@ -125,6 +129,7 @@ export async function POST(request: Request) {
       is_active: false,
       is_deployed: false,
       ...(body.session_id ? { session_id: body.session_id } : {}),
+      ...(body.event_id ? { event_id: body.event_id } : {}),
     })
     .select()
     .single();

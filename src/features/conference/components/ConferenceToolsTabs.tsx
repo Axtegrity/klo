@@ -32,13 +32,21 @@ const TAB_ICONS: Record<ConferenceToolTab, React.ElementType> = {
   wordcloud: Cloud,
 };
 
-export default function ConferenceToolsTabs() {
+interface ConferenceToolsTabsProps {
+  eventId?: string;
+  sessionId?: string;
+}
+
+export default function ConferenceToolsTabs({ eventId, sessionId }: ConferenceToolsTabsProps = {}) {
   const [activeTab, setActiveTab] = useState<ConferenceToolTab>("polls");
-  const { activeSession } = useSessions();
+  const { activeSession } = useSessions(eventId ? { eventId } : undefined);
   const { isAuthenticated } = useConferenceRoles();
-  const pollsHook = usePolls({ sessionId: activeSession?.id ?? undefined });
+  // Use explicit sessionId prop (guest-selected) if provided, otherwise fall back to admin-activated session
+  const effectiveSessionId = sessionId ?? activeSession?.id ?? undefined;
+  const pollsHook = usePolls({ sessionId: effectiveSessionId, eventId });
   const questionsHook = useQuestions({
-    sessionId: activeSession?.id ?? undefined,
+    sessionId: effectiveSessionId,
+    eventId,
   });
   const wordCloudHook = useWordCloud();
 
