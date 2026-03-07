@@ -113,9 +113,10 @@ export default function EventsPage() {
       .catch(() => {});
   }, []);
 
+  const today = new Date().toISOString().slice(0, 10);
   const sortDate = (d: string) => d === "SAVE THE DATE" ? Infinity : new Date(d).getTime();
   const upcomingEvents = events
-    .filter((e) => isUpcoming(e.event_date))
+    .filter((e) => isUpcoming(e.event_date) && e.event_date !== today)
     .sort((a, b) => sortDate(a.event_date) - sortDate(b.event_date));
   const pastEvents = events
     .filter((e) => !isUpcoming(e.event_date))
