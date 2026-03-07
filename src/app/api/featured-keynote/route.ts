@@ -4,20 +4,7 @@ import { getServiceSupabase } from "@/lib/supabase";
 export async function GET() {
   const supabase = getServiceSupabase();
 
-  // First try: manually featured event
-  const { data: featured } = await supabase
-    .from("event_presentations")
-    .select("id, title, conference_name, conference_location, event_date, description, slug")
-    .eq("is_featured", true)
-    .eq("is_published", true)
-    .limit(1)
-    .maybeSingle();
-
-  if (featured) {
-    return NextResponse.json(featured);
-  }
-
-  // Fallback: most upcoming published event (nearest future date, or SAVE THE DATE)
+  // Always show the nearest upcoming published event (closest future date first)
   const today = new Date().toISOString().slice(0, 10);
   const { data, error } = await supabase
     .from("event_presentations")
