@@ -122,16 +122,16 @@ function StatCard({
 
 type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "presentations" | "events" | "inquiries" | "tools";
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: "overview", label: "Overview" },
-  { id: "users", label: "Users" },
-  { id: "content", label: "Content" },
-  { id: "revenue", label: "Revenue" },
-  { id: "conference", label: "Conference" },
-  { id: "presentations", label: "Presentations" },
-  { id: "events", label: "Events" },
-  { id: "inquiries", label: "Inquiries" },
-  { id: "tools", label: "Tools" },
+const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
+  { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "events", label: "Events", icon: Vote },
+  { id: "conference", label: "Conference", icon: BarChart3 },
+  { id: "inquiries", label: "Inquiries", icon: Inbox },
+  { id: "presentations", label: "Presentations", icon: ClipboardCheck },
+  { id: "users", label: "Users", icon: Users },
+  { id: "content", label: "Content", icon: BotMessageSquare },
+  { id: "revenue", label: "Revenue", icon: DollarSign },
+  { id: "tools", label: "Tools", icon: Lock },
 ];
 
 // ------------------------------------------------------------
@@ -377,25 +377,29 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <motion.div variants={fadeUp} custom={1} className="mb-8">
-          <div className="flex gap-1 p-1 rounded-xl bg-klo-dark/50 border border-white/5 w-fit">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  activeTab === tab.id
-                    ? "bg-klo-slate text-klo-text shadow-md"
-                    : "text-klo-muted hover:text-klo-text"
-                }`}
-              >
-                {tab.label}
-                {tab.id === "inquiries" && inquiriesNewCount > 0 && (
-                  <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] font-bold">
-                    {inquiriesNewCount}
-                  </span>
-                )}
-              </button>
-            ))}
+          <div className="flex gap-1 p-1 rounded-xl bg-klo-dark/50 border border-white/5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
+                    activeTab === tab.id
+                      ? "bg-klo-slate text-klo-text shadow-md"
+                      : "text-klo-muted hover:text-klo-text"
+                  }`}
+                >
+                  <Icon size={15} />
+                  {tab.label}
+                  {tab.id === "inquiries" && inquiriesNewCount > 0 && (
+                    <span className="ml-0.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] font-bold">
+                      {inquiriesNewCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </motion.div>
 
