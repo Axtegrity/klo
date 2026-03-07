@@ -2,36 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { AI_ADVISOR_SYSTEM_PROMPT } from "@/lib/constants";
-
-// ------------------------------------------------------------
-// In-memory rate limiter (per-IP, resets on deploy/restart)
-// ------------------------------------------------------------
-
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
-
-const rateLimitMap = new Map<string, RateLimitEntry>();
-const RATE_LIMIT = 30;
-const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-
-function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
-    return { allowed: true, remaining: RATE_LIMIT - 1 };
-  }
-
-  if (entry.count >= RATE_LIMIT) {
-    return { allowed: false, remaining: 0 };
-  }
-
-  entry.count += 1;
-  return { allowed: true, remaining: RATE_LIMIT - entry.count };
-}
+import { advisorLimiter, checkLimit, getClientIp } from "@/lib/ratelimit";
 
 // ------------------------------------------------------------
 // POST /api/ai-advisor
@@ -55,10 +26,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rate limiting based on IP
-    const forwarded = request.headers.get("x-forwarded-for");
-    const ip = forwarded?.split(",")[0]?.trim() ?? "unknown";
-    const { allowed, remaining } = checkRateLimit(ip);
+    // Rate limiting (Upstash-backed, falls back to allow-all if not configured)
+    const ip = getClientIp(request);
+    const { allowed, remaining } = await checkLimit(advisorLimiter, ip);
 
     if (!allowed) {
       return NextResponse.json(

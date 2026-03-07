@@ -2,10 +2,21 @@ import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { getServiceSupabase } from "@/lib/supabase";
 import { resend } from "@/lib/email";
+import { registerLimiter, checkLimit, getClientIp } from "@/lib/ratelimit";
 import crypto from "crypto";
 
 export async function POST(request: Request) {
   try {
+    // Rate limit: 5 per minute per IP
+    const ip = getClientIp(request);
+    const { allowed } = await checkLimit(registerLimiter, ip);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { email, password, full_name } = body as {
       email?: string;

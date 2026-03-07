@@ -27,6 +27,8 @@
     "@capacitor/status-bar": "^8.0.1",
     "@stripe/stripe-js": "^8.8.0",
     "@supabase/supabase-js": "^2.98.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.3",
     "bcryptjs": "^3.0.3",
     "docx": "^9.6.0",
     "framer-motion": "^12.34.3",

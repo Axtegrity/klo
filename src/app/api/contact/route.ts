@@ -1,31 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resend } from "@/lib/email";
 import { getServiceSupabase } from "@/lib/supabase";
-
-/* ------------------------------------------------------------------ */
-/*  Simple in-memory rate limiter: 3 submissions per hour per IP       */
-/* ------------------------------------------------------------------ */
-
-const rateLimitMap = new Map<string, number[]>();
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
-const RATE_LIMIT_MAX = 3;
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const timestamps = rateLimitMap.get(ip) ?? [];
-
-  // Remove entries older than the window
-  const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW);
-  rateLimitMap.set(ip, recent);
-
-  if (recent.length >= RATE_LIMIT_MAX) {
-    return true;
-  }
-
-  recent.push(now);
-  rateLimitMap.set(ip, recent);
-  return false;
-}
+import { contactLimiter, checkLimit, getClientIp } from "@/lib/ratelimit";
 
 /* ------------------------------------------------------------------ */
 /*  Validation                                                          */
@@ -55,10 +31,8 @@ interface ConsultFormData {
   location?: string;
   areaOfInterest: string;
   organizationName: string;
-  organizationSize: string;
-  currentChallenge: string;
-  timeline: string;
-  previousConsultant: string;
+  organizationSize?: string;
+  currentChallenge?: string;
   additionalDetails?: string;
 }
 
@@ -96,18 +70,6 @@ function validateConsultForm(data: unknown): {
   if (!d.organizationName || typeof d.organizationName !== "string") {
     errors.push("Organization name is required.");
   }
-  if (!d.organizationSize || typeof d.organizationSize !== "string") {
-    errors.push("Organization size is required.");
-  }
-  if (!d.currentChallenge || typeof d.currentChallenge !== "string") {
-    errors.push("Current challenge is required.");
-  }
-  if (!d.timeline || typeof d.timeline !== "string") {
-    errors.push("Timeline is required.");
-  }
-  if (!d.previousConsultant || typeof d.previousConsultant !== "string") {
-    errors.push("Previous consultant experience is required.");
-  }
 
   if (errors.length > 0) {
     return { valid: false, errors };
@@ -127,10 +89,8 @@ function validateConsultForm(data: unknown): {
       location: d.location ? (d.location as string).trim() : undefined,
       areaOfInterest: (d.areaOfInterest as string).trim(),
       organizationName: (d.organizationName as string).trim(),
-      organizationSize: (d.organizationSize as string).trim(),
-      currentChallenge: (d.currentChallenge as string).trim(),
-      timeline: (d.timeline as string).trim(),
-      previousConsultant: (d.previousConsultant as string).trim(),
+      organizationSize: d.organizationSize ? (d.organizationSize as string).trim() : undefined,
+      currentChallenge: d.currentChallenge ? (d.currentChallenge as string).trim() : undefined,
       additionalDetails: d.additionalDetails ? (d.additionalDetails as string).trim() : undefined,
     },
   };
@@ -206,13 +166,10 @@ function validateForm(data: unknown): {
 
 export async function POST(req: NextRequest) {
   try {
-    // Rate limiting
-    const ip =
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      req.headers.get("x-real-ip") ??
-      "unknown";
-
-    if (isRateLimited(ip)) {
+    // Rate limiting (Upstash-backed, falls back to allow-all if not configured)
+    const ip = getClientIp(req);
+    const { allowed } = await checkLimit(contactLimiter, ip);
+    if (!allowed) {
       return NextResponse.json(
         {
           success: false,
@@ -249,10 +206,10 @@ export async function POST(req: NextRequest) {
           industry: parsed.industry,
           location: parsed.location ?? null,
           area_of_interest: parsed.areaOfInterest,
-          organization_size: parsed.organizationSize,
-          current_challenge: parsed.currentChallenge,
-          timeline: parsed.timeline,
-          previous_consultant: parsed.previousConsultant,
+          organization_size: parsed.organizationSize ?? null,
+          current_challenge: parsed.currentChallenge ?? null,
+          timeline: null,
+          previous_consultant: null,
           additional_details: parsed.additionalDetails ?? null,
           ip_address: ip,
         });
@@ -281,12 +238,12 @@ export async function POST(req: NextRequest) {
         parsed.location ? row("Location", parsed.location) : "",
         row("Area of Interest", parsed.areaOfInterest),
         row("Organization", parsed.organizationName),
-        row("Organization Size", parsed.organizationSize),
-        row("Timeline", parsed.timeline),
-        row("Previous Consultant", parsed.previousConsultant),
+        parsed.organizationSize ? row("Organization Size", parsed.organizationSize) : "",
       ].filter(Boolean).join("");
 
-      const challengeSection = `<h3 style="color:#C9A84C;margin-top:24px;">Current Challenge</h3><p style="color:#ddd;line-height:1.6;">${parsed.currentChallenge}</p>`;
+      const challengeSection = parsed.currentChallenge
+        ? `<h3 style="color:#C9A84C;margin-top:24px;">Current Challenge</h3><p style="color:#ddd;line-height:1.6;">${parsed.currentChallenge}</p>`
+        : "";
 
       const additionalSection = parsed.additionalDetails
         ? `<h3 style="color:#C9A84C;margin-top:24px;">Additional Details</h3><p style="color:#ddd;line-height:1.6;">${parsed.additionalDetails}</p>`
