@@ -8,22 +8,15 @@ import { Calendar, MapPin, ArrowRight } from "lucide-react";
 interface FeaturedEvent {
   id: string;
   title: string;
+  slug: string;
   conference_name: string;
   conference_location: string;
   event_date: string;
   description: string | null;
 }
 
-const fallbackEvent: FeaturedEvent = {
-  id: "fallback",
-  title: "New Life Leadership Conference — AI and the Future of Ministry",
-  conference_name: "New Life Leadership Conference",
-  conference_location: "Montgomery, AL",
-  event_date: "2026-03-07",
-  description: null,
-};
-
 function formatDate(dateStr: string): string {
+  if (dateStr === "SAVE THE DATE") return "SAVE THE DATE";
   const d = new Date(dateStr + "T12:00:00");
   return d.toLocaleDateString("en-US", {
     month: "long",
@@ -33,18 +26,15 @@ function formatDate(dateStr: string): string {
 }
 
 export default function UpcomingKeynote() {
-  const [event, setEvent] = useState<FeaturedEvent | null>(fallbackEvent);
+  const [event, setEvent] = useState<FeaturedEvent | null>(null);
 
   useEffect(() => {
     fetch("/api/featured-keynote")
       .then((res) => res.json())
       .then((data) => {
-        // Use fetched event if available, otherwise keep fallback
-        setEvent(data ?? fallbackEvent);
+        if (data && data.id) setEvent(data);
       })
-      .catch(() => {
-        // Keep fallback on error
-      });
+      .catch(() => {});
   }, []);
 
   if (!event) return null;
@@ -99,7 +89,7 @@ export default function UpcomingKeynote() {
 
               {/* CTA */}
               <Link
-                href="/conference"
+                href="/events"
                 className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-[#2764FF]/25 hover:scale-105 active:scale-[0.98] shrink-0 w-full sm:w-auto"
               >
                 Join the Conference
