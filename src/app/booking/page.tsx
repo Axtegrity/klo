@@ -10,6 +10,7 @@ import {
 import Card from "@/components/shared/Card";
 import Badge from "@/components/shared/Badge";
 import InquiryForm from "@/components/booking/InquiryForm";
+import SpeakerBio from "@/components/booking/SpeakerBio";
 import Testimonials from "@/components/booking/Testimonials";
 import FadeInOnScroll from "@/components/shared/FadeInOnScroll";
 import type { LucideIcon } from "lucide-react";
@@ -139,6 +140,11 @@ export default function BookingPage() {
           </div>
         </motion.div>
       </section>
+      </FadeInOnScroll>
+
+      {/* ====== Speaker Bio ====== */}
+      <FadeInOnScroll>
+        <SpeakerBio />
       </FadeInOnScroll>
 
       {/* ====== Inquiry Form ====== */}
