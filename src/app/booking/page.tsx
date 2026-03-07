@@ -7,8 +7,10 @@ import {
   Building2,
   Timer,
 } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import Card from "@/components/shared/Card";
 import Badge from "@/components/shared/Badge";
+import Button from "@/components/shared/Button";
 import InquiryForm from "@/components/booking/InquiryForm";
 import SpeakerBio from "@/components/booking/SpeakerBio";
 import Testimonials from "@/components/booking/Testimonials";
@@ -105,6 +107,14 @@ export default function BookingPage() {
             Keynotes, workshops, and executive sessions at the intersection of
             technology, leadership, and faith.
           </motion.p>
+
+          <motion.div variants={fadeUp} custom={3} className="mt-8">
+            <a href="#inquiry-form">
+              <Button variant="primary" className="gap-2">
+                Submit an Inquiry <ArrowDown size={16} />
+              </Button>
+            </a>
+          </motion.div>
         </motion.div>
       </section>
 
@@ -142,14 +152,9 @@ export default function BookingPage() {
       </section>
       </FadeInOnScroll>
 
-      {/* ====== Speaker Bio ====== */}
-      <FadeInOnScroll>
-        <SpeakerBio />
-      </FadeInOnScroll>
-
       {/* ====== Inquiry Form ====== */}
       <FadeInOnScroll delay={0.1}>
-      <section id="inquiry-form" className="px-6 py-16 md:py-24 bg-klo-dark/40">
+      <section id="inquiry-form" className="px-6 py-16 md:py-24">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -172,6 +177,11 @@ export default function BookingPage() {
           </motion.div>
         </motion.div>
       </section>
+      </FadeInOnScroll>
+
+      {/* ====== Speaker Bio ====== */}
+      <FadeInOnScroll>
+        <SpeakerBio />
       </FadeInOnScroll>
 
       {/* ====== Testimonials ====== */}

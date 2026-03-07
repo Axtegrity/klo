@@ -100,10 +100,11 @@ export default function SpeakerBio() {
               >
                 Keith Odom is a pioneering voice at the intersection of faith and technology.
                 As the <span className="text-klo-text font-medium">Director of Technology for
-                the Church of God in Christ (COGIC)</span>, the largest Pentecostal denomination
-                in the world, Keith leads the denomination&apos;s digital transformation
-                strategy&mdash;modernizing infrastructure, strengthening cybersecurity, and
-                equipping churches globally to operate with excellence in a digital-first age.
+                the Church of God in Christ (COGIC)</span>&mdash;the largest Pentecostal
+                denomination in the world&mdash;he leads its digital transformation strategy.
+                His career began at the renowned <span className="text-klo-text font-medium">MIT
+                Media Lab</span>, where he developed a passion for innovation alongside
+                world-class researchers in disruptive technology.
               </motion.p>
 
               <motion.p
@@ -111,45 +112,21 @@ export default function SpeakerBio() {
                 custom={2}
                 className="text-klo-muted leading-relaxed text-[15px]"
               >
-                With roots as a &ldquo;techie&rdquo; formed during his time as Senior Fiscal
-                Officer at the renowned <span className="text-klo-text font-medium">MIT Media
-                Lab</span>, Keith developed a passion for innovation while working alongside
-                world-class researchers in disruptive technology. Today, that same drive fuels
-                his leadership as <span className="text-klo-text font-medium">CEO and Solution
-                Architect of Axtegrity Consulting</span>, a Microsoft Solutions Partner
-                specializing in ERP solutions, cloud services, and custom software development.
-              </motion.p>
-
-              <motion.p
-                variants={fadeUp}
-                custom={3}
-                className="text-klo-muted leading-relaxed text-[15px]"
-              >
-                Keith also leads <span className="text-klo-text font-medium">TechChurch</span>,
-                an Axtegrity subsidiary focused on helping churches and faith-based organizations
-                embrace emerging technologies. Through initiatives like the Church &amp; Technology
-                Summit and The Experia Summit, he creates spaces where pastors, media professionals,
-                and tech leaders come together to be educated, equipped, and empowered for
-                21st-century ministry.
-              </motion.p>
-
-              <motion.p
-                variants={fadeUp}
-                custom={4}
-                className="text-klo-muted leading-relaxed text-[15px]"
-              >
-                A devoted son of the Church of God in Christ, Keith serves as the{" "}
+                Today Keith serves as <span className="text-klo-text font-medium">CEO of
+                Axtegrity Consulting</span>, a Microsoft Solutions Partner, and leads{" "}
+                <span className="text-klo-text font-medium">TechChurch</span>&mdash;helping
+                churches embrace emerging technologies through initiatives like the Church &amp;
+                Technology Summit. He also serves as{" "}
                 <span className="text-klo-text font-medium">Lead Pastor of The Place of Grace
-                Church (TPoG)</span> in Orlando, Florida&mdash;a forward-thinking ministry
-                committed to transformative change. At every level of his work, Keith champions
-                the belief that technology, when grounded in Kingdom purpose, can be a catalyst
-                for revival, reach, and relevance.
+                Church</span> in Orlando, FL. At every level, Keith champions the belief that
+                technology, grounded in Kingdom purpose, can be a catalyst for revival, reach,
+                and relevance.
               </motion.p>
 
               {/* Credential cards */}
               <motion.div
                 variants={fadeUp}
-                custom={5}
+                custom={3}
                 className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4"
               >
                 {credentials.map((cred) => {
