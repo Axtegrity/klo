@@ -629,16 +629,25 @@ export default function ConferencePage() {
                               </span>
                               <span className="text-xs text-klo-muted shrink-0">{f.file_size}</span>
                               {isAuthenticated ? (
-                                <a
-                                  href={f.file_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  download
-                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2764FF]/10 text-[#2764FF] text-xs font-medium rounded-lg hover:bg-[#2764FF]/20 transition"
-                                >
-                                  <Download size={12} />
-                                  Download
-                                </a>
+                                <div className="flex items-center gap-2">
+                                  <a
+                                    href={f.file_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2764FF]/10 text-[#2764FF] text-xs font-medium rounded-lg hover:bg-[#2764FF]/20 transition"
+                                  >
+                                    <FileDown size={12} />
+                                    Open
+                                  </a>
+                                  <a
+                                    href={f.file_url}
+                                    download
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-klo-muted text-xs font-medium rounded-lg hover:bg-white/10 hover:text-klo-text transition"
+                                  >
+                                    <Download size={12} />
+                                    Download
+                                  </a>
+                                </div>
                               ) : (
                                 <span className="flex items-center gap-1.5 px-3 py-1.5 bg-klo-slate/30 text-klo-muted text-xs rounded-lg">
                                   <Lock size={12} />
