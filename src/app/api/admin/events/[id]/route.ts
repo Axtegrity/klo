@@ -26,9 +26,8 @@ export async function PUT(
 
   // Explicit allowlist — never spread raw body into DB
   const ALLOWED_FIELDS = [
-    "title", "description", "date", "time", "location", "type",
-    "status", "image_url", "slug", "is_featured", "event_source",
-    "speaker", "capacity", "registration_url", "tags",
+    "title", "description", "conference_name", "conference_location",
+    "event_category", "event_date", "is_published", "is_featured", "slug",
   ] as const;
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   for (const key of ALLOWED_FIELDS) {

@@ -15,6 +15,9 @@ import {
   Star,
   Globe,
   GlobeOff,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 
 interface EventFile {
@@ -50,6 +53,11 @@ export default function EventsAdminTab() {
   const [showForm, setShowForm] = useState(false);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
+
+  // Document parse state
+  const [parsing, setParsing] = useState(false);
+  const [parseStatus, setParseStatus] = useState<"idle" | "success" | "error">("idle");
+  const [parseError, setParseError] = useState<string | null>(null);
 
   // Form state
   const [formTitle, setFormTitle] = useState("");
@@ -98,11 +106,45 @@ export default function EventsAdminTab() {
         setFormLocation("");
         setFormDate("");
         setFormDescription("");
+        setParseStatus("idle");
+        setParseError(null);
         setShowForm(false);
         fetchEvents();
       }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleParseDocument = async (file: File) => {
+    setParsing(true);
+    setParseStatus("idle");
+    setParseError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/events/parse", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setParseStatus("error");
+        setParseError(data.error || "Failed to parse document");
+        return;
+      }
+      if (data.title) setFormTitle(data.title);
+      if (data.conference_name) setFormConference(data.conference_name);
+      if (data.conference_location) setFormLocation(data.conference_location);
+      if (data.event_date) setFormDate(data.event_date);
+      if (data.event_category) setFormCategory(data.event_category);
+      if (data.description) setFormDescription(data.description);
+      setParseStatus("success");
+    } catch {
+      setParseStatus("error");
+      setParseError("Network error. Please try again.");
+    } finally {
+      setParsing(false);
     }
   };
 
@@ -350,6 +392,51 @@ export default function EventsAdminTab() {
           className="glass rounded-2xl p-6 border border-white/5 space-y-4"
           onSubmit={handleCreateEvent}
         >
+          {/* Document upload zone */}
+          <div className="space-y-2">
+            <label
+              className={`flex flex-col items-center justify-center gap-2 px-4 py-5 rounded-xl border-2 border-dashed transition-colors cursor-pointer ${
+                parsing
+                  ? "border-klo-gold/30 bg-klo-gold/5"
+                  : "border-white/10 hover:border-klo-gold/30 hover:bg-white/[0.02]"
+              }`}
+            >
+              {parsing ? (
+                <Loader2 size={20} className="text-klo-gold animate-spin" />
+              ) : parseStatus === "success" ? (
+                <CheckCircle size={20} className="text-emerald-400" />
+              ) : parseStatus === "error" ? (
+                <AlertCircle size={20} className="text-red-400" />
+              ) : (
+                <Upload size={20} className="text-klo-muted" />
+              )}
+              <span className="text-sm text-klo-muted">
+                {parsing
+                  ? "Extracting event details..."
+                  : parseStatus === "success"
+                  ? "Fields populated! Review and edit below."
+                  : "Upload a document to auto-fill"}
+              </span>
+              <span className="text-xs text-klo-muted/60">
+                PDF, DOC, DOCX, or TXT — or fill out manually below
+              </span>
+              <input
+                type="file"
+                className="hidden"
+                accept=".pdf,.doc,.docx,.txt"
+                disabled={parsing}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleParseDocument(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {parseStatus === "error" && parseError && (
+              <p className="text-xs text-red-400 px-1">{parseError}</p>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
               type="text"
