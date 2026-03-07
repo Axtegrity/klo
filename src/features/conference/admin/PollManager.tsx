@@ -11,11 +11,9 @@ import {
   Upload,
   Rocket,
   FileText,
-  BarChart3,
   Download,
 } from "lucide-react";
-import PollResults from "../components/PollResults";
-import CollectiveResultsChart from "../components/CollectiveResultsChart";
+// PollResults and CollectiveResultsChart available if needed for detailed views
 import { useConferenceRealtime } from "../hooks/useConferenceRealtime";
 import { useSessions } from "../hooks/useSessions";
 import type { PollWithVotes, ConferenceSession } from "../types";
@@ -35,12 +33,10 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
   const [inputMode, setInputMode] = useState<InputMode>("single");
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [expandedResults, setExpandedResults] = useState<Set<string> | "all">("all");
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [filterSessionId, setFilterSessionId] = useState<string>("all");
   const [exporting, setExporting] = useState(false);
-  const [showCollective, setShowCollective] = useState(false);
   const { sessions } = useSessions();
 
   const fetchPolls = useCallback(async () => {
@@ -241,23 +237,6 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
   const deletePoll = async (id: string) => {
     await fetch(`/api/conference/polls/${id}`, { method: "DELETE" });
     fetchPolls();
-  };
-
-  const isExpanded = (id: string) => expandedResults === "all" || expandedResults.has(id);
-
-  const toggleResults = (id: string) => {
-    setExpandedResults((prev) => {
-      if (prev === "all") {
-        // Switching from all-open: close just this one
-        const next = new Set(deployedPolls.map((p) => p.id));
-        next.delete(id);
-        return next;
-      }
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
   };
 
   const handleExportPDF = async () => {
@@ -495,112 +474,120 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
             </div>
           )}
 
-          {/* Deployed / Active Polls */}
+          {/* Results — one unified view */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-klo-text flex items-center gap-2">
                 <Rocket size={16} className="text-emerald-400" />
-                Deployed Polls ({deployedPolls.length})
+                Results ({deployedPolls.length} poll{deployedPolls.length !== 1 ? "s" : ""})
               </h3>
               {deployedPolls.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setShowCollective(!showCollective)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      showCollective
-                        ? "bg-[#2764FF]/10 text-[#2764FF]"
-                        : "text-klo-muted hover:text-klo-text hover:bg-white/5"
-                    }`}
-                  >
-                    <BarChart3 size={14} />
-                    {showCollective ? "Hide Collective" : "Collective Results"}
-                  </button>
-                  <button
-                    onClick={handleExportPDF}
-                    disabled={exporting}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2764FF]/10 text-[#2764FF] hover:bg-[#2764FF]/20 transition-colors text-xs font-medium disabled:opacity-40"
-                  >
-                    <Download size={14} />
-                    {exporting ? "Exporting..." : "Download PDF"}
-                  </button>
-                </div>
+                <button
+                  onClick={handleExportPDF}
+                  disabled={exporting}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2764FF]/10 text-[#2764FF] hover:bg-[#2764FF]/20 transition-colors text-xs font-medium disabled:opacity-40"
+                >
+                  <Download size={14} />
+                  {exporting ? "Exporting..." : "Download PDF"}
+                </button>
               )}
             </div>
 
-            {/* Collective results chart — aggregated view across all deployed polls */}
-            {showCollective && deployedPolls.length > 0 && (
-              <div className="glass rounded-2xl p-5 border border-[#2764FF]/20">
-                <h4 className="text-sm font-semibold text-klo-text mb-4">All Poll Results</h4>
-                <CollectiveResultsChart polls={deployedPolls} />
-              </div>
-            )}
-
-            {deployedPolls.map((poll) => (
-              <div key={poll.id} className="glass rounded-2xl p-4 border border-white/5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-klo-text truncate">{poll.question}</p>
-                    <p className="text-xs text-klo-muted mt-1">
-                      {(poll.options as string[]).length} options
-                      {poll.is_active ? " — Active" : " — Closed"}
-                      {" — "}{poll.totalVotes} vote{poll.totalVotes !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => togglePoll(poll.id, "is_active", !poll.is_active)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        poll.is_active
-                          ? "text-emerald-400 hover:bg-emerald-500/10"
-                          : "text-klo-muted hover:bg-white/5"
-                      }`}
-                      title={poll.is_active ? "Close poll" : "Reopen poll"}
-                    >
-                      {poll.is_active ? <Power size={16} /> : <PowerOff size={16} />}
-                    </button>
-                    <button
-                      onClick={() => togglePoll(poll.id, "show_results", !poll.show_results)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        poll.show_results
-                          ? "text-[#2764FF] hover:bg-[#2764FF]/10"
-                          : "text-klo-muted hover:bg-white/5"
-                      }`}
-                      title={poll.show_results ? "Hide results from attendees" : "Show results to attendees"}
-                    >
-                      {poll.show_results ? <Eye size={16} /> : <EyeOff size={16} />}
-                    </button>
-                    <button
-                      onClick={() => toggleResults(poll.id)}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        isExpanded(poll.id)
-                          ? "bg-[#2764FF]/10 text-[#2764FF]"
-                          : "text-klo-muted hover:text-klo-text hover:bg-white/5"
-                      }`}
-                      title={isExpanded(poll.id) ? "Hide results" : "View results"}
-                    >
-                      <BarChart3 size={14} />
-                      {isExpanded(poll.id) ? "Hide" : "Results"}
-                    </button>
-                    <button
-                      onClick={() => deletePoll(poll.id)}
-                      className="p-2 rounded-lg text-klo-muted hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                      title="Delete poll"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-                {isExpanded(poll.id) && (
-                  <div className="mt-4 pt-4 border-t border-white/5">
-                    <PollResults poll={poll} live={poll.is_active} />
-                  </div>
-                )}
-              </div>
-            ))}
-            {deployedPolls.length === 0 && (
+            {deployedPolls.length === 0 ? (
               <p className="text-sm text-klo-muted text-center py-4">
                 No deployed polls yet. Create and deploy polls from the queue above.
               </p>
+            ) : (
+              <div className="glass rounded-2xl border border-white/5 divide-y divide-white/5">
+                {deployedPolls.map((poll) => {
+                  const options = poll.options as string[];
+                  const maxVotes = Math.max(...poll.votes);
+                  return (
+                    <div key={poll.id} className="p-4 space-y-3">
+                      {/* Question header + controls */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-klo-text">{poll.question}</p>
+                          <p className="text-xs text-klo-muted mt-0.5">
+                            {poll.totalVotes} vote{poll.totalVotes !== 1 ? "s" : ""}
+                            {poll.is_active ? (
+                              <span className="text-emerald-400 ml-2">Live</span>
+                            ) : (
+                              <span className="text-klo-muted/60 ml-2">Closed</span>
+                            )}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => togglePoll(poll.id, "is_active", !poll.is_active)}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              poll.is_active
+                                ? "text-emerald-400 hover:bg-emerald-500/10"
+                                : "text-klo-muted hover:bg-white/5"
+                            }`}
+                            title={poll.is_active ? "Close poll" : "Reopen poll"}
+                          >
+                            {poll.is_active ? <Power size={14} /> : <PowerOff size={14} />}
+                          </button>
+                          <button
+                            onClick={() => togglePoll(poll.id, "show_results", !poll.show_results)}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              poll.show_results
+                                ? "text-[#2764FF] hover:bg-[#2764FF]/10"
+                                : "text-klo-muted hover:bg-white/5"
+                            }`}
+                            title={poll.show_results ? "Visible to attendees" : "Hidden from attendees"}
+                          >
+                            {poll.show_results ? <Eye size={14} /> : <EyeOff size={14} />}
+                          </button>
+                          <button
+                            onClick={() => deletePoll(poll.id)}
+                            className="p-1.5 rounded-lg text-klo-muted hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            title="Delete poll"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Inline results — always visible */}
+                      {poll.totalVotes > 0 ? (
+                        <div className="space-y-2">
+                          {options.map((opt, idx) => {
+                            const votes = poll.votes[idx] || 0;
+                            const pct = poll.totalVotes > 0 ? Math.round((votes / poll.totalVotes) * 100) : 0;
+                            const isLeading = votes === maxVotes && maxVotes > 0;
+                            return (
+                              <div key={idx}>
+                                <div className="flex items-center justify-between text-xs mb-0.5">
+                                  <span className={isLeading ? "text-klo-text font-semibold" : "text-klo-muted"}>
+                                    {opt}
+                                  </span>
+                                  <span className={isLeading ? "text-klo-text font-semibold" : "text-klo-muted"}>
+                                    {votes} ({pct}%)
+                                  </span>
+                                </div>
+                                <div className="w-full h-2 rounded-full bg-white/5">
+                                  <div
+                                    className="h-full rounded-full transition-all duration-500"
+                                    style={{
+                                      width: `${pct}%`,
+                                      backgroundColor: isLeading ? "#D4A853" : "#2764FF",
+                                      opacity: isLeading ? 1 : 0.6,
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-klo-muted/60">No votes yet</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         </>
