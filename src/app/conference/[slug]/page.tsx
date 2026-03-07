@@ -8,15 +8,12 @@ import {
   MapPin,
   Radio,
   Sparkles,
-  LogOut,
   ArrowLeft,
 } from "lucide-react";
 import Badge from "@/components/shared/Badge";
 import SeminarModeGate from "@/features/conference/components/SeminarModeGate";
 import ConferenceToolsTabs from "@/features/conference/components/ConferenceToolsTabs";
-import GuestSignInCard from "@/features/conference/components/GuestSignInCard";
 import SessionSelectCard from "@/features/conference/components/SessionSelectCard";
-import { useGuestSession } from "@/features/conference/hooks/useGuestSession";
 import { useSessions } from "@/features/conference/hooks/useSessions";
 import type { ConferenceSession } from "@/features/conference/types";
 
@@ -84,7 +81,6 @@ export default function EventConferencePage() {
   const [eventLoading, setEventLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  const { guest, eventId, isGuest, loading: guestLoading, signIn, signOut } = useGuestSession();
   const [selectedSession, setSelectedSession] = useState<ConferenceSession | null>(null);
   const { sessions, loading: sessionsLoading } = useSessions(event ? { eventId: event.id } : undefined);
 
@@ -105,7 +101,7 @@ export default function EventConferencePage() {
       .finally(() => setEventLoading(false));
   }, [slug]);
 
-  if (eventLoading || guestLoading) {
+  if (eventLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="w-8 h-8 border-2 border-[#2764FF]/30 border-t-[#2764FF] rounded-full animate-spin" />
@@ -124,41 +120,8 @@ export default function EventConferencePage() {
     );
   }
 
-  // If event requires access code and guest hasn't signed in for THIS event
-  const needsSignIn = event.access_code && (!isGuest || guest?.event_id !== event.id);
-
-  if (needsSignIn) {
-    return (
-      <div className="min-h-screen">
-        <section className="relative overflow-hidden py-20 md:py-28 px-6">
-          <div className="absolute inset-0 bg-gradient-to-b from-klo-gold/5 via-transparent to-transparent pointer-events-none" />
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-            className="relative z-10 max-w-4xl mx-auto text-center"
-          >
-            <motion.div variants={fadeUp} custom={0} className="mb-6">
-              <Badge variant="gold">Conference Companion</Badge>
-            </motion.div>
-            <motion.h1
-              variants={fadeUp}
-              custom={1}
-              className="font-display text-3xl md:text-5xl font-bold text-klo-text leading-tight mb-4"
-            >
-              {event.conference_name}
-            </motion.h1>
-            <motion.p variants={fadeUp} custom={2} className="text-klo-muted mb-10">
-              {event.title}
-            </motion.p>
-            <motion.div variants={fadeUp} custom={3}>
-              <GuestSignInCard onSignIn={signIn} eventTitle={event.conference_name} />
-            </motion.div>
-          </motion.div>
-        </section>
-      </div>
-    );
-  }
+  // TODO: Access code gate disabled for now — will re-enable later
+  // const needsSignIn = event.access_code && (!isGuest || guest?.event_id !== event.id);
 
   // If event has sessions and guest hasn't picked one yet, show session selector
   const hasSessions = sessions.length > 0;
@@ -185,12 +148,7 @@ export default function EventConferencePage() {
             >
               {event.conference_name}
             </motion.h1>
-            {isGuest && guest && (
-              <motion.p variants={fadeUp} custom={2} className="text-klo-muted mb-10">
-                Welcome, <span className="text-klo-text font-medium">{guest.display_name}</span>
-              </motion.p>
-            )}
-            <motion.div variants={fadeUp} custom={3}>
+            <motion.div variants={fadeUp} custom={2}>
               <SessionSelectCard
                 sessions={sessions}
                 loading={sessionsLoading}
@@ -259,9 +217,9 @@ export default function EventConferencePage() {
             </span>
           </motion.div>
 
-          {/* Session + guest info bar */}
-          <motion.div variants={fadeUp} custom={4} className="mt-6 flex flex-col items-center gap-3">
-            {selectedSession && (
+          {/* Session info bar */}
+          {selectedSession && (
+            <motion.div variants={fadeUp} custom={4} className="mt-6">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2764FF]/10 border border-[#2764FF]/20 text-sm">
                 <Radio size={14} className="text-[#2764FF]" />
                 <span className="text-klo-text font-medium">{selectedSession.title}</span>
@@ -273,22 +231,8 @@ export default function EventConferencePage() {
                   <ArrowLeft size={12} />
                 </button>
               </div>
-            )}
-            {isGuest && guest && (
-              <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm">
-                <span className="text-klo-muted">
-                  Welcome, <span className="text-klo-text font-medium">{guest.display_name}</span>
-                </span>
-                <button
-                  onClick={signOut}
-                  className="p-1 rounded-lg text-klo-muted hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                  title="Sign out"
-                >
-                  <LogOut size={14} />
-                </button>
-              </div>
-            )}
-          </motion.div>
+            </motion.div>
+          )}
         </motion.div>
       </section>
 
