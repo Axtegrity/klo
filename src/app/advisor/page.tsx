@@ -7,7 +7,6 @@ import { Bot, Trash2, FileText, Send } from "lucide-react";
 import { useChat } from "@/hooks/useChat";
 import ChatInterface from "@/components/advisor/ChatInterface";
 import SuggestedPrompts from "@/components/advisor/SuggestedPrompts";
-import UsageMeter from "@/components/advisor/UsageMeter";
 
 // ------------------------------------------------------------
 // Animation variants
@@ -33,19 +32,16 @@ export default function AdvisorPage() {
     error,
     sendMessage,
     clearChat,
-    usageCount,
-    usageLimit,
   } = useChat();
 
   const hasMessages = messages.length > 0;
-  const atLimit = usageCount >= usageLimit;
   const initialInputRef = useRef<HTMLTextAreaElement>(null);
 
   const handleInitialSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!initialInputRef.current) return;
     const content = initialInputRef.current.value.trim();
-    if (!content || isLoading || atLimit) return;
+    if (!content || isLoading) return;
     sendMessage(content);
   };
 
@@ -146,7 +142,7 @@ export default function AdvisorPage() {
                   ref={initialInputRef}
                   rows={1}
                   placeholder="Type your own question..."
-                  disabled={isLoading || atLimit}
+                  disabled={isLoading}
                   onKeyDown={handleInitialKeyDown}
                   onChange={(e) => {
                     e.target.style.height = "auto";
@@ -156,7 +152,7 @@ export default function AdvisorPage() {
                 />
                 <button
                   type="submit"
-                  disabled={isLoading || atLimit}
+                  disabled={isLoading}
                   aria-label="Send message"
                   className="w-9 h-9 flex items-center justify-center rounded-lg bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white hover:brightness-110 active:brightness-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                 >
@@ -172,15 +168,10 @@ export default function AdvisorPage() {
               isLoading={isLoading}
               error={error}
               onSend={sendMessage}
-              disabled={atLimit}
             />
           </div>
         )}
 
-        {/* Usage meter shown below chat when there are messages, or below prompts */}
-        {hasMessages && (
-          <UsageMeter usageCount={usageCount} usageLimit={usageLimit} />
-        )}
       </div>
     </div>
   );

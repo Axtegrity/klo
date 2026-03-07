@@ -11,13 +11,20 @@ async function verifyAdmin() {
   return session;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = getServiceSupabase();
+  const { searchParams } = new URL(request.url);
+  const sessionId = searchParams.get("session_id");
 
   // Fetch polls and pre-aggregated vote counts in two queries
   // (avoids fetching every individual vote row)
+  let pollsQuery = supabase.from("conference_polls").select("*").order("created_at", { ascending: false });
+  if (sessionId) {
+    pollsQuery = pollsQuery.eq("session_id", sessionId);
+  }
+
   const [pollsRes, voteCountsRes] = await Promise.all([
-    supabase.from("conference_polls").select("*").order("created_at", { ascending: false }),
+    pollsQuery,
     supabase.rpc("get_poll_vote_counts"),
   ]);
 
@@ -88,6 +95,7 @@ export async function POST(request: Request) {
         options: q.options.map((o: string) => o.trim()).filter(Boolean),
         is_active: false,
         is_deployed: false,
+        ...(body.session_id ? { session_id: body.session_id } : {}),
       });
     }
     const { data, error } = await supabase
@@ -111,7 +119,13 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from("conference_polls")
-    .insert({ question, options, is_active: false, is_deployed: false })
+    .insert({
+      question,
+      options,
+      is_active: false,
+      is_deployed: false,
+      ...(body.session_id ? { session_id: body.session_id } : {}),
+    })
     .select()
     .single();
 

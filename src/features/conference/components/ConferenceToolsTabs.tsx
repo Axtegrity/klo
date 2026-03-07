@@ -36,7 +36,7 @@ export default function ConferenceToolsTabs() {
   const [activeTab, setActiveTab] = useState<ConferenceToolTab>("polls");
   const { activeSession } = useSessions();
   const { isAuthenticated } = useConferenceRoles();
-  const pollsHook = usePolls();
+  const pollsHook = usePolls({ sessionId: activeSession?.id ?? undefined });
   const questionsHook = useQuestions({
     sessionId: activeSession?.id ?? undefined,
   });

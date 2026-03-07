@@ -4,64 +4,6 @@ import { useState, useCallback, useRef } from "react";
 import type { AdvisorMessage } from "@/types";
 
 // ------------------------------------------------------------
-// Usage tracking helpers (localStorage)
-// ------------------------------------------------------------
-
-interface UsageData {
-  count: number;
-  month: number;
-  year: number;
-}
-
-const STORAGE_KEY = "klo-advisor-usage";
-const FREE_TIER_LIMIT = 5;
-
-function getUsage(): UsageData {
-  if (typeof window === "undefined") {
-    return { count: 0, month: 0, year: 0 };
-  }
-
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return resetUsage();
-
-    const data: UsageData = JSON.parse(raw);
-    const now = new Date();
-
-    // Reset if month/year has changed
-    if (data.month !== now.getMonth() || data.year !== now.getFullYear()) {
-      return resetUsage();
-    }
-
-    return data;
-  } catch {
-    return resetUsage();
-  }
-}
-
-function resetUsage(): UsageData {
-  const now = new Date();
-  const data: UsageData = {
-    count: 0,
-    month: now.getMonth(),
-    year: now.getFullYear(),
-  };
-  if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }
-  return data;
-}
-
-function incrementUsage(): UsageData {
-  const data = getUsage();
-  data.count += 1;
-  if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }
-  return data;
-}
-
-// ------------------------------------------------------------
 // Unique ID generator
 // ------------------------------------------------------------
 
@@ -77,7 +19,6 @@ export function useChat() {
   const [messages, setMessages] = useState<AdvisorMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [usageCount, setUsageCount] = useState<number>(() => getUsage().count);
 
   // AbortController ref so we can cancel in-flight requests
   const abortRef = useRef<AbortController | null>(null);
@@ -85,13 +26,6 @@ export function useChat() {
   const sendMessage = useCallback(
     async (content: string) => {
       if (!content.trim()) return;
-
-      // Check usage limit
-      const currentUsage = getUsage();
-      if (currentUsage.count >= FREE_TIER_LIMIT) {
-        setError("Monthly usage limit reached. Upgrade to continue.");
-        return;
-      }
 
       setError(null);
       setIsLoading(true);
@@ -135,10 +69,6 @@ export function useChat() {
             errBody?.error ?? `Request failed (${response.status})`
           );
         }
-
-        // Increment usage
-        const updated = incrementUsage();
-        setUsageCount(updated.count);
 
         // Read SSE stream
         const reader = response.body?.getReader();
@@ -214,7 +144,5 @@ export function useChat() {
     error,
     sendMessage,
     clearChat,
-    usageCount,
-    usageLimit: FREE_TIER_LIMIT,
   };
 }

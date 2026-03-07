@@ -15,7 +15,7 @@ function getVoterId(): string {
   return id;
 }
 
-export function usePolls() {
+export function usePolls({ sessionId }: { sessionId?: string } = {}) {
   const [polls, setPolls] = useState<PollWithVotes[]>([]);
   const [loading, setLoading] = useState(true);
   const [votedPolls, setVotedPolls] = useState<Set<string>>(() => {
@@ -30,7 +30,10 @@ export function usePolls() {
 
   const fetchPolls = useCallback(async () => {
     try {
-      const res = await fetch("/api/conference/polls");
+      const url = sessionId
+        ? `/api/conference/polls?session_id=${sessionId}`
+        : "/api/conference/polls";
+      const res = await fetch(url);
       if (!res.ok) return;
       const data = await res.json();
 
@@ -47,7 +50,7 @@ export function usePolls() {
     } finally {
       setLoading(false);
     }
-  }, [votedPolls]);
+  }, [votedPolls, sessionId]);
 
   useEffect(() => {
     fetchPolls();

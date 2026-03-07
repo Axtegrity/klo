@@ -12,10 +12,12 @@ import {
   Rocket,
   FileText,
   BarChart3,
+  Download,
 } from "lucide-react";
 import PollResults from "../components/PollResults";
 import { useConferenceRealtime } from "../hooks/useConferenceRealtime";
-import type { PollWithVotes } from "../types";
+import { useSessions } from "../hooks/useSessions";
+import type { PollWithVotes, ConferenceSession } from "../types";
 
 type InputMode = "single" | "batch";
 
@@ -31,6 +33,9 @@ export default function PollManager() {
   const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [filterSessionId, setFilterSessionId] = useState<string>("all");
+  const [exporting, setExporting] = useState(false);
+  const { sessions } = useSessions();
 
   const fetchPolls = useCallback(async () => {
     try {
@@ -72,7 +77,11 @@ export default function PollManager() {
       const res = await fetch("/api/conference/polls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: question.trim(), options: validOptions }),
+        body: JSON.stringify({
+          question: question.trim(),
+          options: validOptions,
+          ...(filterSessionId !== "all" ? { session_id: filterSessionId } : {}),
+        }),
       });
       if (res.ok) {
         setQuestion("");
@@ -115,7 +124,10 @@ export default function PollManager() {
       const res = await fetch("/api/conference/polls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ questions }),
+        body: JSON.stringify({
+          questions,
+          ...(filterSessionId !== "all" ? { session_id: filterSessionId } : {}),
+        }),
       });
       if (res.ok) {
         setBatchText("");
@@ -191,8 +203,40 @@ export default function PollManager() {
     });
   };
 
-  const queuedPolls = polls.filter((p) => !p.is_deployed);
-  const deployedPolls = polls.filter((p) => p.is_deployed);
+  const handleExportPDF = async () => {
+    const target = (filterSessionId === "all"
+      ? polls
+      : polls.filter((p) => p.session_id === filterSessionId)
+    ).filter((p) => p.is_deployed);
+
+    if (target.length === 0) return;
+    setExporting(true);
+    try {
+      const res = await fetch("/api/conference/polls/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ polls: target }),
+      });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `klo-poll-results-${Date.now()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("Failed to export PDF");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const filteredPolls = filterSessionId === "all"
+    ? polls
+    : polls.filter((p) => p.session_id === filterSessionId);
+  const queuedPolls = filteredPolls.filter((p) => !p.is_deployed);
+  const deployedPolls = filteredPolls.filter((p) => p.is_deployed);
 
   return (
     <div className="space-y-6">
@@ -205,6 +249,23 @@ export default function PollManager() {
       {successMsg && (
         <div className="rounded-xl p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
           {successMsg}
+        </div>
+      )}
+
+      {/* Session filter */}
+      {sessions.length > 0 && (
+        <div className="glass rounded-2xl p-4 border border-white/5">
+          <label className="text-xs font-medium text-klo-muted block mb-2">Session</label>
+          <select
+            value={filterSessionId}
+            onChange={(e) => setFilterSessionId(e.target.value)}
+            className="w-full bg-klo-dark border border-white/10 rounded-lg px-4 py-2.5 text-sm text-klo-text focus:outline-none focus:border-[#2764FF]/50"
+          >
+            <option value="all">All Sessions</option>
+            {sessions.map((s) => (
+              <option key={s.id} value={s.id}>{s.title}</option>
+            ))}
+          </select>
         </div>
       )}
 
@@ -367,10 +428,22 @@ export default function PollManager() {
 
           {/* Deployed / Active Polls */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-klo-text flex items-center gap-2">
-              <Rocket size={16} className="text-emerald-400" />
-              Deployed Polls ({deployedPolls.length})
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-klo-text flex items-center gap-2">
+                <Rocket size={16} className="text-emerald-400" />
+                Deployed Polls ({deployedPolls.length})
+              </h3>
+              {deployedPolls.length > 0 && (
+                <button
+                  onClick={handleExportPDF}
+                  disabled={exporting}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2764FF]/10 text-[#2764FF] hover:bg-[#2764FF]/20 transition-colors text-xs font-medium disabled:opacity-40"
+                >
+                  <Download size={14} />
+                  {exporting ? "Exporting..." : "Download PDF"}
+                </button>
+              )}
+            </div>
             {deployedPolls.map((poll) => (
               <div key={poll.id} className="glass rounded-2xl p-4 border border-white/5">
                 <div className="flex items-start justify-between gap-3">
