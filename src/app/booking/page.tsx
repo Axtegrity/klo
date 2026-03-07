@@ -13,7 +13,6 @@ import Badge from "@/components/shared/Badge";
 import Button from "@/components/shared/Button";
 import InquiryForm from "@/components/booking/InquiryForm";
 import SpeakerBio from "@/components/booking/SpeakerBio";
-import Testimonials from "@/components/booking/Testimonials";
 import FadeInOnScroll from "@/components/shared/FadeInOnScroll";
 import type { LucideIcon } from "lucide-react";
 
@@ -182,29 +181,6 @@ export default function BookingPage() {
       {/* ====== Speaker Bio ====== */}
       <FadeInOnScroll>
         <SpeakerBio />
-      </FadeInOnScroll>
-
-      {/* ====== Testimonials ====== */}
-      <FadeInOnScroll delay={0.1}>
-      <section className="px-6 py-16 md:py-24 bg-klo-dark/40">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="max-w-6xl mx-auto"
-        >
-          <motion.div variants={fadeUp} custom={0} className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-klo-text mb-4">
-              What Organizers Say
-            </h2>
-          </motion.div>
-
-          <motion.div variants={fadeUp} custom={1}>
-            <Testimonials />
-          </motion.div>
-        </motion.div>
-      </section>
       </FadeInOnScroll>
 
     </div>
