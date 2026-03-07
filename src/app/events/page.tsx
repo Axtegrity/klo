@@ -352,16 +352,18 @@ function EventCard({ event, isPast }: { event: EventItem; isPast?: boolean }) {
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-lg font-semibold text-klo-text">
-                {event.conference_name}
+                {event.title}
               </h3>
               {event.is_featured && !isPast && (
                 <Badge variant="gold">Featured</Badge>
               )}
               {isPast && <Badge variant="muted">Past</Badge>}
             </div>
-            <p className="text-sm text-klo-muted leading-relaxed">
-              {event.title}
-            </p>
+            {event.conference_name !== event.title && (
+              <p className="text-sm text-klo-muted leading-relaxed">
+                {event.conference_name}
+              </p>
+            )}
             {event.description && (
               <p className="text-sm text-klo-muted/70 leading-relaxed">
                 {event.description}
