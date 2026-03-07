@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
     description,
     event_date,
     event_time,
+    event_timezone,
   } = body;
 
   if (!title || !conference_name || !conference_location || !event_category || !event_date) {
@@ -73,6 +74,7 @@ export async function POST(req: NextRequest) {
       description: description || null,
       event_date,
       event_time: event_time || null,
+      event_timezone: event_timezone || "America/Chicago",
       is_published: true,
     })
     .select()

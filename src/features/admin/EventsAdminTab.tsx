@@ -41,6 +41,7 @@ interface Event {
   description: string | null;
   event_date: string;
   event_time: string | null;
+  event_timezone: string | null;
   is_published: boolean;
   is_featured: boolean;
   event_files: EventFile[];
@@ -52,9 +53,20 @@ interface ParsedEvent {
   conference_location: string;
   event_date: string;
   event_time: string;
+  event_timezone: string;
   event_category: "Current Events" | "Previous Events";
   description: string;
 }
+
+const TIMEZONE_OPTIONS = [
+  { value: "America/New_York", label: "Eastern (ET)" },
+  { value: "America/Chicago", label: "Central (CT)" },
+  { value: "America/Denver", label: "Mountain (MT)" },
+  { value: "America/Los_Angeles", label: "Pacific (PT)" },
+  { value: "America/Phoenix", label: "Arizona (MST)" },
+  { value: "America/Anchorage", label: "Alaska (AKT)" },
+  { value: "Pacific/Honolulu", label: "Hawaii (HST)" },
+];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -82,6 +94,7 @@ export default function EventsAdminTab() {
   const [formDate, setFormDate] = useState("");
   const [formCategory, setFormCategory] = useState<"Current Events" | "Previous Events">("Current Events");
   const [formTime, setFormTime] = useState("");
+  const [formTimezone, setFormTimezone] = useState("America/Chicago");
   const [formDescription, setFormDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -113,6 +126,7 @@ export default function EventsAdminTab() {
     setFormDate("");
     setFormCategory("Current Events");
     setFormTime("");
+    setFormTimezone("America/Chicago");
     setFormDescription("");
     setParseStatus("idle");
     setParseError(null);
@@ -132,6 +146,7 @@ export default function EventsAdminTab() {
           conference_location: formLocation,
           event_date: formDate,
           event_time: formTime || undefined,
+          event_timezone: formTimezone,
           event_category: formCategory,
           description: formDescription,
         }),
@@ -218,6 +233,7 @@ export default function EventsAdminTab() {
       conference_location: event.conference_location,
       event_date: event.event_date,
       event_time: event.event_time || "",
+      event_timezone: event.event_timezone || "America/Chicago",
       event_category: event.event_category,
       description: event.description || "",
     });
@@ -458,6 +474,15 @@ export default function EventsAdminTab() {
                         onChange={(e) => setEditFields({ ...editFields, event_time: e.target.value })}
                         className={inputClass}
                       />
+                      <select
+                        value={(editFields as Record<string, unknown>).event_timezone as string ?? "America/Chicago"}
+                        onChange={(e) => setEditFields({ ...editFields, event_timezone: e.target.value })}
+                        className={inputClass}
+                      >
+                        {TIMEZONE_OPTIONS.map((tz) => (
+                          <option key={tz.value} value={tz.value}>{tz.label}</option>
+                        ))}
+                      </select>
                       <select
                         value={editFields.event_category ?? "Current Events"}
                         onChange={(e) => setEditFields({ ...editFields, event_category: e.target.value })}
@@ -702,6 +727,15 @@ export default function EventsAdminTab() {
                       className={inputClass}
                     />
                     <select
+                      value={ev.event_timezone || "America/Chicago"}
+                      onChange={(e) => updateParsedEvent(idx, "event_timezone", e.target.value)}
+                      className={inputClass}
+                    >
+                      {TIMEZONE_OPTIONS.map((tz) => (
+                        <option key={tz.value} value={tz.value}>{tz.label}</option>
+                      ))}
+                    </select>
+                    <select
                       value={ev.event_category}
                       onChange={(e) => updateParsedEvent(idx, "event_category", e.target.value)}
                       className={inputClass}
@@ -795,6 +829,15 @@ export default function EventsAdminTab() {
                 onChange={(e) => setFormTime(e.target.value)}
                 className={inputClass}
               />
+              <select
+                value={formTimezone}
+                onChange={(e) => setFormTimezone(e.target.value)}
+                className={inputClass}
+              >
+                {TIMEZONE_OPTIONS.map((tz) => (
+                  <option key={tz.value} value={tz.value}>{tz.label}</option>
+                ))}
+              </select>
               <select
                 value={formCategory}
                 onChange={(e) =>
