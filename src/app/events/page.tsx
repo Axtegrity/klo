@@ -399,18 +399,19 @@ function EventCard({ event, isPast }: { event: EventItem; isPast?: boolean }) {
                 <MapPin size={12} className="text-[#2764FF]/70" />
                 {event.conference_location}
               </span>
-              {event.website_url && (
-                <a
-                  href={event.website_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-[#2764FF] hover:text-[#21B8CD] underline underline-offset-2 transition-colors"
-                >
-                  <ExternalLink size={12} />
-                  Visit Website
-                </a>
-              )}
             </div>
+            {event.website_url && (
+              <a
+                href={event.website_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-2 mt-2 px-4 py-2 rounded-lg bg-[#2764FF]/10 border border-[#2764FF]/20 text-[#2764FF] hover:bg-[#2764FF]/20 hover:text-[#21B8CD] text-sm font-medium transition-colors cursor-pointer"
+              >
+                <ExternalLink size={14} />
+                Visit Website
+              </a>
+            )}
           </div>
           {!isPast && (
             <Link
