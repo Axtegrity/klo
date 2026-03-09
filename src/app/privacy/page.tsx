@@ -131,10 +131,10 @@ export default function PrivacyPolicyPage() {
             time-limited tokens.
           </p>
           <p>
-            Administrative and organizer access is authenticated through Google
-            OAuth or Apple OAuth. We do not store OAuth passwords. We receive
-            only the profile information (name, email, profile image) authorized
-            by the OAuth provider.
+            Registered users sign in with their email address and a securely
+            hashed password. We do not store plaintext passwords. Administrative
+            access uses the same credential-based authentication with
+            role-based permissions.
           </p>
         </Section>
 
@@ -167,12 +167,8 @@ export default function PrivacyPolicyPage() {
               Payment processing for subscriptions and purchases.
             </li>
             <li>
-              <strong className="text-[#E6EDF3]">Google OAuth</strong> &mdash;
-              Authentication for authorized users.
-            </li>
-            <li>
-              <strong className="text-[#E6EDF3]">Apple OAuth</strong> &mdash;
-              Authentication for authorized users.
+              <strong className="text-[#E6EDF3]">NextAuth.js</strong> &mdash;
+              Secure session management and authentication.
             </li>
             <li>
               <strong className="text-[#E6EDF3]">Vercel</strong> &mdash;

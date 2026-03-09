@@ -49,5 +49,8 @@ playwright/.cache/
 /ios/
 /android/
 
+# build artifacts
+/builds/
+
 # sensitive slides
 public/credentials-slide.*

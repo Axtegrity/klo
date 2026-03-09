@@ -50,7 +50,7 @@ export default function TermsPage() {
           <ul className="list-disc pl-6 space-y-2">
             <li>
               <strong>Registered accounts</strong> &mdash; You may sign in with
-              Google, Apple, or owner credentials. You are responsible for
+              your email and password. You are responsible for
               maintaining the confidentiality of your account and for all
               activity that occurs under it.
             </li>
@@ -245,18 +245,10 @@ export default function TermsPage() {
           </h2>
           <p>
             These Terms shall be governed by and construed in accordance with
-            the laws of the State of{" "}
-            <span className="text-klo-accent font-medium">
-              [STATE &mdash; TO BE CONFIGURED]
-            </span>
-            , without regard to its conflict-of-law provisions. Any disputes
-            arising under these Terms shall be resolved through binding
-            arbitration in accordance with applicable rules, conducted in the
-            State of{" "}
-            <span className="text-klo-accent font-medium">
-              [STATE &mdash; TO BE CONFIGURED]
-            </span>
-            .
+            the laws of the State of Florida, without regard to its
+            conflict-of-law provisions. Any disputes arising under these Terms
+            shall be resolved through binding arbitration in accordance with
+            applicable rules, conducted in the State of Florida.
           </p>
         </section>
 

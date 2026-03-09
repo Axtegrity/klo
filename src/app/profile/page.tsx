@@ -23,6 +23,7 @@ import Badge from "@/components/shared/Badge";
 import Button from "@/components/shared/Button";
 import Card from "@/components/shared/Card";
 import { useSubscription } from "@/hooks/useSubscription";
+import { signOut } from "next-auth/react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -356,6 +357,9 @@ function SavedContentTab() {
 }
 
 function SettingsTab() {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [formData, setFormData] = useState({
     fullName: "Keith Demo User",
     organization: "KLO Consulting",
@@ -548,10 +552,77 @@ function SettingsTab() {
         <Button
           variant="ghost"
           className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+          onClick={() => signOut({ callbackUrl: "/" })}
         >
           <LogOut size={16} />
           Sign Out
         </Button>
+      </motion.div>
+
+      {/* Delete Account */}
+      <motion.div variants={fadeUp} custom={3} className="mt-4 pt-8 border-t border-[#21262D]">
+        <h3 className="font-display text-lg font-semibold text-red-400 mb-2">
+          Delete Account
+        </h3>
+        <p className="text-klo-muted text-sm mb-4">
+          Permanently delete your account and all associated data including assessment results,
+          saved content, and profile information. This action cannot be undone.
+        </p>
+        {deleteError && (
+          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+            {deleteError}
+          </div>
+        )}
+        {!showDeleteConfirm ? (
+          <Button
+            variant="ghost"
+            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+            onClick={() => setShowDeleteConfirm(true)}
+          >
+            <Trash2 size={16} />
+            Delete My Account
+          </Button>
+        ) : (
+          <Card className="border-red-500/30 bg-red-500/5">
+            <p className="text-sm text-klo-text mb-4">
+              Are you sure? All your data will be permanently removed. This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="ghost"
+                className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                onClick={async () => {
+                  setDeleting(true);
+                  setDeleteError("");
+                  try {
+                    const res = await fetch("/api/auth/delete-account", { method: "DELETE" });
+                    if (!res.ok) {
+                      const data = await res.json();
+                      setDeleteError(data.error || "Failed to delete account");
+                      setDeleting(false);
+                      return;
+                    }
+                    await signOut({ callbackUrl: "/" });
+                  } catch {
+                    setDeleteError("Something went wrong. Please try again.");
+                    setDeleting(false);
+                  }
+                }}
+                disabled={deleting}
+              >
+                <Trash2 size={16} />
+                {deleting ? "Deleting..." : "Yes, Delete Everything"}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+            </div>
+          </Card>
+        )}
       </motion.div>
     </motion.div>
   );

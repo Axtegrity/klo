@@ -83,6 +83,31 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#0D1117" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+  var cap=window.Capacitor;
+  if(!cap||!cap.isNativePlatform||!cap.isNativePlatform())return;
+  var _f=window.fetch.bind(window);
+  window.fetch=function(input,init){
+    if(typeof input==='string'){
+      if(input.startsWith('/api/')||input.startsWith('/api?')){
+        input='https://keithlodom.ai'+input;
+        init=Object.assign({},init||{},{credentials:'include'});
+      }
+    }else if(input instanceof Request){
+      var u=new URL(input.url);
+      if((u.hostname==='localhost'||u.protocol==='capacitor:')&&u.pathname.startsWith('/api/')){
+        var newUrl='https://keithlodom.ai'+u.pathname+u.search;
+        input=new Request(newUrl,input);
+        init=Object.assign({},init||{},{credentials:'include'});
+      }
+    }
+    return _f(input,init);
+  };
+})();`,
+          }}
+        />
       </head>
       <body className="font-body antialiased bg-[#0D1117] text-klo-text no-overscroll">
         <AuthProvider>
