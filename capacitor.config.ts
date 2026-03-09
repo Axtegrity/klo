@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   webDir: "out",
 
   server: {
-    url: "https://klo-app-tim-adams-projects-6c46d12d.vercel.app",
+    url: "https://keithlodom.ai",
     cleartext: false,
   },
 

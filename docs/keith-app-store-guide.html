@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KLO App — App Store Launch Guide</title>
+  <style>
+    @page { size: 11in 8.5in; margin: 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0D1117;
+      color: #E6EDF3;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+
+    .slide {
+      width: 11in;
+      height: 8.5in;
+      padding: 0.7in 0.9in;
+      page-break-after: always;
+      position: relative;
+      overflow: hidden;
+    }
+    .slide:last-child { page-break-after: avoid; }
+
+    /* Backgrounds */
+    .bg-dark { background: #0D1117; }
+    .bg-slate { background: linear-gradient(145deg, #0D1117, #161B22); }
+    .bg-accent { background: linear-gradient(135deg, #0D1117 60%, rgba(39,100,255,0.15)); }
+
+    /* Typography */
+    h1 { font-size: 48px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
+    h2 { font-size: 36px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; }
+    h3 { font-size: 24px; font-weight: 600; line-height: 1.3; }
+    p, li { font-size: 18px; line-height: 1.6; color: #8B949E; }
+    .gold { color: #D4A853; }
+    .blue { color: #2764FF; }
+    .white { color: #E6EDF3; }
+    .muted { color: #8B949E; }
+    .small { font-size: 14px; }
+    .tiny { font-size: 12px; }
+
+    /* Layout */
+    .flex { display: flex; }
+    .gap-40 { gap: 40px; }
+    .gap-24 { gap: 24px; }
+    .gap-16 { gap: 16px; }
+    .col { flex-direction: column; }
+    .center { align-items: center; justify-content: center; }
+    .between { justify-content: space-between; }
+    .grow { flex: 1; }
+    .mt-auto { margin-top: auto; }
+    .mt-24 { margin-top: 24px; }
+    .mt-32 { margin-top: 32px; }
+    .mt-48 { margin-top: 48px; }
+    .mb-8 { margin-bottom: 8px; }
+    .mb-16 { margin-bottom: 16px; }
+    .mb-24 { margin-bottom: 24px; }
+    .mb-32 { margin-bottom: 32px; }
+
+    /* Components */
+    .card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 28px;
+    }
+    .card-blue {
+      background: rgba(39,100,255,0.08);
+      border: 1px solid rgba(39,100,255,0.2);
+      border-radius: 16px;
+      padding: 28px;
+    }
+    .card-gold {
+      background: rgba(212,168,83,0.08);
+      border: 1px solid rgba(212,168,83,0.2);
+      border-radius: 16px;
+      padding: 28px;
+    }
+    .pill {
+      display: inline-block;
+      background: rgba(39,100,255,0.15);
+      border: 1px solid rgba(39,100,255,0.3);
+      border-radius: 20px;
+      padding: 6px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #2764FF;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .pill-gold {
+      background: rgba(212,168,83,0.15);
+      border-color: rgba(212,168,83,0.3);
+      color: #D4A853;
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2764FF, #21B8CD);
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .check { color: #3FB950; font-size: 20px; margin-right: 8px; }
+    .divider {
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(90deg, #D4A853, #2764FF);
+      border-radius: 2px;
+    }
+    ul { list-style: none; padding: 0; }
+    ul li { padding: 6px 0; padding-left: 24px; position: relative; }
+    ul li::before {
+      content: "›";
+      position: absolute;
+      left: 0;
+      color: #2764FF;
+      font-weight: bold;
+      font-size: 20px;
+    }
+    ol { padding-left: 0; list-style: none; counter-reset: step; }
+    ol li { padding: 8px 0; counter-increment: step; padding-left: 32px; position: relative; }
+    ol li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(39,100,255,0.2);
+      color: #2764FF;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      top: 10px;
+    }
+
+    /* Footer */
+    .footer {
+      position: absolute;
+      bottom: 0.5in;
+      left: 0.9in;
+      right: 0.9in;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #484F58;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  </style>
+</head>
+<body>
+
+<!-- ===================== SLIDE 1: TITLE ===================== -->
+<div class="slide bg-dark flex col center" style="text-align: center;">
+  <div class="pill pill-gold mb-24">App Store Launch Guide</div>
+  <h1 class="mb-16" style="font-size: 56px;">Keith L. Odom App</h1>
+  <div class="divider" style="margin: 0 auto 24px;"></div>
+  <p style="font-size: 22px; max-width: 600px; margin: 0 auto;">
+    Everything you need to publish the KLO app on<br/>
+    <span class="white" style="font-weight: 600;">Google Play</span> and the <span class="white" style="font-weight: 600;">Apple App Store</span>
+  </p>
+  <div class="mt-48 muted small">Prepared by Tim Adams &bull; March 2026</div>
+  <div class="footer">
+    <span>Confidential</span>
+    <span>keithlodom.ai</span>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 2: OVERVIEW ===================== -->
+<div class="slide bg-slate flex col">
+  <div class="pill mb-24">Overview</div>
+  <h2 class="mb-8">What's Already Done</h2>
+  <p class="mb-32">Tim has completed all development work. Here's what's ready to go.</p>
+
+  <div class="grid-3" style="margin-bottom: 32px;">
+    <div class="card">
+      <div style="font-size: 28px; margin-bottom: 12px;">&#9989;</div>
+      <h3 class="mb-8" style="font-size: 18px;">App Code</h3>
+      <p class="small">Full Next.js app wrapped in Capacitor for native iOS & Android</p>
+    </div>
+    <div class="card">
+      <div style="font-size: 28px; margin-bottom: 12px;">&#9989;</div>
+      <h3 class="mb-8" style="font-size: 18px;">App Icons</h3>
+      <p class="small">All icon sizes generated for both platforms</p>
+    </div>
+    <div class="card">
+      <div style="font-size: 28px; margin-bottom: 12px;">&#9989;</div>
+      <h3 class="mb-8" style="font-size: 18px;">Splash Screen</h3>
+      <p class="small">Dark branded launch screen configured</p>
+    </div>
+    <div class="card">
+      <div style="font-size: 28px; margin-bottom: 12px;">&#9989;</div>
+      <h3 class="mb-8" style="font-size: 18px;">Privacy Policy</h3>
+      <p class="small">Live at keithlodom.ai/privacy</p>
+    </div>
+    <div class="card">
+      <div style="font-size: 28px; margin-bottom: 12px;">&#9989;</div>
+      <h3 class="mb-8" style="font-size: 18px;">Terms of Service</h3>
+      <p class="small">Live at keithlodom.ai/terms</p>
+    </div>
+    <div class="card">
+      <div style="font-size: 28px; margin-bottom: 12px;">&#9989;</div>
+      <h3 class="mb-8" style="font-size: 18px;">Support Page</h3>
+      <p class="small">Live at keithlodom.ai/support</p>
+    </div>
+  </div>
+
+  <div class="card-gold">
+    <p style="color: #D4A853; font-size: 16px;"><strong>App ID:</strong> <span class="white">io.keithlodom.klo</span> &nbsp;&bull;&nbsp; <strong>Version:</strong> <span class="white">1.0.0</span> &nbsp;&bull;&nbsp; <strong>Display Name:</strong> <span class="white">KLO</span></p>
+  </div>
+
+  <div class="footer">
+    <span>KLO App Store Guide</span>
+    <span>2 / 9</span>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 3: WHAT KEITH NEEDS TO DO ===================== -->
+<div class="slide bg-accent flex col">
+  <div class="pill mb-24">Your Action Items</div>
+  <h2 class="mb-8">What You (Keith) Need To Do</h2>
+  <p class="mb-32">Three things only you can do because they require your accounts and identity.</p>
+
+  <div class="flex gap-24" style="flex: 1;">
+    <div class="card-blue grow flex col" style="flex: 1;">
+      <div class="step-num mb-16">1</div>
+      <h3 class="mb-8">Deploy to AWS</h3>
+      <p class="small mb-16">Host the app on your AWS account so the native apps have a server to connect to.</p>
+      <ul class="small">
+        <li>Use <strong class="white">AWS Amplify</strong> (easiest) — connect the GitHub repo</li>
+        <li>Point <strong class="white">keithlodom.ai</strong> DNS to Amplify</li>
+        <li>Set environment variables (Tim will provide the list)</li>
+      </ul>
+    </div>
+    <div class="card-blue grow flex col" style="flex: 1;">
+      <div class="step-num mb-16">2</div>
+      <h3 class="mb-8">Provide Store Assets</h3>
+      <p class="small mb-16">Write the marketing copy and gather screenshots for both stores.</p>
+      <ul class="small">
+        <li>App description (short + long)</li>
+        <li>Screenshots (Tim can generate these)</li>
+        <li>Feature graphic for Google Play</li>
+        <li>App category selection</li>
+      </ul>
+    </div>
+    <div class="card-blue grow flex col" style="flex: 1;">
+      <div class="step-num mb-16">3</div>
+      <h3 class="mb-8">Submit for Review</h3>
+      <p class="small mb-16">Upload the builds Tim provides and submit through your developer accounts.</p>
+      <ul class="small">
+        <li>Upload AAB to Google Play Console</li>
+        <li>Upload via Xcode to App Store Connect</li>
+        <li>Complete content rating questionnaires</li>
+        <li>Set pricing (Free with in-app purchases)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>KLO App Store Guide</span>
+    <span>3 / 9</span>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 4: AWS AMPLIFY SETUP ===================== -->
+<div class="slide bg-slate flex col">
+  <div class="pill mb-24">Step 1</div>
+  <h2 class="mb-8">Deploy to AWS Amplify</h2>
+  <p class="mb-24">This is the server that powers the app. The native apps load from this URL.</p>
+
+  <div class="flex gap-24" style="flex: 1;">
+    <div style="flex: 1;">
+      <ol>
+        <li><span class="white">Log in to <strong>AWS Console</strong></span> &rarr; search for <strong class="blue">Amplify</strong></li>
+        <li><span class="white">Click "New app" &rarr; "Host web app"</span></li>
+        <li><span class="white">Connect your <strong>GitHub</strong> account</span> and select the <strong class="gold">klo</strong> repository</li>
+        <li><span class="white">Select the <strong>main</strong> branch</span></li>
+        <li><span class="white">Amplify auto-detects Next.js</span> — accept the default build settings</li>
+        <li><span class="white">Click "Save and deploy"</span> — wait for the build to complete (~3-5 min)</li>
+        <li><span class="white">Go to "Domain management"</span> &rarr; add <strong class="gold">keithlodom.ai</strong></li>
+        <li><span class="white">Update your DNS</span> to point to the Amplify URL (Amplify shows you exactly what records to add)</li>
+      </ol>
+    </div>
+    <div style="flex: 0.8;">
+      <div class="card-gold mb-24">
+        <h3 class="gold mb-8" style="font-size: 16px;">Environment Variables</h3>
+        <p class="small mb-16">In Amplify &rarr; App settings &rarr; Environment variables, add these:</p>
+        <p class="small white" style="font-family: monospace; line-height: 2;">
+          NEXT_PUBLIC_SUPABASE_URL<br/>
+          NEXT_PUBLIC_SUPABASE_ANON_KEY<br/>
+          SUPABASE_SERVICE_ROLE_KEY<br/>
+          NEXTAUTH_SECRET<br/>
+          NEXTAUTH_URL<br/>
+          GOOGLE_CLIENT_ID<br/>
+          GOOGLE_CLIENT_SECRET<br/>
+          STRIPE_SECRET_KEY<br/>
+          STRIPE_PUBLISHABLE_KEY
+        </p>
+        <p class="small mt-24" style="color: #D4A853;">Tim will send you the values for each of these securely.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>KLO App Store Guide</span>
+    <span>4 / 9</span>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 5: GOOGLE PLAY SUBMISSION ===================== -->
+<div class="slide bg-dark flex col">
+  <div class="pill mb-24">Step 2A</div>
+  <h2 class="mb-8">Google Play Store Submission</h2>
+  <p class="mb-24">Publish the Android version of the KLO app.</p>
+
+  <div class="flex gap-24" style="flex: 1;">
+    <div style="flex: 1; font-size: 15px;">
+      <ol style="font-size: 15px;">
+        <li style="padding: 4px 0;"><span class="white">Go to <strong>play.google.com/console</strong></span> — sign in with your developer account</li>
+        <li style="padding: 4px 0;"><span class="white">Click "Create app"</span> &rarr; Name: <strong class="gold">Keith L. Odom</strong>, English, App, Free</li>
+        <li style="padding: 4px 0;"><span class="white">"Main store listing"</span> &rarr; short desc, full desc, screenshots, feature graphic, icon (Tim provides all assets)</li>
+        <li style="padding: 4px 0;"><span class="white">Complete "Content rating"</span> — informational, no violence/gambling</li>
+        <li style="padding: 4px 0;"><span class="white">"Target audience"</span> &rarr; 18+ (not directed at children)</li>
+        <li style="padding: 4px 0;"><span class="white">"App content"</span> &rarr; privacy policy: <strong class="blue">keithlodom.ai/privacy</strong></li>
+        <li style="padding: 4px 0;"><span class="white">Production &rarr; "Create new release"</span> &rarr; upload <strong>.aab file</strong> from Tim</li>
+        <li style="padding: 4px 0;"><span class="white">Release notes:</span> "Initial release of the Keith L. Odom app"</li>
+        <li style="padding: 4px 0;"><span class="white">"Review release" &rarr; "Start rollout to Production"</span></li>
+      </ol>
+    </div>
+    <div style="flex: 0.5;">
+      <div class="card mb-16">
+        <p class="small gold mb-8"><strong>Review Time</strong></p>
+        <p class="small">First submission: <strong class="white">3-7 days</strong></p>
+        <p class="small">Updates: <strong class="white">1-3 days</strong></p>
+      </div>
+      <div class="card mb-16">
+        <p class="small gold mb-8"><strong>Category</strong></p>
+        <p class="small white">Business or Education</p>
+      </div>
+      <div class="card">
+        <p class="small gold mb-8"><strong>Contact Details</strong></p>
+        <p class="small">Required by Google:</p>
+        <p class="small white" style="margin-top: 4px;">info@keithlodom.ai</p>
+        <p class="small white">keithlodom.ai</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>KLO App Store Guide</span>
+    <span>5 / 9</span>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 6: APPLE APP STORE ===================== -->
+<div class="slide bg-slate flex col">
+  <div class="pill mb-24">Step 2B</div>
+  <h2 class="mb-8">Apple App Store Submission</h2>
+  <p class="mb-24">Publish the iOS version of the KLO app.</p>
+
+  <div class="flex gap-24" style="flex: 1;">
+    <div style="flex: 1;">
+      <ol>
+        <li><span class="white">Go to <strong>appstoreconnect.apple.com</strong></span> and sign in with your Apple Developer account</li>
+        <li><span class="white">Click "+" &rarr; "New App"</span>
+          <ul class="small" style="margin-top: 8px;">
+            <li>Platform: iOS</li>
+            <li>Name: <strong class="gold">Keith L. Odom</strong></li>
+            <li>Bundle ID: <strong class="white">io.keithlodom.klo</strong> (register this in Certificates, Identifiers & Profiles first)</li>
+            <li>SKU: <strong class="white">klo-app-001</strong></li>
+          </ul>
+        </li>
+        <li><span class="white">Fill in "App Information"</span>:
+          <ul class="small" style="margin-top: 8px;">
+            <li>Privacy Policy URL: <strong class="blue">https://keithlodom.ai/privacy</strong></li>
+            <li>Category: Business or Education</li>
+            <li>Support URL: <strong class="blue">https://keithlodom.ai/support</strong></li>
+          </ul>
+        </li>
+        <li><span class="white">Go to your app &rarr; "1.0 Prepare for Submission"</span></li>
+        <li><span class="white">Upload screenshots</span> (Tim provides these):
+          <ul class="small" style="margin-top: 8px;">
+            <li>6.7" iPhone (1290 x 2796px)</li>
+            <li>6.5" iPhone (1284 x 2778px)</li>
+            <li>iPad Pro 12.9" (2048 x 2732px)</li>
+          </ul>
+        </li>
+        <li><span class="white">Add description, keywords, support URL, marketing URL</span></li>
+        <li><span class="white">Under "Build"</span> — select the build Tim uploaded via Xcode/Transporter</li>
+        <li><span class="white">Complete "App Review Information"</span> — add demo notes if app requires sign-in</li>
+        <li><span class="white">Click "Submit for Review"</span></li>
+      </ol>
+    </div>
+    <div style="flex: 0.5;">
+      <div class="card mb-16">
+        <p class="small gold mb-8"><strong>Review Time</strong></p>
+        <p class="small">First submission: <strong class="white">1-3 days</strong></p>
+        <p class="small">90% within <strong class="white">24 hours</strong></p>
+      </div>
+      <div class="card mb-16">
+        <p class="small gold mb-8"><strong>Important</strong></p>
+        <p class="small white">Tim needs temporary access to your Apple Developer account to upload the build from Xcode, OR Keith can run the Xcode archive himself on a Mac.</p>
+      </div>
+      <div class="card">
+        <p class="small gold mb-8"><strong>Review Notes</strong></p>
+        <p class="small">Provide Apple a demo account or explain that guests join events without sign-in.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>KLO App Store Guide</span>
+    <span>6 / 9</span>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 7: STORE LISTING COPY ===================== -->
+<div class="slide bg-accent flex col">
+  <div class="pill mb-24">Store Listings</div>
+  <h2 class="mb-8">Suggested App Store Copy</h2>
+  <p class="mb-24">Use this copy for both Google Play and App Store listings. Edit as you see fit.</p>
+
+  <div class="grid-2" style="flex: 1;">
+    <div>
+      <div class="card-gold mb-24">
+        <h3 class="gold mb-8" style="font-size: 16px;">Short Description (80 chars)</h3>
+        <p class="white" style="font-size: 16px; font-style: italic;">"Interactive event engagement tools from keynote speaker Keith L. Odom"</p>
+      </div>
+      <div class="card">
+        <h3 class="blue mb-16" style="font-size: 16px;">Full Description</h3>
+        <p class="small white" style="line-height: 1.8;">
+          The Keith L. Odom app brings interactive engagement to live events and conferences. Whether you're an event organizer or an attendee, this app transforms passive audiences into active participants.
+          <br/><br/>
+          <strong>For Attendees:</strong><br/>
+          &bull; Vote on live polls during keynote sessions<br/>
+          &bull; Submit and upvote questions in real-time Q&A<br/>
+          &bull; Participate in word cloud activities<br/>
+          &bull; View upcoming events and past highlights
+          <br/><br/>
+          <strong>For Event Organizers:</strong><br/>
+          &bull; Create and manage live polls<br/>
+          &bull; Moderate audience Q&A<br/>
+          &bull; Push real-time announcements<br/>
+          &bull; Track engagement analytics<br/>
+          &bull; Receive post-event reports
+          <br/><br/>
+          <strong>Also Includes:</strong><br/>
+          &bull; Leadership assessments and personal development tools<br/>
+          &bull; AI-powered coaching conversations<br/>
+          &bull; Book Keith for your next event<br/>
+          &bull; Access exclusive content and resources
+        </p>
+      </div>
+    </div>
+    <div>
+      <div class="card mb-24">
+        <h3 class="blue mb-8" style="font-size: 16px;">Keywords (Apple — 100 chars max)</h3>
+        <p class="small white">keynote,speaker,event,engagement,polls,leadership,conference,Q&A,audience,coaching</p>
+      </div>
+      <div class="card mb-24">
+        <h3 class="blue mb-8" style="font-size: 16px;">Category</h3>
+        <p class="small white">Primary: Business<br/>Secondary: Education</p>
+      </div>
+      <div class="card mb-24">
+        <h3 class="blue mb-8" style="font-size: 16px;">What's New (v1.0.0)</h3>
+        <p class="small white">Initial release of the Keith L. Odom app featuring live event engagement tools, leadership assessments, AI coaching, and event booking.</p>
+      </div>
+      <div class="card-gold">
+        <h3 class="gold mb-8" style="font-size: 16px;">Content Rating Answers</h3>
+        <p class="small">When filling out the content rating questionnaire:</p>
+        <ul class="small" style="margin-top: 8px;">
+          <li><span class="white">Violence:</span> No</li>
+          <li><span class="white">Sexual content:</span> No</li>
+          <li><span class="white">Language:</span> No (profanity filter active)</li>
+          <li><span class="white">Gambling:</span> No</li>
+          <li><span class="white">User-generated content:</span> Yes (Q&A, polls)</li>
+          <li><span class="white">Accounts:</span> Optional (guest access available)</li>
+          <li><span class="white">In-app purchases:</span> Yes (subscriptions via Stripe)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>KLO App Store Guide</span>
+    <span>7 / 9</span>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 8: TIMELINE ===================== -->
+<div class="slide bg-dark flex col">
+  <div class="pill mb-24">Timeline</div>
+  <h2 class="mb-32">Launch Timeline</h2>
+
+  <div style="flex: 1;">
+    <div class="flex gap-40">
+      <div style="flex: 1;">
+        <div class="flex gap-16 mb-32" style="align-items: flex-start;">
+          <div class="step-num">1</div>
+          <div>
+            <h3 class="mb-8" style="font-size: 20px;">AWS Deployment <span class="muted small">(Keith)</span></h3>
+            <p class="small">Connect GitHub repo to AWS Amplify, set env vars, point DNS.</p>
+            <p class="small gold" style="margin-top: 4px;">~1-2 hours</p>
+          </div>
+        </div>
+        <div class="flex gap-16 mb-32" style="align-items: flex-start;">
+          <div class="step-num">2</div>
+          <div>
+            <h3 class="mb-8" style="font-size: 20px;">Verify App Works <span class="muted small">(Tim + Keith)</span></h3>
+            <p class="small">Confirm keithlodom.ai loads correctly from AWS. Test all features.</p>
+            <p class="small gold" style="margin-top: 4px;">~30 minutes</p>
+          </div>
+        </div>
+        <div class="flex gap-16 mb-32" style="align-items: flex-start;">
+          <div class="step-num">3</div>
+          <div>
+            <h3 class="mb-8" style="font-size: 20px;">Build Native Apps <span class="muted small">(Tim)</span></h3>
+            <p class="small">Generate signed Android AAB and iOS archive. Generate store screenshots.</p>
+            <p class="small gold" style="margin-top: 4px;">~1-2 hours</p>
+          </div>
+        </div>
+      </div>
+      <div style="flex: 1;">
+        <div class="flex gap-16 mb-32" style="align-items: flex-start;">
+          <div class="step-num">4</div>
+          <div>
+            <h3 class="mb-8" style="font-size: 20px;">Submit to Stores <span class="muted small">(Keith, guided by Tim)</span></h3>
+            <p class="small">Upload builds, fill in store listings, submit for review.</p>
+            <p class="small gold" style="margin-top: 4px;">~1-2 hours</p>
+          </div>
+        </div>
+        <div class="flex gap-16 mb-32" style="align-items: flex-start;">
+          <div class="step-num">5</div>
+          <div>
+            <h3 class="mb-8" style="font-size: 20px;">Review Period <span class="muted small">(Waiting)</span></h3>
+            <p class="small">Google: 3-7 days for first app. Apple: usually within 24 hours.</p>
+            <p class="small gold" style="margin-top: 4px;">1-7 days</p>
+          </div>
+        </div>
+        <div class="flex gap-16 mb-32" style="align-items: flex-start;">
+          <div class="step-num">6</div>
+          <div>
+            <h3 class="mb-8" style="font-size: 20px;">Go Live! <span class="muted small">(Automatic)</span></h3>
+            <p class="small">Once approved, the app appears in both stores. Share the links!</p>
+            <p class="small gold" style="margin-top: 4px;">Immediate after approval</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-gold" style="margin-top: 16px;">
+      <p style="color: #D4A853; font-size: 16px; text-align: center;">
+        <strong>Total estimated time: 1-2 days of work + up to 7 days review</strong>
+      </p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>KLO App Store Guide</span>
+    <span>8 / 9</span>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 9: QUICK REFERENCE ===================== -->
+<div class="slide bg-slate flex col">
+  <div class="pill pill-gold mb-24">Quick Reference</div>
+  <h2 class="mb-24">Key Details At a Glance</h2>
+
+  <div class="grid-2" style="flex: 1;">
+    <div>
+      <div class="card mb-24">
+        <h3 class="blue mb-16" style="font-size: 18px;">App Details</h3>
+        <table style="width: 100%; font-size: 15px;">
+          <tr><td class="muted" style="padding: 6px 0; width: 40%;">App Name</td><td class="white" style="padding: 6px 0;"><strong>Keith L. Odom</strong></td></tr>
+          <tr><td class="muted" style="padding: 6px 0;">Display Name</td><td class="white" style="padding: 6px 0;">KLO</td></tr>
+          <tr><td class="muted" style="padding: 6px 0;">Bundle ID</td><td class="white" style="padding: 6px 0; font-family: monospace; font-size: 13px;">io.keithlodom.klo</td></tr>
+          <tr><td class="muted" style="padding: 6px 0;">Version</td><td class="white" style="padding: 6px 0;">1.0.0</td></tr>
+          <tr><td class="muted" style="padding: 6px 0;">Pricing</td><td class="white" style="padding: 6px 0;">Free (with in-app purchases)</td></tr>
+          <tr><td class="muted" style="padding: 6px 0;">Category</td><td class="white" style="padding: 6px 0;">Business / Education</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3 class="blue mb-16" style="font-size: 18px;">URLs (Live Now)</h3>
+        <table style="width: 100%; font-size: 15px;">
+          <tr><td class="muted" style="padding: 6px 0; width: 40%;">Website</td><td class="blue" style="padding: 6px 0;">keithlodom.ai</td></tr>
+          <tr><td class="muted" style="padding: 6px 0;">Privacy Policy</td><td class="blue" style="padding: 6px 0;">keithlodom.ai/privacy</td></tr>
+          <tr><td class="muted" style="padding: 6px 0;">Terms</td><td class="blue" style="padding: 6px 0;">keithlodom.ai/terms</td></tr>
+          <tr><td class="muted" style="padding: 6px 0;">Support</td><td class="blue" style="padding: 6px 0;">keithlodom.ai/support</td></tr>
+          <tr><td class="muted" style="padding: 6px 0;">Contact</td><td class="white" style="padding: 6px 0;">info@keithlodom.ai</td></tr>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="card mb-24">
+        <h3 class="blue mb-16" style="font-size: 18px;">Who Does What</h3>
+        <table style="width: 100%; font-size: 15px;">
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td class="gold" style="padding: 10px 0; width: 55%;"><strong>Keith</strong></td><td class="gold" style="padding: 10px 0;"><strong>Tim</strong></td></tr>
+          <tr><td class="white" style="padding: 8px 0;">AWS Amplify setup</td><td class="white" style="padding: 8px 0;">Build signed apps</td></tr>
+          <tr><td class="white" style="padding: 8px 0;">DNS configuration</td><td class="white" style="padding: 8px 0;">Generate screenshots</td></tr>
+          <tr><td class="white" style="padding: 8px 0;">Set environment vars</td><td class="white" style="padding: 8px 0;">Provide env var values</td></tr>
+          <tr><td class="white" style="padding: 8px 0;">Store submissions</td><td class="white" style="padding: 8px 0;">Upload iOS build (needs access)</td></tr>
+          <tr><td class="white" style="padding: 8px 0;">Review responses</td><td class="white" style="padding: 8px 0;">Bug fixes if rejected</td></tr>
+          <tr><td class="white" style="padding: 8px 0;">Approve descriptions</td><td class="white" style="padding: 8px 0;">Provide store copy</td></tr>
+        </table>
+      </div>
+      <div class="card-gold">
+        <h3 class="gold mb-8" style="font-size: 16px;">Next Step</h3>
+        <p style="font-size: 16px; color: #E6EDF3; line-height: 1.6;">
+          <strong>Keith</strong>: Set up AWS Amplify and let Tim know when <strong>keithlodom.ai</strong> is loading from AWS.<br/><br/>
+          <strong>Tim</strong> will then build the native apps, generate screenshots, and walk you through the store submissions.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>KLO App Store Guide</span>
+    <span>9 / 9</span>
+  </div>
+</div>
+
+</body>
+</html>
