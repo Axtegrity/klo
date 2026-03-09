@@ -34,7 +34,7 @@ export async function GET() {
     strategyRoomsRes,
     vaultRes,
   ] = await Promise.all([
-    supabase.from("profiles").select("subscription_tier"),
+    supabase.from("profiles").select("id, role"),
     supabase.from("profiles").select("id").gte("created_at", sevenDaysAgo),
     supabase.from("profiles").select("id").gte("created_at", thirtyDaysAgo),
     supabase.from("subscriptions").select("tier, status"),
@@ -44,22 +44,13 @@ export async function GET() {
     supabase.from("vault_content").select("content_type, tier_required"),
   ]);
 
-  // Users by tier
+  // Users — all free for now (no tiers)
   const profiles = profilesRes.data ?? [];
-  const byTier = { free: 0, pro: 0, executive: 0 };
-  for (const p of profiles) {
-    const tier = p.subscription_tier as keyof typeof byTier;
-    if (tier in byTier) byTier[tier]++;
-    else byTier.free++;
-  }
+  const byTier = { free: profiles.length, pro: 0, executive: 0 };
 
-  // Active subscriptions & MRR
+  // Subscriptions — not active yet
   const subs = (subscriptionsRes.data ?? []).filter((s) => s.status === "active");
-  let mrr = 0;
-  for (const s of subs) {
-    if (s.tier === "pro") mrr += 29;
-    else if (s.tier === "executive") mrr += 99;
-  }
+  const mrr = 0;
 
   // Advisor stats
   const advisorData = advisorRes.data ?? [];

@@ -117,23 +117,23 @@
       border-radius: 2px;
     }
     ul { list-style: none; padding: 0; }
-    ul li { padding: 6px 0; padding-left: 24px; position: relative; }
+    ul li { padding: 6px 0; padding-left: 28px; position: relative; }
     ul li::before {
       content: "›";
       position: absolute;
-      left: 0;
+      left: 4px;
       color: #2764FF;
       font-weight: bold;
-      font-size: 20px;
+      font-size: 18px;
     }
     ol { padding-left: 0; list-style: none; counter-reset: step; }
-    ol li { padding: 8px 0; counter-increment: step; padding-left: 32px; position: relative; }
+    ol li { padding: 8px 0; counter-increment: step; padding-left: 56px; position: relative; }
     ol li::before {
       content: counter(step);
       position: absolute;
-      left: 0;
-      width: 24px;
-      height: 24px;
+      left: 4px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       background: rgba(39,100,255,0.2);
       color: #2764FF;
@@ -142,7 +142,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      top: 10px;
+      top: 7px;
     }
 
     /* Footer */
@@ -243,7 +243,7 @@
       <ul class="small">
         <li>Use <strong class="white">AWS Amplify</strong> (easiest) — connect the GitHub repo</li>
         <li>Point <strong class="white">keithlodom.ai</strong> DNS to Amplify</li>
-        <li>Set environment variables (Tim will provide the list)</li>
+        <li>Set environment variables (use the one-time secret link Tim sent)</li>
       </ul>
     </div>
     <div class="card-blue grow flex col" style="flex: 1;">
@@ -287,7 +287,7 @@
       <ol>
         <li><span class="white">Log in to <strong>AWS Console</strong></span> &rarr; search for <strong class="blue">Amplify</strong></li>
         <li><span class="white">Click "New app" &rarr; "Host web app"</span></li>
-        <li><span class="white">Connect your <strong>GitHub</strong> account</span> and select the <strong class="gold">klo</strong> repository</li>
+        <li><span class="white">Connect your <strong>GitHub</strong> account</span> and select the <strong class="gold">Axtegrity/klo</strong> repository</li>
         <li><span class="white">Select the <strong>main</strong> branch</span></li>
         <li><span class="white">Amplify auto-detects Next.js</span> — accept the default build settings</li>
         <li><span class="white">Click "Save and deploy"</span> — wait for the build to complete (~3-5 min)</li>
@@ -299,18 +299,23 @@
       <div class="card-gold mb-24">
         <h3 class="gold mb-8" style="font-size: 16px;">Environment Variables</h3>
         <p class="small mb-16">In Amplify &rarr; App settings &rarr; Environment variables, add these:</p>
-        <p class="small white" style="font-family: monospace; line-height: 2;">
+        <p class="small white" style="font-family: monospace; line-height: 1.8; font-size: 11px;">
           NEXT_PUBLIC_SUPABASE_URL<br/>
           NEXT_PUBLIC_SUPABASE_ANON_KEY<br/>
           SUPABASE_SERVICE_ROLE_KEY<br/>
           NEXTAUTH_SECRET<br/>
-          NEXTAUTH_URL<br/>
+          NEXTAUTH_URL <span class="gold">*</span><br/>
+          NEXT_PUBLIC_APP_URL <span class="gold">*</span><br/>
           GOOGLE_CLIENT_ID<br/>
           GOOGLE_CLIENT_SECRET<br/>
           STRIPE_SECRET_KEY<br/>
-          STRIPE_PUBLISHABLE_KEY
+          STRIPE_WEBHOOK_SECRET<br/>
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY<br/>
+          ANTHROPIC_API_KEY<br/>
+          RESEND_API_KEY<br/>
+          ADMIN_NOTIFICATION_EMAILS <span class="gold">*</span>
         </p>
-        <p class="small mt-24" style="color: #D4A853;">Tim will send you the values for each of these securely.</p>
+        <p class="small mt-24" style="color: #D4A853;"><span class="gold">*</span> Set NEXTAUTH_URL and NEXT_PUBLIC_APP_URL to your AWS domain (e.g. https://keithlodom.ai). Set ADMIN_NOTIFICATION_EMAILS to your email. All other values are in the one-time secret link Tim sent you.</p>
       </div>
     </div>
   </div>
@@ -578,7 +583,7 @@
           <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td class="gold" style="padding: 10px 0; width: 55%;"><strong>Keith</strong></td><td class="gold" style="padding: 10px 0;"><strong>Tim</strong></td></tr>
           <tr><td class="white" style="padding: 8px 0;">AWS Amplify setup</td><td class="white" style="padding: 8px 0;">Build signed apps</td></tr>
           <tr><td class="white" style="padding: 8px 0;">DNS configuration</td><td class="white" style="padding: 8px 0;">Generate screenshots</td></tr>
-          <tr><td class="white" style="padding: 8px 0;">Set environment vars</td><td class="white" style="padding: 8px 0;">Provide env var values</td></tr>
+          <tr><td class="white" style="padding: 8px 0;">Set environment vars</td><td class="white" style="padding: 8px 0;">Env values sent (one-time link)</td></tr>
           <tr><td class="white" style="padding: 8px 0;">Store submissions</td><td class="white" style="padding: 8px 0;">Upload iOS build (needs access)</td></tr>
           <tr><td class="white" style="padding: 8px 0;">Review responses</td><td class="white" style="padding: 8px 0;">Bug fixes if rejected</td></tr>
           <tr><td class="white" style="padding: 8px 0;">Approve descriptions</td><td class="white" style="padding: 8px 0;">Provide store copy</td></tr>
@@ -587,7 +592,7 @@
       <div class="card-gold">
         <h3 class="gold mb-8" style="font-size: 16px;">Next Step</h3>
         <p style="font-size: 16px; color: #E6EDF3; line-height: 1.6;">
-          <strong>Keith</strong>: Set up AWS Amplify and let Tim know when <strong>keithlodom.ai</strong> is loading from AWS.<br/><br/>
+          <strong>Keith</strong>: GitHub repo is transferred to your account (<strong>Axtegrity/klo</strong>). Env values sent via one-time secret. Set up AWS Amplify and let Tim know when <strong>keithlodom.ai</strong> is loading from AWS.<br/><br/>
           <strong>Tim</strong> will then build the native apps, generate screenshots, and walk you through the store submissions.
         </p>
       </div>
