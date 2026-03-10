@@ -8,12 +8,14 @@ import {
   FolderKanban,
   Mic2,
   ArrowRight,
+  Share2,
 } from "lucide-react";
 import Badge from "@/components/shared/Badge";
 import Button from "@/components/shared/Button";
 import AffiliationStrip from "@/components/affiliations/AffiliationStrip";
 import AnimatedImage from "@/components/shared/AnimatedImage";
 import FadeInOnScroll from "@/components/shared/FadeInOnScroll";
+import { nativeShare } from "@/lib/native-share";
 import type { LucideIcon } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -121,6 +123,22 @@ export default function AboutPage() {
             Bridging faith, technology, and leadership to empower organizations
             and communities for the digital age.
           </motion.p>
+
+          <motion.div variants={fadeUp} custom={3} className="mt-6">
+            <button
+              onClick={() =>
+                nativeShare({
+                  title: "Keith L. Odom",
+                  text: "AI Strategist, Leadership Speaker & Executive Advisor",
+                  url: "https://keithlodom.ai/about",
+                })
+              }
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/[0.04] border border-white/10 text-klo-muted hover:text-[#2764FF] hover:border-[#2764FF]/30 hover:bg-[#2764FF]/10 text-sm font-medium transition-colors"
+            >
+              <Share2 size={16} />
+              Share Profile
+            </button>
+          </motion.div>
         </motion.div>
       </section>
 

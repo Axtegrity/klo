@@ -2,11 +2,12 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Download, RotateCcw, Calendar, FileText, Presentation } from "lucide-react";
+import { Download, RotateCcw, Calendar, FileText, Presentation, Share2 } from "lucide-react";
 import Button from "@/components/shared/Button";
 import Badge from "@/components/shared/Badge";
 import Card from "@/components/shared/Card";
 import type { AssessmentAnswerRecord } from "@/hooks/useAssessment";
+import { nativeShare } from "@/lib/native-share";
 
 // ------------------------------------------------------------
 // Types
@@ -387,6 +388,20 @@ export default function ScoreReport({
           <Button variant="secondary" size="md" onClick={onRetake}>
             <RotateCcw size={16} />
             Retake Assessment
+          </Button>
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() =>
+              nativeShare({
+                title: `${assessmentTitle} Assessment`,
+                text: `I just completed the ${assessmentTitle} Assessment on KLO! Check it out.`,
+                url: "https://keithlodom.ai/assessments",
+              })
+            }
+          >
+            <Share2 size={16} />
+            Share Results
           </Button>
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

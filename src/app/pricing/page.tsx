@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -193,6 +193,13 @@ function ComparisonCell({ value }: { value: string | boolean }) {
 export default function PricingPage() {
   const router = useRouter();
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [isNative, setIsNative] = useState(false);
+
+  useEffect(() => {
+    import("@capacitor/core").then(({ Capacitor }) => {
+      setIsNative(Capacitor.isNativePlatform());
+    }).catch(() => {});
+  }, []);
 
   async function handleSelect(tier: SubscriptionTier) {
     if (tier.slug === "free") {
@@ -269,17 +276,38 @@ export default function PricingPage() {
       {/*  Pricing Cards                                              */}
       {/* ---------------------------------------------------------- */}
       <section className="px-4 pb-20">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
-          {SUBSCRIPTION_TIERS.map((tier, i) => (
-            <PricingCard
-              key={tier.slug}
-              tier={tier}
-              index={i}
-              onSelect={handleSelect}
-              loading={loadingTier === tier.slug}
-            />
-          ))}
-        </div>
+        {isNative ? (
+          <div className="max-w-xl mx-auto text-center">
+            <div className="bg-[#161B22] border border-[#21262D] rounded-2xl p-8">
+              <h2 className="font-display text-2xl font-bold text-klo-text mb-3">
+                Manage Your Subscription
+              </h2>
+              <p className="text-klo-muted text-sm leading-relaxed mb-6">
+                To subscribe or manage your plan, please visit our website.
+              </p>
+              <a
+                href="https://klo-app.vercel.app/pricing"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-[#2764FF] text-white py-3 px-6 rounded-xl hover:bg-[#3a75ff] transition-colors font-semibold text-sm"
+              >
+                Visit keithlodom.ai to manage your subscription
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+            {SUBSCRIPTION_TIERS.map((tier, i) => (
+              <PricingCard
+                key={tier.slug}
+                tier={tier}
+                index={i}
+                onSelect={handleSelect}
+                loading={loadingTier === tier.slug}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ---------------------------------------------------------- */}

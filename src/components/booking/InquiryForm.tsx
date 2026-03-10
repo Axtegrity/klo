@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import Card from "@/components/shared/Card";
 import Button from "@/components/shared/Button";
+import { haptics } from "@/lib/haptics";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                           */
@@ -138,17 +139,20 @@ export default function InquiryForm() {
       if (res.ok && data.success) {
         setStatus("success");
         setServerMessage(data.message);
+        haptics.success();
       } else {
         setStatus("error");
         setServerMessage(
           data.message || "Something went wrong. Please try again."
         );
+        haptics.error();
       }
     } catch {
       setStatus("error");
       setServerMessage(
         "Unable to connect to the server. Please check your connection and try again."
       );
+      haptics.error();
     }
   };
 

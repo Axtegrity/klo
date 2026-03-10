@@ -12,9 +12,11 @@ import {
   FileText,
   Download,
   ExternalLink,
+  Share2,
 } from "lucide-react";
 import Badge from "@/components/shared/Badge";
 import Card from "@/components/shared/Card";
+import { nativeShare } from "@/lib/native-share";
 
 interface FeaturedKeynote {
   id: string;
@@ -422,6 +424,20 @@ function EventCard({ event, isPast }: { event: EventItem; isPast?: boolean }) {
                 <Badge variant="gold">Featured</Badge>
               )}
               {isPast && <Badge variant="muted">Past</Badge>}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nativeShare({
+                    title: event.title,
+                    text: event.conference_name,
+                    url: event.website_url || "https://keithlodom.ai/events",
+                  });
+                }}
+                className="ml-auto shrink-0 w-8 h-8 rounded-lg bg-white/[0.04] border border-white/10 flex items-center justify-center text-klo-muted hover:text-[#2764FF] hover:border-[#2764FF]/30 hover:bg-[#2764FF]/10 transition-colors"
+                aria-label="Share event"
+              >
+                <Share2 size={14} />
+              </button>
             </div>
             {event.conference_name !== event.title && (
               <p className="text-sm text-klo-muted leading-relaxed">

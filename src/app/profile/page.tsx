@@ -24,6 +24,7 @@ import Button from "@/components/shared/Button";
 import Card from "@/components/shared/Card";
 import { useSubscription } from "@/hooks/useSubscription";
 import { signOut } from "next-auth/react";
+import { haptics } from "@/lib/haptics";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -376,6 +377,7 @@ function SettingsTab() {
 
   const handleSave = () => {
     setSaved(true);
+    haptics.success();
     setTimeout(() => setSaved(false), 2000);
   };
 
@@ -577,7 +579,7 @@ function SettingsTab() {
           <Button
             variant="ghost"
             className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-            onClick={() => setShowDeleteConfirm(true)}
+            onClick={() => { haptics.warning(); setShowDeleteConfirm(true); }}
           >
             <Trash2 size={16} />
             Delete My Account

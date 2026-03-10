@@ -10,6 +10,7 @@ import Questionnaire from "./Questionnaire";
 import ScoreReport from "./ScoreReport";
 import type { AssessmentQuestion } from "@/lib/assessment-questions";
 import type { AssessmentSavedResult } from "@/hooks/useAssessment";
+import { haptics } from "@/lib/haptics";
 
 // ------------------------------------------------------------
 // Types
@@ -43,6 +44,7 @@ export default function AssessmentPageWrapper({
 
   const handleComplete = useCallback((res: AssessmentSavedResult) => {
     setResult(res);
+    haptics.success();
   }, []);
 
   const handleRetake = useCallback(() => {

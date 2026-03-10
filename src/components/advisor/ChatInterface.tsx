@@ -6,6 +6,7 @@ import { User, Bot, Send, AlertCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { AdvisorMessage } from "@/types";
+import { haptics } from "@/lib/haptics";
 
 // ------------------------------------------------------------
 // Props
@@ -181,6 +182,7 @@ export default function ChatInterface({
     const content = textareaRef.current.value.trim();
     if (!content || isLoading || disabled) return;
 
+    haptics.light();
     onSend(content);
     textareaRef.current.value = "";
     textareaRef.current.style.height = "auto";

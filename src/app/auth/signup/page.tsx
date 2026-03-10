@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { haptics } from "@/lib/haptics";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -46,6 +47,7 @@ export default function SignUpPage() {
 
       if (!res.ok) {
         setError(data.error || "Registration failed.");
+        haptics.error();
         setIsLoading(false);
         return;
       }
@@ -60,15 +62,18 @@ export default function SignUpPage() {
 
       if (result?.error) {
         setError("Account created but sign-in failed. Please sign in manually.");
+        haptics.error();
         setIsLoading(false);
         return;
       }
 
       if (result?.url) {
+        haptics.success();
         router.push(result.url);
       }
     } catch {
       setError("Something went wrong. Please try again.");
+      haptics.error();
       setIsLoading(false);
     }
   };
@@ -169,8 +174,8 @@ export default function SignUpPage() {
 
           <p className="mt-6 text-xs text-klo-muted text-center leading-snug">
             By continuing, you agree to the{" "}
-            <span className="text-[#2764FF] hover:underline cursor-pointer">Terms of Service</span> and{" "}
-            <span className="text-[#2764FF] hover:underline cursor-pointer">Privacy Policy</span>
+            <Link href="/terms" className="text-[#2764FF] hover:underline">Terms of Service</Link> and{" "}
+            <Link href="/privacy" className="text-[#2764FF] hover:underline">Privacy Policy</Link>
           </p>
         </motion.div>
 

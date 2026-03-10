@@ -90,6 +90,18 @@ export default function ManageSubscriptionPage() {
       });
       const data = await res.json();
       if (data.url) {
+        // On native platforms, open Stripe portal in external browser
+        // to avoid navigating the WebView away from the app
+        try {
+          const { Capacitor } = await import("@capacitor/core");
+          if (Capacitor.isNativePlatform()) {
+            const { Browser } = await import("@capacitor/browser");
+            await Browser.open({ url: data.url });
+            return;
+          }
+        } catch {
+          // Not on native, fall through to default behavior
+        }
         window.location.href = data.url;
       }
     } catch {

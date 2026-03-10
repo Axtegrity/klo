@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { PollWithVotes } from "../types";
+import { haptics } from "@/lib/haptics";
 
 interface PollVoteFormProps {
   poll: PollWithVotes;
@@ -15,6 +16,7 @@ export default function PollVoteForm({ poll, onVote }: PollVoteFormProps) {
   const handleVote = async () => {
     if (selected === null) return;
     setSubmitting(true);
+    haptics.medium();
     await onVote(poll.id, selected);
     setSubmitting(false);
   };

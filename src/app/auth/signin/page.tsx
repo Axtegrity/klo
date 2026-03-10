@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { haptics } from "@/lib/haptics";
 
 export default function SignInPage() {
   return (
@@ -38,7 +39,9 @@ function SignInContent() {
     setIsLoading(false);
     if (result?.error) {
       setError("Invalid email or password.");
+      haptics.error();
     } else if (result?.url) {
+      haptics.success();
       router.push(result.url);
     }
   };

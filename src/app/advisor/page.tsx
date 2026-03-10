@@ -7,6 +7,7 @@ import { Bot, Trash2, FileText, Send } from "lucide-react";
 import { useChat } from "@/hooks/useChat";
 import ChatInterface from "@/components/advisor/ChatInterface";
 import SuggestedPrompts from "@/components/advisor/SuggestedPrompts";
+import { haptics } from "@/lib/haptics";
 
 // ------------------------------------------------------------
 // Animation variants
@@ -42,6 +43,7 @@ export default function AdvisorPage() {
     if (!initialInputRef.current) return;
     const content = initialInputRef.current.value.trim();
     if (!content || isLoading) return;
+    haptics.light();
     sendMessage(content);
   };
 
