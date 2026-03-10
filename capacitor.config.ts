@@ -6,10 +6,16 @@ const config: CapacitorConfig = {
   appName: "KLO",
   webDir: "out",
 
+  server: {
+    url: "https://keithlodom.ai",
+    cleartext: false,
+  },
+
   ios: {
     scheme: "KLO",
     contentInset: "always",
     backgroundColor: "#0D1117",
+    allowsLinkPreview: false,
   },
 
   android: {
