@@ -28,6 +28,8 @@ interface FeaturedKeynote {
   event_time: string | null;
   description: string | null;
   website_url: string | null;
+  start_date: string | null;
+  end_date: string | null;
 }
 
 const fadeUp = {
@@ -64,6 +66,8 @@ interface EventItem {
   is_featured: boolean;
   access_code: string | null;
   website_url: string | null;
+  start_date: string | null;
+  end_date: string | null;
   event_files: EventFile[];
 }
 
@@ -107,6 +111,19 @@ function linkifyText(text: string): React.ReactNode[] {
     result.push(<span key={`t-${lastIndex}`}>{text.slice(lastIndex)}</span>);
   }
   return result;
+}
+
+function formatDateRange(startDate: string | null, endDate: string | null, eventDate: string): string {
+  if (eventDate === "SAVE THE DATE") return "SAVE THE DATE";
+  const start = startDate || eventDate;
+  const end = endDate || eventDate;
+  if (start === end) return formatDate(start);
+  const s = new Date(start + "T12:00:00");
+  const e = new Date(end + "T12:00:00");
+  if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) {
+    return `${s.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} – ${e.toLocaleDateString("en-US", { weekday: "long", day: "numeric", year: "numeric" })}`;
+  }
+  return `${formatDate(start)} – ${formatDate(end)}`;
 }
 
 function formatTime(time: string): string {
@@ -242,7 +259,7 @@ export default function EventsPage() {
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-klo-muted pt-1">
                   <span className="inline-flex items-center gap-1.5">
                     <Calendar size={14} className="text-[#2764FF]" />
-                    {formatDate(featuredKeynote.event_date)}
+                    {formatDateRange(featuredKeynote.start_date, featuredKeynote.end_date, featuredKeynote.event_date)}
                     {featuredKeynote.event_time && ` at ${formatTime(featuredKeynote.event_time)}`}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
@@ -452,7 +469,7 @@ function EventCard({ event, isPast }: { event: EventItem; isPast?: boolean }) {
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-klo-muted pt-1">
               <span className="inline-flex items-center gap-1.5">
                 <Calendar size={12} className="text-[#2764FF]/70" />
-                {formatDate(event.event_date)}
+                {formatDateRange(event.start_date, event.end_date, event.event_date)}
                 {event.event_time && ` at ${formatTime(event.event_time)}`}
               </span>
               <span className="inline-flex items-center gap-1.5">

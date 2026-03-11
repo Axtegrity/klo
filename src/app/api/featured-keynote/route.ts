@@ -22,7 +22,10 @@ export async function GET() {
   // Fetch all upcoming published events (today and future)
   const { data: events, error } = await supabase
     .from("event_presentations")
-    .select("id, title, conference_name, conference_location, event_date, event_time, event_timezone, description, slug, website_url")
+    .select(`id, title, conference_name, conference_location, event_date, event_time, event_timezone, description, slug, website_url, start_date, end_date,
+      keynote_session:conference_sessions!keynote_session_id (
+        id, speaker, room, time_label, sort_order
+      )`)
     .eq("is_published", true)
     .or(`event_date.gte.${today},event_date.eq.SAVE THE DATE`)
     .order("event_date", { ascending: true })

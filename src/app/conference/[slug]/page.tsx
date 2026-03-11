@@ -28,6 +28,8 @@ interface EventData {
   description: string | null;
   access_code: string | null;
   seminar_mode: boolean;
+  start_date: string | null;
+  end_date: string | null;
 }
 
 const fadeUp = {
@@ -53,6 +55,19 @@ function formatDate(dateStr: string): string {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function formatDateRange(startDate: string | null, endDate: string | null, eventDate: string): string {
+  if (eventDate === "SAVE THE DATE") return "SAVE THE DATE";
+  const start = startDate || eventDate;
+  const end = endDate || eventDate;
+  if (start === end) return formatDate(start);
+  const s = new Date(start + "T12:00:00");
+  const e = new Date(end + "T12:00:00");
+  if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) {
+    return `${s.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} – ${e.toLocaleDateString("en-US", { weekday: "long", day: "numeric", year: "numeric" })}`;
+  }
+  return `${formatDate(start)} – ${formatDate(end)}`;
 }
 
 function LiveBadge() {
@@ -209,7 +224,7 @@ export default function EventConferencePage() {
           >
             <span className="inline-flex items-center gap-2">
               <CalendarDays size={16} className="text-[#2764FF]" />
-              {formatDate(event.event_date)}
+              {formatDateRange(event.start_date, event.end_date, event.event_date)}
             </span>
             <span className="inline-flex items-center gap-2">
               <MapPin size={16} className="text-[#2764FF]" />

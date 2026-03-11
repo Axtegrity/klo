@@ -47,6 +47,8 @@ interface Event {
   access_code: string | null;
   seminar_mode: boolean;
   website_url: string | null;
+  start_date: string | null;
+  end_date: string | null;
   event_files: EventFile[];
 }
 
@@ -100,6 +102,8 @@ export default function EventsAdminTab() {
   const [formTimezone, setFormTimezone] = useState("America/Chicago");
   const [formDescription, setFormDescription] = useState("");
   const [formWebsiteUrl, setFormWebsiteUrl] = useState("");
+  const [formStartDate, setFormStartDate] = useState("");
+  const [formEndDate, setFormEndDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // Edit state
@@ -133,6 +137,8 @@ export default function EventsAdminTab() {
     setFormTimezone("America/Chicago");
     setFormDescription("");
     setFormWebsiteUrl("");
+    setFormStartDate("");
+    setFormEndDate("");
     setParseStatus("idle");
     setParseError(null);
     setParsedEvents([]);
@@ -155,6 +161,8 @@ export default function EventsAdminTab() {
           event_category: formCategory,
           description: formDescription,
           website_url: formWebsiteUrl || undefined,
+          start_date: formStartDate || undefined,
+          end_date: formEndDate || undefined,
         }),
       });
       if (res.ok) {
@@ -251,6 +259,8 @@ export default function EventsAdminTab() {
       description: event.description || "",
       access_code: event.access_code || "",
       website_url: event.website_url || "",
+      start_date: event.start_date || "",
+      end_date: event.end_date || "",
     });
   };
 
@@ -498,6 +508,24 @@ export default function EventsAdminTab() {
                         >
                           TBD
                         </button>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-klo-muted mb-1">Conference Start Date</label>
+                        <input
+                          type="date"
+                          value={((editFields as Record<string, unknown>).start_date as string ?? "").slice(0, 10)}
+                          onChange={(e) => setEditFields({ ...editFields, start_date: e.target.value || null })}
+                          className={inputClass}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-klo-muted mb-1">Conference End Date</label>
+                        <input
+                          type="date"
+                          value={((editFields as Record<string, unknown>).end_date as string ?? "").slice(0, 10)}
+                          onChange={(e) => setEditFields({ ...editFields, end_date: e.target.value || null })}
+                          className={inputClass}
+                        />
                       </div>
                       <input
                         type="time"
@@ -876,6 +904,24 @@ export default function EventsAdminTab() {
                 >
                   TBD
                 </button>
+              </div>
+              <div>
+                <label className="block text-xs text-klo-muted mb-1">Conference Start Date</label>
+                <input
+                  type="date"
+                  value={formStartDate}
+                  onChange={(e) => setFormStartDate(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-klo-muted mb-1">Conference End Date</label>
+                <input
+                  type="date"
+                  value={formEndDate}
+                  onChange={(e) => setFormEndDate(e.target.value)}
+                  className={inputClass}
+                />
               </div>
               <input
                 type="time"
