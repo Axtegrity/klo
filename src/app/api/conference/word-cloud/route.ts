@@ -24,17 +24,25 @@ function normalizeForProfanity(text: string): string {
     .replace(/5/g, "s");
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const eventId = searchParams.get("event_id") || undefined;
   const supabase = getServiceSupabase();
 
   // Use SQL-side aggregation instead of fetching all rows
-  const { data, error } = await supabase.rpc("get_word_cloud_counts");
+  const { data, error } = await supabase.rpc("get_word_cloud_counts", {
+    p_event_id: eventId ?? null,
+  });
 
   if (error) {
     // Fallback to client-side aggregation if RPC doesn't exist yet
-    const { data: rawData, error: rawError } = await supabase
+    let query = supabase
       .from("conference_word_cloud")
       .select("word");
+
+    if (eventId) query = query.eq("event_id", eventId);
+
+    const { data: rawData, error: rawError } = await query;
 
     if (rawError) {
       return NextResponse.json({ error: rawError.message }, { status: 500 });
@@ -62,7 +70,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { word } = body;
+  const { word, event_id } = body;
 
   if (!word?.trim() || word.trim().length > 30) {
     return NextResponse.json(
@@ -116,7 +124,7 @@ export async function POST(request: Request) {
 
   const { error } = await supabase
     .from("conference_word_cloud")
-    .insert({ word: word.trim().toLowerCase(), voter_fingerprint: fingerprint });
+    .insert({ word: word.trim().toLowerCase(), voter_fingerprint: fingerprint, ...(event_id ? { event_id } : {}) });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

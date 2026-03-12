@@ -52,6 +52,7 @@ export interface SeminarMode {
 
 export interface ConferenceSession {
   id: string;
+  event_id: string | null;
   title: string;
   description: string | null;
   scheduled_at: string | null;

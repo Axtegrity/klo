@@ -5,19 +5,26 @@ import { Trash2 } from "lucide-react";
 import { useConferenceRealtime } from "../hooks/useConferenceRealtime";
 import type { WordCloudEntry } from "../types";
 
-export default function WordCloudManager() {
+interface WordCloudManagerProps {
+  eventId?: string;
+}
+
+export default function WordCloudManager({ eventId }: WordCloudManagerProps) {
   const [entries, setEntries] = useState<WordCloudEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [clearing, setClearing] = useState(false);
 
   const fetchEntries = useCallback(async () => {
     try {
-      const res = await fetch("/api/conference/word-cloud");
+      const url = eventId
+        ? `/api/conference/word-cloud?event_id=${eventId}`
+        : "/api/conference/word-cloud";
+      const res = await fetch(url);
       if (res.ok) setEntries(await res.json());
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [eventId]);
 
   useConferenceRealtime({ onWordCloudChange: fetchEntries });
 
@@ -29,7 +36,10 @@ export default function WordCloudManager() {
     if (!confirm("Clear all word cloud entries? This cannot be undone.")) return;
     setClearing(true);
     try {
-      const res = await fetch("/api/conference/word-cloud/clear", { method: "DELETE" });
+      const clearUrl = eventId
+        ? `/api/conference/word-cloud/clear?event_id=${eventId}`
+        : "/api/conference/word-cloud/clear";
+      const res = await fetch(clearUrl, { method: "DELETE" });
       if (res.ok) {
         setEntries([]);
       }

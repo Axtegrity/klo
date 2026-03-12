@@ -39,7 +39,7 @@ interface ConferenceToolsTabsProps {
 
 export default function ConferenceToolsTabs({ eventId, sessionId }: ConferenceToolsTabsProps = {}) {
   const [activeTab, setActiveTab] = useState<ConferenceToolTab>("polls");
-  const { activeSession } = useSessions(eventId ? { eventId } : undefined);
+  const { sessions, activeSession } = useSessions(eventId ? { eventId } : undefined);
   const { isAuthenticated } = useConferenceRoles();
   // Use explicit sessionId prop (guest-selected) if provided, otherwise fall back to admin-activated session
   const effectiveSessionId = sessionId ?? activeSession?.id ?? undefined;
@@ -48,19 +48,22 @@ export default function ConferenceToolsTabs({ eventId, sessionId }: ConferenceTo
     sessionId: effectiveSessionId,
     eventId,
   });
-  const wordCloudHook = useWordCloud();
+  const wordCloudHook = useWordCloud({ eventId });
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
   const fetchAnnouncements = useCallback(async () => {
     try {
-      const res = await fetch("/api/conference/announcements");
+      const url = eventId
+        ? `/api/conference/announcements?event_id=${eventId}`
+        : "/api/conference/announcements";
+      const res = await fetch(url);
       if (res.ok) setAnnouncements(await res.json());
     } catch {
       // keep current
     }
-  }, []);
+  }, [eventId]);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -70,7 +73,8 @@ export default function ConferenceToolsTabs({ eventId, sessionId }: ConferenceTo
 
   const visibleAnnouncements = announcements.filter((a) => !dismissedIds.has(a.id));
 
-  const qaDisabled = activeSession && !activeSession.qa_enabled;
+  const selectedSession = sessionId ? sessions.find((s) => s.id === sessionId) : activeSession;
+  const qaDisabled = selectedSession && !selectedSession.qa_enabled;
 
   return (
     <div className="space-y-6">

@@ -9,6 +9,9 @@ interface SessionSelectCardProps {
   loading: boolean;
   onSelect: (session: ConferenceSession) => void;
   eventTitle?: string;
+  joining?: boolean;
+  joiningLabel?: string;
+  error?: string | null;
 }
 
 export default function SessionSelectCard({
@@ -16,6 +19,9 @@ export default function SessionSelectCard({
   loading,
   onSelect,
   eventTitle,
+  joining,
+  joiningLabel = "Joining session…",
+  error,
 }: SessionSelectCardProps) {
   if (loading) {
     return (
@@ -48,12 +54,26 @@ export default function SessionSelectCard({
           </p>
         </div>
 
+        {error && (
+          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            {error}
+          </div>
+        )}
+
+        {joining && (
+          <div className="flex items-center justify-center gap-2 mb-4 py-2 text-sm text-klo-muted">
+            <Loader2 size={16} className="animate-spin text-[#2764FF]" />
+            <span>{joiningLabel}</span>
+          </div>
+        )}
+
         <div className="space-y-3">
           {sessions.map((session) => (
             <button
               key={session.id}
               onClick={() => onSelect(session)}
-              className="w-full text-left p-4 rounded-xl bg-klo-dark border border-white/10 hover:border-[#2764FF]/40 hover:bg-[#2764FF]/5 transition-all group"
+              disabled={joining}
+              className="w-full text-left p-4 rounded-xl bg-klo-dark border border-white/10 hover:border-[#2764FF]/40 hover:bg-[#2764FF]/5 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-[#2764FF]/50 group-hover:bg-[#2764FF] transition-colors shrink-0" />

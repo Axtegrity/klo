@@ -7,6 +7,9 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const eventId = searchParams.get("event_id");
 
+  const activeOnly = searchParams.get("active_only") === "true";
+  const standaloneOnly = searchParams.get("standalone_only") === "true";
+
   let query = supabase
     .from("conference_sessions")
     .select("*")
@@ -15,6 +18,14 @@ export async function GET(request: Request) {
 
   if (eventId) {
     query = query.eq("event_id", eventId);
+  }
+
+  if (standaloneOnly) {
+    query = query.is("event_id", null);
+  }
+
+  if (activeOnly) {
+    query = query.eq("is_active", true);
   }
 
   const { data, error } = await query;

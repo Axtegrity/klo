@@ -4,13 +4,17 @@ import { useState, useEffect, useCallback } from "react";
 import { useConferenceRealtime } from "./useConferenceRealtime";
 import type { WordCloudEntry } from "../types";
 
-export function useWordCloud() {
+export function useWordCloud(options?: { eventId?: string }) {
+  const eventId = options?.eventId;
   const [entries, setEntries] = useState<WordCloudEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchEntries = useCallback(async () => {
     try {
-      const res = await fetch("/api/conference/word-cloud");
+      const url = eventId
+        ? `/api/conference/word-cloud?event_id=${eventId}`
+        : "/api/conference/word-cloud";
+      const res = await fetch(url);
       if (!res.ok) return;
       const data: WordCloudEntry[] = await res.json();
       setEntries(data);
@@ -19,7 +23,7 @@ export function useWordCloud() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [eventId]);
 
   useEffect(() => {
     fetchEntries();
@@ -35,7 +39,7 @@ export function useWordCloud() {
         const res = await fetch("/api/conference/word-cloud", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ word }),
+          body: JSON.stringify({ word, ...(eventId ? { event_id: eventId } : {}) }),
         });
         if (res.ok) {
           fetchEntries();

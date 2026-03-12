@@ -12,7 +12,11 @@ interface Announcement {
   created_at: string;
 }
 
-export default function AnnouncementManager() {
+interface AnnouncementManagerProps {
+  eventId?: string;
+}
+
+export default function AnnouncementManager({ eventId }: AnnouncementManagerProps) {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -20,12 +24,15 @@ export default function AnnouncementManager() {
 
   const fetchAnnouncements = useCallback(async () => {
     try {
-      const res = await fetch("/api/conference/announcements");
+      const url = eventId
+        ? `/api/conference/announcements?event_id=${eventId}`
+        : "/api/conference/announcements";
+      const res = await fetch(url);
       if (res.ok) setAnnouncements(await res.json());
     } catch {
       // keep current state
     }
-  }, []);
+  }, [eventId]);
 
   useConferenceRealtime({ onAnnouncementsChange: fetchAnnouncements });
 
@@ -41,7 +48,7 @@ export default function AnnouncementManager() {
       const res = await fetch("/api/conference/announcements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), message: message.trim() }),
+        body: JSON.stringify({ title: title.trim(), message: message.trim(), ...(eventId ? { event_id: eventId } : {}) }),
       });
       if (res.ok) {
         setTitle("");

@@ -5,6 +5,45 @@ import { getServiceSupabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
+// GET /api/conference/session-attendance?event_id=X — check current session for an event
+export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = (session.user as { id?: string }).id;
+  if (!userId) {
+    return NextResponse.json({ error: "User ID not found" }, { status: 401 });
+  }
+
+  const eventId = req.nextUrl.searchParams.get("event_id");
+  if (!eventId) {
+    return NextResponse.json({ error: "event_id required" }, { status: 400 });
+  }
+
+  const supabase = getServiceSupabase();
+
+  const { data, error } = await supabase
+    .from("conference_session_attendees")
+    .select("session_id, conference_sessions!inner(id, event_id, title, description, scheduled_at, is_active, qa_enabled, release_mode, speaker, room, time_label, sort_order, created_at)")
+    .eq("user_id", userId)
+    .is("left_at", null)
+    .eq("conference_sessions.event_id", eventId);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (!data || data.length === 0) {
+    return NextResponse.json({ session: null });
+  }
+
+  // Return the first active session attendance for this event
+  const active = data[0];
+  return NextResponse.json({ session: active.conference_sessions });
+}
+
 // POST /api/conference/session-attendance — join a session
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -72,7 +111,8 @@ export async function POST(req: NextRequest) {
     );
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Session attendance insert error:", { error, session_id, userId });
+    return NextResponse.json({ error: error.message, code: error.code, details: error.details }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

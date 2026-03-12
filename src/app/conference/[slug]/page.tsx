@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -8,12 +8,11 @@ import {
   MapPin,
   Radio,
   Sparkles,
-  ArrowLeft,
+  ChevronDown,
 } from "lucide-react";
 import Badge from "@/components/shared/Badge";
 import SeminarModeGate from "@/features/conference/components/SeminarModeGate";
 import ConferenceToolsTabs from "@/features/conference/components/ConferenceToolsTabs";
-import SessionSelectCard from "@/features/conference/components/SessionSelectCard";
 import { useSessions } from "@/features/conference/hooks/useSessions";
 import type { ConferenceSession } from "@/features/conference/types";
 
@@ -97,7 +96,66 @@ export default function EventConferencePage() {
   const [notFound, setNotFound] = useState(false);
 
   const [selectedSession, setSelectedSession] = useState<ConferenceSession | null>(null);
-  const { sessions, loading: sessionsLoading } = useSessions(event ? { eventId: event.id } : undefined);
+  const { sessions, loading: sessionsLoading } = useSessions(
+    event ? { eventId: event.id, activeOnly: true } : undefined
+  );
+
+  // Restore session from server if user was already in one
+  useEffect(() => {
+    if (!event?.id || selectedSession || sessionsLoading) return;
+    fetch(`/api/conference/session-attendance?event_id=${encodeURIComponent(event.id)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.session) {
+          setSelectedSession(data.session as ConferenceSession);
+        }
+      })
+      .catch(() => {});
+  }, [event?.id, sessions, sessionsLoading, selectedSession]);
+
+  // Handle session dropdown change
+  const handleSessionChange = useCallback(async (sessionId: string) => {
+    const session = sessions.find((s) => s.id === sessionId);
+    if (!session) return;
+
+    // Leave current session if switching
+    if (selectedSession) {
+      fetch("/api/conference/session-attendance", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: selectedSession.id }),
+      }).catch(() => {});
+    }
+
+    setSelectedSession(session);
+
+    // Join new session (best-effort)
+    try {
+      const res = await fetch("/api/conference/session-attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: session.id }),
+      });
+      if (res.status === 409) {
+        // Auto-resolve conflict
+        const data = await res.json();
+        if (data.conflicting_session_id) {
+          await fetch("/api/conference/session-attendance", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session_id: data.conflicting_session_id }),
+          });
+          await fetch("/api/conference/session-attendance", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session_id: session.id }),
+          });
+        }
+      }
+    } catch {
+      // Local selection still works
+    }
+  }, [sessions, selectedSession]);
 
   // Fetch event by slug
   useEffect(() => {
@@ -135,49 +193,8 @@ export default function EventConferencePage() {
     );
   }
 
-  // TODO: Access code gate disabled for now — will re-enable later
-  // const needsSignIn = event.access_code && (!isGuest || guest?.event_id !== event.id);
-
-  // If event has sessions and guest hasn't picked one yet, show session selector
   const hasSessions = sessions.length > 0;
-  const needsSessionSelection = hasSessions && !selectedSession;
 
-  if (needsSessionSelection) {
-    return (
-      <div className="min-h-screen">
-        <section className="relative overflow-hidden py-20 md:py-28 px-6">
-          <div className="absolute inset-0 bg-gradient-to-b from-klo-gold/5 via-transparent to-transparent pointer-events-none" />
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-            className="relative z-10 max-w-4xl mx-auto text-center"
-          >
-            <motion.div variants={fadeUp} custom={0} className="mb-6">
-              <Badge variant="gold">Conference Companion</Badge>
-            </motion.div>
-            <motion.h1
-              variants={fadeUp}
-              custom={1}
-              className="font-display text-3xl md:text-5xl font-bold text-klo-text leading-tight mb-4"
-            >
-              {event.conference_name}
-            </motion.h1>
-            <motion.div variants={fadeUp} custom={2}>
-              <SessionSelectCard
-                sessions={sessions}
-                loading={sessionsLoading}
-                onSelect={setSelectedSession}
-                eventTitle={event.conference_name}
-              />
-            </motion.div>
-          </motion.div>
-        </section>
-      </div>
-    );
-  }
-
-  // Signed in or no access code required — show the event
   return (
     <div className="min-h-screen">
       {/* Hero */}
@@ -232,19 +249,28 @@ export default function EventConferencePage() {
             </span>
           </motion.div>
 
-          {/* Session info bar */}
-          {selectedSession && (
-            <motion.div variants={fadeUp} custom={4} className="mt-6">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2764FF]/10 border border-[#2764FF]/20 text-sm">
-                <Radio size={14} className="text-[#2764FF]" />
-                <span className="text-klo-text font-medium">{selectedSession.title}</span>
-                <button
-                  onClick={() => setSelectedSession(null)}
-                  className="p-0.5 rounded text-klo-muted hover:text-klo-text transition-colors"
-                  title="Change session"
-                >
-                  <ArrowLeft size={12} />
-                </button>
+          {/* Session selector — always requires selection */}
+          {hasSessions && !sessionsLoading && (
+            <motion.div variants={fadeUp} custom={4} className="mt-8">
+              <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-klo-dark/60 border border-white/10 backdrop-blur-sm">
+                <Radio size={16} className="text-[#2764FF] shrink-0" />
+                <label className="text-sm text-klo-muted shrink-0">Session:</label>
+                <div className="relative">
+                  <select
+                    value={selectedSession?.id || ""}
+                    onChange={(e) => handleSessionChange(e.target.value)}
+                    className="appearance-none bg-transparent border border-white/10 rounded-lg pl-3 pr-8 py-1.5 text-sm text-klo-text font-medium focus:outline-none focus:border-[#2764FF]/50 cursor-pointer min-w-[200px]"
+                  >
+                    <option value="" disabled>Select a session…</option>
+                    {sessions.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.title}
+                        {s.time_label ? ` — ${s.time_label}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-klo-muted pointer-events-none" />
+                </div>
               </div>
             </motion.div>
           )}

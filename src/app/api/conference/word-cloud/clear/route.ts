@@ -11,17 +11,27 @@ async function verifyAdmin() {
   return session;
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   const session = await verifyAdmin();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const eventId = searchParams.get("event_id") || undefined;
+
   const supabase = getServiceSupabase();
-  const { error } = await supabase
+  let query = supabase
     .from("conference_word_cloud")
-    .delete()
-    .neq("id", "00000000-0000-0000-0000-000000000000"); // delete all rows
+    .delete();
+
+  if (eventId) {
+    query = query.eq("event_id", eventId);
+  } else {
+    query = query.neq("id", "00000000-0000-0000-0000-000000000000"); // delete all rows
+  }
+
+  const { error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

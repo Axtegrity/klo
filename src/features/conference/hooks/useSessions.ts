@@ -4,16 +4,18 @@ import { useState, useEffect, useCallback } from "react";
 import { useConferenceRealtime } from "./useConferenceRealtime";
 import type { ConferenceSession } from "../types";
 
-export function useSessions(options?: { eventId?: string }) {
+export function useSessions(options?: { eventId?: string; activeOnly?: boolean }) {
   const [sessions, setSessions] = useState<ConferenceSession[]>([]);
   const [loading, setLoading] = useState(true);
   const eventId = options?.eventId;
+  const activeOnly = options?.activeOnly;
 
   const fetchSessions = useCallback(async () => {
     try {
-      const url = eventId
-        ? `/api/conference/sessions?event_id=${eventId}`
-        : "/api/conference/sessions";
+      const params = new URLSearchParams();
+      if (eventId) params.set("event_id", eventId);
+      if (activeOnly) params.set("active_only", "true");
+      const url = `/api/conference/sessions${params.toString() ? `?${params}` : ""}`;
       const res = await fetch(url);
       if (res.ok) {
         setSessions(await res.json());
@@ -23,7 +25,7 @@ export function useSessions(options?: { eventId?: string }) {
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [eventId, activeOnly]);
 
   useEffect(() => {
     fetchSessions();

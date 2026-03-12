@@ -11,13 +11,20 @@ async function verifyAdmin() {
   return session;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const eventId = searchParams.get("event_id") || undefined;
   const supabase = getServiceSupabase();
-  const { data, error } = await supabase
+
+  let query = supabase
     .from("conference_announcements")
     .select("*")
     .eq("is_active", true)
     .order("created_at", { ascending: false });
+
+  if (eventId) query = query.eq("event_id", eventId);
+
+  const { data, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -35,7 +42,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { title, message } = body;
+  const { title, message, event_id } = body;
 
   if (!title?.trim() || !message?.trim()) {
     return NextResponse.json(
@@ -47,7 +54,7 @@ export async function POST(request: Request) {
   const supabase = getServiceSupabase();
   const { data, error } = await supabase
     .from("conference_announcements")
-    .insert({ title: title.trim(), message: message.trim() })
+    .insert({ title: title.trim(), message: message.trim(), ...(event_id ? { event_id } : {}) })
     .select()
     .single();
 

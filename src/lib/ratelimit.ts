@@ -38,6 +38,9 @@ export const contactLimiter = createLimiter("contact", 3, "1 h");
 // AI Advisor: 30 per hour (cost protection)
 export const advisorLimiter = createLimiter("advisor", 30, "1 h");
 
+// Maven webhook: 10 per minute (abuse protection)
+export const mavenWebhookLimiter = createLimiter("maven-webhook", 10, "1 m");
+
 // ── Helper ─────────────────────────────────────────────────
 
 export async function checkLimit(
