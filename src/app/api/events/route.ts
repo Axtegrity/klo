@@ -17,6 +17,8 @@ export async function GET() {
     .eq("is_published", true)
     .order("event_date", { ascending: false });
 
+  // Note: new columns (notes, session_name, room_location, event_status) are included via `*`
+
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

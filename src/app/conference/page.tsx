@@ -25,6 +25,7 @@ import Badge from "@/components/shared/Badge";
 import SeminarModeGate from "@/features/conference/components/SeminarModeGate";
 import ConferenceToolsTabs from "@/features/conference/components/ConferenceToolsTabs";
 import { useSessions } from "@/features/conference/hooks/useSessions";
+import { useSeminarMode } from "@/features/conference/hooks/useSeminarMode";
 
 /* ------------------------------------------------------------------ */
 /*  Animation helpers                                                   */
@@ -173,6 +174,9 @@ export default function ConferencePage() {
   const { data: session } = useSession();
   const isAuthenticated = !!(session?.user as { id?: string } | undefined)?.id;
 
+  /* ---------- Seminar mode gate (entire page) ---------- */
+  const { seminarMode, loading: seminarLoading } = useSeminarMode();
+
   /* ---------- Sessions from DB ---------- */
   const { sessions, loading: sessionsLoading } = useSessions();
 
@@ -186,14 +190,14 @@ export default function ConferencePage() {
       .catch(() => {});
   }, []);
 
-  /* ---------- Featured event ---------- */
+  /* ---------- Live event ---------- */
   const [event, setEvent] = useState<FeaturedEvent>(fallbackEvent);
 
   useEffect(() => {
-    fetch("/api/featured-keynote")
+    fetch("/api/live-events")
       .then((res) => res.json())
       .then((data) => {
-        if (data) setEvent(data);
+        if (Array.isArray(data) && data.length > 0) setEvent(data[0]);
       })
       .catch(() => {});
   }, []);
@@ -216,6 +220,11 @@ export default function ConferencePage() {
   }, [notes]);
 
   /* ---------- Render ---------- */
+
+  // Engagement page: completely blank when seminar mode is OFF — no containers, no placeholder
+  if (seminarLoading) return null;
+  if (!seminarMode.active) return <div className="min-h-screen" />;
+
   return (
     <div className="min-h-screen">
       {/* ====== Conference Hero ====== */}
