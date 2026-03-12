@@ -19,28 +19,9 @@ export default function SeminarModeGate({ children, eventId }: SeminarModeGatePr
     );
   }
 
+  // When seminar mode is OFF: render absolutely nothing — no containers, no placeholders
   if (!seminarMode.active) {
-    return (
-      <div className="relative">
-        <div className="opacity-30 pointer-events-none select-none blur-[2px]">
-          {children}
-        </div>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="glass rounded-2xl p-6 sm:p-8 border border-white/10 text-center w-[calc(100%-2rem)] max-w-md mx-auto">
-            <div className="w-14 h-14 rounded-2xl bg-[#2764FF]/10 flex items-center justify-center mx-auto mb-4">
-              <Clock size={28} className="text-[#2764FF]" />
-            </div>
-            <h3 className="font-display text-xl font-bold text-klo-text mb-2">
-              Conference Tools Inactive
-            </h3>
-            <p className="text-sm text-klo-muted leading-relaxed">
-              Interactive tools will be activated by the presenter when the session begins.
-              Check back soon!
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return <>{children}</>;

@@ -228,10 +228,24 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
   };
 
   const togglePoll = async (id: string, field: "is_active" | "show_results", value: boolean) => {
+    // Confirmation prompt when closing a poll (deactivating)
+    if (field === "is_active" && value === false) {
+      const confirmed = window.confirm(
+        "Are you sure you want to close this poll? Once closed, no more votes can be submitted."
+      );
+      if (!confirmed) return;
+    }
+
+    const body: Record<string, unknown> = { [field]: value };
+    // Set closed_at timestamp when deactivating a poll
+    if (field === "is_active" && value === false) {
+      body.closed_at = new Date().toISOString();
+    }
+
     await fetch(`/api/conference/polls/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ [field]: value }),
+      body: JSON.stringify(body),
     });
     fetchPolls();
   };

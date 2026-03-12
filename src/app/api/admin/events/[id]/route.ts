@@ -29,6 +29,8 @@ export async function PUT(
     "title", "description", "conference_name", "conference_location",
     "event_category", "event_date", "event_time", "event_timezone", "is_published", "is_featured", "slug",
     "access_code", "seminar_mode", "website_url", "start_date", "end_date",
+    "notes", "session_name", "room_location", "is_guest_presenter", "session_end_time",
+    "event_status", "event_status_override",
   ] as const;
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   for (const key of ALLOWED_FIELDS) {

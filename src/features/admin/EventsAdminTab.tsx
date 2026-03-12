@@ -39,6 +39,7 @@ interface Event {
   conference_location: string;
   event_category: string;
   description: string | null;
+  notes: string | null;
   event_date: string;
   event_time: string | null;
   event_timezone: string | null;
@@ -49,6 +50,12 @@ interface Event {
   website_url: string | null;
   start_date: string | null;
   end_date: string | null;
+  session_name: string | null;
+  room_location: string | null;
+  is_guest_presenter: boolean;
+  session_end_time: string | null;
+  event_status: string;
+  event_status_override: boolean;
   event_files: EventFile[];
 }
 
@@ -101,9 +108,13 @@ export default function EventsAdminTab() {
   const [formTime, setFormTime] = useState("");
   const [formTimezone, setFormTimezone] = useState("America/Chicago");
   const [formDescription, setFormDescription] = useState("");
+  const [formNotes, setFormNotes] = useState("");
   const [formWebsiteUrl, setFormWebsiteUrl] = useState("");
   const [formStartDate, setFormStartDate] = useState("");
   const [formEndDate, setFormEndDate] = useState("");
+  const [formIsGuestPresenter, setFormIsGuestPresenter] = useState(false);
+  const [formSessionName, setFormSessionName] = useState("");
+  const [formRoomLocation, setFormRoomLocation] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // Edit state
@@ -136,9 +147,13 @@ export default function EventsAdminTab() {
     setFormTime("");
     setFormTimezone("America/Chicago");
     setFormDescription("");
+    setFormNotes("");
     setFormWebsiteUrl("");
     setFormStartDate("");
     setFormEndDate("");
+    setFormIsGuestPresenter(false);
+    setFormSessionName("");
+    setFormRoomLocation("");
     setParseStatus("idle");
     setParseError(null);
     setParsedEvents([]);
@@ -160,9 +175,13 @@ export default function EventsAdminTab() {
           event_timezone: formTimezone,
           event_category: formCategory,
           description: formDescription,
+          notes: formNotes || undefined,
           website_url: formWebsiteUrl || undefined,
           start_date: formStartDate || undefined,
           end_date: formEndDate || undefined,
+          is_guest_presenter: formIsGuestPresenter,
+          session_name: formSessionName || undefined,
+          room_location: formRoomLocation || undefined,
         }),
       });
       if (res.ok) {
@@ -257,11 +276,18 @@ export default function EventsAdminTab() {
       event_timezone: event.event_timezone || "America/Chicago",
       event_category: event.event_category,
       description: event.description || "",
+      notes: event.notes || "",
       access_code: event.access_code || "",
       website_url: event.website_url || "",
       start_date: event.start_date || null,
       end_date: event.end_date || null,
-    });
+      session_name: event.session_name || "",
+      room_location: event.room_location || "",
+      is_guest_presenter: event.is_guest_presenter || false,
+      session_end_time: event.session_end_time || "",
+      event_status: event.event_status || "upcoming",
+      event_status_override: event.event_status_override || false,
+    } as Partial<Event>);
   };
 
   const handleSaveEdit = async (eventId: string) => {
@@ -295,7 +321,26 @@ export default function EventsAdminTab() {
     fetchEvents();
   };
 
+  const [uploadMsg, setUploadMsg] = useState<{ eventId: string; type: "success" | "error"; text: string } | null>(null);
+
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+  const ALLOWED_FILE_TYPES = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt"];
+
   const handleUploadFile = async (eventId: string, file: File) => {
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      setUploadMsg({ eventId, type: "error", text: `File too large. Maximum size is 50MB. (${(file.size / 1024 / 1024).toFixed(1)}MB)` });
+      setTimeout(() => setUploadMsg(null), 5000);
+      return;
+    }
+    // Validate file type
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    if (!ALLOWED_FILE_TYPES.includes(ext)) {
+      setUploadMsg({ eventId, type: "error", text: `File type ".${ext}" not allowed. Accepted: ${ALLOWED_FILE_TYPES.join(", ")}` });
+      setTimeout(() => setUploadMsg(null), 5000);
+      return;
+    }
+
     setUploading(eventId);
     try {
       const formData = new FormData();
@@ -305,11 +350,27 @@ export default function EventsAdminTab() {
         body: formData,
       });
       if (res.ok) {
+        setUploadMsg({ eventId, type: "success", text: `"${file.name}" uploaded successfully` });
+        logActivity("presentation_uploaded", "event", eventId, `File: ${file.name}`);
         fetchEvents();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setUploadMsg({ eventId, type: "error", text: data.error || "Upload failed" });
       }
+      setTimeout(() => setUploadMsg(null), 5000);
     } finally {
       setUploading(null);
     }
+  };
+
+  const logActivity = async (action: string, entityType: string, entityId: string, details?: string) => {
+    try {
+      await fetch("/api/admin/activity-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, entity_type: entityType, entity_id: entityId, details }),
+      });
+    } catch { /* best-effort logging */ }
   };
 
   const handleDeleteFile = async (eventId: string, fileId: string) => {
@@ -589,6 +650,84 @@ export default function EventsAdminTab() {
                       rows={3}
                       className={inputClass}
                     />
+                    <textarea
+                      placeholder="Notes (shown in View More Details on the events page)"
+                      value={(editFields as Record<string, unknown>).notes as string ?? ""}
+                      onChange={(e) => setEditFields({ ...editFields, notes: e.target.value })}
+                      rows={3}
+                      className={inputClass}
+                    />
+
+                    {/* Guest Presenter toggle and fields */}
+                    <div className="space-y-3">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <button
+                          type="button"
+                          onClick={() => setEditFields({ ...editFields, is_guest_presenter: !(editFields as Record<string, unknown>).is_guest_presenter })}
+                          className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                            (editFields as Record<string, unknown>).is_guest_presenter ? "bg-[#2764FF]" : "bg-klo-slate"
+                          }`}
+                          role="switch"
+                          aria-checked={!!(editFields as Record<string, unknown>).is_guest_presenter}
+                          aria-label="Guest Presenter"
+                        >
+                          <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
+                            (editFields as Record<string, unknown>).is_guest_presenter ? "translate-x-5" : ""
+                          }`} />
+                        </button>
+                        <span className="text-sm text-klo-text">Guest Presenter (Keith is presenting at another conference)</span>
+                      </label>
+
+                      {!!(editFields as Record<string, unknown>).is_guest_presenter && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-14">
+                          <input
+                            type="text"
+                            placeholder="Session Name"
+                            value={(editFields as Record<string, unknown>).session_name as string ?? ""}
+                            onChange={(e) => setEditFields({ ...editFields, session_name: e.target.value })}
+                            className={inputClass}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Room Location (optional)"
+                            value={(editFields as Record<string, unknown>).room_location as string ?? ""}
+                            onChange={(e) => setEditFields({ ...editFields, room_location: e.target.value })}
+                            className={inputClass}
+                          />
+                          <input
+                            type="time"
+                            placeholder="Session End Time"
+                            value={(editFields as Record<string, unknown>).session_end_time as string ?? ""}
+                            onChange={(e) => setEditFields({ ...editFields, session_end_time: e.target.value })}
+                            className={inputClass}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Event Status Override */}
+                    <div className="flex items-center gap-3">
+                      <label className="text-xs text-klo-muted">Status:</label>
+                      <select
+                        value={(editFields as Record<string, unknown>).event_status as string ?? "upcoming"}
+                        onChange={(e) => setEditFields({ ...editFields, event_status: e.target.value, event_status_override: true })}
+                        className={`${inputClass} w-40`}
+                      >
+                        <option value="upcoming">Upcoming</option>
+                        <option value="live">Live</option>
+                        <option value="past">Past</option>
+                      </select>
+                      {!!(editFields as Record<string, unknown>).event_status_override && (
+                        <button
+                          type="button"
+                          onClick={() => setEditFields({ ...editFields, event_status_override: false })}
+                          className="text-xs text-klo-muted hover:text-klo-text transition-colors"
+                        >
+                          Reset to auto
+                        </button>
+                      )}
+                    </div>
+
                     <div className="flex gap-3">
                       <button
                         onClick={() => handleSaveEdit(event.id)}
@@ -630,6 +769,11 @@ export default function EventsAdminTab() {
                         />
                       </label>
                     </div>
+                    {uploadMsg && uploadMsg.eventId === event.id && (
+                      <p className={`text-xs px-2 py-1 rounded ${uploadMsg.type === "success" ? "text-emerald-400 bg-emerald-500/10" : "text-red-400 bg-red-500/10"}`}>
+                        {uploadMsg.text}
+                      </p>
+                    )}
                     {event.event_files?.length > 0 ? (
                       <div className="space-y-2">
                         {event.event_files.map((file) => (
@@ -964,6 +1108,13 @@ export default function EventsAdminTab() {
               rows={3}
               className={inputClass}
             />
+            <textarea
+              placeholder="Notes (shown in View More Details on the events page)"
+              value={formNotes}
+              onChange={(e) => setFormNotes(e.target.value)}
+              rows={3}
+              className={inputClass}
+            />
             <input
               type="url"
               placeholder="Website URL (optional)"
@@ -971,6 +1122,46 @@ export default function EventsAdminTab() {
               onChange={(e) => setFormWebsiteUrl(e.target.value)}
               className={inputClass}
             />
+
+            {/* Guest Presenter toggle and fields */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => setFormIsGuestPresenter(!formIsGuestPresenter)}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                    formIsGuestPresenter ? "bg-[#2764FF]" : "bg-klo-slate"
+                  }`}
+                  role="switch"
+                  aria-checked={formIsGuestPresenter}
+                  aria-label="Guest Presenter"
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
+                    formIsGuestPresenter ? "translate-x-5" : ""
+                  }`} />
+                </button>
+                <span className="text-sm text-klo-text">Guest Presenter (Keith is presenting at another conference)</span>
+              </label>
+
+              {formIsGuestPresenter && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-14">
+                  <input
+                    type="text"
+                    placeholder="Session Name"
+                    value={formSessionName}
+                    onChange={(e) => setFormSessionName(e.target.value)}
+                    className={inputClass}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Room Location (optional)"
+                    value={formRoomLocation}
+                    onChange={(e) => setFormRoomLocation(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              )}
+            </div>
             <div className="flex gap-3">
               <button
                 type="submit"

@@ -56,6 +56,11 @@ export async function POST(req: NextRequest) {
     website_url,
     start_date,
     end_date,
+    notes,
+    session_name,
+    room_location,
+    is_guest_presenter,
+    session_end_time,
   } = body;
 
   if (!title || !conference_name || !conference_location || !event_date) {
@@ -83,6 +88,11 @@ export async function POST(req: NextRequest) {
       website_url: website_url || null,
       start_date: start_date || null,
       end_date: end_date || null,
+      notes: notes || null,
+      session_name: session_name || null,
+      room_location: room_location || null,
+      is_guest_presenter: is_guest_presenter || false,
+      session_end_time: session_end_time || null,
       is_published: true,
     })
     .select()
