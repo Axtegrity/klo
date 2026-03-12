@@ -37,7 +37,7 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [filterSessionId, setFilterSessionId] = useState<string>("all");
   const [exporting, setExporting] = useState(false);
-  const { sessions } = useSessions();
+  const { sessions } = useSessions({ eventId });
 
   const fetchPolls = useCallback(async () => {
     try {
@@ -161,6 +161,8 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (eventId) formData.append("event_id", eventId);
+      if (filterSessionId !== "all") formData.append("session_id", filterSessionId);
       const res = await fetch("/api/conference/polls/upload", {
         method: "POST",
         body: formData,

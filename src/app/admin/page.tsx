@@ -219,10 +219,12 @@ export default function AdminPage() {
       setActivity(await activityRes.json());
       if (pollsRes.ok) {
         const pollsData = await pollsRes.json();
+        // Only count polls that belong to an event (ignore orphans with no event_id)
+        const linkedPolls = pollsData.filter((p: { event_id?: string | null }) => p.event_id);
         setPollStats({
-          total: pollsData.length,
-          totalVotes: pollsData.reduce((sum: number, p: { totalVotes: number }) => sum + p.totalVotes, 0),
-          active: pollsData.filter((p: { is_active: boolean; is_deployed: boolean }) => p.is_active && p.is_deployed).length,
+          total: linkedPolls.length,
+          totalVotes: linkedPolls.reduce((sum: number, p: { totalVotes: number }) => sum + p.totalVotes, 0),
+          active: linkedPolls.filter((p: { is_active: boolean; is_deployed: boolean }) => p.is_active && p.is_deployed).length,
         });
       }
       if (inquiriesRes.ok) {

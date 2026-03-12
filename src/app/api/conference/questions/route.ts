@@ -42,8 +42,21 @@ export async function GET(request: Request) {
   }
 
   // Non-privileged users: hide hidden questions, hide archived, only show released
+  // Also verify parent session is active (if question belongs to a session)
   if (!isPrivileged) {
     query = query.eq("is_hidden", false).is("archived_at", null).eq("released", true);
+
+    // Filter out questions from inactive sessions
+    if (sessionId) {
+      const { data: sess } = await supabase
+        .from("conference_sessions")
+        .select("is_active")
+        .eq("id", sessionId)
+        .single();
+      if (!sess?.is_active) {
+        return NextResponse.json([]);
+      }
+    }
   } else if (showArchived) {
     // Admin requesting archived only
     query = query.not("archived_at", "is", null);

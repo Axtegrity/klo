@@ -54,6 +54,10 @@ export async function DELETE(
 
   const { id } = await params;
   const supabase = getServiceSupabase();
+
+  // Delete votes first, then the poll
+  await supabase.from("conference_poll_votes").delete().eq("poll_id", id);
+
   const { error } = await supabase
     .from("conference_polls")
     .delete()

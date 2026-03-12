@@ -17,6 +17,18 @@ export async function GET(request: Request) {
   const sessionId = searchParams.get("session_id");
   const eventId = searchParams.get("event_id");
 
+  // If attendee is requesting by session, verify session is active
+  if (sessionId) {
+    const { data: sess } = await supabase
+      .from("conference_sessions")
+      .select("is_active")
+      .eq("id", sessionId)
+      .single();
+    if (!sess?.is_active) {
+      return NextResponse.json([]);
+    }
+  }
+
   // Fetch polls and pre-aggregated vote counts in two queries
   // (avoids fetching every individual vote row)
   let pollsQuery = supabase.from("conference_polls").select("*").order("created_at", { ascending: false });

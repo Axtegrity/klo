@@ -83,6 +83,8 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
+  const eventId = formData.get("event_id") as string | null;
+  const sessionId = formData.get("session_id") as string | null;
   if (!file) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
@@ -181,6 +183,8 @@ export async function POST(request: Request) {
     options: q.options,
     is_active: false,
     is_deployed: false,
+    ...(eventId ? { event_id: eventId } : {}),
+    ...(sessionId ? { session_id: sessionId } : {}),
   }));
 
   const { data, error } = await supabase

@@ -30,6 +30,10 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
   const [speaker, setSpeaker] = useState("");
   const [room, setRoom] = useState("");
   const [timeLabel, setTimeLabel] = useState("");
+  const [sessionDate, setSessionDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [qaEnabled, setQaEnabled] = useState(true);
   const [creating, setCreating] = useState(false);
   const [autoFetch, setAutoFetch] = useState(false);
   const [autoFetchLoading, setAutoFetchLoading] = useState(true);
@@ -48,7 +52,7 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
     try {
       const url = eventId
         ? `/api/conference/sessions?event_id=${eventId}`
-        : "/api/conference/sessions";
+        : "/api/conference/sessions?standalone_only=true";
       const res = await fetch(url);
       if (res.ok) setSessions(await res.json());
     } finally {
@@ -83,10 +87,32 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
     });
   };
 
+  // Build time_label from start/end time inputs (e.g. "9:00 AM – 10:15 AM")
+  const buildTimeLabel = () => {
+    if (timeLabel) return timeLabel; // manual override
+    if (!startTime) return undefined;
+    const fmt = (t: string) => {
+      const [h, m] = t.split(":").map(Number);
+      const ampm = h >= 12 ? "PM" : "AM";
+      const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+      return `${h12}:${m.toString().padStart(2, "0")} ${ampm}`;
+    };
+    if (!endTime) return fmt(startTime);
+    return `${fmt(startTime)} – ${fmt(endTime)}`;
+  };
+
   const createSession = async () => {
     if (!title.trim()) return;
     setCreating(true);
     try {
+      // Build scheduled_at from date + start time
+      let scheduledAt: string | undefined;
+      if (sessionDate && startTime) {
+        scheduledAt = new Date(`${sessionDate}T${startTime}:00`).toISOString();
+      } else if (sessionDate) {
+        scheduledAt = new Date(`${sessionDate}T00:00:00`).toISOString();
+      }
+
       const res = await fetch("/api/conference/sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -95,7 +121,9 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
           description,
           speaker: speaker || undefined,
           room: room || undefined,
-          time_label: timeLabel || undefined,
+          time_label: buildTimeLabel() || undefined,
+          scheduled_at: scheduledAt || undefined,
+          qa_enabled: qaEnabled,
           ...(eventId ? { event_id: eventId } : {}),
         }),
       });
@@ -105,6 +133,10 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
         setSpeaker("");
         setRoom("");
         setTimeLabel("");
+        setSessionDate("");
+        setStartTime("");
+        setEndTime("");
+        setQaEnabled(true);
         setShowCreateForm(false);
         fetchSessions();
       }
@@ -146,36 +178,64 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
   };
 
   const toggleActive = async (id: string, currentlyActive: boolean) => {
-    await fetch(`/api/conference/sessions/${id}`, {
+    const newActive = !currentlyActive;
+    // Optimistic: update this session and deactivate siblings if activating
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? { ...s, is_active: newActive }
+          : newActive
+          ? { ...s, is_active: false }
+          : s
+      )
+    );
+    const res = await fetch(`/api/conference/sessions/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ is_active: !currentlyActive }),
+      body: JSON.stringify({ is_active: newActive }),
     });
-    fetchSessions();
+    if (!res.ok) {
+      // Revert on failure
+      fetchSessions();
+    }
   };
 
   const toggleQA = async (id: string, currentValue: boolean) => {
-    await fetch(`/api/conference/sessions/${id}`, {
+    const newValue = !currentValue;
+    // Optimistic update
+    setSessions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, qa_enabled: newValue } : s))
+    );
+    const res = await fetch(`/api/conference/sessions/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ qa_enabled: !currentValue }),
+      body: JSON.stringify({ qa_enabled: newValue }),
     });
-    fetchSessions();
+    if (!res.ok) fetchSessions();
   };
 
   const setReleaseMode = async (id: string, mode: string) => {
-    await fetch(`/api/conference/sessions/${id}`, {
+    // Optimistic update
+    setSessions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, release_mode: mode as ConferenceSession["release_mode"] } : s))
+    );
+    const res = await fetch(`/api/conference/sessions/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ release_mode: mode }),
     });
-    fetchSessions();
+    if (!res.ok) fetchSessions();
   };
 
   const deleteSession = async (id: string) => {
-    await fetch(`/api/conference/sessions/${id}`, { method: "DELETE" });
+    // Optimistic: remove from UI immediately
+    setSessions((prev) => prev.filter((s) => s.id !== id));
     setDeleteConfirmId(null);
-    fetchSessions();
+    const res = await fetch(`/api/conference/sessions/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      // Revert on failure
+      fetchSessions();
+    }
   };
 
   const handleCreateKeyDown = (e: React.KeyboardEvent) => {
@@ -237,7 +297,7 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
           className="w-full glass rounded-2xl p-4 border border-dashed border-white/10 hover:border-[#2764FF]/30 transition-colors flex items-center justify-center gap-2 text-sm text-klo-muted hover:text-klo-text"
         >
           <Plus size={16} />
-          Add New Session
+          Add Session
         </button>
       ) : (
         <div className="glass rounded-2xl p-5 border border-[#2764FF]/20 space-y-3">
@@ -273,7 +333,38 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
               className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50"
             />
           </div>
+          {/* Date, Start Time, End Time */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs text-klo-muted mb-1">Date</label>
+              <input
+                type="date"
+                value={sessionDate}
+                onChange={(e) => setSessionDate(e.target.value)}
+                className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text focus:outline-none focus:border-[#2764FF]/50"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-klo-muted mb-1">Start Time</label>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text focus:outline-none focus:border-[#2764FF]/50"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-klo-muted mb-1">End Time</label>
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text focus:outline-none focus:border-[#2764FF]/50"
+              />
+            </div>
+          </div>
+          {/* Speaker, Room */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-klo-muted mb-1">Speaker</label>
               <input
@@ -296,17 +387,41 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
                 className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50"
               />
             </div>
-            <div>
-              <label className="block text-xs text-klo-muted mb-1">Time</label>
-              <input
-                type="text"
-                value={timeLabel}
-                onChange={(e) => setTimeLabel(e.target.value)}
-                onKeyDown={handleCreateKeyDown}
-                placeholder="e.g. 9:00 AM - 10:15 AM"
-                className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50"
-              />
+          </div>
+          {/* Time Label override (optional) */}
+          <div>
+            <label className="block text-xs text-klo-muted mb-1">
+              Time Label <span className="text-klo-muted/50">(auto-generated from start/end, or type custom)</span>
+            </label>
+            <input
+              type="text"
+              value={timeLabel}
+              onChange={(e) => setTimeLabel(e.target.value)}
+              onKeyDown={handleCreateKeyDown}
+              placeholder={startTime ? buildTimeLabel() || "" : "e.g. 9:00 AM – 10:15 AM"}
+              className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50"
+            />
+          </div>
+          {/* Q&A toggle */}
+          <div className="flex items-center justify-between py-1">
+            <div className="flex items-center gap-2">
+              <MessageSquare size={14} className={qaEnabled ? "text-emerald-400" : "text-klo-muted"} />
+              <span className="text-sm text-klo-text">Q&A</span>
+              <span className="text-xs text-klo-muted">— allow audience questions in this session</span>
             </div>
+            <button
+              type="button"
+              onClick={() => setQaEnabled(!qaEnabled)}
+              className={`relative w-10 h-5 rounded-full transition-colors ${
+                qaEnabled ? "bg-emerald-500" : "bg-klo-slate"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                  qaEnabled ? "translate-x-5" : ""
+                }`}
+              />
+            </button>
           </div>
           <div className="flex items-center gap-2 pt-1">
             <button
