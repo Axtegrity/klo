@@ -54,6 +54,7 @@ interface Event {
   room_location: string | null;
   is_guest_presenter: boolean;
   session_end_time: string | null;
+  display_name_mode: string;
   event_status: string;
   event_status_override: boolean;
   event_files: EventFile[];
@@ -285,6 +286,7 @@ export default function EventsAdminTab() {
       room_location: event.room_location || "",
       is_guest_presenter: event.is_guest_presenter || false,
       session_end_time: event.session_end_time || "",
+      display_name_mode: event.display_name_mode || "event",
       event_status: event.event_status || "upcoming",
       event_status_override: event.event_status_override || false,
     } as Partial<Event>);
@@ -703,6 +705,20 @@ export default function EventsAdminTab() {
                           />
                         </div>
                       )}
+                    </div>
+
+                    {/* Engagement Page Display Name */}
+                    <div className="flex items-center gap-3">
+                      <label className="text-xs text-klo-muted">Engagement Display:</label>
+                      <select
+                        value={(editFields as Record<string, unknown>).display_name_mode as string ?? "event"}
+                        onChange={(e) => setEditFields({ ...editFields, display_name_mode: e.target.value })}
+                        className={`${inputClass} w-48`}
+                      >
+                        <option value="event">Event Name</option>
+                        <option value="session">Session Name</option>
+                      </select>
+                      <span className="text-xs text-klo-muted/60">Shown as heading on engagement page</span>
                     </div>
 
                     {/* Event Status Override */}

@@ -17,7 +17,7 @@ export async function GET() {
   // Fetch all published events for today
   const { data: events, error } = await supabase
     .from("event_presentations")
-    .select("id, title, slug, conference_name, conference_location, event_date, event_time, event_timezone, description, website_url, start_date, end_date")
+    .select("id, title, slug, conference_name, conference_location, event_date, event_time, event_timezone, description, website_url, start_date, end_date, display_name_mode")
     .eq("is_published", true)
     .eq("event_date", today)
     .order("event_time", { ascending: true, nullsFirst: false });

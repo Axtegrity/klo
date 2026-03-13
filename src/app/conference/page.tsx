@@ -51,6 +51,7 @@ interface LiveEvent {
   event_time: string | null;
   event_timezone: string | null;
   description: string | null;
+  display_name_mode: string | null;
 }
 
 function formatDate(dateStr: string): string {
@@ -289,11 +290,15 @@ export default function ConferencePage() {
             <motion.div variants={fadeUp} custom={0} className="text-center">
               <Badge variant="gold" className="mb-4">Live Session</Badge>
               <h1 className="font-display text-4xl md:text-6xl font-bold text-klo-text tracking-tight">
-                {selectedEvent?.conference_name}
+                {selectedEvent?.display_name_mode === "session" && selectedSession
+                  ? selectedSession.title
+                  : selectedEvent?.conference_name}
               </h1>
               {selectedSession && (
                 <p className="mt-4 text-xl md:text-2xl text-klo-muted">
-                  {selectedSession.title}
+                  {selectedEvent?.display_name_mode === "session"
+                    ? selectedEvent?.conference_name
+                    : selectedSession.title}
                 </p>
               )}
               {selectedEvent && (
