@@ -139,7 +139,7 @@ export default function ConferencePage() {
   if (!seminarMode.active || liveEvents.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center px-6">
-        <p className="text-klo-muted text-lg text-center">
+        <p className="text-klo-muted text-xl md:text-2xl text-center">
           Come Back Soon For Upcoming Events
         </p>
       </div>
@@ -158,10 +158,10 @@ export default function ConferencePage() {
         >
           <motion.div variants={fadeUp} custom={0} className="text-center mb-10">
             <Badge variant="gold" className="mb-4">Live Today</Badge>
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
+            <h1 className="font-display text-4xl md:text-5xl font-bold text-klo-text tracking-tight">
               Select an Event
             </h1>
-            <p className="mt-3 text-klo-muted">
+            <p className="mt-4 text-lg text-klo-muted">
               Multiple events are happening today. Choose one to join.
             </p>
           </motion.div>
@@ -176,13 +176,13 @@ export default function ConferencePage() {
                   <Card hoverable className="relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-emerald-400 to-[#2764FF] rounded-l-xl" />
                     <div className="pl-4 space-y-2">
-                      <h3 className="text-lg font-bold text-klo-text">
+                      <h3 className="text-xl font-bold text-klo-text">
                         {ev.conference_name}
                       </h3>
                       {ev.conference_name !== ev.title && (
-                        <p className="text-sm text-klo-muted">{ev.title}</p>
+                        <p className="text-base text-klo-muted">{ev.title}</p>
                       )}
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-klo-muted">
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-klo-muted">
                         <span className="inline-flex items-center gap-1.5">
                           <CalendarDays size={12} className="text-[#2764FF]" />
                           {formatDate(ev.event_date)}
@@ -192,7 +192,7 @@ export default function ConferencePage() {
                           {ev.conference_location}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1 text-[#2764FF] text-sm font-medium pt-1">
+                      <div className="flex items-center gap-1 text-[#2764FF] text-base font-medium pt-1">
                         Join <ChevronRight size={14} />
                       </div>
                     </div>
@@ -231,20 +231,20 @@ export default function ConferencePage() {
 
           <motion.div variants={fadeUp} custom={0} className="text-center mb-10">
             <Badge variant="gold" className="mb-4">Live Now</Badge>
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
+            <h1 className="font-display text-4xl md:text-5xl font-bold text-klo-text tracking-tight">
               {selectedEvent.conference_name}
             </h1>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-sm text-klo-muted">
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-5 text-base text-klo-muted">
               <span className="inline-flex items-center gap-2">
-                <CalendarDays size={14} className="text-[#2764FF]" />
+                <CalendarDays size={16} className="text-[#2764FF]" />
                 {formatDate(selectedEvent.event_date)}
               </span>
               <span className="inline-flex items-center gap-2">
-                <MapPin size={14} className="text-[#2764FF]" />
+                <MapPin size={16} className="text-[#2764FF]" />
                 {selectedEvent.conference_location}
               </span>
             </div>
-            <p className="mt-6 text-klo-muted">Select a session to join.</p>
+            <p className="mt-6 text-lg text-klo-muted">Select a session to join.</p>
           </motion.div>
 
           <div className="space-y-3">
@@ -254,7 +254,7 @@ export default function ConferencePage() {
               </div>
             ) : sessions.length === 0 ? (
               <Card>
-                <p className="text-klo-muted text-sm text-center py-6">
+                <p className="text-klo-muted text-base text-center py-8">
                   No sessions available yet. Check back soon!
                 </p>
               </Card>
@@ -288,22 +288,22 @@ export default function ConferencePage() {
           <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
             <motion.div variants={fadeUp} custom={0} className="text-center">
               <Badge variant="gold" className="mb-4">Live Session</Badge>
-              <h1 className="font-display text-3xl md:text-5xl font-bold text-klo-text">
+              <h1 className="font-display text-4xl md:text-6xl font-bold text-klo-text tracking-tight">
                 {selectedEvent?.conference_name}
               </h1>
               {selectedSession && (
-                <p className="mt-3 text-lg text-klo-muted">
+                <p className="mt-4 text-xl md:text-2xl text-klo-muted">
                   {selectedSession.title}
                 </p>
               )}
               {selectedEvent && (
-                <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-sm text-klo-muted">
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-5 text-base text-klo-muted">
                   <span className="inline-flex items-center gap-2">
-                    <CalendarDays size={14} className="text-[#2764FF]" />
+                    <CalendarDays size={16} className="text-[#2764FF]" />
                     {formatDate(selectedEvent.event_date)}
                   </span>
                   <span className="inline-flex items-center gap-2">
-                    <MapPin size={14} className="text-[#2764FF]" />
+                    <MapPin size={16} className="text-[#2764FF]" />
                     {selectedEvent.conference_location}
                   </span>
                 </div>
@@ -327,10 +327,10 @@ export default function ConferencePage() {
       <section className="px-6 py-12">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-[#2764FF]/10 flex items-center justify-center">
-              <StickyNote size={20} className="text-[#2764FF]" />
+            <div className="w-12 h-12 rounded-lg bg-[#2764FF]/10 flex items-center justify-center">
+              <StickyNote size={24} className="text-[#2764FF]" />
             </div>
-            <h2 className="font-display text-2xl font-bold text-klo-text">
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-klo-text">
               Session Notes
             </h2>
           </div>
@@ -341,7 +341,7 @@ export default function ConferencePage() {
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Start typing your notes here... Your notes are automatically saved to your browser."
                 rows={8}
-                className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-3 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50 focus:ring-1 focus:ring-[#2764FF]/20 transition-colors resize-y leading-relaxed"
+                className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-5 py-4 text-base text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50 focus:ring-1 focus:ring-[#2764FF]/20 transition-colors resize-y leading-relaxed"
               />
               <div className="flex items-center justify-between">
                 <span className="text-xs text-klo-muted">
@@ -396,7 +396,7 @@ function SessionCard({
         <div className="flex items-center gap-4 pl-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold text-klo-text truncate">
+              <h3 className="text-lg font-semibold text-klo-text truncate">
                 {session.title}
               </h3>
               {session.is_active && (
@@ -404,11 +404,11 @@ function SessionCard({
               )}
             </div>
             {session.description && (
-              <p className="text-sm text-klo-muted mt-1 line-clamp-2">
+              <p className="text-base text-klo-muted mt-1.5 line-clamp-2">
                 {session.description}
               </p>
             )}
-            <div className="flex items-center gap-4 text-xs text-klo-muted mt-2">
+            <div className="flex items-center gap-4 text-sm text-klo-muted mt-2.5">
               {session.time_label && (
                 <span className="inline-flex items-center gap-1.5">
                   <Radio size={12} className={session.is_active ? "text-emerald-400" : "text-klo-muted"} />
