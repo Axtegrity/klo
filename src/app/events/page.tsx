@@ -65,6 +65,7 @@ interface EventItem {
   end_date: string | null;
   session_name: string | null;
   room_location: string | null;
+  display_name_mode: string | null;
   event_files: EventFile[];
 }
 
@@ -304,10 +305,14 @@ export default function EventsPage() {
                         <Badge variant="green">Live Now</Badge>
                       </div>
                       <h3 className="text-xl md:text-2xl font-bold text-klo-text">
-                        {event.conference_name}
+                        {event.display_name_mode === "session" && event.session_name
+                          ? event.session_name
+                          : event.conference_name}
                       </h3>
                       <p className="text-sm md:text-base text-klo-muted leading-relaxed">
-                        {event.title}
+                        {event.display_name_mode === "session" && event.session_name
+                          ? event.conference_name
+                          : event.title}
                       </p>
                       {event.description && (
                         <p className="text-sm text-klo-muted/70 leading-relaxed">
@@ -351,10 +356,16 @@ export default function EventsPage() {
               <X size={18} />
             </button>
             <div>
-              <h2 className="text-xl font-bold text-klo-text pr-10">{selectedEvent.title}</h2>
-              {selectedEvent.conference_name !== selectedEvent.title && (
+              <h2 className="text-xl font-bold text-klo-text pr-10">
+                {selectedEvent.display_name_mode === "session" && selectedEvent.session_name
+                  ? selectedEvent.session_name
+                  : selectedEvent.title}
+              </h2>
+              {selectedEvent.display_name_mode === "session" && selectedEvent.session_name ? (
                 <p className="text-sm text-klo-muted mt-1">{selectedEvent.conference_name}</p>
-              )}
+              ) : selectedEvent.conference_name !== selectedEvent.title ? (
+                <p className="text-sm text-klo-muted mt-1">{selectedEvent.conference_name}</p>
+              ) : null}
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-klo-muted mt-3">
                 <span className="inline-flex items-center gap-1.5">
                   <Calendar size={12} className="text-[#2764FF]/70" />
@@ -618,7 +629,9 @@ function EventCard({
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-lg font-semibold text-klo-text">
-                {event.title}
+                {event.display_name_mode === "session" && event.session_name
+                  ? event.session_name
+                  : event.title}
               </h3>
               {isPastEvent && <Badge variant="muted">Past</Badge>}
               <button
@@ -636,11 +649,15 @@ function EventCard({
                 <Share2 size={14} />
               </button>
             </div>
-            {event.conference_name !== event.title && (
+            {event.display_name_mode === "session" && event.session_name ? (
               <p className="text-sm text-klo-muted leading-relaxed">
                 {event.conference_name}
               </p>
-            )}
+            ) : event.conference_name !== event.title ? (
+              <p className="text-sm text-klo-muted leading-relaxed">
+                {event.conference_name}
+              </p>
+            ) : null}
             {event.description && (
               <p className="text-sm text-klo-muted/70 leading-relaxed">
                 {linkifyText(event.description)}
