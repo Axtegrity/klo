@@ -233,7 +233,9 @@ export default function ConferencePage() {
           <motion.div variants={fadeUp} custom={0} className="text-center mb-10">
             <Badge variant="gold" className="mb-4">Live Now</Badge>
             <h1 className="font-display text-4xl md:text-5xl font-bold text-klo-text tracking-tight">
-              {selectedEvent.conference_name}
+              {selectedEvent.display_name_mode === "session"
+                ? selectedEvent.title
+                : selectedEvent.conference_name}
             </h1>
             <div className="mt-5 flex flex-wrap items-center justify-center gap-5 text-base text-klo-muted">
               <span className="inline-flex items-center gap-2">
