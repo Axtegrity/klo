@@ -221,9 +221,13 @@ export default function ConferencePage() {
 
   /* ---------- Render ---------- */
 
-  // Engagement page: completely blank when seminar mode is OFF — no containers, no placeholder
+  // Engagement page: show only a simple message when seminar mode is OFF
   if (seminarLoading) return null;
-  if (!seminarMode.active) return <div className="min-h-screen" />;
+  if (!seminarMode.active) return (
+    <div className="min-h-screen flex items-center justify-center px-6">
+      <p className="text-klo-muted text-lg text-center">Come Back Soon For Upcoming Events</p>
+    </div>
+  );
 
   return (
     <div className="min-h-screen">
