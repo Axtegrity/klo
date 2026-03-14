@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920">
+<title>KLO Platform — Training Deck</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #0D1117; color: #E6EDF3; }
+  .slide {
+    width: 1920px; height: 1080px; padding: 80px 120px;
+    display: flex; flex-direction: column; justify-content: center;
+    position: relative; overflow: hidden; page-break-after: always;
+  }
+  .slide::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, #2764FF, #21B8CD);
+  }
+  .slide-number {
+    position: absolute; bottom: 40px; right: 60px;
+    font-size: 14px; color: #8B949E;
+  }
+  .logo-footer {
+    position: absolute; bottom: 36px; left: 60px;
+    font-size: 14px; color: #8B949E; font-weight: 600;
+  }
+  h1 { font-size: 72px; font-weight: 800; line-height: 1.1; letter-spacing: -2px; }
+  h2 { font-size: 52px; font-weight: 700; line-height: 1.2; letter-spacing: -1px; margin-bottom: 40px; }
+  h3 { font-size: 36px; font-weight: 700; margin-bottom: 20px; }
+  p { font-size: 28px; line-height: 1.6; color: #8B949E; }
+  .accent { color: #2764FF; }
+  .cyan { color: #21B8CD; }
+  .gold { color: #D4A843; }
+  .green { color: #3FB950; }
+  .subtitle { font-size: 32px; color: #8B949E; margin-top: 20px; }
+  .badge {
+    display: inline-block; padding: 8px 20px; border-radius: 20px;
+    font-size: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px;
+    margin-bottom: 30px;
+  }
+  .badge-blue { background: rgba(39,100,255,0.15); color: #2764FF; }
+  .badge-gold { background: rgba(212,168,67,0.15); color: #D4A843; }
+  .badge-green { background: rgba(63,185,80,0.15); color: #3FB950; }
+  .badge-cyan { background: rgba(33,184,205,0.15); color: #21B8CD; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; }
+  .card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px; padding: 36px;
+  }
+  .card h3 { font-size: 28px; margin-bottom: 12px; }
+  .card p { font-size: 22px; }
+  .card-icon { font-size: 40px; margin-bottom: 16px; }
+  ul { list-style: none; }
+  ul li { font-size: 26px; line-height: 1.8; color: #C9D1D9; padding-left: 36px; position: relative; }
+  ul li::before { content: '→'; position: absolute; left: 0; color: #2764FF; font-weight: 700; }
+  .flow-row { display: flex; align-items: center; gap: 24px; margin: 20px 0; }
+  .flow-step {
+    background: rgba(39,100,255,0.1); border: 1px solid rgba(39,100,255,0.25);
+    border-radius: 16px; padding: 24px 32px; text-align: center; flex: 1;
+  }
+  .flow-step .num { font-size: 40px; font-weight: 800; color: #2764FF; }
+  .flow-step .label { font-size: 20px; color: #C9D1D9; margin-top: 8px; }
+  .flow-arrow { font-size: 32px; color: #2764FF; }
+  .section-divider {
+    width: 1920px; height: 1080px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    position: relative; page-break-after: always;
+    background: linear-gradient(135deg, rgba(39,100,255,0.08), rgba(33,184,205,0.05));
+  }
+  .section-divider::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, #2764FF, #21B8CD);
+  }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th { text-align: left; font-size: 20px; font-weight: 700; color: #2764FF; padding: 16px 20px; border-bottom: 2px solid rgba(39,100,255,0.3); }
+  td { font-size: 20px; padding: 14px 20px; color: #C9D1D9; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .check { color: #3FB950; font-weight: 700; }
+  .x-mark { color: #8B949E; }
+  .faq-item { margin-bottom: 28px; }
+  .faq-q { font-size: 26px; font-weight: 700; color: #E6EDF3; margin-bottom: 8px; }
+  .faq-a { font-size: 22px; color: #8B949E; line-height: 1.6; }
+  .cta-box {
+    background: linear-gradient(135deg, rgba(39,100,255,0.12), rgba(33,184,205,0.08));
+    border: 1px solid rgba(39,100,255,0.25); border-radius: 20px;
+    padding: 48px; text-align: center; margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide" style="justify-content:center; align-items:center; text-align:center;">
+  <span class="badge badge-gold">Training Guide</span>
+  <h1>KLO Platform</h1>
+  <p class="subtitle" style="max-width:900px; margin:20px auto 0;">
+    Complete Training Deck for Users, Admins &amp; Guests
+  </p>
+  <p style="font-size:22px; margin-top:40px; color:#8B949E;">
+    Prepared for Keith L. Odom &nbsp;|&nbsp; keithlodom.ai
+  </p>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">1</span>
+</div>
+
+<!-- SLIDE 2: Agenda -->
+<div class="slide">
+  <span class="badge badge-blue">Agenda</span>
+  <h2>What We'll Cover</h2>
+  <div class="grid-2">
+    <div>
+      <ul>
+        <li>Platform Overview &amp; Architecture</li>
+        <li>Guest Experience (no account needed)</li>
+        <li>User Experience (signed-in members)</li>
+        <li>Engagement Page Flow (live events)</li>
+      </ul>
+    </div>
+    <div>
+      <ul>
+        <li>Admin Dashboard &amp; Controls</li>
+        <li>Event Management &amp; Countdown</li>
+        <li>Registration &amp; Access</li>
+        <li>FAQs &amp; Feedback</li>
+      </ul>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">2</span>
+</div>
+
+<!-- SLIDE 3: Platform Overview -->
+<div class="slide">
+  <span class="badge badge-blue">Overview</span>
+  <h2>Platform at a Glance</h2>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-icon">🌐</div>
+      <h3>Web App</h3>
+      <p>keithlodom.ai — Full-featured web platform accessible from any browser</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📱</div>
+      <h3>Mobile App</h3>
+      <p>Native iOS &amp; Android via Capacitor — push notifications, biometric lock</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <h3>Real-Time</h3>
+      <p>Live polls, Q&amp;A, word clouds, and announcements during events</p>
+    </div>
+  </div>
+  <div class="grid-3" style="margin-top:30px;">
+    <div class="card">
+      <div class="card-icon">🤖</div>
+      <h3>AI Advisor</h3>
+      <p>Ask Keith — AI-powered strategic guidance on faith, tech &amp; leadership</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <h3>Assessments</h3>
+      <p>4 assessments: Church Readiness, AI Readiness, Governance, Cyber Risk</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📁</div>
+      <h3>Vault</h3>
+      <p>Curated library of frameworks, templates, whitepapers &amp; videos</p>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">3</span>
+</div>
+
+<!-- SLIDE 4: Three Roles -->
+<div class="slide">
+  <span class="badge badge-blue">Roles</span>
+  <h2>Three Types of Users</h2>
+  <div class="grid-3">
+    <div class="card" style="border-color:rgba(139,148,158,0.3);">
+      <h3 class="cyan">Guest</h3>
+      <p style="font-size:20px; margin-bottom:16px;">No account required</p>
+      <ul>
+        <li style="font-size:22px;">Browse events</li>
+        <li style="font-size:22px;">View event details</li>
+        <li style="font-size:22px;">Join live sessions</li>
+        <li style="font-size:22px;">Participate in polls/Q&amp;A</li>
+        <li style="font-size:22px;">Take free assessments</li>
+        <li style="font-size:22px;">Submit booking inquiries</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:rgba(39,100,255,0.3);">
+      <h3 class="accent">User</h3>
+      <p style="font-size:20px; margin-bottom:16px;">Free registration — full access</p>
+      <ul>
+        <li style="font-size:22px;">Everything guests can do</li>
+        <li style="font-size:22px;">AI Advisor chat</li>
+        <li style="font-size:22px;">Full vault access &amp; downloads</li>
+        <li style="font-size:22px;">Download event files</li>
+        <li style="font-size:22px;">All 4 assessments</li>
+        <li style="font-size:22px;">Save content &amp; track progress</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:rgba(212,168,67,0.3);">
+      <h3 class="gold">Admin</h3>
+      <p style="font-size:20px; margin-bottom:16px;">Keith + authorized team</p>
+      <ul>
+        <li style="font-size:22px;">Full admin dashboard</li>
+        <li style="font-size:22px;">Manage events &amp; sessions</li>
+        <li style="font-size:22px;">Control polls, Q&amp;A, word cloud</li>
+        <li style="font-size:22px;">Toggle countdown clocks</li>
+        <li style="font-size:22px;">View analytics</li>
+        <li style="font-size:22px;">Manage users &amp; inquiries</li>
+      </ul>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">4</span>
+</div>
+
+<!-- SECTION DIVIDER: Guest Experience -->
+<div class="section-divider">
+  <span class="badge badge-cyan">Section 1</span>
+  <h1 style="font-size:64px;">Guest Experience</h1>
+  <p style="font-size:28px; margin-top:20px;">What visitors see without an account</p>
+  <span class="logo-footer" style="left:50%;transform:translateX(-50%);">KLO Platform</span>
+  <span class="slide-number">5</span>
+</div>
+
+<!-- SLIDE 6: Guest - Pages Available -->
+<div class="slide">
+  <span class="badge badge-cyan">Guest</span>
+  <h2>Pages Available to Guests</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Fully Accessible</h3>
+      <ul>
+        <li><span class="accent">Home</span> — Hero, trending topics, latest brief</li>
+        <li><span class="accent">Events</span> — Browse all events, countdown clocks, view details</li>
+        <li><span class="accent">Booking</span> — Submit a speaking inquiry to Keith</li>
+        <li><span class="accent">Consult</span> — Browse 6 consultation topics, submit intake form</li>
+        <li><span class="accent">About</span> — Keith's bio and background</li>
+        <li><span class="accent">Assessments</span> — Church Readiness &amp; AI Readiness (free)</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Requires Sign-In</h3>
+      <ul>
+        <li><span class="gold">Vault</span> — Full access after sign-in (view &amp; download)</li>
+        <li><span class="gold">AI Advisor</span> — Requires sign-in</li>
+        <li><span class="gold">Assessments</span> — All 4 available after sign-in</li>
+        <li><span class="gold">Strategy Rooms</span> — Requires sign-in</li>
+        <li><span class="gold">Profile</span> — Requires sign-in</li>
+        <li><span class="gold">Event Files</span> — Download available after sign-in</li>
+      </ul>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">6</span>
+</div>
+
+<!-- SLIDE 7: Guest - Events Page -->
+<div class="slide">
+  <span class="badge badge-cyan">Guest</span>
+  <h2>Events Page — What Guests See</h2>
+  <p style="margin-bottom:30px;">The events page at <span class="accent">keithlodom.ai/events</span> is the main hub for all events.</p>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Before Event Day</h3>
+      <ul>
+        <li style="font-size:22px;"><strong>Countdown Clock</strong> — months, days, hours, minutes, seconds (if admin enables it)</li>
+        <li style="font-size:22px;"><strong>Event Cards</strong> — title, session name, date, location</li>
+        <li style="font-size:22px;"><strong>View More Details</strong> — opens modal with notes, files, description</li>
+        <li style="font-size:22px;"><strong>Join Event</strong> — grayed out, not clickable until event day</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>On Event Day</h3>
+      <ul>
+        <li style="font-size:22px;"><strong>Countdown disappears</strong> automatically</li>
+        <li style="font-size:22px;"><strong>"Live Now" badge</strong> appears on the event</li>
+        <li style="font-size:22px;"><strong>Join Event button activates</strong> — links to engagement page</li>
+        <li style="font-size:22px;"><strong>Live Events section</strong> appears at the top of the page</li>
+      </ul>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">7</span>
+</div>
+
+<!-- SLIDE 8: Guest - Engagement Flow -->
+<div class="slide">
+  <span class="badge badge-cyan">Guest</span>
+  <h2>Engagement Page — Live Event Flow</h2>
+  <p style="margin-bottom:30px;">When a guest taps <strong>"Join Event"</strong> on event day, here's what they see:</p>
+  <div class="flow-row">
+    <div class="flow-step">
+      <div class="num">1</div>
+      <div class="label">Select Event<br/><span style="font-size:16px;color:#8B949E;">(if multiple live)</span></div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="num">2</div>
+      <div class="label">Select Session<br/><span style="font-size:16px;color:#8B949E;">(if multiple sessions)</span></div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="num">3</div>
+      <div class="label">Interactive Tools<br/><span style="font-size:16px;color:#8B949E;">Polls, Q&amp;A, Word Cloud</span></div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="num">4</div>
+      <div class="label">Session Notes<br/><span style="font-size:16px;color:#8B949E;">Auto-saved locally</span></div>
+    </div>
+  </div>
+  <div style="margin-top:40px;">
+    <ul>
+      <li>If only <strong>1 event</strong> is live → auto-selects, skips step 1</li>
+      <li>If only <strong>1 session</strong> exists → auto-selects, skips step 2</li>
+      <li>If <strong>no events</strong> are live → shows "Come Back Soon For Upcoming Events"</li>
+    </ul>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">8</span>
+</div>
+
+<!-- SLIDE 9: Guest - Interactive Tools -->
+<div class="slide">
+  <span class="badge badge-cyan">Guest</span>
+  <h2>Interactive Tools — During a Session</h2>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <h3>Live Polling</h3>
+      <p>Vote on questions the speaker creates in real time. Results update instantly for everyone.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">❓</div>
+      <h3>Q&amp;A</h3>
+      <p>Submit questions during the session. The speaker or moderator approves which questions appear.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">☁️</div>
+      <h3>Word Cloud</h3>
+      <p>Type a word or phrase. It appears in a live word cloud visible to everyone — bigger = more popular.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📝</div>
+      <h3>Session Notes</h3>
+      <p>Personal notepad that auto-saves to your browser. Word count displayed. Only you can see your notes.</p>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">9</span>
+</div>
+
+<!-- SECTION DIVIDER: User Experience -->
+<div class="section-divider">
+  <span class="badge badge-blue">Section 2</span>
+  <h1 style="font-size:64px;">User Experience</h1>
+  <p style="font-size:28px; margin-top:20px;">What signed-in members can do</p>
+  <span class="logo-footer" style="left:50%;transform:translateX(-50%);">KLO Platform</span>
+  <span class="slide-number">10</span>
+</div>
+
+<!-- SLIDE 11: Registration & Access -->
+<div class="slide">
+  <span class="badge badge-blue">User</span>
+  <h2>Registration is Free — Full Access</h2>
+  <div class="grid-2">
+    <div class="card" style="border-color:rgba(39,100,255,0.4); background:rgba(39,100,255,0.05);">
+      <h3 class="accent">Registered User (Free)</h3>
+      <p style="font-size:24px;color:#8B949E;margin:12px 0 20px;">Create a free account to unlock everything</p>
+      <ul>
+        <li style="font-size:22px;">All 4 assessments with reports</li>
+        <li style="font-size:22px;">Full vault access &amp; downloads</li>
+        <li style="font-size:22px;">AI Advisor — "Ask Keith"</li>
+        <li style="font-size:22px;">Download event presentations</li>
+        <li style="font-size:22px;">Community feed &amp; discussions</li>
+        <li style="font-size:22px;">Strategy Rooms</li>
+        <li style="font-size:22px;">Profile, saved content, settings</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:rgba(139,148,158,0.3);">
+      <h3 class="cyan">Guest (No Account)</h3>
+      <p style="font-size:24px;color:#8B949E;margin:12px 0 20px;">Can still browse and participate in live events</p>
+      <ul>
+        <li style="font-size:22px;">Browse events &amp; view details</li>
+        <li style="font-size:22px;">Join live sessions (polls, Q&amp;A, word cloud)</li>
+        <li style="font-size:22px;">Submit booking &amp; consult inquiries</li>
+        <li style="font-size:22px;">View event files (no download)</li>
+        <li style="font-size:22px;">Browse vault (preview only)</li>
+        <li style="font-size:22px;">Take Church &amp; AI assessments</li>
+      </ul>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">11</span>
+</div>
+
+<!-- SLIDE 12: User - AI Advisor -->
+<div class="slide">
+  <span class="badge badge-blue">User</span>
+  <h2>AI Advisor — "Ask Keith"</h2>
+  <div class="grid-2">
+    <div>
+      <p style="margin-bottom:24px;">A conversational AI trained on Keith's expertise in faith, technology, leadership, and digital transformation.</p>
+      <ul>
+        <li>Chat interface with suggested prompts to start</li>
+        <li>Streaming responses in real time</li>
+        <li>Conversation history within the session</li>
+        <li>Clear conversation button to start fresh</li>
+        <li>Links to AI Policy Builder</li>
+      </ul>
+    </div>
+    <div>
+      <div class="card">
+        <h3>Access</h3>
+        <table>
+          <tr><td>Guest (no account)</td><td class="x-mark">Not available</td></tr>
+          <tr><td>Registered User</td><td class="check">Full access</td></tr>
+        </table>
+      </div>
+      <div class="card" style="margin-top:20px;">
+        <h3>Sample Prompts</h3>
+        <p style="font-size:20px;">"How should my church approach AI adoption?"</p>
+        <p style="font-size:20px; margin-top:8px;">"What does a digital transformation roadmap look like?"</p>
+      </div>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">12</span>
+</div>
+
+<!-- SLIDE 13: User - Assessments -->
+<div class="slide">
+  <span class="badge badge-blue">User</span>
+  <h2>Assessments</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3 class="accent">4 Assessments — All Available to Registered Users</h3>
+      <ul>
+        <li style="font-size:22px;"><strong>Church Readiness</strong> — 10 questions, ~5 min. Infrastructure, communication, digital engagement</li>
+        <li style="font-size:22px;"><strong>AI Readiness</strong> — 10 questions, ~5 min. Data foundations, culture, governance readiness</li>
+        <li style="font-size:22px;"><strong>Governance</strong> — 10 questions, ~5 min. IT policies, compliance, strategic alignment</li>
+        <li style="font-size:22px;"><strong>Cyber Risk</strong> — 10 questions, ~5 min. People, process, technology security</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 class="cyan">Guest Access</h3>
+      <p style="margin-bottom:12px;">Guests (not signed in) can take Church Readiness and AI Readiness. Sign in to access all 4.</p>
+    </div>
+  </div>
+  <div style="margin-top:30px;">
+    <h3>Assessment Flow</h3>
+    <div class="flow-row">
+      <div class="flow-step"><div class="num">1</div><div class="label">Select Assessment</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="num">2</div><div class="label">Answer 10 Questions</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="num">3</div><div class="label">Get Maturity Score</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="num">4</div><div class="label">View Recommendations</div></div>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">13</span>
+</div>
+
+<!-- SLIDE 14: User - Profile & Settings -->
+<div class="slide">
+  <span class="badge badge-blue">User</span>
+  <h2>Profile &amp; Settings</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Profile Tabs</h3>
+      <ul>
+        <li><strong>Overview</strong> — Stats dashboard: assessments completed, advisor queries, vault items saved, member since date</li>
+        <li><strong>Assessment Results</strong> — View all completed assessments with scores and maturity levels</li>
+        <li><strong>Saved Content</strong> — Bookmarked vault items for quick access</li>
+        <li><strong>Settings</strong> — Name, organization, notifications, security, sign out</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Settings Options</h3>
+      <div class="card">
+        <ul>
+          <li style="font-size:22px;">Update name &amp; organization info</li>
+          <li style="font-size:22px;">Toggle email digest notifications</li>
+          <li style="font-size:22px;">Toggle assessment reminders</li>
+          <li style="font-size:22px;">Toggle new content alerts</li>
+          <li style="font-size:22px;">Enable biometric lock (mobile app)</li>
+          <li style="font-size:22px;">Update profile information</li>
+          <li style="font-size:22px;">Delete account (danger zone)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">14</span>
+</div>
+
+<!-- SECTION DIVIDER: Admin -->
+<div class="section-divider">
+  <span class="badge badge-gold">Section 3</span>
+  <h1 style="font-size:64px;">Admin Dashboard</h1>
+  <p style="font-size:28px; margin-top:20px;">Managing events, users &amp; content</p>
+  <span class="logo-footer" style="left:50%;transform:translateX(-50%);">KLO Platform</span>
+  <span class="slide-number">15</span>
+</div>
+
+<!-- SLIDE 16: Admin - Accessing the Dashboard -->
+<div class="slide">
+  <span class="badge badge-gold">Admin</span>
+  <h2>Accessing the Admin Dashboard</h2>
+  <div class="grid-2">
+    <div>
+      <p style="margin-bottom:24px;">The Admin link appears in the navigation <strong>only for admin/owner accounts</strong>.</p>
+      <ul>
+        <li>Navigate to <span class="accent">keithlodom.ai/admin</span></li>
+        <li>Or click <strong>"Admin"</strong> in the top navigation bar</li>
+        <li>Only visible when signed in as admin or owner</li>
+        <li>Regular users and guests cannot see or access this page</li>
+      </ul>
+    </div>
+    <div>
+      <div class="card">
+        <h3>Admin Tabs</h3>
+        <ul>
+          <li style="font-size:22px;">📊 Dashboard Stats</li>
+          <li style="font-size:22px;">👥 User Management</li>
+          <li style="font-size:22px;">📅 Events Management</li>
+          <li style="font-size:22px;">🎤 Conference Tools</li>
+          <li style="font-size:22px;">📩 Inquiries</li>
+          <li style="font-size:22px;">📊 Activity &amp; Analytics</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">16</span>
+</div>
+
+<!-- SLIDE 17: Admin - Event Management -->
+<div class="slide">
+  <span class="badge badge-gold">Admin</span>
+  <h2>Event Management</h2>
+  <p style="margin-bottom:24px;">Create, edit, and control how events appear on the site.</p>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Creating an Event</h3>
+      <ul>
+        <li style="font-size:20px;">Event title &amp; conference name</li>
+        <li style="font-size:20px;">Date, time, timezone</li>
+        <li style="font-size:20px;">Location</li>
+        <li style="font-size:20px;">Description &amp; notes</li>
+        <li style="font-size:20px;">Website URL</li>
+        <li style="font-size:20px;">Multi-day date range (start/end)</li>
+        <li style="font-size:20px;">Guest presenter toggle + session details</li>
+        <li style="font-size:20px;">Access code (auto-generated)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Event Controls</h3>
+      <ul>
+        <li style="font-size:20px;"><strong>Publish/Unpublish</strong> — control visibility</li>
+        <li style="font-size:20px;"><strong>Feature event</strong> — highlight on homepage</li>
+        <li style="font-size:20px;"><strong>Countdown Clock</strong> — toggle on/off</li>
+        <li style="font-size:20px;"><strong>Engagement Display</strong> — show Event Name or Session Name as heading</li>
+        <li style="font-size:20px;"><strong>Status Override</strong> — manually set Upcoming/Live/Past</li>
+        <li style="font-size:20px;"><strong>Seminar Mode</strong> — activate engagement page</li>
+        <li style="font-size:20px;"><strong>Upload files</strong> — PDF, PPTX, DOCX, etc. (50MB max)</li>
+      </ul>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">17</span>
+</div>
+
+<!-- SLIDE 18: Admin - Event Day Checklist -->
+<div class="slide">
+  <span class="badge badge-gold">Admin</span>
+  <h2>Event Day — Admin Checklist</h2>
+  <p style="margin-bottom:30px;">Steps to go live on event day:</p>
+  <div style="max-width:1400px;">
+    <table>
+      <tr><th style="width:60px;">#</th><th>Action</th><th>Where</th><th>What It Does</th></tr>
+      <tr><td><strong>1</strong></td><td>Turn on <strong>Seminar Mode</strong></td><td>Admin → Conference tab</td><td>Makes the Engagement nav link visible &amp; engagement page active</td></tr>
+      <tr><td><strong>2</strong></td><td>Create <strong>Session(s)</strong></td><td>Admin → Conference → Session Manager</td><td>Creates the sessions guests will select on the engagement page</td></tr>
+      <tr><td><strong>3</strong></td><td>Mark session as <strong>Active</strong></td><td>Admin → Conference → Session Manager</td><td>Shows "Live" badge on the session card</td></tr>
+      <tr><td><strong>4</strong></td><td>Create <strong>Polls</strong></td><td>Admin → Conference → Poll Manager</td><td>Makes polls available for guests to vote on</td></tr>
+      <tr><td><strong>5</strong></td><td>Enable <strong>Q&amp;A</strong></td><td>Admin → Conference → Session Manager</td><td>Lets guests submit questions</td></tr>
+      <tr><td><strong>6</strong></td><td>Send <strong>Announcements</strong></td><td>Admin → Conference → Announcements</td><td>Broadcasts messages to all connected guests</td></tr>
+      <tr><td><strong>7</strong></td><td>After event: Turn off <strong>Seminar Mode</strong></td><td>Admin → Conference tab</td><td>Hides engagement page &amp; nav link</td></tr>
+    </table>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">18</span>
+</div>
+
+<!-- SLIDE 19: Admin - Conference Tools -->
+<div class="slide">
+  <span class="badge badge-gold">Admin</span>
+  <h2>Conference Tools — Admin Controls</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Poll Manager</h3>
+      <ul>
+        <li style="font-size:20px;">Create poll with question + options</li>
+        <li style="font-size:20px;">Activate/deactivate polls</li>
+        <li style="font-size:20px;">View live vote counts</li>
+        <li style="font-size:20px;">Close polls when done</li>
+        <li style="font-size:20px;">Delete polls</li>
+        <li style="font-size:20px;">Polls are scoped to a session</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Q&amp;A Moderator</h3>
+      <ul>
+        <li style="font-size:20px;">View all submitted questions</li>
+        <li style="font-size:20px;">Approve questions for display</li>
+        <li style="font-size:20px;">Feature top questions</li>
+        <li style="font-size:20px;">Remove inappropriate questions</li>
+        <li style="font-size:20px;">Profanity filter built in</li>
+        <li style="font-size:20px;">Q&amp;A scoped to a session</li>
+      </ul>
+    </div>
+    <div class="card" style="margin-top:30px;">
+      <h3>Word Cloud</h3>
+      <ul>
+        <li style="font-size:20px;">Monitor word submissions in real time</li>
+        <li style="font-size:20px;">Reset cloud to start fresh</li>
+        <li style="font-size:20px;">Block specific words</li>
+        <li style="font-size:20px;">Word cloud is scoped to the event</li>
+      </ul>
+    </div>
+    <div class="card" style="margin-top:30px;">
+      <h3>Announcements</h3>
+      <ul>
+        <li style="font-size:20px;">Broadcast messages to all attendees</li>
+        <li style="font-size:20px;">Messages appear instantly</li>
+        <li style="font-size:20px;">Use for schedule changes, reminders, etc.</li>
+        <li style="font-size:20px;">Announcements scoped to the event</li>
+      </ul>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">19</span>
+</div>
+
+<!-- SLIDE 20: Admin - Countdown & Display Settings -->
+<div class="slide">
+  <span class="badge badge-gold">Admin</span>
+  <h2>Countdown Clock &amp; Display Settings</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Countdown Clock</h3>
+      <p style="margin-bottom:20px;">Found in the event edit form under the countdown toggle.</p>
+      <ul>
+        <li>Toggle <strong>"Show Countdown Clock"</strong> on any upcoming event</li>
+        <li>Countdown shows <strong>months, days, hours, minutes, seconds</strong></li>
+        <li>Appears at the top of the Events page, below the hero</li>
+        <li>Automatically disappears when the event date arrives</li>
+        <li>Multiple events can have countdowns simultaneously</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Engagement Display Mode</h3>
+      <p style="margin-bottom:20px;">Controls what name appears as the heading.</p>
+      <ul>
+        <li><strong>Event Name</strong> (default) — shows the conference/event name as the main heading</li>
+        <li><strong>Session Name</strong> — shows the session name as the main heading on the engagement page and View More Details modal</li>
+        <li>Event cards on the events page always show event title first, session name second</li>
+      </ul>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">20</span>
+</div>
+
+<!-- SECTION DIVIDER: FAQs -->
+<div class="section-divider">
+  <span class="badge badge-green">Section 4</span>
+  <h1 style="font-size:64px;">FAQs</h1>
+  <p style="font-size:28px; margin-top:20px;">Frequently Asked Questions</p>
+  <span class="logo-footer" style="left:50%;transform:translateX(-50%);">KLO Platform</span>
+  <span class="slide-number">21</span>
+</div>
+
+<!-- SLIDE 22: FAQs - General -->
+<div class="slide">
+  <span class="badge badge-green">FAQs</span>
+  <h2>General Questions</h2>
+  <div class="faq-item">
+    <div class="faq-q">Q: Do guests need to create an account to join a live session?</div>
+    <div class="faq-a">No. Guests can participate in polls, Q&amp;A, and word clouds without signing in. They only need an account to download files or use the AI Advisor.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Q: How does the Engagement page know which event to show?</div>
+    <div class="faq-a">It checks today's date against all published events. If the event date matches today AND seminar mode is on, it appears. If only one event is live, it auto-selects.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Q: What happens to the countdown clock on event day?</div>
+    <div class="faq-a">It automatically disappears when the event date arrives. The event moves from the countdown section to the "Live Events" section with a "Join Event" button.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Q: Can I run multiple events on the same day?</div>
+    <div class="faq-a">Yes. The engagement page supports multiple simultaneous events. Guests will see a selection screen to pick which event to join.</div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">22</span>
+</div>
+
+<!-- SLIDE 23: FAQs - Admin -->
+<div class="slide">
+  <span class="badge badge-green">FAQs</span>
+  <h2>Admin Questions</h2>
+  <div class="faq-item">
+    <div class="faq-q">Q: Do I need to manually switch an event to "live"?</div>
+    <div class="faq-a">No. Events automatically show as live when today matches the event date. You only need to turn on <strong>Seminar Mode</strong> for the engagement page tools to work. The status override is only needed if you want to force a status change.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Q: What's the difference between Seminar Mode and the event status?</div>
+    <div class="faq-a"><strong>Seminar Mode</strong> controls whether the engagement page and "Engagement" nav link are visible at all. <strong>Event Status</strong> (upcoming/live/past) controls how the event appears on the events page. Both are independent — you need seminar mode ON for engagement tools to work.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Q: What's the max file size I can upload to an event?</div>
+    <div class="faq-a">50MB per file. Supported types: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Q: How do I turn everything off after an event?</div>
+    <div class="faq-a">Turn off <strong>Seminar Mode</strong> in Admin → Conference tab. This hides the engagement page and removes the nav link. The event will automatically move to "Past Events" on the events page after its date passes.</div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">23</span>
+</div>
+
+<!-- SLIDE 24: FAQs - Technical -->
+<div class="slide">
+  <span class="badge badge-green">FAQs</span>
+  <h2>Technical Questions</h2>
+  <div class="faq-item">
+    <div class="faq-q">Q: Are session notes saved to a server?</div>
+    <div class="faq-a">No. Session notes are saved to the guest's browser (localStorage). They persist across page refreshes on the same device but are not backed up to a server. If the guest clears their browser data, notes are lost.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Q: How does the countdown handle time zones?</div>
+    <div class="faq-a">Each event has a timezone setting (default: Central Time). The countdown calculates the remaining time based on the event's timezone, not the viewer's local time. This ensures everyone sees the same countdown regardless of where they are.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Q: Is the mobile app the same as the website?</div>
+    <div class="faq-a">The mobile app wraps the same web app using Capacitor, adding native features: push notifications, biometric lock (Face ID/Touch ID), native share, and offline detection. The core experience is identical.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Q: Can guests see poll results after voting?</div>
+    <div class="faq-a">Yes. Results update in real time for everyone. After an event ends, closed poll results are also visible in the event's "View More Details" modal on the events page.</div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">24</span>
+</div>
+
+<!-- SLIDE 25: Quick Reference -->
+<div class="slide">
+  <span class="badge badge-blue">Reference</span>
+  <h2>Quick Reference — Key Pages</h2>
+  <table>
+    <tr><th>Page</th><th>URL</th><th>Who Can Access</th><th>Purpose</th></tr>
+    <tr><td>Home</td><td>keithlodom.ai</td><td>Everyone</td><td>Landing page, latest content</td></tr>
+    <tr><td>Events</td><td>/events</td><td>Everyone</td><td>Browse events, countdown, join live</td></tr>
+    <tr><td>Engagement</td><td>/conference</td><td>Everyone (when active)</td><td>Live polls, Q&amp;A, word cloud</td></tr>
+    <tr><td>Assessments</td><td>/assessments</td><td>Everyone (all 4 for registered)</td><td>Self-assessment tools</td></tr>
+    <tr><td>AI Advisor</td><td>/advisor</td><td>Registered users</td><td>AI-powered guidance</td></tr>
+    <tr><td>Vault</td><td>/vault</td><td>Registered users (previews for guests)</td><td>Content library</td></tr>
+    <tr><td>Booking</td><td>/booking</td><td>Everyone</td><td>Speaking engagement inquiries</td></tr>
+    <tr><td>Consult</td><td>/consult</td><td>Everyone</td><td>Consultation intake</td></tr>
+    <tr><td>Profile</td><td>/profile</td><td>Signed-in users</td><td>Account, settings, results</td></tr>
+    <tr><td>Admin</td><td>/admin</td><td>Admin/Owner only</td><td>Full management dashboard</td></tr>
+  </table>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">25</span>
+</div>
+
+<!-- SLIDE 26: Questions & Feedback -->
+<div class="slide" style="justify-content:center; align-items:center; text-align:center;">
+  <span class="badge badge-gold">Feedback</span>
+  <h1 style="font-size:56px;">Questions &amp; Feedback</h1>
+  <p style="font-size:28px; max-width:1000px; margin:30px auto;">
+    Have questions about how something works? Want a feature changed or added?<br/>
+    Use the form below or reach out directly.
+  </p>
+  <div class="cta-box" style="max-width:900px; margin:40px auto; text-align:left;">
+    <div class="grid-2" style="gap:30px;">
+      <div>
+        <h3 style="margin-bottom:16px;">Ask a Question</h3>
+        <p style="font-size:20px;">Anything about the platform — how to use a feature, what a setting does, or how to handle a specific scenario during an event.</p>
+      </div>
+      <div>
+        <h3 style="margin-bottom:16px;">Provide Feedback</h3>
+        <p style="font-size:20px;">Tell us what's working, what's confusing, what you'd like changed, or new features you'd like to see. Your input shapes the platform.</p>
+      </div>
+    </div>
+    <div style="margin-top:32px; text-align:center;">
+      <p style="font-size:24px; color:#E6EDF3; font-weight:600;">Contact Tim Adams — Platform Developer</p>
+      <p style="font-size:22px; margin-top:12px;">
+        📧 Email: <span class="accent">tim@axtegrity.com</span>
+      </p>
+      <p style="font-size:22px; margin-top:8px;">
+        💬 Or message directly through the platform
+      </p>
+    </div>
+  </div>
+  <span class="logo-footer">KLO Platform</span>
+  <span class="slide-number">26</span>
+</div>
+
+</body>
+</html>

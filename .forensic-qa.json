@@ -1,0 +1,79 @@
+{
+  "name": "KLO App",
+  "url": "https://klo-app.vercel.app",
+  "threshold": 80,
+  "screenshotOnFail": true,
+
+  "pages": [
+    { "path": "/", "label": "Homepage", "critical": true },
+    { "path": "/about", "label": "About" },
+    { "path": "/assessments", "label": "Assessments", "critical": true },
+    { "path": "/contact", "label": "Contact" },
+    { "path": "/booking", "label": "Booking" },
+    { "path": "/login", "label": "Login", "critical": true }
+  ],
+
+  "apiEndpoints": [
+    { "path": "/api/health", "method": "GET", "expectedStatus": 200 },
+    { "path": "/api/assessments", "method": "GET", "expectedStatus": [200, 401] }
+  ],
+
+  "userFlows": [
+    {
+      "name": "Homepage to Assessment",
+      "critical": true,
+      "steps": [
+        { "action": "goto", "path": "/" },
+        { "action": "waitForSelector", "selector": "a[href*='assessment'], a[href*='assessments'], button:has-text('assessment')", "timeout": 5000 },
+        { "action": "click", "selector": "a[href*='assessment'], a[href*='assessments'], button:has-text('assessment')" },
+        { "action": "waitForNavigation" },
+        { "action": "assertUrl", "pattern": "/assessment" }
+      ]
+    },
+    {
+      "name": "Contact Form Visibility",
+      "steps": [
+        { "action": "goto", "path": "/contact" },
+        { "action": "waitForSelector", "selector": "form, [data-testid='contact-form'], input[type='email']", "timeout": 5000 },
+        { "action": "assertVisible", "selector": "form, [data-testid='contact-form'], input[type='email']" }
+      ]
+    }
+  ],
+
+  "auth": {
+    "loginUrl": "/login",
+    "credentials": {
+      "email": "ENV:FORENSIC_QA_EMAIL",
+      "password": "ENV:FORENSIC_QA_PASSWORD"
+    },
+    "successIndicator": "a[href*='dashboard'], [data-testid='user-menu'], .user-avatar",
+    "enabled": false
+  },
+
+  "consoleErrors": {
+    "failOnError": true,
+    "ignorePatterns": [
+      "favicon.ico",
+      "third-party",
+      "gtag",
+      "analytics",
+      "hotjar",
+      "chunk load failed"
+    ]
+  },
+
+  "brokenLinks": {
+    "crawlDepth": 1,
+    "ignorePatterns": [
+      "mailto:",
+      "tel:",
+      "javascript:",
+      "#",
+      "linkedin.com",
+      "facebook.com",
+      "twitter.com",
+      "instagram.com"
+    ],
+    "timeout": 10000
+  }
+}

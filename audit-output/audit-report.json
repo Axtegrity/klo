@@ -1,0 +1,229 @@
+{
+  "tool": "maven-pdf-auditor",
+  "version": "1.0",
+  "timestamp": "2026-03-11T01:46:12.563Z",
+  "input": "/Users/timothyadams/Desktop/Maven-System-Guide.pdf",
+  "duration": "4.1s",
+  "threshold": 85,
+  "overall": 94,
+  "passed": true,
+  "totalChecks": 26,
+  "categories": {
+    "Page Integrity": {
+      "pass": 6,
+      "warn": 0,
+      "fail": 0,
+      "info": 0,
+      "total": 6,
+      "score": 100
+    },
+    "Content Safety": {
+      "pass": 12,
+      "warn": 0,
+      "fail": 0,
+      "info": 0,
+      "total": 12,
+      "score": 100
+    },
+    "Visual Render": {
+      "pass": 3,
+      "warn": 3,
+      "fail": 0,
+      "info": 0,
+      "total": 6,
+      "score": 75
+    },
+    "Layout": {
+      "pass": 2,
+      "warn": 0,
+      "fail": 0,
+      "info": 0,
+      "total": 2,
+      "score": 100
+    }
+  },
+  "checks": [
+    {
+      "category": "Page Integrity",
+      "name": "Page 1: not a blank overflow",
+      "status": "pass",
+      "detail": "373 chars, 18% fill",
+      "value": "18%"
+    },
+    {
+      "category": "Page Integrity",
+      "name": "Page 2: not a blank overflow",
+      "status": "pass",
+      "detail": "1468 chars, 48% fill",
+      "value": "48%"
+    },
+    {
+      "category": "Page Integrity",
+      "name": "Page 3: not a blank overflow",
+      "status": "pass",
+      "detail": "1816 chars, 32% fill",
+      "value": "32%"
+    },
+    {
+      "category": "Page Integrity",
+      "name": "Page 4: not a blank overflow",
+      "status": "pass",
+      "detail": "1860 chars, 29% fill",
+      "value": "29%"
+    },
+    {
+      "category": "Page Integrity",
+      "name": "Page 5: not a blank overflow",
+      "status": "pass",
+      "detail": "1907 chars, 31% fill",
+      "value": "31%"
+    },
+    {
+      "category": "Page Integrity",
+      "name": "Page 6: not a blank overflow",
+      "status": "pass",
+      "detail": "2086 chars, 40% fill",
+      "value": "40%"
+    },
+    {
+      "category": "Content Safety",
+      "name": "Page 1: no excessive blank gaps",
+      "status": "pass",
+      "detail": "Largest blank gap: 30% of page height",
+      "value": "30%"
+    },
+    {
+      "category": "Content Safety",
+      "name": "Page 1: content reaches footer zone",
+      "status": "pass",
+      "detail": "Content ends at 95% of page (fill: 18%)",
+      "value": "95%"
+    },
+    {
+      "category": "Content Safety",
+      "name": "Page 2: no excessive blank gaps",
+      "status": "pass",
+      "detail": "Largest blank gap: 25% of page height",
+      "value": "25%"
+    },
+    {
+      "category": "Content Safety",
+      "name": "Page 2: content reaches footer zone",
+      "status": "pass",
+      "detail": "Content ends at 95% of page (fill: 48%)",
+      "value": "95%"
+    },
+    {
+      "category": "Content Safety",
+      "name": "Page 3: no excessive blank gaps",
+      "status": "pass",
+      "detail": "Largest blank gap: 26% of page height",
+      "value": "26%"
+    },
+    {
+      "category": "Content Safety",
+      "name": "Page 3: content reaches footer zone",
+      "status": "pass",
+      "detail": "Content ends at 95% of page (fill: 32%)",
+      "value": "95%"
+    },
+    {
+      "category": "Content Safety",
+      "name": "Page 4: no excessive blank gaps",
+      "status": "pass",
+      "detail": "Largest blank gap: 30% of page height",
+      "value": "30%"
+    },
+    {
+      "category": "Content Safety",
+      "name": "Page 4: content reaches footer zone",
+      "status": "pass",
+      "detail": "Content ends at 95% of page (fill: 29%)",
+      "value": "95%"
+    },
+    {
+      "category": "Content Safety",
+      "name": "Page 5: no excessive blank gaps",
+      "status": "pass",
+      "detail": "Largest blank gap: 36% of page height",
+      "value": "36%"
+    },
+    {
+      "category": "Content Safety",
+      "name": "Page 5: content reaches footer zone",
+      "status": "pass",
+      "detail": "Content ends at 95% of page (fill: 31%)",
+      "value": "95%"
+    },
+    {
+      "category": "Content Safety",
+      "name": "Page 6: no excessive blank gaps",
+      "status": "pass",
+      "detail": "Largest blank gap: 9% of page height",
+      "value": "9%"
+    },
+    {
+      "category": "Content Safety",
+      "name": "Page 6: content reaches footer zone",
+      "status": "pass",
+      "detail": "Content ends at 95% of page (fill: 40%)",
+      "value": "95%"
+    },
+    {
+      "category": "Visual Render",
+      "name": "Page 1: adequate content fill",
+      "status": "pass",
+      "detail": "18% of page rows contain visible content (cover page)",
+      "value": "18%"
+    },
+    {
+      "category": "Visual Render",
+      "name": "Page 2: adequate content fill",
+      "status": "pass",
+      "detail": "48% of page rows contain visible content",
+      "value": "48%"
+    },
+    {
+      "category": "Visual Render",
+      "name": "Page 3: adequate content fill",
+      "status": "warn",
+      "detail": "32% of page rows contain visible content",
+      "value": "32%"
+    },
+    {
+      "category": "Visual Render",
+      "name": "Page 4: adequate content fill",
+      "status": "warn",
+      "detail": "29% of page rows contain visible content",
+      "value": "29%"
+    },
+    {
+      "category": "Visual Render",
+      "name": "Page 5: adequate content fill",
+      "status": "warn",
+      "detail": "31% of page rows contain visible content",
+      "value": "31%"
+    },
+    {
+      "category": "Visual Render",
+      "name": "Page 6: adequate content fill",
+      "status": "pass",
+      "detail": "40% of page rows contain visible content",
+      "value": "40%"
+    },
+    {
+      "category": "Layout",
+      "name": "Footer present on all pages",
+      "status": "pass",
+      "detail": "6/6 pages have footer text",
+      "value": "6/6"
+    },
+    {
+      "category": "Layout",
+      "name": "Header/branding on content pages",
+      "status": "pass",
+      "detail": "5/5 content pages have header branding (page 1 cover excluded)",
+      "value": "5/5"
+    }
+  ]
+}

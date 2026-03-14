@@ -1,0 +1,73 @@
+name: Maven PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  maven-review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DIFF=$(gh pr diff ${{ github.event.pull_request.number }} --repo ${{ github.repository }})
+          # Truncate to 50KB to stay within payload limits
+          DIFF_TRUNCATED=$(echo "$DIFF" | head -c 51200)
+          # Write to file to avoid shell escaping issues
+          echo "$DIFF_TRUNCATED" > /tmp/pr-diff.txt
+
+      - name: Submit review task to Maven
+        id: submit
+        run: |
+          DIFF_CONTENT=$(cat /tmp/pr-diff.txt)
+
+          PAYLOAD=$(jq -n \
+            --arg task_type "code_review" \
+            --arg status "pending" \
+            --arg priority "normal" \
+            --arg input "$(jq -n \
+              --arg source "github_pr" \
+              --arg repo "${{ github.repository }}" \
+              --arg pr_number "${{ github.event.pull_request.number }}" \
+              --arg pr_title "${{ github.event.pull_request.title }}" \
+              --arg pr_author "${{ github.event.pull_request.user.login }}" \
+              --arg pr_url "${{ github.event.pull_request.html_url }}" \
+              --arg diff "$DIFF_CONTENT" \
+              '{source: $source, repo: $repo, pr_number: $pr_number, pr_title: $pr_title, pr_author: $pr_author, pr_url: $pr_url, diff: $diff}')" \
+            '{task_type: $task_type, status: $status, priority: $priority, input: $input}')
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            "https://n8n-production-6a5b.up.railway.app/webhook/task-router" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "::error::Failed to submit task to Maven (HTTP $HTTP_CODE): $BODY"
+            exit 1
+          fi
+
+          TASK_ID=$(echo "$BODY" | jq -r '.task_id // .id // "submitted"')
+          echo "task_id=$TASK_ID" >> "$GITHUB_OUTPUT"
+          echo "Maven review task created: $TASK_ID"
+
+      - name: Comment on PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --body "Maven review submitted — task ID: \`${{ steps.submit.outputs.task_id }}\`"
