@@ -10,6 +10,10 @@ const ADMIN_EMAIL = "admin@keithlodom.io";
 const ADMIN_ID = "00000000-0000-0000-0000-000000000002";
 const MODERATOR_EMAIL = "moderator@keithlodom.io";
 const MODERATOR_ID = "00000000-0000-0000-0000-000000000003";
+const TEST1_EMAIL = "appletest1@keithlodom.ai";
+const TEST1_ID = "00000000-0000-0000-0000-000000000004";
+const TEST2_EMAIL = "appletest2@keithlodom.ai";
+const TEST2_ID = "00000000-0000-0000-0000-000000000005";
 
 const CREDENTIAL_ACCOUNTS = [
   {
@@ -32,6 +36,20 @@ const CREDENTIAL_ACCOUNTS = [
     name: "KLO Moderator",
     envVar: "MODERATOR_PASSWORD",
     role: "moderator" as const,
+  },
+  {
+    email: TEST1_EMAIL,
+    id: TEST1_ID,
+    name: "Apple Test 1",
+    envVar: "APPLE_TEST_PASSWORD",
+    role: "admin" as const,
+  },
+  {
+    email: TEST2_EMAIL,
+    id: TEST2_ID,
+    name: "Apple Test 2",
+    envVar: "APPLE_TEST_PASSWORD",
+    role: "admin" as const,
   },
 ];
 
