@@ -364,32 +364,67 @@ function SavedContentTab() {
 }
 
 function PushNotificationRow() {
-  const [isNative, setIsNative] = useState(false);
+  const [pushSupported, setPushSupported] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useState(() => {
-    import("@capacitor/core").then(({ Capacitor }) => {
-      if (Capacitor.isNativePlatform()) {
-        setIsNative(true);
-        import("@/lib/push-notifications").then(({ checkPushPermission }) => {
-          checkPushPermission().then(setPushEnabled);
-        });
+  useEffect(() => {
+    async function checkStatus() {
+      // Check native first
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        if (Capacitor.isNativePlatform()) {
+          setPushSupported(true);
+          const { checkPushPermission } = await import("@/lib/push-notifications");
+          const enabled = await checkPushPermission();
+          setPushEnabled(enabled);
+          return;
+        }
+      } catch {}
+
+      // Check web push
+      const { isWebPushSupported, getExistingSubscription } = await import("@/lib/web-push-client");
+      if (isWebPushSupported()) {
+        setPushSupported(true);
+        const existing = await getExistingSubscription();
+        setPushEnabled(!!existing);
       }
-    }).catch(() => {});
-  });
+    }
+    checkStatus();
+  }, []);
 
-  if (!isNative) return null;
+  if (!pushSupported) return null;
 
-  const handleEnable = async () => {
+  const handleToggle = async () => {
     setLoading(true);
     try {
-      const { initPushNotifications } = await import("@/lib/push-notifications");
-      const token = await initPushNotifications();
-      if (token) {
-        localStorage.setItem("klo-push-token", token);
-        setPushEnabled(true);
-        haptics.success();
+      // Check if native
+      const { Capacitor } = await import("@capacitor/core");
+      if (Capacitor.isNativePlatform()) {
+        if (!pushEnabled) {
+          const { initPushNotifications } = await import("@/lib/push-notifications");
+          const token = await initPushNotifications();
+          if (token) {
+            localStorage.setItem("klo-push-token", token);
+            setPushEnabled(true);
+            haptics.success();
+          }
+        }
+      } else {
+        // Web push
+        if (pushEnabled) {
+          const { unsubscribeFromWebPush } = await import("@/lib/web-push-client");
+          await unsubscribeFromWebPush();
+          setPushEnabled(false);
+          haptics.light();
+        } else {
+          const { subscribeToWebPush } = await import("@/lib/web-push-client");
+          const sub = await subscribeToWebPush();
+          if (sub) {
+            setPushEnabled(true);
+            haptics.success();
+          }
+        }
       }
     } catch {
       // Permission denied or error
@@ -408,17 +443,22 @@ function PushNotificationRow() {
           </p>
         </div>
       </div>
-      {pushEnabled ? (
-        <span className="text-xs text-emerald-400 font-medium">Enabled</span>
-      ) : (
-        <button
-          onClick={handleEnable}
-          disabled={loading}
-          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[#2764FF] text-white hover:bg-[#2764FF]/80 transition-colors disabled:opacity-50 cursor-pointer"
-        >
-          {loading ? "Enabling..." : "Enable"}
-        </button>
-      )}
+      <button
+        role="switch"
+        aria-checked={pushEnabled}
+        aria-label="Push Notifications"
+        onClick={handleToggle}
+        disabled={loading}
+        className={`relative w-11 h-6 rounded-full transition-colors duration-200 cursor-pointer disabled:opacity-50 ${
+          pushEnabled ? "bg-[#2764FF]" : "bg-klo-slate"
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform duration-200 ${
+            pushEnabled ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </button>
     </div>
   );
 }

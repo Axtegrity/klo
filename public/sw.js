@@ -90,3 +90,51 @@ self.addEventListener("fetch", (event) => {
       .catch(() => caches.match(request))
   );
 });
+
+// Push notification received — show notification
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+
+  try {
+    const payload = event.data.json();
+    const options = {
+      body: payload.body || "",
+      icon: payload.icon || "/icons/icon-192.png",
+      badge: payload.badge || "/icons/badge-72.png",
+      tag: payload.tag || "klo-notification",
+      data: payload.data || {},
+      vibrate: [200, 100, 200],
+      actions: [{ action: "open", title: "Open" }],
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(payload.title || "KLO Advisory", options)
+    );
+  } catch {
+    event.waitUntil(
+      self.registration.showNotification("KLO Advisory", {
+        body: event.data.text(),
+        icon: "/icons/icon-192.png",
+      })
+    );
+  }
+});
+
+// Notification click — navigate to the target URL
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const url = event.notification.data?.url || "/";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && "focus" in client) {
+          client.navigate(url);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});

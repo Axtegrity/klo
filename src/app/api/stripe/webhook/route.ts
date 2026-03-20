@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { getServiceSupabase } from "@/lib/supabase";
+import { sendPushToUser } from "@/lib/push-server";
 
 /* ------------------------------------------------------------------ */
 /*  POST /api/stripe/webhook                                           */
@@ -71,6 +72,26 @@ export async function POST(request: NextRequest) {
           })
           .eq("stripe_customer_id", customerId);
 
+        // Push notification: subscription confirmed
+        try {
+          const { data: profile } = await supabaseCheckout
+            .from("profiles")
+            .select("id")
+            .eq("stripe_customer_id", customerId)
+            .single();
+
+          if (profile) {
+            await sendPushToUser(profile.id, {
+              title: "Welcome to KLO " + tier.charAt(0).toUpperCase() + tier.slice(1) + "!",
+              body: "Your subscription is active. Explore your new features now.",
+              url: "/vault",
+              tag: "subscription-confirmed",
+            });
+          }
+        } catch (pushErr) {
+          console.error("[Stripe Webhook] Push notification failed:", pushErr);
+        }
+
         break;
       }
 
@@ -134,6 +155,26 @@ export async function POST(request: NextRequest) {
             payment_failed_at: new Date().toISOString(),
           })
           .eq("stripe_customer_id", customerId);
+
+        // Push notification: payment issue
+        try {
+          const { data: failedProfile } = await supabaseFailed
+            .from("profiles")
+            .select("id")
+            .eq("stripe_customer_id", customerId)
+            .single();
+
+          if (failedProfile) {
+            await sendPushToUser(failedProfile.id, {
+              title: "Payment Issue",
+              body: "We couldn't process your payment. Please update your payment method.",
+              url: "/profile",
+              tag: "payment-failed",
+            });
+          }
+        } catch (pushErr) {
+          console.error("[Stripe Webhook] Push notification failed:", pushErr);
+        }
 
         // Optionally notify user via Resend on final attempt
         if (attemptCount >= 3) {

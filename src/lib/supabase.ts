@@ -62,6 +62,16 @@ export interface Subscription {
   created_at: string;
 }
 
+export interface PushSubscription {
+  id: string;
+  user_id: string;
+  platform: "web" | "ios" | "android";
+  token: string;
+  user_agent: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -70,6 +80,7 @@ export interface Database {
       vault_content: { Row: VaultContent };
       strategy_rooms: { Row: StrategyRoom };
       subscriptions: { Row: Subscription };
+      push_subscriptions: { Row: PushSubscription };
     };
   };
 }

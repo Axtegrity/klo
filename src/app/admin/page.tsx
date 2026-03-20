@@ -24,6 +24,7 @@ import {
   Inbox,
   BookOpen,
   Send,
+  Bell,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import {
@@ -51,6 +52,7 @@ import ConferenceAdminTab from "@/features/conference/admin/ConferenceAdminTab";
 import EventsAdminTab from "@/features/admin/EventsAdminTab";
 import InquiriesAdminTab from "@/features/admin/InquiriesAdminTab";
 import PresentationsAdminTab from "@/features/admin/PresentationsAdminTab";
+import NotificationsAdminTab from "@/features/admin/NotificationsAdminTab";
 
 // ------------------------------------------------------------
 // Animation variants
@@ -122,13 +124,14 @@ function StatCard({
 // Tab definitions
 // ------------------------------------------------------------
 
-type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "presentations" | "events" | "inquiries" | "tools";
+type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "presentations" | "events" | "inquiries" | "notifications" | "tools";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "events", label: "Events", icon: Vote },
   { id: "conference", label: "Conference", icon: BarChart3 },
   { id: "inquiries", label: "Inquiries", icon: Inbox },
+  { id: "notifications", label: "Notifications", icon: Bell },
   { id: "presentations", label: "Presentations", icon: ClipboardCheck },
   { id: "users", label: "Users", icon: Users },
   { id: "content", label: "Content", icon: BotMessageSquare },
@@ -1146,6 +1149,11 @@ export default function AdminPage() {
         {/* INQUIRIES TAB */}
         {activeTab === "inquiries" && (
           <InquiriesAdminTab />
+        )}
+
+        {/* NOTIFICATIONS TAB */}
+        {activeTab === "notifications" && (
+          <NotificationsAdminTab />
         )}
 
         {/* TOOLS TAB */}

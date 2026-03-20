@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { resend } from "@/lib/email";
+import { sendPushToUser } from "@/lib/push-server";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -37,6 +38,19 @@ export async function POST(request: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Push notification: assessment completed
+  try {
+    const assessmentName = assessment_type.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+    await sendPushToUser(userId, {
+      title: "Assessment Complete!",
+      body: `You scored ${score}% on ${assessmentName}. View your results and recommendations.`,
+      url: "/profile?tab=assessments",
+      tag: "assessment-complete",
+    });
+  } catch {
+    // Don't fail the save if push fails
   }
 
   // Notify Keith + Tim of new assessment completion
