@@ -1,0 +1,645 @@
+{
+  "url": "https://klo-app.vercel.app",
+  "project": "KLO App",
+  "timestamp": "2026-03-17T15:49:31.942Z",
+  "duration": "915.3s",
+  "threshold": 80,
+  "score": 98,
+  "passed": true,
+  "criticalFailures": 0,
+  "categories": {
+    "page-loads": {
+      "score": 100,
+      "weight": 15,
+      "pass": 33,
+      "warn": 0,
+      "fail": 0,
+      "info": 0,
+      "total": 33
+    },
+    "console-health": {
+      "score": 95,
+      "weight": 10,
+      "pass": 20,
+      "warn": 0,
+      "fail": 1,
+      "info": 0,
+      "total": 21
+    },
+    "navigation-links": {
+      "score": 100,
+      "weight": 15,
+      "pass": 2,
+      "warn": 0,
+      "fail": 0,
+      "info": 1,
+      "total": 3
+    },
+    "api-health": {
+      "score": 100,
+      "weight": 15,
+      "pass": 6,
+      "warn": 0,
+      "fail": 0,
+      "info": 0,
+      "total": 6
+    },
+    "user-flows": {
+      "score": 100,
+      "weight": 20,
+      "pass": 2,
+      "warn": 0,
+      "fail": 0,
+      "info": 0,
+      "total": 2
+    },
+    "auth-flows": {
+      "score": 100,
+      "weight": 10,
+      "pass": 0,
+      "warn": 0,
+      "fail": 0,
+      "info": 1,
+      "total": 1
+    },
+    "form-submissions": {
+      "score": 100,
+      "weight": 10,
+      "pass": 4,
+      "warn": 0,
+      "fail": 0,
+      "info": 1,
+      "total": 5
+    },
+    "visual-stability": {
+      "score": 75,
+      "weight": 5,
+      "pass": 3,
+      "warn": 3,
+      "fail": 0,
+      "info": 0,
+      "total": 6
+    }
+  },
+  "checks": [
+    {
+      "name": "Homepage — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://klo-app.vercel.app",
+      "critical": true
+    },
+    {
+      "name": "Homepage — Load Time",
+      "value": "637ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "Homepage — Has Content",
+      "value": "2600 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "About — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://klo-app.vercel.app/about",
+      "critical": false
+    },
+    {
+      "name": "About — Load Time",
+      "value": "351ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "About — Has Content",
+      "value": "4527 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "Assessments — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://klo-app.vercel.app/assessments",
+      "critical": true
+    },
+    {
+      "name": "Assessments — Load Time",
+      "value": "1599ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "Assessments — Has Content",
+      "value": "1528 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "Booking — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://klo-app.vercel.app/booking",
+      "critical": false
+    },
+    {
+      "name": "Booking — Load Time",
+      "value": "1459ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "Booking — Has Content",
+      "value": "2699 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "Sign In — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://klo-app.vercel.app/auth/signin",
+      "critical": true
+    },
+    {
+      "name": "Sign In — Load Time",
+      "value": "1205ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "Sign In — Has Content",
+      "value": "662 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "Events — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://klo-app.vercel.app/events",
+      "critical": false
+    },
+    {
+      "name": "Events — Load Time",
+      "value": "1727ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "Events — Has Content",
+      "value": "944 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "Feed — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://klo-app.vercel.app/feed",
+      "critical": false
+    },
+    {
+      "name": "Feed — Load Time",
+      "value": "1115ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "Feed — Has Content",
+      "value": "6098 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "Pricing — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://klo-app.vercel.app/pricing",
+      "critical": false
+    },
+    {
+      "name": "Pricing — Load Time",
+      "value": "499ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "Pricing — Has Content",
+      "value": "2343 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "Vault — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://klo-app.vercel.app/vault",
+      "critical": false
+    },
+    {
+      "name": "Vault — Load Time",
+      "value": "150ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "Vault — Has Content",
+      "value": "554 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "Support — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://klo-app.vercel.app/support",
+      "critical": false
+    },
+    {
+      "name": "Support — Load Time",
+      "value": "182ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "Support — Has Content",
+      "value": "1796 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "Conference — HTTP Status",
+      "value": "200",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "https://klo-app.vercel.app/conference",
+      "critical": false
+    },
+    {
+      "name": "Conference — Load Time",
+      "value": "251ms",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Good"
+    },
+    {
+      "name": "Conference — Has Content",
+      "value": "538 chars",
+      "status": "pass",
+      "category": "page-loads",
+      "detail": "Content present"
+    },
+    {
+      "name": "Homepage — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "Homepage — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "About — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "About — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "Assessments — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "Assessments — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "Booking — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "Booking — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "Sign In — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "Sign In — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "Events — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "Events — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "Feed — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "Feed — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "Pricing — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "Pricing — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "Vault — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "Vault — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "Support — Console Check",
+      "value": "FAILED",
+      "status": "fail",
+      "category": "console-health",
+      "detail": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://klo-app.vercel.app/support\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "name": "Conference — Console Errors",
+      "value": "0 error(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "Clean console"
+    },
+    {
+      "name": "Conference — Console Warnings",
+      "value": "0 warning(s)",
+      "status": "pass",
+      "category": "console-health",
+      "detail": "No warnings"
+    },
+    {
+      "name": "Internal Links Health",
+      "value": "20/20 OK",
+      "status": "pass",
+      "category": "navigation-links",
+      "detail": "All internal links valid"
+    },
+    {
+      "name": "Dead Anchors",
+      "value": "0 found",
+      "status": "pass",
+      "category": "navigation-links",
+      "detail": "No dead anchors"
+    },
+    {
+      "name": "External Links",
+      "value": "1 found",
+      "status": "info",
+      "category": "navigation-links",
+      "detail": "External links not tested for availability"
+    },
+    {
+      "name": "API GET /api/events — Status",
+      "value": "HTTP 200",
+      "status": "pass",
+      "category": "api-health",
+      "detail": "Expected: 200"
+    },
+    {
+      "name": "API GET /api/events — Response Time",
+      "value": "636ms",
+      "status": "pass",
+      "category": "api-health",
+      "detail": "Fast"
+    },
+    {
+      "name": "API POST /api/contact — Status",
+      "value": "HTTP 500",
+      "status": "pass",
+      "category": "api-health",
+      "detail": "Expected: 200|400|405|500"
+    },
+    {
+      "name": "API POST /api/contact — Response Time",
+      "value": "467ms",
+      "status": "pass",
+      "category": "api-health",
+      "detail": "Fast"
+    },
+    {
+      "name": "API GET /api/assessments — Status",
+      "value": "HTTP 401",
+      "status": "pass",
+      "category": "api-health",
+      "detail": "Expected: 200|401"
+    },
+    {
+      "name": "API GET /api/assessments — Response Time",
+      "value": "276ms",
+      "status": "pass",
+      "category": "api-health",
+      "detail": "Fast"
+    },
+    {
+      "name": "Flow — Assessments Page Loads",
+      "value": "PASSED",
+      "status": "pass",
+      "category": "user-flows",
+      "detail": "All steps completed",
+      "critical": true
+    },
+    {
+      "name": "Flow — Sign In Page Loads",
+      "value": "PASSED",
+      "status": "pass",
+      "category": "user-flows",
+      "detail": "All steps completed",
+      "critical": false
+    },
+    {
+      "name": "Auth Testing",
+      "value": "Disabled",
+      "status": "info",
+      "category": "auth-flows",
+      "detail": "Set auth.enabled=true in manifest to test auth flows"
+    },
+    {
+      "name": "Booking — Form \"form-0\" Visibility",
+      "value": "9 inputs",
+      "status": "pass",
+      "category": "form-submissions",
+      "detail": "9 total inputs, 9 visible"
+    },
+    {
+      "name": "Booking — Form \"form-0\" Submit Button",
+      "value": "Present",
+      "status": "pass",
+      "category": "form-submissions",
+      "detail": "Submit button found"
+    },
+    {
+      "name": "Sign In — Form \"form-0\" Visibility",
+      "value": "2 inputs",
+      "status": "pass",
+      "category": "form-submissions",
+      "detail": "2 total inputs, 2 visible"
+    },
+    {
+      "name": "Sign In — Form \"form-0\" Submit Button",
+      "value": "Present",
+      "status": "pass",
+      "category": "form-submissions",
+      "detail": "Submit button found"
+    },
+    {
+      "name": "Sign In — Form \"form-0\" Required Fields",
+      "value": "2 required",
+      "status": "info",
+      "category": "form-submissions",
+      "detail": "Fields: email, password"
+    },
+    {
+      "name": "Homepage — CLS (Layout Shift)",
+      "value": "0.0028",
+      "status": "pass",
+      "category": "visual-stability",
+      "detail": "Good (< 0.1)"
+    },
+    {
+      "name": "Homepage — Element Overlap",
+      "value": "1 overlap(s)",
+      "status": "warn",
+      "category": "visual-stability",
+      "detail": "Interactive elements overlap — may cause click issues"
+    },
+    {
+      "name": "About — CLS (Layout Shift)",
+      "value": "0.0026",
+      "status": "pass",
+      "category": "visual-stability",
+      "detail": "Good (< 0.1)"
+    },
+    {
+      "name": "About — Element Overlap",
+      "value": "1 overlap(s)",
+      "status": "warn",
+      "category": "visual-stability",
+      "detail": "Interactive elements overlap — may cause click issues"
+    },
+    {
+      "name": "Assessments — CLS (Layout Shift)",
+      "value": "0.0026",
+      "status": "pass",
+      "category": "visual-stability",
+      "detail": "Good (< 0.1)"
+    },
+    {
+      "name": "Assessments — Element Overlap",
+      "value": "1 overlap(s)",
+      "status": "warn",
+      "category": "visual-stability",
+      "detail": "Interactive elements overlap — may cause click issues"
+    }
+  ],
+  "summary": {
+    "totalChecks": 77,
+    "passed": 70,
+    "warnings": 3,
+    "failed": 1,
+    "info": 3
+  }
+}

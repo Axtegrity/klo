@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KLO Push Notifications — Admin Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #0B0F1A;
+    color: #E6EDF3;
+    line-height: 1.7;
+    padding: 0;
+  }
+
+  .page {
+    max-width: 850px;
+    margin: 0 auto;
+    padding: 56px 56px;
+    page-break-after: always;
+    min-height: 100vh;
+  }
+
+  .page:last-child { page-break-after: auto; }
+
+  /* Cover page */
+  .cover {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    text-align: center;
+    background: linear-gradient(160deg, #0B0F1A 0%, #111827 50%, #0B0F1A 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 60% 40%, rgba(39, 100, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 30% 70%, rgba(200, 168, 78, 0.06) 0%, transparent 40%);
+  }
+
+  .cover-content { position: relative; z-index: 1; }
+
+  .cover h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 56px;
+    font-weight: 400;
+    color: #C8A84E;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+
+  .cover h2 {
+    font-size: 24px;
+    font-weight: 400;
+    color: #8B949E;
+    margin-bottom: 48px;
+  }
+
+  .cover .meta {
+    font-size: 15px;
+    color: #6E7681;
+    margin-top: 32px;
+  }
+
+  .cover .meta p { margin: 4px 0; }
+
+  .cover .badge {
+    display: inline-block;
+    padding: 10px 28px;
+    background: rgba(39, 100, 255, 0.1);
+    border: 1px solid rgba(39, 100, 255, 0.2);
+    border-radius: 100px;
+    color: #2764FF;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  /* Page header — gold serif */
+  h2 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 36px;
+    font-weight: 400;
+    color: #C8A84E;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .page-subtitle {
+    font-size: 16px;
+    color: #8B949E;
+    margin-bottom: 36px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(200, 168, 78, 0.15);
+  }
+
+  h3 {
+    font-size: 21px;
+    font-weight: 600;
+    color: #E6EDF3;
+    margin: 36px 0 16px;
+  }
+
+  h3:first-of-type { margin-top: 0; }
+
+  p { margin: 0 0 16px; color: #C9D1D9; font-size: 15px; }
+
+  /* Method cards — big visual separation */
+  .method-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    padding: 32px;
+    margin: 24px 0;
+  }
+
+  .method-card h3 {
+    margin: 0 0 8px;
+    font-size: 22px;
+  }
+
+  .method-card .method-desc {
+    color: #8B949E;
+    font-size: 14px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .method-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 16px;
+  }
+
+  .method-label.web {
+    background: rgba(39, 100, 255, 0.12);
+    color: #2764FF;
+    border: 1px solid rgba(39, 100, 255, 0.2);
+  }
+
+  .method-label.mobile {
+    background: rgba(200, 168, 78, 0.12);
+    color: #C8A84E;
+    border: 1px solid rgba(200, 168, 78, 0.2);
+  }
+
+  .method-label.api {
+    background: rgba(110, 207, 85, 0.12);
+    color: #6ECF55;
+    border: 1px solid rgba(110, 207, 85, 0.2);
+  }
+
+  .method-label.auto {
+    background: rgba(136, 64, 255, 0.12);
+    color: #A875FF;
+    border: 1px solid rgba(136, 64, 255, 0.2);
+  }
+
+  /* Numbered steps */
+  .steps {
+    counter-reset: step-counter;
+    list-style: none;
+    padding: 0;
+    margin: 16px 0;
+  }
+
+  .steps li {
+    counter-increment: step-counter;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+
+  .steps li::before {
+    content: counter(step-counter);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(39, 100, 255, 0.15);
+    color: #2764FF;
+    font-weight: 700;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  .steps li strong { color: #E6EDF3; font-size: 15px; }
+  .steps li p { margin: 4px 0 0; color: #8B949E; font-size: 14px; }
+
+  /* Code */
+  code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    padding: 2px 6px;
+    background: rgba(110, 118, 129, 0.15);
+    border-radius: 4px;
+    color: #79C0FF;
+  }
+
+  pre {
+    background: #161B22;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 20px 24px;
+    overflow-x: auto;
+    margin: 16px 0 24px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  pre code { background: none; padding: 0; color: #E6EDF3; }
+  .comment { color: #6E7681; }
+  .key { color: #79C0FF; }
+  .string { color: #A5D6FF; }
+
+  /* Info boxes */
+  .info-box {
+    padding: 18px 22px;
+    border-radius: 12px;
+    margin: 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .info-box.blue {
+    background: rgba(39, 100, 255, 0.06);
+    border: 1px solid rgba(39, 100, 255, 0.15);
+    color: #79C0FF;
+  }
+
+  .info-box.gold {
+    background: rgba(200, 168, 78, 0.06);
+    border: 1px solid rgba(200, 168, 78, 0.15);
+    color: #C8A84E;
+  }
+
+  .info-box.green {
+    background: rgba(110, 207, 85, 0.06);
+    border: 1px solid rgba(110, 207, 85, 0.15);
+    color: #6ECF55;
+  }
+
+  .info-box.purple {
+    background: rgba(136, 64, 255, 0.06);
+    border: 1px solid rgba(136, 64, 255, 0.15);
+    color: #A875FF;
+  }
+
+  .info-box strong { display: block; margin-bottom: 6px; font-size: 15px; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+
+  th {
+    text-align: left;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #8B949E;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    color: #C9D1D9;
+    vertical-align: top;
+  }
+
+  /* Checklist */
+  .checklist {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0;
+  }
+
+  .checklist li {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 15px;
+    color: #C9D1D9;
+  }
+
+  .checklist li:last-child { border-bottom: none; }
+  .checklist .do { color: #6ECF55; }
+  .checklist .dont { color: #F77A81; }
+
+  /* Footer */
+  .footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    text-align: center;
+    color: #6E7681;
+    font-size: 12px;
+  }
+
+  @media print {
+    body { background: #0B0F1A; }
+    .page { padding: 48px 44px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================ -->
+<!-- COVER PAGE                                    -->
+<!-- ============================================ -->
+<div class="page cover">
+  <div class="cover-content">
+    <div class="badge">Admin Guide</div>
+    <h1 style="margin-top: 36px;">Push Notifications</h1>
+    <h2>KLO Advisory Platform</h2>
+    <p style="color: #6E7681; max-width: 500px; margin: 0 auto; font-size: 16px; line-height: 1.8;">
+      How to send push notifications from the admin dashboard,<br>
+      the mobile app, and via automated triggers.
+    </p>
+    <div class="meta">
+      <p>Prepared for Keith Odom</p>
+      <p>March 2026</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 2: OVERVIEW                              -->
+<!-- ============================================ -->
+<div class="page">
+  <h2>Overview</h2>
+  <p class="page-subtitle">What push notifications are and how they work in KLO</p>
+
+  <p>
+    Your KLO app supports push notifications across <strong>web browsers</strong>,
+    <strong>iOS</strong>, and <strong>Android</strong>. Users opt in from their
+    Profile Settings, and you can send notifications from the Admin Dashboard.
+  </p>
+
+  <p>
+    Push notifications are messages that appear on a user's device even when they're
+    not actively using your app &mdash; banners on phones, pop-ups on desktop.
+    Users must grant permission before receiving them.
+  </p>
+
+  <h3>Three Ways to Send</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Where</th>
+        <th>Best For</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Admin Dashboard</strong></td>
+        <td>keithlodom.ai/admin &rarr; Notifications tab</td>
+        <td>Announcements, new content, event reminders</td>
+      </tr>
+      <tr>
+        <td><strong>Mobile App</strong></td>
+        <td>Admin section within the iOS/Android app</td>
+        <td>Quick sends on the go from your phone</td>
+      </tr>
+      <tr>
+        <td><strong>Automated</strong></td>
+        <td>Fires automatically (no action needed)</td>
+        <td>Subscription confirmed, assessment done, payment failed</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="info-box blue">
+    <strong>Supported Platforms</strong>
+    Chrome, Edge, Firefox, Safari 16.4+, iOS app, Android app.
+    A single user can subscribe on multiple devices &mdash; they'll receive
+    notifications on all of them.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 3: METHOD 1 — ADMIN DASHBOARD            -->
+<!-- ============================================ -->
+<div class="page">
+  <h2>Method 1: Admin Dashboard</h2>
+  <p class="page-subtitle">Send from your computer at keithlodom.ai/admin</p>
+
+  <div class="method-card">
+    <span class="method-label web">Desktop / Laptop</span>
+    <h3>Getting There</h3>
+    <p class="method-desc">Open your browser, sign in as admin, and navigate to the Notifications tab.</p>
+
+    <ol class="steps">
+      <li>
+        <div>
+          <strong>Sign in at keithlodom.ai</strong>
+          <p>Use your admin credentials (owner or admin role required)</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Go to /admin</strong>
+          <p>Click "Admin" in the navigation or go directly to <code>keithlodom.ai/admin</code></p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Click the "Notifications" tab</strong>
+          <p>You'll see subscriber stats, the compose form, and a list of all subscribers</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <h3>Sending a Broadcast (All Users)</h3>
+
+  <ol class="steps">
+    <li>
+      <div>
+        <strong>Select "Broadcast to All"</strong>
+        <p>This is the default. Every subscribed user on every device will receive it.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <strong>Fill in the notification</strong>
+        <p><strong>Title:</strong> Short &amp; punchy, under 50 characters (bold headline on the device)</p>
+        <p><strong>Body:</strong> 1-2 sentences. Be clear and actionable.</p>
+        <p><strong>Link URL:</strong> Where they go when they tap. Use paths like <code>/vault</code>, <code>/assessments</code>, <code>/booking</code></p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <strong>Click "Send Notification"</strong>
+        <p>A green banner confirms how many devices received it.</p>
+      </div>
+    </li>
+  </ol>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 4: DASHBOARD — SPECIFIC USER              -->
+<!-- ============================================ -->
+<div class="page">
+  <h2>Method 1: Admin Dashboard (cont.)</h2>
+  <p class="page-subtitle">Targeting a specific user instead of everyone</p>
+
+  <div class="method-card">
+    <h3>Sending to a Specific User</h3>
+    <p class="method-desc">Use this when a notification is relevant to only one person.</p>
+
+    <ol class="steps">
+      <li>
+        <div>
+          <strong>Click "Specific User" (instead of "Broadcast to All")</strong>
+          <p>A new "User ID" field will appear in the form.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Find the User ID</strong>
+          <p>Switch to the <strong>Users</strong> tab in the admin dashboard. Each user row has a UUID &mdash; copy it.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Paste the User ID, compose your message, and send</strong>
+          <p>Only that user's devices will receive the notification.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <h3>Understanding Subscriber Stats</h3>
+  <p>At the top of the Notifications tab you'll see four stat cards:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Stat</th>
+        <th>What It Means</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Total Subscribers</strong></td><td>Total device subscriptions across all platforms</td></tr>
+      <tr><td><strong>Web Push</strong></td><td>Users subscribed via Chrome, Safari, Edge, or Firefox</td></tr>
+      <tr><td><strong>iOS</strong></td><td>Users subscribed via the KLO iPhone/iPad app</td></tr>
+      <tr><td><strong>Android</strong></td><td>Users subscribed via the KLO Android app</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info-box blue">
+    <strong>One User, Multiple Devices</strong>
+    If someone subscribes on both their phone and laptop, they count as 2 subscriptions
+    but are still 1 user. Broadcasts reach all their devices.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 5: METHOD 2 — MOBILE APP                  -->
+<!-- ============================================ -->
+<div class="page">
+  <h2>Method 2: From the Mobile App</h2>
+  <p class="page-subtitle">Send push notifications directly from your iPhone or Android</p>
+
+  <div class="method-card">
+    <span class="method-label mobile">iOS / Android</span>
+    <h3>Sending from Your Phone</h3>
+    <p class="method-desc">The admin dashboard works in the KLO mobile app too &mdash; same features, optimized for touch.</p>
+
+    <ol class="steps">
+      <li>
+        <div>
+          <strong>Open the KLO app on your phone</strong>
+          <p>Make sure you're signed in with your admin account.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Navigate to Admin &rarr; Notifications tab</strong>
+          <p>The admin dashboard is fully responsive. Tap the "Notifications" tab just like on desktop.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Choose broadcast or specific user</strong>
+          <p>Tap "Broadcast to All" or "Specific User" &mdash; same options as desktop.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Fill in Title, Body, and Link URL</strong>
+          <p>Compose your notification. Keep the title short since you're typing on mobile.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Tap "Send Notification"</strong>
+          <p>You'll see the green confirmation with delivery count.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <div class="info-box gold">
+    <strong>Pro Tip: Quick Sends on the Go</strong>
+    This is perfect for time-sensitive notifications like "Session starting in 10 minutes!"
+    or "New framework just dropped" &mdash; no need to get to a computer.
+    The mobile app uses the same API, so everything works identically.
+  </div>
+
+  <div class="info-box blue">
+    <strong>Who Can Send from Mobile?</strong>
+    Only users with <strong>owner</strong> or <strong>admin</strong> roles can access the
+    Notifications tab and send push notifications. Regular users won't see it.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 6: METHOD 3 — AUTOMATED                   -->
+<!-- ============================================ -->
+<div class="page">
+  <h2>Method 3: Automated Notifications</h2>
+  <p class="page-subtitle">These fire automatically &mdash; no action needed from you</p>
+
+  <div class="method-card">
+    <span class="method-label auto">Automatic</span>
+    <h3>Built-In Triggers</h3>
+    <p class="method-desc">The system sends these to the user who triggered the event. You still get email notifications for admin-relevant events.</p>
+
+    <table style="margin: 0;">
+      <thead>
+        <tr>
+          <th style="width: 30%;">When This Happens</th>
+          <th>User Sees This</th>
+          <th style="width: 15%;">Taps To</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong>User subscribes</strong><br>
+            <span style="color:#6E7681; font-size: 12px;">Completes Stripe checkout</span>
+          </td>
+          <td>
+            <strong>"Welcome to KLO Pro!"</strong><br>
+            Your subscription is active. Explore your new features now.
+          </td>
+          <td><code>/vault</code></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Payment fails</strong><br>
+            <span style="color:#6E7681; font-size: 12px;">Stripe can't charge card</span>
+          </td>
+          <td>
+            <strong>"Payment Issue"</strong><br>
+            We couldn't process your payment. Please update your payment method.
+          </td>
+          <td><code>/profile</code></td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Assessment done</strong><br>
+            <span style="color:#6E7681; font-size: 12px;">User completes any assessment</span>
+          </td>
+          <td>
+            <strong>"Assessment Complete!"</strong><br>
+            You scored 72% on Church AI Readiness. View your results.
+          </td>
+          <td><code>/profile</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="info-box green">
+    <strong>These Go to the User, Not You</strong>
+    When someone completes an assessment, <em>they</em> get the push notification.
+    You still get the admin email notification as before &mdash; nothing changes on your end.
+  </div>
+
+  <h3>Future Triggers (Can Be Added)</h3>
+  <ul class="checklist">
+    <li>New vault content published &rarr; notify all subscribers</li>
+    <li>Booking confirmed &rarr; notify the user</li>
+    <li>Conference session starting soon &rarr; notify attendees</li>
+    <li>Weekly engagement digest &rarr; nudge inactive users</li>
+  </ul>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 7: HOW USERS OPT IN                       -->
+<!-- ============================================ -->
+<div class="page">
+  <h2>How Users Subscribe</h2>
+  <p class="page-subtitle">What your users need to do to start receiving notifications</p>
+
+  <div class="method-card">
+    <span class="method-label web">Web Browser</span>
+    <h3>Subscribing on Desktop / Laptop</h3>
+    <p class="method-desc">Works in Chrome, Edge, Firefox, and Safari 16.4+</p>
+
+    <ol class="steps">
+      <li>
+        <div>
+          <strong>Go to Profile &rarr; Settings</strong>
+          <p>The "Push Notifications" toggle is under Notification Preferences.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Toggle on Push Notifications</strong>
+          <p>The browser shows a permission prompt: "keithlodom.ai wants to send notifications."</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Click "Allow"</strong>
+          <p>Done! The toggle turns blue. They'll now receive push notifications in their browser.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <div class="method-card" style="margin-top: 28px;">
+    <span class="method-label mobile">iOS / Android App</span>
+    <h3>Subscribing on Mobile</h3>
+    <p class="method-desc">The app handles most of this automatically</p>
+
+    <ol class="steps">
+      <li>
+        <div>
+          <strong>App prompts on first launch</strong>
+          <p>When a user first opens the KLO app, it automatically asks for push notification permission. If they tap "Allow", they're subscribed immediately.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Can also toggle in Profile &rarr; Settings</strong>
+          <p>Same toggle as web. If they declined the initial prompt, they can enable it here (the app will re-prompt for permission).</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <div class="info-box gold">
+    <strong>If a User Blocked Notifications</strong>
+    If someone previously tapped "Don't Allow" (iOS) or "Block" (browser), they need to
+    fix it in their device settings:<br>
+    <strong>iPhone:</strong> Settings &rarr; KLO &rarr; Notifications &rarr; Allow Notifications<br>
+    <strong>Chrome:</strong> Click lock icon in address bar &rarr; Site Settings &rarr; Notifications &rarr; Allow
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 8: UNSUBSCRIBING                          -->
+<!-- ============================================ -->
+<div class="page">
+  <h2>Unsubscribing &amp; Best Practices</h2>
+  <p class="page-subtitle">How users opt out, and how to keep engagement high</p>
+
+  <h3>Unsubscribing</h3>
+  <p>
+    Users can toggle off push notifications from their Profile &rarr; Settings at any time.
+    This immediately removes their subscription from the server. They stop receiving
+    notifications on that device right away.
+  </p>
+
+  <h3 style="margin-top: 40px;">Best Practices</h3>
+
+  <div style="display: flex; gap: 24px; margin-top: 20px;">
+    <div style="flex: 1;">
+      <h4 style="color: #6ECF55; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Do</h4>
+      <ul class="checklist">
+        <li><span class="do">&#10003;</span> &nbsp;Keep titles under 50 characters</li>
+        <li><span class="do">&#10003;</span> &nbsp;Make the body actionable</li>
+        <li><span class="do">&#10003;</span> &nbsp;Always include a link URL</li>
+        <li><span class="do">&#10003;</span> &nbsp;Send 1-3x per week max</li>
+        <li><span class="do">&#10003;</span> &nbsp;Send during business hours (Tue-Thu is best)</li>
+        <li><span class="do">&#10003;</span> &nbsp;Target specific users when relevant</li>
+      </ul>
+    </div>
+    <div style="flex: 1;">
+      <h4 style="color: #F77A81; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Don't</h4>
+      <ul class="checklist">
+        <li><span class="dont">&#10007;</span> &nbsp;Send more than once a day</li>
+        <li><span class="dont">&#10007;</span> &nbsp;Use ALL CAPS or clickbait</li>
+        <li><span class="dont">&#10007;</span> &nbsp;Send without a clear purpose</li>
+        <li><span class="dont">&#10007;</span> &nbsp;Send late at night</li>
+        <li><span class="dont">&#10007;</span> &nbsp;Send the same message twice</li>
+        <li><span class="dont">&#10007;</span> &nbsp;Forget to test on your own device first</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 40px;">Ready-to-Use Templates</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Use Case</th>
+        <th>Title</th>
+        <th>Body</th>
+        <th>Link</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>New content</td>
+        <td>New in the Vault</td>
+        <td>The [Name] framework is now available.</td>
+        <td>/vault</td>
+      </tr>
+      <tr>
+        <td>Event</td>
+        <td>Event Tomorrow</td>
+        <td>[Event] starts at [time]. Don't miss it!</td>
+        <td>/events</td>
+      </tr>
+      <tr>
+        <td>Feature</td>
+        <td>New Feature</td>
+        <td>Strategy Rooms are live! Collaborate in real time.</td>
+        <td>/strategy-rooms</td>
+      </tr>
+      <tr>
+        <td>Nudge</td>
+        <td>Track Your Progress</td>
+        <td>It's been a while. See how you've grown.</td>
+        <td>/assessments</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 9: TECHNICAL REFERENCE                    -->
+<!-- ============================================ -->
+<div class="page">
+  <h2>Technical Reference</h2>
+  <p class="page-subtitle">For developers and technical team members</p>
+
+  <h3>API Endpoints</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Endpoint</th>
+        <th>Method</th>
+        <th>Auth</th>
+        <th>Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>/api/push/subscribe</code></td>
+        <td>POST</td>
+        <td>User</td>
+        <td>Register a push subscription</td>
+      </tr>
+      <tr>
+        <td><code>/api/push/unsubscribe</code></td>
+        <td>DELETE</td>
+        <td>User</td>
+        <td>Remove a push subscription</td>
+      </tr>
+      <tr>
+        <td><code>/api/push/send</code></td>
+        <td>POST</td>
+        <td>Admin</td>
+        <td>Send notification (broadcast or targeted)</td>
+      </tr>
+      <tr>
+        <td><code>/api/push/subscribers</code></td>
+        <td>GET</td>
+        <td>Admin</td>
+        <td>List all subscribers with stats</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Send API &mdash; Request Examples</h3>
+
+  <pre><code><span class="comment">// Broadcast to all subscribers</span>
+{
+  <span class="key">"title"</span>: <span class="string">"New Framework Available"</span>,
+  <span class="key">"body"</span>: <span class="string">"Check out the AI Ethics Framework."</span>,
+  <span class="key">"url"</span>: <span class="string">"/vault"</span>
+}
+
+<span class="comment">// Send to one specific user</span>
+{
+  <span class="key">"title"</span>: <span class="string">"Your Report is Ready"</span>,
+  <span class="key">"body"</span>: <span class="string">"View your AI readiness report."</span>,
+  <span class="key">"userId"</span>: <span class="string">"user-uuid-here"</span>
+}
+
+<span class="comment">// Send to multiple specific users</span>
+{
+  <span class="key">"title"</span>: <span class="string">"Pro Members Only"</span>,
+  <span class="key">"body"</span>: <span class="string">"Exclusive content just dropped."</span>,
+  <span class="key">"userIds"</span>: [<span class="string">"uuid-1"</span>, <span class="string">"uuid-2"</span>]
+}</code></pre>
+
+  <h3>Key Files</h3>
+
+  <table>
+    <thead>
+      <tr><th>File</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>src/lib/push-server.ts</code></td><td>Server-side send utilities</td></tr>
+      <tr><td><code>src/lib/web-push-client.ts</code></td><td>Browser subscribe/unsubscribe</td></tr>
+      <tr><td><code>src/lib/push-notifications.ts</code></td><td>Native (Capacitor) push init</td></tr>
+      <tr><td><code>public/sw.js</code></td><td>Service worker (push event handlers)</td></tr>
+      <tr><td><code>src/features/admin/NotificationsAdminTab.tsx</code></td><td>Admin UI component</td></tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <p>KLO Advisory &mdash; Push Notifications Admin Guide &mdash; March 2026</p>
+    <p>Generated by Maven | Prepared by Tim Adams</p>
+  </div>
+</div>
+
+</body>
+</html>
