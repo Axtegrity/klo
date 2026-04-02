@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { isBiometricAvailable, biometricVerify } from "@/lib/biometric-auth";
 
 const BIOMETRIC_LOCK_KEY = "klo-biometric-lock";
@@ -18,16 +18,20 @@ export function setBiometricLockEnabled(enabled: boolean): void {
 export default function BiometricGate({ children }: { children: React.ReactNode }) {
   const [locked, setLocked] = useState(false);
   const [checking, setChecking] = useState(false);
+  const verifyingRef = useRef(false);
 
   const unlock = useCallback(async () => {
-    if (checking) return;
+    if (verifyingRef.current) return;
+    verifyingRef.current = true;
     setChecking(true);
     const success = await biometricVerify("Unlock KLO");
     if (success) {
       setLocked(false);
     }
     setChecking(false);
-  }, [checking]);
+    // Delay clearing the flag so rapid appStateChange events don't re-trigger
+    setTimeout(() => { verifyingRef.current = false; }, 1500);
+  }, []);
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
@@ -40,16 +44,20 @@ export default function BiometricGate({ children }: { children: React.ReactNode 
         const { App } = await import("@capacitor/app");
 
         const listener = await App.addListener("appStateChange", async (state) => {
+          // Skip if already verifying (prevents loop when biometric/passcode UI causes state changes)
+          if (verifyingRef.current) return;
           if (state.isActive && isBiometricLockEnabled()) {
             const available = await isBiometricAvailable();
             if (available) {
               setLocked(true);
+              verifyingRef.current = true;
               setChecking(true);
               const success = await biometricVerify("Unlock KLO");
               if (success) {
                 setLocked(false);
               }
               setChecking(false);
+              setTimeout(() => { verifyingRef.current = false; }, 1500);
             }
           }
         });

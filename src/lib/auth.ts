@@ -175,22 +175,37 @@ export const authOptions: NextAuthOptions = {
       if (credAccount) {
         token.role = credAccount.role;
         token.subscriptionTier = "executive";
+        // Still check DB for updated name
+        try {
+          const supabase = getServiceSupabase();
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", credAccount.id)
+            .single();
+          if (profile?.full_name) {
+            token.name = profile.full_name;
+          }
+        } catch {}
         return token;
       }
 
-      // Refresh role from DB on every token refresh (cached in JWT)
+      // Refresh role + name from DB on every token refresh (cached in JWT)
       if (token.id) {
         try {
           const supabase = getServiceSupabase();
           const { data: profile } = await supabase
             .from("profiles")
-            .select("subscription_tier, role")
+            .select("subscription_tier, role, full_name")
             .eq("id", token.id)
             .single();
 
           if (profile) {
             token.subscriptionTier = profile.subscription_tier ?? "free";
             token.role = profile.role ?? "user";
+            if (profile.full_name) {
+              token.name = profile.full_name;
+            }
           }
         } catch {
           // If DB query fails, keep existing token values

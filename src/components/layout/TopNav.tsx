@@ -172,9 +172,10 @@ export default function TopNav() {
             animate={{ y: 0 }}
             exit={{ y: "-100%" }}
             transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
-            className="fixed inset-0 z-40 bg-[#0D1117]/98 backdrop-blur-lg pt-20 px-8 lg:hidden"
+            className="fixed inset-0 z-40 bg-[#0D1117]/98 backdrop-blur-lg px-8 lg:hidden overflow-y-auto overscroll-contain"
+            style={{ paddingTop: "calc(72px + env(safe-area-inset-top, 0px) + 16px)", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 32px)" }}
           >
-            <ul className="flex flex-col gap-6">
+            <ul className="flex flex-col gap-4">
               {activeNavLinks.map((link, index) => (
                 <motion.li
                   key={link.href}

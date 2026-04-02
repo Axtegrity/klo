@@ -19,6 +19,12 @@ export async function GET() {
   }
 
   const userId = (session.user as { id?: string }).id;
+  const userRole = (session.user as { role?: string }).role;
+
+  // Admin and owner roles always get executive access
+  if (userRole === "admin" || userRole === "owner") {
+    return NextResponse.json({ tier: "executive" });
+  }
 
   if (!userId) {
     return NextResponse.json({ tier: "free" });

@@ -24,7 +24,7 @@ import Badge from "@/components/shared/Badge";
 import Button from "@/components/shared/Button";
 import Card from "@/components/shared/Card";
 import { useSubscription } from "@/hooks/useSubscription";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { haptics } from "@/lib/haptics";
 import { isBiometricAvailable, biometricVerify } from "@/lib/biometric-auth";
 import {
@@ -464,14 +464,15 @@ function PushNotificationRow() {
 }
 
 function SettingsTab() {
+  const { data: session, update: updateSession } = useSession();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [formData, setFormData] = useState({
-    fullName: "Keith Demo User",
-    organization: "KLO Consulting",
+    fullName: "",
+    organization: "",
     orgType: "consulting",
-    industry: "Technology & Ministry",
+    industry: "",
     teamSize: "11-50",
   });
   const [notifications, setNotifications] = useState({
@@ -480,8 +481,34 @@ function SettingsTab() {
     newVaultContent: false,
   });
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
+
+  // Load profile from session + Supabase
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      fullName: session?.user?.name || "",
+    }));
+    // Fetch profile data from Supabase
+    fetch("/api/profile")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          setFormData((prev) => ({
+            ...prev,
+            fullName: data.full_name || session?.user?.name || "",
+            organization: data.organization_name || "",
+            orgType: data.organization_type || "consulting",
+            industry: data.industry || "",
+            teamSize: data.team_size || "11-50",
+          }));
+        }
+      })
+      .catch(() => {});
+  }, [session]);
 
   useEffect(() => {
     isBiometricAvailable().then((available) => {
@@ -508,10 +535,36 @@ function SettingsTab() {
     }
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    haptics.success();
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError("");
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: formData.fullName,
+          organization: formData.organization,
+          org_type: formData.orgType,
+          industry: formData.industry,
+          team_size: formData.teamSize,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setSaveError(data.error || "Failed to save");
+        return;
+      }
+      // Update the session so the name reflects immediately
+      await updateSession({ name: formData.fullName });
+      setSaved(true);
+      haptics.success();
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      setSaveError("Something went wrong. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const inputClasses =
@@ -720,9 +773,17 @@ function SettingsTab() {
       )}
 
       {/* Actions */}
+      {saveError && (
+        <motion.div variants={fadeUp} custom={2.5}>
+          <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+            {saveError}
+          </div>
+        </motion.div>
+      )}
+
       <motion.div variants={fadeUp} custom={3} className="flex flex-col gap-4">
-        <Button variant="primary" onClick={handleSave}>
-          {saved ? "Changes Saved!" : "Save Changes"}
+        <Button variant="primary" onClick={handleSave} disabled={saving}>
+          {saving ? "Saving..." : saved ? "Changes Saved!" : "Save Changes"}
         </Button>
         <Button
           variant="ghost"
@@ -806,6 +867,11 @@ function SettingsTab() {
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
   const { tier } = useSubscription();
+  const { data: session } = useSession();
+
+  const userName = session?.user?.name || "User";
+  const userEmail = session?.user?.email || "";
+  const userInitial = userName.charAt(0).toUpperCase();
 
   const tierLabel =
     tier === "free" ? "Free Tier" : tier === "pro" ? "Pro" : "Executive";
@@ -828,16 +894,16 @@ export default function ProfilePage() {
             {/* Avatar */}
             <div className="w-20 h-20 rounded-full bg-[#2764FF]/15 border-2 border-[#2764FF]/30 flex items-center justify-center shrink-0">
               <span className="font-display text-3xl font-bold text-[#2764FF]">
-                K
+                {userInitial}
               </span>
             </div>
 
             {/* Info */}
             <div className="text-center sm:text-left flex-1">
               <h1 className="font-display text-2xl md:text-3xl font-bold text-klo-text mb-1">
-                Keith Demo User
+                {userName}
               </h1>
-              <p className="text-klo-muted text-sm mb-3">demo@klo.ai</p>
+              <p className="text-klo-muted text-sm mb-3">{userEmail}</p>
               <div className="flex items-center gap-3 justify-center sm:justify-start">
                 <Badge variant="gold">
                   <Crown size={10} className="mr-1" />
