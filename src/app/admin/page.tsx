@@ -59,8 +59,7 @@ import PresentationsAdminTab from "@/features/admin/PresentationsAdminTab";
 import NotificationsAdminTab from "@/features/admin/NotificationsAdminTab";
 import CustomizeAdminTab from "@/features/admin/CustomizeAdminTab";
 import ContentManagerTab from "@/features/admin/ContentManagerTab";
-import UserManagementGuide from "@/features/admin/UserManagementGuide";
-import { Paintbrush, FileEdit, HelpCircle } from "lucide-react";
+import { Paintbrush, FileEdit } from "lucide-react";
 
 // ------------------------------------------------------------
 // Animation variants
@@ -214,7 +213,6 @@ export default function AdminPage() {
   } | null>(null);
   const [userActionLoading, setUserActionLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
-  const [showUserGuide, setShowUserGuide] = useState(false);
 
   const userRole = (session?.user as { role?: string } | undefined)?.role;
   const isAdmin = ["owner", "admin"].includes(userRole ?? "");
@@ -664,10 +662,7 @@ export default function AdminPage() {
         )}
 
         {/* USERS TAB */}
-        {!loading && activeTab === "users" && showUserGuide && (
-          <UserManagementGuide onClose={() => setShowUserGuide(false)} />
-        )}
-        {!loading && activeTab === "users" && !showUserGuide && (
+        {!loading && activeTab === "users" && (
           <div className="space-y-6">
             {/* Search & filter bar */}
             <motion.div
@@ -701,152 +696,155 @@ export default function AdminPage() {
                 <option value="pro">Pro</option>
                 <option value="executive">Executive</option>
               </select>
-              <button
-                onClick={() => setShowUserGuide(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-klo-gold/10 border border-klo-gold/20 text-klo-gold text-sm font-medium hover:bg-klo-gold/20 transition-colors"
-              >
-                <HelpCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">Help</span>
-              </button>
             </motion.div>
 
-            {/* Users table */}
-            <motion.div
-              variants={fadeUp}
-              custom={3}
-              className="glass rounded-2xl border border-white/5 overflow-hidden"
-            >
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-white/5">
-                      <th className="text-left px-6 py-4 text-klo-muted font-medium">Name</th>
-                      <th className="text-left px-6 py-4 text-klo-muted font-medium hidden md:table-cell">Organization</th>
-                      <th className="text-left px-6 py-4 text-klo-muted font-medium">Tier</th>
-                      <th className="text-left px-6 py-4 text-klo-muted font-medium hidden sm:table-cell">Role</th>
-                      <th className="text-left px-6 py-4 text-klo-muted font-medium hidden sm:table-cell">Joined</th>
-                      <th className="text-right px-6 py-4 text-klo-muted font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((user) => {
-                      const isDisabled = user.disabled;
-                      const isProtected = user.id === '00000000-0000-0000-0000-000000000001';
-                      const isSelf = user.email === (session?.user as { email?: string })?.email;
-                      return (
-                        <tr
-                          key={user.id}
-                          className={`border-b border-white/5 transition-colors ${isDisabled ? 'opacity-50' : 'hover:bg-white/[0.02]'}`}
-                        >
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <p className="text-klo-text font-medium">
-                                {user.full_name || "—"}
-                              </p>
-                              {isDisabled && (
-                                <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
-                                  Disabled
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-klo-muted hidden md:table-cell">
-                            {user.organization_name || "—"}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                user.subscription_tier === "executive"
-                                  ? "bg-klo-gold/20 text-klo-gold"
-                                  : user.subscription_tier === "pro"
-                                  ? "bg-blue-500/20 text-blue-400"
-                                  : "bg-white/10 text-klo-muted"
-                              }`}
-                            >
-                              {user.subscription_tier}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 hidden sm:table-cell">
-                            <span className="text-xs text-klo-muted capitalize">{user.role || 'user'}</span>
-                          </td>
-                          <td className="px-6 py-4 text-klo-muted hidden sm:table-cell">
-                            {new Date(user.created_at).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            {!isProtected && !isSelf && (
-                              <div className="flex items-center justify-end gap-1">
-                                <button
-                                  onClick={() => setUserActionModal({
-                                    type: isDisabled ? 'enable' : 'disable',
-                                    user,
-                                  })}
-                                  className="p-1.5 rounded-lg hover:bg-white/5 text-klo-muted hover:text-klo-text transition-colors"
-                                  title={isDisabled ? 'Enable user' : 'Disable user'}
-                                >
-                                  {isDisabled ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setSelectedRole(user.role || 'user');
-                                    setUserActionModal({ type: 'role', user });
-                                  }}
-                                  className="p-1.5 rounded-lg hover:bg-white/5 text-klo-muted hover:text-klo-text transition-colors"
-                                  title="Change role"
-                                >
-                                  <Shield className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => setUserActionModal({ type: 'delete', user })}
-                                  className="p-1.5 rounded-lg hover:bg-white/5 text-klo-muted hover:text-red-400 transition-colors"
-                                  title="Delete user"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {users.length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-klo-muted">
-                          No users found
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+            {/* User count */}
+            <p className="text-sm text-klo-muted">{usersTotal} users total</p>
 
-              {/* Pagination */}
-              {usersTotalPages > 1 && (
-                <div className="flex items-center justify-between px-6 py-4 border-t border-white/5">
-                  <p className="text-sm text-klo-muted">
-                    {usersTotal} users total
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setUsersPage((p) => Math.max(1, p - 1))}
-                      disabled={usersPage <= 1}
-                      className="p-2 rounded-lg hover:bg-white/5 text-klo-muted disabled:opacity-30"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <span className="text-sm text-klo-text">
-                      {usersPage} / {usersTotalPages}
-                    </span>
-                    <button
-                      onClick={() => setUsersPage((p) => Math.min(usersTotalPages, p + 1))}
-                      disabled={usersPage >= usersTotalPages}
-                      className="p-2 rounded-lg hover:bg-white/5 text-klo-muted disabled:opacity-30"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
+            {/* User cards */}
+            <div className="space-y-3">
+              {users.map((user) => {
+                const isDisabled = user.disabled;
+                const isProtected = user.id === '00000000-0000-0000-0000-000000000001';
+                const isSelf = user.email === (session?.user as { email?: string })?.email;
+                const canManage = !isProtected && !isSelf;
+                return (
+                  <motion.div
+                    key={user.id}
+                    variants={fadeUp}
+                    custom={3}
+                    className={`glass rounded-2xl border p-5 transition-all ${
+                      isDisabled
+                        ? "border-red-500/20 opacity-60"
+                        : "border-white/5"
+                    }`}
+                  >
+                    {/* Top: user info */}
+                    <div className="flex items-start justify-between gap-4 mb-4">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-base font-semibold text-klo-text">
+                            {user.full_name || "Unnamed User"}
+                          </h3>
+                          {isDisabled && (
+                            <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-400 border border-red-500/20">
+                              Account Disabled
+                            </span>
+                          )}
+                          {isProtected && (
+                            <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold bg-klo-gold/20 text-klo-gold border border-klo-gold/20">
+                              Owner
+                            </span>
+                          )}
+                          {isSelf && (
+                            <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/20">
+                              You
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-klo-muted mt-0.5">{user.email}</p>
+                        {user.organization_name && (
+                          <p className="text-sm text-klo-muted">{user.organization_name}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span
+                          className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
+                            user.subscription_tier === "executive"
+                              ? "bg-klo-gold/20 text-klo-gold"
+                              : user.subscription_tier === "pro"
+                              ? "bg-blue-500/20 text-blue-400"
+                              : "bg-white/10 text-klo-muted"
+                          }`}
+                        >
+                          {user.subscription_tier}
+                        </span>
+                        <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-white/5 text-klo-muted capitalize">
+                          {user.role || "user"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bottom: info row + action buttons */}
+                    <div className="flex items-center justify-between border-t border-white/5 pt-4">
+                      <p className="text-xs text-klo-muted">
+                        Joined {new Date(user.created_at).toLocaleDateString()}
+                      </p>
+
+                      {canManage && (
+                        <div className="flex items-center gap-2">
+                          {isDisabled ? (
+                            <button
+                              onClick={() => setUserActionModal({ type: "enable", user })}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-colors"
+                            >
+                              <UserCheck className="w-3.5 h-3.5" />
+                              Re-enable
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setUserActionModal({ type: "disable", user })}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 text-klo-muted border border-white/10 hover:bg-white/10 hover:text-klo-text transition-colors"
+                            >
+                              <UserX className="w-3.5 h-3.5" />
+                              Disable
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setSelectedRole(user.role || "user");
+                              setUserActionModal({ type: "role", user });
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 text-klo-muted border border-white/10 hover:bg-white/10 hover:text-klo-text transition-colors"
+                          >
+                            <Shield className="w-3.5 h-3.5" />
+                            Change Role
+                          </button>
+                          <button
+                            onClick={() => setUserActionModal({ type: "delete", user })}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+              {users.length === 0 && (
+                <div className="glass rounded-2xl border border-white/5 p-12 text-center text-klo-muted">
+                  No users found
                 </div>
               )}
-            </motion.div>
+            </div>
+
+            {/* Pagination */}
+            {usersTotalPages > 1 && (
+              <div className="flex items-center justify-between">
+                <div />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setUsersPage((p) => Math.max(1, p - 1))}
+                    disabled={usersPage <= 1}
+                    className="px-3 py-1.5 rounded-lg text-sm text-klo-muted hover:bg-white/5 disabled:opacity-30"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-klo-text">
+                    Page {usersPage} of {usersTotalPages}
+                  </span>
+                  <button
+                    onClick={() => setUsersPage((p) => Math.min(usersTotalPages, p + 1))}
+                    disabled={usersPage >= usersTotalPages}
+                    className="px-3 py-1.5 rounded-lg text-sm text-klo-muted hover:bg-white/5 disabled:opacity-30"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
