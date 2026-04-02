@@ -19,10 +19,16 @@ import {
   Mail,
   FileText,
   Fingerprint,
+  ShieldCheck,
+  ShieldOff,
+  Copy,
+  Check,
+  KeyRound,
 } from "lucide-react";
 import Badge from "@/components/shared/Badge";
 import Button from "@/components/shared/Button";
 import Card from "@/components/shared/Card";
+import Modal from "@/components/shared/Modal";
 import { useSubscription } from "@/hooks/useSubscription";
 import { signOut, useSession } from "next-auth/react";
 import { haptics } from "@/lib/haptics";
@@ -486,6 +492,20 @@ function SettingsTab() {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
 
+  // MFA state
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [showMfaSetup, setShowMfaSetup] = useState(false);
+  const [showMfaDisable, setShowMfaDisable] = useState(false);
+  const [mfaQrUri, setMfaQrUri] = useState("");
+  const [mfaEncryptedSecret, setMfaEncryptedSecret] = useState("");
+  const [mfaSetupCode, setMfaSetupCode] = useState("");
+  const [mfaSetupStep, setMfaSetupStep] = useState<"qr" | "backup">("qr");
+  const [mfaBackupCodes, setMfaBackupCodes] = useState<string[]>([]);
+  const [mfaDisableCode, setMfaDisableCode] = useState("");
+  const [mfaError, setMfaError] = useState("");
+  const [mfaCopied, setMfaCopied] = useState(false);
+
   // Load profile from session + Supabase
   useEffect(() => {
     setFormData((prev) => ({
@@ -518,6 +538,85 @@ function SettingsTab() {
       }
     });
   }, []);
+
+  // Load MFA status
+  useEffect(() => {
+    fetch("/api/auth/mfa/status")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setMfaEnabled(data.mfaEnabled ?? false);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleMfaSetupOpen = async () => {
+    setMfaError("");
+    setMfaSetupCode("");
+    setMfaSetupStep("qr");
+    setMfaLoading(true);
+    try {
+      const res = await fetch("/api/auth/mfa/setup", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) { setMfaError(data.error ?? "Failed to start setup"); return; }
+      setMfaQrUri(data.uri);
+      setMfaEncryptedSecret(data.encryptedSecret);
+      setShowMfaSetup(true);
+    } catch {
+      setMfaError("Failed to start setup");
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleMfaConfirmSetup = async () => {
+    setMfaError("");
+    setMfaLoading(true);
+    try {
+      const res = await fetch("/api/auth/mfa/verify-setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ encryptedSecret: mfaEncryptedSecret, code: mfaSetupCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setMfaError(data.error ?? "Invalid code"); setMfaLoading(false); return; }
+      setMfaBackupCodes(data.backupCodes);
+      setMfaSetupStep("backup");
+      setMfaEnabled(true);
+      haptics.success();
+    } catch {
+      setMfaError("Something went wrong");
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleMfaDisable = async () => {
+    setMfaError("");
+    setMfaLoading(true);
+    try {
+      const res = await fetch("/api/auth/mfa/disable", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: mfaDisableCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setMfaError(data.error ?? "Invalid code"); setMfaLoading(false); return; }
+      setMfaEnabled(false);
+      setShowMfaDisable(false);
+      setMfaDisableCode("");
+      haptics.success();
+    } catch {
+      setMfaError("Something went wrong");
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleCopyBackupCodes = async () => {
+    await navigator.clipboard.writeText(mfaBackupCodes.join("\n"));
+    setMfaCopied(true);
+    setTimeout(() => setMfaCopied(false), 2000);
+  };
 
   const handleBiometricToggle = async () => {
     if (!biometricEnabled) {
@@ -771,6 +870,199 @@ function SettingsTab() {
           </Card>
         </motion.div>
       )}
+
+      {/* Two-Factor Authentication */}
+      <motion.div variants={fadeUp} custom={2.3}>
+        <h3 className="font-display text-lg font-semibold text-klo-text mb-4">
+          Two-Factor Authentication
+        </h3>
+        <Card>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {mfaEnabled
+                ? <ShieldCheck size={16} className="text-emerald-400" />
+                : <ShieldOff size={16} className="text-klo-muted" />
+              }
+              <div>
+                <p className="text-sm font-medium text-klo-text">
+                  Authenticator App (TOTP)
+                </p>
+                <p className="text-xs text-klo-muted">
+                  {mfaEnabled
+                    ? "Enabled — your account is protected"
+                    : "Disabled — add an extra layer of security"}
+                </p>
+              </div>
+            </div>
+            {mfaEnabled ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                onClick={() => { setMfaError(""); setMfaDisableCode(""); setShowMfaDisable(true); }}
+              >
+                Disable
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleMfaSetupOpen}
+                disabled={mfaLoading}
+              >
+                {mfaLoading ? "Loading..." : "Enable"}
+              </Button>
+            )}
+          </div>
+          {mfaError && !showMfaSetup && !showMfaDisable && (
+            <p className="mt-3 text-xs text-red-400">{mfaError}</p>
+          )}
+        </Card>
+      </motion.div>
+
+      {/* MFA Setup Modal */}
+      <Modal
+        isOpen={showMfaSetup}
+        onClose={() => { setShowMfaSetup(false); setMfaSetupCode(""); setMfaSetupStep("qr"); setMfaBackupCodes([]); setMfaError(""); }}
+        title={mfaSetupStep === "qr" ? "Set Up Two-Factor Authentication" : "Save Your Backup Codes"}
+        size="md"
+      >
+        {mfaSetupStep === "qr" ? (
+          <div className="space-y-5">
+            <p className="text-sm text-klo-muted">
+              Scan this QR code with your authenticator app (Google Authenticator,
+              Authy, 1Password, etc.), then enter the 6-digit code to confirm.
+            </p>
+            {/* QR Code rendered via a free QR API — no data sent to third party, URI is already encoded */}
+            {mfaQrUri && (
+              <div className="flex justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(mfaQrUri)}`}
+                  alt="Scan this QR code with your authenticator app"
+                  width={200}
+                  height={200}
+                  className="rounded-lg border border-[#21262D]"
+                />
+              </div>
+            )}
+            <div>
+              <label className="block text-xs text-klo-muted mb-1.5">
+                Enter the 6-digit code from your app
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="one-time-code"
+                maxLength={6}
+                placeholder="000000"
+                value={mfaSetupCode}
+                onChange={(e) => setMfaSetupCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="w-full bg-[#0D1117] border border-[#30363D] text-klo-text py-3 px-4 rounded-xl focus:outline-none focus:border-[#C8A84E] transition-colors placeholder:text-klo-muted/50 text-center text-lg tracking-[0.25em] font-mono"
+              />
+            </div>
+            {mfaError && (
+              <p className="text-xs text-red-400">{mfaError}</p>
+            )}
+            <Button
+              variant="gold"
+              onClick={handleMfaConfirmSetup}
+              disabled={mfaSetupCode.length !== 6 || mfaLoading}
+              className="w-full"
+            >
+              {mfaLoading ? "Verifying..." : "Confirm & Enable MFA"}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm">
+              Save these backup codes in a secure place. Each code can only be used once.
+              If you lose your authenticator app, use one of these to regain access.
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {mfaBackupCodes.map((code) => (
+                <div
+                  key={code}
+                  className="bg-[#0D1117] border border-[#21262D] rounded-lg px-3 py-2 font-mono text-sm text-klo-text text-center tracking-widest"
+                >
+                  {code}
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleCopyBackupCodes}
+                className="flex-1"
+              >
+                {mfaCopied ? <Check size={14} /> : <Copy size={14} />}
+                {mfaCopied ? "Copied!" : "Copy All"}
+              </Button>
+              <Button
+                variant="gold"
+                size="sm"
+                onClick={() => { setShowMfaSetup(false); setMfaSetupStep("qr"); setMfaBackupCodes([]); }}
+                className="flex-1"
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* MFA Disable Modal */}
+      <Modal
+        isOpen={showMfaDisable}
+        onClose={() => { setShowMfaDisable(false); setMfaDisableCode(""); setMfaError(""); }}
+        title="Disable Two-Factor Authentication"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-klo-muted">
+            Enter your current authenticator code or a backup code to disable MFA.
+          </p>
+          <div>
+            <label className="block text-xs text-klo-muted mb-1.5">
+              Authenticator code or backup code
+            </label>
+            <input
+              type="text"
+              autoComplete="off"
+              maxLength={8}
+              placeholder="000000"
+              value={mfaDisableCode}
+              onChange={(e) => setMfaDisableCode(e.target.value.replace(/\s/g, "").slice(0, 8))}
+              className="w-full bg-[#0D1117] border border-[#30363D] text-klo-text py-3 px-4 rounded-xl focus:outline-none focus:border-[#C8A84E] transition-colors placeholder:text-klo-muted/50 text-center font-mono tracking-widest"
+            />
+          </div>
+          {mfaError && (
+            <p className="text-xs text-red-400">{mfaError}</p>
+          )}
+          <div className="flex gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setShowMfaDisable(false); setMfaDisableCode(""); setMfaError(""); }}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+              onClick={handleMfaDisable}
+              disabled={mfaDisableCode.length < 6 || mfaLoading}
+            >
+              <KeyRound size={14} />
+              {mfaLoading ? "Disabling..." : "Disable MFA"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Actions */}
       {saveError && (

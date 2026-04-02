@@ -41,6 +41,12 @@ export const advisorLimiter = createLimiter("advisor", 30, "1 h");
 // Maven webhook: 10 per minute (abuse protection)
 export const mavenWebhookLimiter = createLimiter("maven-webhook", 10, "1 m");
 
+// MFA setup: 5 per minute (prevent secret generation spam)
+export const mfaSetupLimiter = createLimiter("mfa-setup", 5, "1 m");
+
+// MFA verify: 10 per minute per IP (prevent brute-force of 6-digit codes)
+export const mfaVerifyLimiter = createLimiter("mfa-verify", 10, "1 m");
+
 // ── Helper ─────────────────────────────────────────────────
 
 export async function checkLimit(

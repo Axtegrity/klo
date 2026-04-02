@@ -58,6 +58,11 @@ export const authOptions: NextAuthOptions = {
 
   session: {
     strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 24 hours — stolen tokens expire rather than living forever
+  },
+
+  jwt: {
+    maxAge: 24 * 60 * 60, // 24 hours
   },
 
   pages: {
@@ -128,7 +133,7 @@ export const authOptions: NextAuthOptions = {
           const supabase = getServiceSupabase();
           const { data: profile } = await supabase
             .from("profiles")
-            .select("id, email, full_name, password_hash")
+            .select("id, email, full_name, password_hash, disabled")
             .eq("email", credentials.email.toLowerCase())
             .single();
 
@@ -138,6 +143,10 @@ export const authOptions: NextAuthOptions = {
               profile.password_hash
             );
             if (valid) {
+              // Reject disabled accounts before issuing a session
+              if (profile.disabled) {
+                return null;
+              }
               return {
                 id: profile.id,
                 name: profile.full_name ?? profile.email,
@@ -155,11 +164,25 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session: updatedSession }) {
       if (user) {
         token.id = user.id;
         token.subscriptionTier = "free";
         token.role = "user";
+        token.mfaPending = false;
+        // Stamp token issuance time on fresh sign-in
+        token.iat = Math.floor(Date.now() / 1000);
+      }
+
+      // Client called update({ mfaPending: false }) after successful MFA verify
+      if (trigger === "update" && updatedSession?.mfaPending === false) {
+        token.mfaPending = false;
+      }
+
+      // Rotate token timestamp every hour so clients must re-verify
+      const tokenAge = Math.floor(Date.now() / 1000) - ((token.iat as number) ?? 0);
+      if (tokenAge > 3600) {
+        token.iat = Math.floor(Date.now() / 1000);
       }
 
       // Credential account role mapping
@@ -169,6 +192,8 @@ export const authOptions: NextAuthOptions = {
       if (credAccount) {
         token.role = credAccount.role;
         token.subscriptionTier = "executive";
+        // Internal credential accounts bypass MFA
+        token.mfaPending = false;
         // Still check DB for updated name
         try {
           const supabase = getServiceSupabase();
@@ -184,14 +209,15 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      // Refresh role + name from DB on every token refresh (cached in JWT)
+      // Refresh role + name from DB on every token refresh (cached in JWT).
+      // On first login (user object present), also check mfa_enabled.
       if (token.id) {
         try {
           const supabase = getServiceSupabase();
           const { data: profile } = await supabase
             .from("profiles")
-            .select("subscription_tier, role, full_name")
-            .eq("id", token.id)
+            .select("subscription_tier, role, full_name, mfa_enabled")
+            .eq("id", token.id as string)
             .single();
 
           if (profile) {
@@ -199,6 +225,12 @@ export const authOptions: NextAuthOptions = {
             token.role = profile.role ?? "user";
             if (profile.full_name) {
               token.name = profile.full_name;
+            }
+            // Only set mfaPending on fresh login — never on token refresh.
+            // If the token already has mfaPending=false it means the user
+            // already passed MFA this session.
+            if (user && profile.mfa_enabled) {
+              token.mfaPending = true;
             }
           }
         } catch {
@@ -215,6 +247,8 @@ export const authOptions: NextAuthOptions = {
         (session.user as { subscriptionTier?: string }).subscriptionTier =
           token.subscriptionTier as string;
         (session.user as { role?: string }).role = token.role as string;
+        (session.user as { mfaPending?: boolean }).mfaPending =
+          (token.mfaPending as boolean) ?? false;
       }
       return session;
     },

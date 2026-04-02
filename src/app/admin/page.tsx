@@ -26,6 +26,9 @@ import {
   Send,
   Bell,
   ScrollText,
+  UserX,
+  UserCheck,
+  Shield,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import {
@@ -56,7 +59,8 @@ import PresentationsAdminTab from "@/features/admin/PresentationsAdminTab";
 import NotificationsAdminTab from "@/features/admin/NotificationsAdminTab";
 import CustomizeAdminTab from "@/features/admin/CustomizeAdminTab";
 import ContentManagerTab from "@/features/admin/ContentManagerTab";
-import { Paintbrush, FileEdit } from "lucide-react";
+import UserManagementGuide from "@/features/admin/UserManagementGuide";
+import { Paintbrush, FileEdit, HelpCircle } from "lucide-react";
 
 // ------------------------------------------------------------
 // Animation variants
@@ -203,6 +207,15 @@ export default function AdminPage() {
   const [resetConfirmText, setResetConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
 
+  // User management modals
+  const [userActionModal, setUserActionModal] = useState<{
+    type: 'disable' | 'enable' | 'delete' | 'role';
+    user: AdminUser;
+  } | null>(null);
+  const [userActionLoading, setUserActionLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState("");
+  const [showUserGuide, setShowUserGuide] = useState(false);
+
   const userRole = (session?.user as { role?: string } | undefined)?.role;
   const isAdmin = ["owner", "admin"].includes(userRole ?? "");
 
@@ -342,6 +355,49 @@ export default function AdminPage() {
     setResetModalOpen(false);
     setResetConfirmText("");
   }, [deleteAssessments]);
+
+  // User management actions
+  const handleUserAction = useCallback(async () => {
+    if (!userActionModal) return;
+    setUserActionLoading(true);
+    try {
+      const { type, user } = userActionModal;
+      if (type === 'delete') {
+        const res = await fetch(`/api/admin/users/${user.id}`, { method: 'DELETE' });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to delete user');
+        }
+      } else if (type === 'disable' || type === 'enable') {
+        const res = await fetch(`/api/admin/users/${user.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ disabled: type === 'disable' }),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to update user');
+        }
+      } else if (type === 'role') {
+        const res = await fetch(`/api/admin/users/${user.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: selectedRole }),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to update role');
+        }
+      }
+      setUserActionModal(null);
+      setSelectedRole("");
+      fetchUsers();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Action failed');
+    } finally {
+      setUserActionLoading(false);
+    }
+  }, [userActionModal, selectedRole, fetchUsers]);
 
   // Don't render until auth check completes
   if (status === "loading" || !isAdmin) {
@@ -608,7 +664,10 @@ export default function AdminPage() {
         )}
 
         {/* USERS TAB */}
-        {!loading && activeTab === "users" && (
+        {!loading && activeTab === "users" && showUserGuide && (
+          <UserManagementGuide onClose={() => setShowUserGuide(false)} />
+        )}
+        {!loading && activeTab === "users" && !showUserGuide && (
           <div className="space-y-6">
             {/* Search & filter bar */}
             <motion.div
@@ -642,6 +701,13 @@ export default function AdminPage() {
                 <option value="pro">Pro</option>
                 <option value="executive">Executive</option>
               </select>
+              <button
+                onClick={() => setShowUserGuide(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-klo-gold/10 border border-klo-gold/20 text-klo-gold text-sm font-medium hover:bg-klo-gold/20 transition-colors"
+              >
+                <HelpCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Help</span>
+              </button>
             </motion.div>
 
             {/* Users table */}
@@ -657,44 +723,94 @@ export default function AdminPage() {
                       <th className="text-left px-6 py-4 text-klo-muted font-medium">Name</th>
                       <th className="text-left px-6 py-4 text-klo-muted font-medium hidden md:table-cell">Organization</th>
                       <th className="text-left px-6 py-4 text-klo-muted font-medium">Tier</th>
+                      <th className="text-left px-6 py-4 text-klo-muted font-medium hidden sm:table-cell">Role</th>
                       <th className="text-left px-6 py-4 text-klo-muted font-medium hidden sm:table-cell">Joined</th>
+                      <th className="text-right px-6 py-4 text-klo-muted font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map((user) => (
-                      <tr
-                        key={user.id}
-                        className="border-b border-white/5 hover:bg-white/[0.02] transition-colors"
-                      >
-                        <td className="px-6 py-4">
-                          <p className="text-klo-text font-medium">
-                            {user.full_name || "—"}
-                          </p>
-                        </td>
-                        <td className="px-6 py-4 text-klo-muted hidden md:table-cell">
-                          {user.organization_name || "—"}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              user.subscription_tier === "executive"
-                                ? "bg-klo-gold/20 text-klo-gold"
-                                : user.subscription_tier === "pro"
-                                ? "bg-blue-500/20 text-blue-400"
-                                : "bg-white/10 text-klo-muted"
-                            }`}
-                          >
-                            {user.subscription_tier}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-klo-muted hidden sm:table-cell">
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </td>
-                      </tr>
-                    ))}
+                    {users.map((user) => {
+                      const isDisabled = user.disabled;
+                      const isProtected = user.id === '00000000-0000-0000-0000-000000000001';
+                      const isSelf = user.email === (session?.user as { email?: string })?.email;
+                      return (
+                        <tr
+                          key={user.id}
+                          className={`border-b border-white/5 transition-colors ${isDisabled ? 'opacity-50' : 'hover:bg-white/[0.02]'}`}
+                        >
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <p className="text-klo-text font-medium">
+                                {user.full_name || "—"}
+                              </p>
+                              {isDisabled && (
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
+                                  Disabled
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-klo-muted hidden md:table-cell">
+                            {user.organization_name || "—"}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                user.subscription_tier === "executive"
+                                  ? "bg-klo-gold/20 text-klo-gold"
+                                  : user.subscription_tier === "pro"
+                                  ? "bg-blue-500/20 text-blue-400"
+                                  : "bg-white/10 text-klo-muted"
+                              }`}
+                            >
+                              {user.subscription_tier}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 hidden sm:table-cell">
+                            <span className="text-xs text-klo-muted capitalize">{user.role || 'user'}</span>
+                          </td>
+                          <td className="px-6 py-4 text-klo-muted hidden sm:table-cell">
+                            {new Date(user.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            {!isProtected && !isSelf && (
+                              <div className="flex items-center justify-end gap-1">
+                                <button
+                                  onClick={() => setUserActionModal({
+                                    type: isDisabled ? 'enable' : 'disable',
+                                    user,
+                                  })}
+                                  className="p-1.5 rounded-lg hover:bg-white/5 text-klo-muted hover:text-klo-text transition-colors"
+                                  title={isDisabled ? 'Enable user' : 'Disable user'}
+                                >
+                                  {isDisabled ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedRole(user.role || 'user');
+                                    setUserActionModal({ type: 'role', user });
+                                  }}
+                                  className="p-1.5 rounded-lg hover:bg-white/5 text-klo-muted hover:text-klo-text transition-colors"
+                                  title="Change role"
+                                >
+                                  <Shield className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => setUserActionModal({ type: 'delete', user })}
+                                  className="p-1.5 rounded-lg hover:bg-white/5 text-klo-muted hover:text-red-400 transition-colors"
+                                  title="Delete user"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                     {users.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="px-6 py-12 text-center text-klo-muted">
+                        <td colSpan={6} className="px-6 py-12 text-center text-klo-muted">
                           No users found
                         </td>
                       </tr>
@@ -732,6 +848,83 @@ export default function AdminPage() {
               )}
             </motion.div>
           </div>
+        )}
+
+        {/* User action confirmation modal */}
+        {userActionModal && (
+          <Modal
+            isOpen={!!userActionModal}
+            onClose={() => { setUserActionModal(null); setSelectedRole(""); }}
+            title={
+              userActionModal.type === 'delete' ? 'Delete User' :
+              userActionModal.type === 'disable' ? 'Disable User' :
+              userActionModal.type === 'enable' ? 'Enable User' :
+              'Change Role'
+            }
+          >
+            <div className="space-y-4">
+              {userActionModal.type === 'delete' && (
+                <div>
+                  <div className="flex items-center gap-2 text-red-400 mb-3">
+                    <AlertTriangle className="w-5 h-5" />
+                    <span className="font-medium">This action cannot be undone</span>
+                  </div>
+                  <p className="text-klo-muted text-sm">
+                    This will permanently disable <span className="text-klo-text font-medium">{userActionModal.user.full_name || userActionModal.user.email}</span>&apos;s account and anonymize their data.
+                  </p>
+                </div>
+              )}
+              {userActionModal.type === 'disable' && (
+                <p className="text-klo-muted text-sm">
+                  Disable <span className="text-klo-text font-medium">{userActionModal.user.full_name || userActionModal.user.email}</span>? They will not be able to sign in until re-enabled.
+                </p>
+              )}
+              {userActionModal.type === 'enable' && (
+                <p className="text-klo-muted text-sm">
+                  Re-enable <span className="text-klo-text font-medium">{userActionModal.user.full_name || userActionModal.user.email}</span>? They will be able to sign in again.
+                </p>
+              )}
+              {userActionModal.type === 'role' && (
+                <div>
+                  <p className="text-klo-muted text-sm mb-3">
+                    Change role for <span className="text-klo-text font-medium">{userActionModal.user.full_name || userActionModal.user.email}</span>
+                  </p>
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl bg-klo-dark border border-white/10 text-klo-text text-sm focus:outline-none focus:border-klo-gold/50"
+                  >
+                    <option value="user">User</option>
+                    <option value="moderator">Moderator</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              )}
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => { setUserActionModal(null); setSelectedRole(""); }}
+                  className="px-4 py-2 rounded-xl text-sm text-klo-muted hover:text-klo-text transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUserAction}
+                  disabled={userActionLoading}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${
+                    userActionModal.type === 'delete'
+                      ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                      : 'bg-klo-gold/20 text-klo-gold hover:bg-klo-gold/30'
+                  }`}
+                >
+                  {userActionLoading ? 'Processing...' :
+                    userActionModal.type === 'delete' ? 'Delete' :
+                    userActionModal.type === 'disable' ? 'Disable' :
+                    userActionModal.type === 'enable' ? 'Enable' :
+                    'Update Role'}
+                </button>
+              </div>
+            </div>
+          </Modal>
         )}
 
         {/* CONTENT TAB */}

@@ -1,12 +1,24 @@
 import { withAuth } from "next-auth/middleware";
+import type { NextRequestWithAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
 // Origins used by Capacitor native apps
 const CAPACITOR_ORIGINS = [
   "capacitor://localhost", // iOS
   "https://localhost",     // Android
 ];
+
+// Routes always reachable even when MFA verification is pending
+const MFA_EXEMPT_PREFIXES = [
+  "/api/auth/",        // all NextAuth routes + MFA API routes
+  "/auth/",            // sign-in, sign-up, mfa-verify pages
+  "/_next/",
+  "/favicon",
+];
+
+function isMfaExempt(pathname: string): boolean {
+  return MFA_EXEMPT_PREFIXES.some((p) => pathname.startsWith(p));
+}
 
 function addCorsHeaders(response: NextResponse, origin: string) {
   response.headers.set("Access-Control-Allow-Origin", origin);
@@ -15,10 +27,11 @@ function addCorsHeaders(response: NextResponse, origin: string) {
 }
 
 export default withAuth(
-  function middleware(request: NextRequest) {
+  function middleware(request: NextRequestWithAuth) {
+    const { pathname } = request.nextUrl;
     const origin = request.headers.get("origin") ?? "";
     const isCapacitor = CAPACITOR_ORIGINS.includes(origin);
-    const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
+    const isApiRoute = pathname.startsWith("/api/");
 
     // Handle CORS preflight for Capacitor on API routes
     if (request.method === "OPTIONS" && isCapacitor && isApiRoute) {
@@ -32,6 +45,15 @@ export default withAuth(
           "Access-Control-Max-Age": "86400",
         },
       });
+    }
+
+    // MFA gate — redirect to challenge page when token has mfaPending=true.
+    // The JWT callback sets this flag on first login when mfa_enabled=true.
+    const token = request.nextauth?.token as ({ mfaPending?: boolean } & Record<string, unknown>) | null;
+    if (token?.mfaPending === true && !isMfaExempt(pathname)) {
+      const mfaUrl = new URL("/auth/mfa-verify", request.url);
+      mfaUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(mfaUrl);
     }
 
     const response = NextResponse.next();

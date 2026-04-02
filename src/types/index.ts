@@ -276,6 +276,9 @@ export interface AdminUser {
   organization_name: string | null;
   subscription_tier: string;
   role: string;
+  disabled: boolean;
+  disabled_at: string | null;
+  disabled_by: string | null;
   created_at: string;
   updated_at: string;
 }
