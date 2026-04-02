@@ -572,6 +572,7 @@ export default function TrainingPage() {
   const [expandedSection, setExpandedSection] = useState<string | null>("getting-started");
   const [expandedSub, setExpandedSub] = useState<string | null>(null);
   const [view, setView] = useState<"map" | "guide" | "workflows">("map");
+  const [audioEnabled, setAudioEnabled] = useState(true);
   const [playingSection, setPlayingSection] = useState<string | null>(null);
   const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
   const [audioProgress, setAudioProgress] = useState(0);
@@ -642,6 +643,28 @@ export default function TrainingPage() {
               Complete walkthrough of every admin function
             </p>
           </div>
+
+          {/* Audio toggle */}
+          <button
+            onClick={() => {
+              if (audioEnabled && audioRef) {
+                audioRef.pause();
+                audioRef.currentTime = 0;
+                setPlayingSection(null);
+                setAudioRef(null);
+                setAudioProgress(0);
+              }
+              setAudioEnabled(!audioEnabled);
+            }}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
+              audioEnabled
+                ? "bg-klo-gold/10 border-klo-gold/20 text-klo-gold"
+                : "bg-white/5 border-white/10 text-klo-muted"
+            }`}
+          >
+            <Volume2 size={14} />
+            {audioEnabled ? "Audio On" : "Audio Off"}
+          </button>
 
           {/* View toggle */}
           <div className="flex gap-1 p-1 rounded-xl bg-klo-dark/50 border border-white/5">
@@ -794,7 +817,7 @@ export default function TrainingPage() {
                   expandedSub={expandedSub}
                   onToggleSub={toggleSub}
                   onNavigate={(tab) => router.push(`/admin?tab=${tab}`)}
-                  hasAudio={!!AUDIO_MAP[section.id]}
+                  hasAudio={audioEnabled && !!AUDIO_MAP[section.id]}
                   isPlaying={playingSection === section.id}
                   audioProgress={playingSection === section.id ? audioProgress : 0}
                   audioDuration={playingSection === section.id ? audioDuration : 0}
