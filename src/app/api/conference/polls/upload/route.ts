@@ -120,11 +120,20 @@ export async function POST(request: Request) {
       const result = await mammoth.extractRawText({ buffer });
       extractedText = result.value;
     } else if (name.endsWith(".xls") || name.endsWith(".xlsx")) {
-      const XLSX = await import("xlsx");
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const workbook = XLSX.read(buffer, { type: "buffer" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 });
+      const ExcelJS = (await import("exceljs")).default;
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(arrayBuffer);
+      const sheet = workbook.worksheets[0];
+      const rows: (string | number)[][] = [];
+      sheet.eachRow((row) => {
+        if (!Array.isArray(row.values)) return;
+        // row.values is 1-indexed in exceljs — index 0 is always null, slice it off
+        const cells = (row.values as unknown[]).slice(1).map((c) =>
+          typeof c === "number" || typeof c === "string" ? c : String(c ?? "")
+        );
+        rows.push(cells);
+      });
       // Try structured rows first (each row = question + options)
       questions = rows
         .filter((row) => row.length >= 3 && row[0])

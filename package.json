@@ -38,6 +38,7 @@
     "@upstash/redis": "^1.37.0",
     "bcryptjs": "^3.0.3",
     "docx": "^9.6.1",
+    "exceljs": "^4.4.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.575.0",
     "mammoth": "^1.12.0",
@@ -54,7 +55,6 @@
     "resend": "^6.10.0",
     "stripe": "^20.4.1",
     "web-push": "^3.6.7",
-    "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   },
   "overrides": {
