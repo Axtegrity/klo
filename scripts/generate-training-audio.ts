@@ -26,14 +26,14 @@ if (!ELEVENLABS_API_KEY) {
   process.exit(1);
 }
 
-// Morgan - Deep, Powerful, Confident (Morgan Freeman style)
-const VOICE_ID = "SAxJUlDKRc79XAyeWyMu";
+// Clara - Corporate & Training Professional (neutral American female)
+const VOICE_ID = "tMXujoAjiboschVOhAnk";
 const MODEL_ID = "eleven_turbo_v2_5";
 const VOICE_SETTINGS = {
-  stability: 0.6,   // lower = more inflection and expressiveness
-  similarity_boost: 0.8,
-  style: 0.5,       // higher = more stylistic variation
-  speed: 1.0,       // natural pace
+  stability: 0.5,   // expressive
+  similarity_boost: 0.85,
+  style: 0.6,       // upbeat, engaging
+  speed: 1.05,      // slightly brisk, not dragging
 };
 
 const AUDIO_DIR = join(process.cwd(), "public/training/audio");
