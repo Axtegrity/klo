@@ -143,7 +143,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "presentations", label: "Presentations", icon: ClipboardCheck },
   { id: "users", label: "Users", icon: Users },
-  { id: "content", label: "Content", icon: BotMessageSquare },
+  { id: "content", label: "Analytics", icon: BotMessageSquare },
   { id: "revenue", label: "Revenue", icon: DollarSign },
   { id: "tools", label: "Tools", icon: Lock },
 ];
