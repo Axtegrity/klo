@@ -28,21 +28,33 @@ const navLinks: NavLink[] = [
 
 export default function TopNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSurveySlug, setActiveSurveySlug] = useState<string | null>(null);
   const pathname = usePathname();
   const { data: session } = useSession();
   const userRole = (session?.user as { role?: string } | undefined)?.role;
   const isAdmin = ["owner", "admin"].includes(userRole ?? "");
   const { seminarMode } = useSeminarMode();
 
+  // Check for active survey to show nav link
+  useEffect(() => {
+    fetch("/api/surveys/active")
+      .then((r) => r.json())
+      .then((data) => setActiveSurveySlug(data.survey?.slug ?? null))
+      .catch(() => {});
+  }, []);
+
   const activeNavLinks = useMemo(
     () => {
       let links = seminarMode.active
         ? navLinks
         : navLinks.filter((l) => l.href !== "/conference");
+      if (activeSurveySlug) {
+        links = [...links, { label: "Survey", href: `/survey/${activeSurveySlug}` }];
+      }
       if (isAdmin) links = [...links, { label: "Admin", href: "/admin" }];
       return links;
     },
-    [isAdmin, seminarMode.active]
+    [isAdmin, seminarMode.active, activeSurveySlug]
   );
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
