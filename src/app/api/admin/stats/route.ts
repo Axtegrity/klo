@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import type { AdminDashboardStats } from "@/types";
+import { logError, logRequest } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,8 @@ async function verifyAdmin() {
   return session;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  logRequest(req);
   const session = await verifyAdmin();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -48,7 +50,7 @@ export async function GET() {
 
   // Log any Supabase errors for debugging
   if (profilesRes.error) {
-    console.error("[admin/stats] profiles query error:", profilesRes.error.message);
+    logError(profilesRes.error, { endpoint: '/api/admin/stats', context: 'profiles_query' });
   }
 
   // Users — all free for now (no tiers)

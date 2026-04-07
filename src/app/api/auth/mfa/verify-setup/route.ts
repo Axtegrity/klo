@@ -21,6 +21,7 @@ import {
   generateBackupCodes,
   hashBackupCodes,
 } from "@/lib/mfa";
+import { logError, logRequest } from "@/lib/logger";
 
 const BodySchema = z.object({
   encryptedSecret: z.string().min(1),
@@ -28,6 +29,7 @@ const BodySchema = z.object({
 });
 
 export async function POST(req: Request) {
+  logRequest(req);
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -82,7 +84,7 @@ export async function POST(req: Request) {
     .eq("id", userId);
 
   if (error) {
-    console.error("[POST /api/auth/mfa/verify-setup]", error);
+    logError(error, { endpoint: '/api/auth/mfa/verify-setup' });
     return NextResponse.json({ error: "Failed to enable MFA" }, { status: 500 });
   }
 

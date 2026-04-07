@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
+import { logError, logRequest } from "@/lib/logger";
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
+  logRequest(request);
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
@@ -26,7 +28,7 @@ export async function DELETE() {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[delete-account] Error:", error);
+    logError(error, { endpoint: '/api/auth/delete-account' });
     return NextResponse.json(
       { error: "Failed to delete account" },
       { status: 500 }

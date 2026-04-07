@@ -5,12 +5,14 @@
  * Used by the settings page to show the correct MFA toggle state.
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
+import { logError, logRequest } from "@/lib/logger";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  logRequest(req);
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -29,7 +31,7 @@ export async function GET() {
     .maybeSingle();
 
   if (error) {
-    console.error("[GET /api/auth/mfa/status]", error);
+    logError(error, { endpoint: '/api/auth/mfa/status' });
     return NextResponse.json({ error: "Failed to load profile" }, { status: 500 });
   }
 

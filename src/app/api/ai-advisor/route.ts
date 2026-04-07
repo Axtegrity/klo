@@ -4,12 +4,14 @@ import { authOptions } from "@/lib/auth";
 import { AI_ADVISOR_SYSTEM_PROMPT } from "@/lib/constants";
 import { advisorLimiter, checkLimit, getClientIp } from "@/lib/ratelimit";
 import { aiAdvisorSchema } from "@/lib/validation";
+import { logError, logRequest } from "@/lib/logger";
 
 // ------------------------------------------------------------
 // POST /api/ai-advisor
 // ------------------------------------------------------------
 
 export async function POST(request: NextRequest) {
+  logRequest(request);
   try {
     // Auth required — prevents unauthenticated API abuse
     const session = await getServerSession(authOptions);
@@ -75,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     if (!anthropicResponse.ok) {
       const errorText = await anthropicResponse.text();
-      console.error("Anthropic API error:", anthropicResponse.status, errorText);
+      logError(new Error(errorText), { endpoint: '/api/ai-advisor', status: anthropicResponse.status });
       return NextResponse.json(
         { error: "AI service is temporarily unavailable." },
         { status: 502 }
@@ -134,7 +136,7 @@ export async function POST(request: NextRequest) {
             }
           }
         } catch (err) {
-          console.error("Stream reading error:", err);
+          logError(err, { endpoint: '/api/ai-advisor', context: 'stream' });
         } finally {
           controller.close();
         }
@@ -150,7 +152,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (err) {
-    console.error("AI Advisor route error:", err);
+    logError(err, { endpoint: '/api/ai-advisor' });
     return NextResponse.json(
       { error: "An unexpected error occurred." },
       { status: 500 }

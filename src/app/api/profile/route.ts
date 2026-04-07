@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
+import { logError, logRequest } from "@/lib/logger";
 
-export async function GET() {
+export async function GET(request: Request) {
+  logRequest(request);
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,7 +24,7 @@ export async function GET() {
     .maybeSingle();
 
   if (error) {
-    console.error("[GET /api/profile]", error);
+    logError(error, { endpoint: '/api/profile', method: 'GET' });
     return NextResponse.json({ error: "Failed to load profile" }, { status: 500 });
   }
 
@@ -30,6 +32,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
+  logRequest(req);
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -71,7 +74,7 @@ export async function PUT(req: Request) {
       .eq("id", userId);
 
     if (error) {
-      console.error("[PUT /api/profile] update", JSON.stringify(error));
+      logError(error, { endpoint: '/api/profile', method: 'PUT', operation: 'update' });
       return NextResponse.json({ error: `Failed to save: ${error.message}` }, { status: 500 });
     }
   } else {
@@ -86,7 +89,7 @@ export async function PUT(req: Request) {
       });
 
     if (error) {
-      console.error("[PUT /api/profile] insert", JSON.stringify(error));
+      logError(error, { endpoint: '/api/profile', method: 'PUT', operation: 'insert' });
       return NextResponse.json({ error: `Failed to save: ${error.message}` }, { status: 500 });
     }
   }

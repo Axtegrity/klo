@@ -5,8 +5,10 @@ import { resend } from "@/lib/email";
 import { registerLimiter, checkLimit, getClientIp } from "@/lib/ratelimit";
 import crypto from "crypto";
 import { registerSchema } from "@/lib/validation";
+import { logError, logRequest } from "@/lib/logger";
 
 export async function POST(request: Request) {
+  logRequest(request);
   try {
     // Rate limit: 5 per minute per IP
     const ip = getClientIp(request);
@@ -61,7 +63,7 @@ export async function POST(request: Request) {
     });
 
     if (insertError) {
-      console.error("Registration insert error:", JSON.stringify(insertError));
+      logError(insertError, { endpoint: '/api/auth/register' });
       return NextResponse.json(
         { error: "Failed to create account" },
         { status: 500 }
@@ -90,7 +92,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
-    console.error("Registration error:", error);
+    logError(error, { endpoint: '/api/auth/register' });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

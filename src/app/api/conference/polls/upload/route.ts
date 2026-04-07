@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { sendAdvisorMessage } from "@/lib/claude";
+import { logError, logRequest } from "@/lib/logger";
 
 async function verifyAdmin() {
   const session = await getServerSession(authOptions);
@@ -75,7 +76,8 @@ ${text}`;
     }));
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  logRequest(request);
   const session = await verifyAdmin();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -167,7 +169,7 @@ export async function POST(request: Request) {
     try {
       questions = await parseWithAI(extractedText);
     } catch (aiErr) {
-      console.error("AI parsing failed:", aiErr);
+      logError(aiErr, { endpoint: '/api/conference/polls/upload', context: 'ai_parse' });
       return NextResponse.json(
         { error: "Could not extract poll questions from this file. Try using the format: Question | Option1 | Option2 | ..." },
         { status: 400 }

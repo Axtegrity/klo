@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sendAdvisorMessage } from "@/lib/claude";
+import { logError, logRequest } from "@/lib/logger";
 
 async function verifyAdmin() {
   const session = await getServerSession(authOptions);
@@ -11,7 +12,8 @@ async function verifyAdmin() {
   return session;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  logRequest(request);
   const session = await verifyAdmin();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -121,7 +123,7 @@ ${extractedText.slice(0, 10000)}`;
 
     return NextResponse.json({ events });
   } catch (aiErr) {
-    console.error("AI event parsing failed:", aiErr);
+    logError(aiErr, { endpoint: '/api/admin/events/parse', context: 'ai_parse' });
     return NextResponse.json(
       { error: "Could not extract event details from this file. Please fill in the form manually." },
       { status: 400 }

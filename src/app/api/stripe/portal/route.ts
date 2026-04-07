@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { stripePortalSchema } from "@/lib/validation";
+import { logError, logRequest } from "@/lib/logger";
 
 /* ------------------------------------------------------------------ */
 /*  POST /api/stripe/portal                                            */
@@ -10,6 +11,7 @@ import { stripePortalSchema } from "@/lib/validation";
 /* ------------------------------------------------------------------ */
 
 export async function POST(request: NextRequest) {
+  logRequest(request);
   try {
     const authSession = await getServerSession(authOptions);
     if (!authSession?.user) {
@@ -79,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.error("[stripe/portal] Error creating portal session:", error);
+    logError(error, { endpoint: '/api/stripe/portal' });
 
     const message =
       error instanceof Error ? error.message : "An unexpected error occurred.";

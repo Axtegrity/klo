@@ -14,8 +14,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkLimit, getClientIp, mfaSetupLimiter } from "@/lib/ratelimit";
 import { generateTotpSecret, buildOtpAuthUri, encryptSecret } from "@/lib/mfa";
+import { logRequest } from "@/lib/logger";
 
 export async function POST(req: Request) {
+  logRequest(req);
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

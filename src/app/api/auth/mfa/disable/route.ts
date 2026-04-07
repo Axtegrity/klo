@@ -13,6 +13,7 @@ import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { checkLimit, getClientIp, mfaVerifyLimiter } from "@/lib/ratelimit";
 import { decryptSecret, verifyTotpCode, verifyBackupCode } from "@/lib/mfa";
+import { logError, logRequest } from "@/lib/logger";
 
 const BodySchema = z.object({
   code: z
@@ -23,6 +24,7 @@ const BodySchema = z.object({
 });
 
 export async function POST(req: Request) {
+  logRequest(req);
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -58,7 +60,7 @@ export async function POST(req: Request) {
     .single();
 
   if (fetchError || !profile) {
-    console.error("[POST /api/auth/mfa/disable] fetch", fetchError);
+    logError(fetchError ?? new Error('Profile not found'), { endpoint: '/api/auth/mfa/disable', context: 'fetch' });
     return NextResponse.json({ error: "Failed to load profile" }, { status: 500 });
   }
 
@@ -72,8 +74,8 @@ export async function POST(req: Request) {
     let plainSecret: string;
     try {
       plainSecret = decryptSecret(profile.mfa_secret);
-    } catch {
-      console.error("[POST /api/auth/mfa/disable] decrypt failed");
+    } catch (decryptErr) {
+      logError(decryptErr, { endpoint: '/api/auth/mfa/disable', context: 'decrypt', userId });
       return NextResponse.json({ error: "Server error" }, { status: 500 });
     }
     verified = verifyTotpCode(plainSecret, code);
@@ -100,7 +102,7 @@ export async function POST(req: Request) {
     .eq("id", userId);
 
   if (updateError) {
-    console.error("[POST /api/auth/mfa/disable]", updateError);
+    logError(updateError, { endpoint: '/api/auth/mfa/disable' });
     return NextResponse.json({ error: "Failed to disable MFA" }, { status: 500 });
   }
 

@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
+import { logError, logRequest } from "@/lib/logger";
 
 // The owner account is protected from all admin mutations
 const OWNER_ID = "00000000-0000-0000-0000-000000000001";
@@ -25,9 +26,10 @@ async function verifyAdmin() {
 }
 
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  logRequest(req);
   const session = await verifyAdmin();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -80,7 +82,7 @@ export async function PATCH(
     .single();
 
   if (error) {
-    console.error("[PATCH /api/admin/users/[id]]", error);
+    logError(error, { endpoint: '/api/admin/users/[id]', method: 'PATCH' });
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 
@@ -88,9 +90,10 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  logRequest(_req);
   const session = await verifyAdmin();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -123,7 +126,7 @@ export async function DELETE(
     .eq("id", id);
 
   if (error) {
-    console.error("[DELETE /api/admin/users/[id]]", error);
+    logError(error, { endpoint: '/api/admin/users/[id]', method: 'DELETE' });
     return NextResponse.json({ error: "Delete failed" }, { status: 500 });
   }
 

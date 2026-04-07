@@ -5,8 +5,10 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { resend } from "@/lib/email";
 import { sendPushToUser } from "@/lib/push-server";
 import { assessmentSaveSchema } from "@/lib/validation";
+import { logError, logRequest } from "@/lib/logger";
 
 export async function POST(request: Request) {
+  logRequest(request);
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -38,6 +40,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
+    logError(error, { endpoint: '/api/assessments', method: 'POST' });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -81,7 +84,8 @@ export async function POST(request: Request) {
   return NextResponse.json(data);
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  logRequest(request);
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -100,6 +104,7 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   if (error) {
+    logError(error, { endpoint: '/api/assessments', method: 'GET' });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

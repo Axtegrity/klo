@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { getServiceSupabase } from "@/lib/supabase";
 import { sendPushToUser } from "@/lib/push-server";
+import { logError, logRequest } from "@/lib/logger";
 
 /* ------------------------------------------------------------------ */
 /*  POST /api/stripe/webhook                                           */
@@ -10,11 +11,12 @@ import { sendPushToUser } from "@/lib/push-server";
 /* ------------------------------------------------------------------ */
 
 export async function POST(request: NextRequest) {
+  logRequest(request);
   const body = await request.text();
   const signature = request.headers.get("stripe-signature");
 
   if (!signature) {
-    console.error("[Stripe Webhook] Missing stripe-signature header");
+    logError(new Error('Missing stripe-signature header'), { endpoint: '/api/stripe/webhook' });
     return NextResponse.json(
       { error: "Missing stripe-signature header" },
       { status: 400 }
@@ -24,7 +26,7 @@ export async function POST(request: NextRequest) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    console.error("[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not configured");
+    logError(new Error('STRIPE_WEBHOOK_SECRET is not configured'), { endpoint: '/api/stripe/webhook' });
     return NextResponse.json(
       { error: "Webhook secret not configured" },
       { status: 500 }
@@ -40,7 +42,7 @@ export async function POST(request: NextRequest) {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    console.error(`[Stripe Webhook] Signature verification failed: ${message}`);
+    logError(err, { endpoint: '/api/stripe/webhook', context: 'signature_verification' });
     return NextResponse.json(
       { error: `Webhook signature verification failed: ${message}` },
       { status: 400 }
@@ -106,7 +108,7 @@ export async function POST(request: NextRequest) {
             });
           }
         } catch (pushErr) {
-          console.error("[Stripe Webhook] Push notification failed:", pushErr);
+          logError(pushErr, { endpoint: '/api/stripe/webhook', context: 'push_notification', event: 'checkout.session.completed' });
         }
 
         break;
@@ -190,7 +192,7 @@ export async function POST(request: NextRequest) {
             });
           }
         } catch (pushErr) {
-          console.error("[Stripe Webhook] Push notification failed:", pushErr);
+          logError(pushErr, { endpoint: '/api/stripe/webhook', context: 'push_notification', event: 'invoice.payment_failed' });
         }
 
         // Optionally notify user via Resend on final attempt
@@ -207,7 +209,7 @@ export async function POST(request: NextRequest) {
                 html: `<p>Hi there,</p><p>We were unable to process your subscription payment after multiple attempts. Please update your payment method to continue accessing your KLO subscription.</p><p>— The KLO Team</p>`,
               });
             } catch (emailErr) {
-              console.error("[Stripe Webhook] Failed to send payment failure email:", emailErr);
+              logError(emailErr, { endpoint: '/api/stripe/webhook', context: 'payment_failure_email' });
             }
           }
         }
@@ -222,7 +224,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("[Stripe Webhook] Handler error:", error);
+    logError(error, { endpoint: '/api/stripe/webhook' });
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 }

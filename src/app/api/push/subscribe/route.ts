@@ -3,8 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { pushSubscribeSchema } from "@/lib/validation";
+import { logError, logRequest } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
+  logRequest(request);
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (error) {
-      console.error("[Push Subscribe] Error:", error);
+      logError(error, { endpoint: '/api/push/subscribe' });
       return NextResponse.json({ error: "Failed to save subscription" }, { status: 500 });
     }
 

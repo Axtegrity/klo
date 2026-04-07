@@ -3,6 +3,7 @@ import { resend } from "@/lib/email";
 import { getServiceSupabase } from "@/lib/supabase";
 import { contactLimiter, checkLimit, getClientIp } from "@/lib/ratelimit";
 import { contactConsultationSchema, contactBookingSchema } from "@/lib/validation";
+import { logError, logRequest } from "@/lib/logger";
 
 /* ------------------------------------------------------------------ */
 /*  Validation                                                          */
@@ -166,6 +167,7 @@ function validateForm(data: unknown): {
 /* ------------------------------------------------------------------ */
 
 export async function POST(req: NextRequest) {
+  logRequest(req);
   try {
     // Rate limiting (Upstash-backed, falls back to allow-all if not configured)
     const ip = getClientIp(req);
@@ -226,7 +228,7 @@ export async function POST(req: NextRequest) {
           ip_address: ip,
         });
       } catch (dbErr) {
-        console.error("Failed to save consultation inquiry to DB:", dbErr);
+        logError(dbErr, { endpoint: '/api/contact', context: 'db_save_consultation' });
       }
 
       // Demo mode
@@ -333,7 +335,7 @@ export async function POST(req: NextRequest) {
         ip_address: ip,
       });
     } catch (dbErr) {
-      console.error("Failed to save booking inquiry to DB:", dbErr);
+      logError(dbErr, { endpoint: '/api/contact', context: 'db_save_booking' });
     }
 
     // Demo mode — skip sending if no API key configured
@@ -414,7 +416,7 @@ export async function POST(req: NextRequest) {
         "Thank you for your inquiry! Our team will review it and respond within 2 business days.",
     });
   } catch (error) {
-    console.error("Contact form error:", error);
+    logError(error, { endpoint: '/api/contact' });
     return NextResponse.json(
       {
         success: false,

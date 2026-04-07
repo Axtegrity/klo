@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { inquiryUpdateSchema } from "@/lib/validation";
+import { logError, logRequest } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ async function verifyAdmin() {
 }
 
 export async function GET(req: NextRequest) {
+  logRequest(req);
   const session = await verifyAdmin();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -48,7 +50,7 @@ export async function GET(req: NextRequest) {
   const { data, count, error } = await query;
 
   if (error) {
-    console.error("Failed to fetch inquiries:", error);
+    logError(error, { endpoint: '/api/admin/inquiries', method: 'GET' });
     return NextResponse.json({ error: "Failed to fetch inquiries" }, { status: 500 });
   }
 
@@ -67,6 +69,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  logRequest(req);
   const session = await verifyAdmin();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -86,7 +89,7 @@ export async function PATCH(req: NextRequest) {
     .eq("id", id);
 
   if (error) {
-    console.error("Failed to update inquiry:", error);
+    logError(error, { endpoint: '/api/admin/inquiries', method: 'PATCH' });
     return NextResponse.json({ error: "Failed to update inquiry" }, { status: 500 });
   }
 

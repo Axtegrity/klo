@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { mavenWebhookLimiter, checkLimit, getClientIp } from "@/lib/ratelimit";
 import { mavenWebhookSchema } from "@/lib/validation";
+import { logError, logRequest } from "@/lib/logger";
 
 /* ------------------------------------------------------------------ */
 /*  Maven Webhook — Submit tasks to Maven agent_tasks table            */
@@ -42,6 +43,7 @@ export async function OPTIONS() {
 /* ------------------------------------------------------------------ */
 
 export async function POST(req: NextRequest) {
+  logRequest(req);
   try {
     // Rate limiting
     const ip = getClientIp(req);
@@ -123,7 +125,7 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) {
       const errText = await res.text();
-      console.error("[Maven Webhook] Supabase error:", errText);
+      logError(new Error(errText), { endpoint: '/api/maven/webhook', context: 'supabase_insert' });
       return NextResponse.json(
         { error: "Failed to submit task" },
         { status: 502, headers: CORS_HEADERS },
@@ -137,7 +139,7 @@ export async function POST(req: NextRequest) {
       { status: 201, headers: CORS_HEADERS },
     );
   } catch (error) {
-    console.error("[Maven Webhook] Unexpected error:", error);
+    logError(error, { endpoint: '/api/maven/webhook' });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500, headers: CORS_HEADERS },

@@ -3,8 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { pushUnsubscribeSchema } from "@/lib/validation";
+import { logError, logRequest } from "@/lib/logger";
 
 export async function DELETE(request: NextRequest) {
+  logRequest(request);
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,7 +33,7 @@ export async function DELETE(request: NextRequest) {
       .eq("token", tokenValue);
 
     if (error) {
-      console.error("[Push Unsubscribe] Error:", error);
+      logError(error, { endpoint: '/api/push/unsubscribe' });
       return NextResponse.json({ error: "Failed to remove subscription" }, { status: 500 });
     }
 

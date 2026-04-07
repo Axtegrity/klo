@@ -3,11 +3,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { sessionAttendanceSchema } from "@/lib/validation";
+import { logError, logRequest } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/conference/session-attendance?event_id=X — check current session for an event
 export async function GET(req: NextRequest) {
+  logRequest(req);
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -47,6 +49,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/conference/session-attendance — join a session
 export async function POST(req: NextRequest) {
+  logRequest(req);
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -114,7 +117,7 @@ export async function POST(req: NextRequest) {
     );
 
   if (error) {
-    console.error("Session attendance insert error:", { error, session_id, userId });
+    logError(error, { endpoint: '/api/conference/session-attendance', method: 'POST', session_id, userId });
     return NextResponse.json({ error: error.message, code: error.code, details: error.details }, { status: 500 });
   }
 
