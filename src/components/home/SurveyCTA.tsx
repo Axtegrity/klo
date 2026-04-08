@@ -15,6 +15,7 @@ interface ActiveSurvey {
 export default function SurveyCTA() {
   const [survey, setSurvey] = useState<ActiveSurvey | null>(null);
 
+  // SurveyCTA checks show_on_homepage specifically (not the nav endpoint)
   useEffect(() => {
     fetch("/api/surveys/active")
       .then((r) => r.json())

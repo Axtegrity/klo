@@ -11,6 +11,7 @@ import BiometricGate from "@/components/layout/BiometricGate";
 import OfflineBanner from "@/components/layout/OfflineBanner";
 import TitleFade from "@/components/layout/TitleFade";
 import ScrollToTop from "@/components/layout/ScrollToTop";
+import ActiveSurveyProvider from "@/components/layout/ActiveSurveyProvider";
 import JsonLd, {
   personJsonLd,
   organizationJsonLd,
@@ -114,6 +115,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-[#0D1117] text-klo-text no-overscroll">
         <AuthProvider>
+          <ActiveSurveyProvider>
           <BiometricGate>
             <ScrollToTop />
             <OfflineBanner />
@@ -131,6 +133,7 @@ export default function RootLayout({
             <BottomNav />
             <Footer />
           </BiometricGate>
+          </ActiveSurveyProvider>
         </AuthProvider>
         <TitleFade />
         <CapacitorInit />
