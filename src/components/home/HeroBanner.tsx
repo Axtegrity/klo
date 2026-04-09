@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const containerVariants = {
   hidden: {},
@@ -26,11 +26,8 @@ const fadeUp = {
 
 const scrollImages = [
   "/images/keith/hero-1.jpg",
-  "/images/keith/hero-2.jpg",
   "/images/keith/hero-3.jpg",
-  "/images/keith/hero-4.jpg",
   "/images/keith/hero-5.jpg",
-  "/images/keith/hero-6.jpg",
 ];
 
 export default function HeroBanner() {
@@ -45,27 +42,25 @@ export default function HeroBanner() {
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-[#0D1117]" style={{ clipPath: "inset(0)" }}>
-      {/* Crossfade background images */}
+      {/* Crossfade background images — all mounted, opacity toggled */}
       <div className="absolute inset-0">
-        <AnimatePresence mode="sync">
+        {scrollImages.map((src, i) => (
           <motion.div
-            key={currentIndex}
+            key={src}
             className="absolute inset-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            animate={{ opacity: i === currentIndex ? 1 : 0 }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
           >
             <Image
-              src={scrollImages[currentIndex]}
+              src={src}
               alt="Keith L. Odom"
               fill
-              priority
+              priority={i === 0}
               className="object-cover object-top"
               sizes="100vw"
             />
           </motion.div>
-        </AnimatePresence>
+        ))}
       </div>
 
       {/* Dark gradient overlay */}
