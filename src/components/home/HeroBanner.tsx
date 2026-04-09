@@ -1,8 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const containerVariants = {
   hidden: {},
@@ -23,19 +24,48 @@ const fadeUp = {
   },
 };
 
+const scrollImages = [
+  "/images/keith/hero-1.jpg",
+  "/images/keith/hero-2.jpg",
+  "/images/keith/hero-3.jpg",
+  "/images/keith/hero-4.jpg",
+  "/images/keith/hero-5.jpg",
+  "/images/keith/hero-6.jpg",
+];
+
 export default function HeroBanner() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % scrollImages.length);
+    }, 2000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-[#0D1117]" style={{ clipPath: "inset(0)" }}>
-      {/* Background image with Ken Burns animation */}
-      <div className="absolute inset-0 animate-kenburns overflow-hidden">
-        <Image
-          src="/images/keith/KO.jpg"
-          alt="Keith L. Odom"
-          fill
-          priority
-          className="object-cover object-center"
-          sizes="100vw"
-        />
+      {/* Crossfade background images */}
+      <div className="absolute inset-0">
+        <AnimatePresence mode="sync">
+          <motion.div
+            key={currentIndex}
+            className="absolute inset-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+          >
+            <Image
+              src={scrollImages[currentIndex]}
+              alt="Keith L. Odom"
+              fill
+              priority
+              className="object-cover object-top"
+              sizes="100vw"
+            />
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Dark gradient overlay */}
