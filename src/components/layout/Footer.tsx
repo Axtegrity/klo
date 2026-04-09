@@ -107,9 +107,12 @@ export default function Footer() {
                 </svg>
               </a>
               {/* Google Play Badge */}
-              <div
-                aria-label="Get it on Google Play — Coming soon"
-                className="inline-block opacity-50 cursor-default"
+              <a
+                href="https://play.google.com/store/apps/details?id=io.keithlodom.klo"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Get it on Google Play"
+                className="inline-block hover:opacity-80 transition-opacity"
               >
                 <svg width="135" height="40" viewBox="0 0 135 40" xmlns="http://www.w3.org/2000/svg">
                   <rect width="135" height="40" rx="5" fill="#000" />
@@ -133,10 +136,10 @@ export default function Footer() {
                     </defs>
                   </g>
                 </svg>
-              </div>
+              </a>
             </div>
             <p className="text-klo-muted/60 text-xs">
-              Coming soon to iOS and Android
+              Available on iOS and Android
             </p>
           </div>
         </div>
