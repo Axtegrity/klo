@@ -8,6 +8,7 @@ import {
   Send,
   CheckCircle2,
   ClipboardList,
+  RotateCcw,
 } from "lucide-react";
 import Button from "@/components/shared/Button";
 
@@ -149,6 +150,15 @@ export default function SurveyClient({ slug }: { slug: string }) {
       setCurrentStep((s) => s - 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  };
+
+  const handleReset = () => {
+    setAnswers({});
+    setCurrentStep(0);
+    setDirection(-1);
+    setStarted(false);
+    setSubmitError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSubmit = async () => {
@@ -497,38 +507,51 @@ export default function SurveyClient({ slug }: { slug: string }) {
         )}
 
         {/* Navigation */}
-        <div className="flex items-center justify-between pt-4 border-t border-[#0E3783]/50">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handlePrev}
-            disabled={currentStep === 0}
-          >
-            <ChevronLeft size={18} />
-            Previous
-          </Button>
-
-          {currentStep === questions.length - 1 ? (
+        <div className="flex flex-col gap-4 pt-4 border-t border-[#0E3783]/50">
+          <div className="flex items-center justify-between">
             <Button
-              variant="primary"
-              size="md"
-              onClick={handleSubmit}
-              disabled={submitting || (!isAnswered() && currentQuestion.required)}
-            >
-              {submitting ? "Submitting..." : "Submit Survey"}
-              <Send size={16} />
-            </Button>
-          ) : (
-            <Button
-              variant="primary"
+              variant="ghost"
               size="sm"
-              onClick={handleNext}
-              disabled={!isAnswered() && currentQuestion.required}
+              onClick={handlePrev}
+              disabled={currentStep === 0}
             >
-              Next
-              <ChevronRight size={18} />
+              <ChevronLeft size={18} />
+              Previous
             </Button>
-          )}
+
+            {currentStep === questions.length - 1 ? (
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleSubmit}
+                disabled={submitting || (!isAnswered() && currentQuestion.required)}
+              >
+                {submitting ? "Submitting..." : "Submit Survey"}
+                <Send size={16} />
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleNext}
+                disabled={!isAnswered() && currentQuestion.required}
+              >
+                Next
+                <ChevronRight size={18} />
+              </Button>
+            )}
+          </div>
+
+          <div className="flex justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+            >
+              <RotateCcw size={16} />
+              Start Over
+            </Button>
+          </div>
         </div>
       </div>
     </div>
