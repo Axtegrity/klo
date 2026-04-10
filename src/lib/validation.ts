@@ -464,3 +464,165 @@ export const contactFormSchema = z.discriminatedUnion("type", [
   contactConsultationSchema,
   contactBookingSchema.extend({ type: z.literal("booking") }),
 ]);
+
+// ----------------------------------------------------------------
+// Creative Studio — Media Library
+// ----------------------------------------------------------------
+
+export const mediaAssetCreateSchema = z.object({
+  name: z.string().min(1).max(500),
+  original_name: z.string().min(1).max(500),
+  storage_path: z.string().min(1).max(2000),
+  public_url: z.string().url().max(2000),
+  mime_type: z.string().min(1).max(200),
+  size_bytes: z.number().int().positive(),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+  duration_ms: z.number().int().positive().optional(),
+  folder: z.string().max(200).optional(),
+  tags: z.array(z.string().max(100)).max(20).optional(),
+  alt_text: z.string().max(500).optional(),
+  asset_type: z.enum(["image", "video", "audio", "graphic"]),
+});
+
+export const mediaAssetUpdateSchema = z.object({
+  name: z.string().min(1).max(500).optional(),
+  folder: z.string().max(200).optional(),
+  tags: z.array(z.string().max(100)).max(20).optional(),
+  alt_text: z.string().max(500).optional(),
+}).refine((data) => Object.keys(data).length > 0, {
+  message: "At least one field is required",
+});
+
+export const mediaListQuerySchema = z.object({
+  folder: z.string().max(200).optional(),
+  asset_type: z.enum(["image", "video", "audio", "graphic"]).optional(),
+  search: z.string().max(200).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+// ----------------------------------------------------------------
+// Creative Studio — Animation Presets
+// ----------------------------------------------------------------
+
+export const animationPresetCreateSchema = z.object({
+  name: z.string().min(1).max(200),
+  slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/),
+  category: z.enum(["fade", "slide", "bounce", "scale", "parallax", "custom"]),
+  config: z.object({
+    initial: z.record(z.string(), z.unknown()),
+    animate: z.record(z.string(), z.unknown()),
+    exit: z.record(z.string(), z.unknown()).optional(),
+    transition: z.object({
+      duration: z.number().min(0).max(10),
+      delay: z.number().min(0).max(10).optional(),
+      ease: z.string().max(50),
+      repeat: z.number().int().min(0).optional(),
+    }),
+    trigger: z.enum(["load", "scroll", "hover", "tap"]),
+    scrollY: z.object({
+      offset: z.tuple([z.string(), z.string()]),
+      outputY: z.tuple([z.string(), z.string()]),
+    }).optional(),
+  }),
+  preview_css: z.string().max(5000).optional(),
+});
+
+export const animationPresetUpdateSchema = animationPresetCreateSchema.partial().refine(
+  (data) => Object.keys(data).length > 0,
+  { message: "At least one field is required" },
+);
+
+// ----------------------------------------------------------------
+// Creative Studio — Theme Config
+// ----------------------------------------------------------------
+
+export const themeConfigCreateSchema = z.object({
+  name: z.string().min(1).max(200),
+  colors: z.record(z.string().max(50), z.string().max(50)),
+  typography: z.object({
+    bodyFont: z.string().max(200),
+    displayFont: z.string().max(200),
+    baseSizeRem: z.number().min(0.5).max(3),
+    scaleRatio: z.number().min(1).max(2),
+    weights: z.object({
+      body: z.number().int().min(100).max(900),
+      heading: z.number().int().min(100).max(900),
+    }),
+  }),
+  buttons: z.object({
+    radiusPx: z.number().min(0).max(50),
+    shadowPx: z.number().min(0).max(50),
+    hoverScale: z.number().min(1).max(1.5),
+    variant: z.enum(["solid", "ghost", "outline"]),
+  }),
+  dark_mode: z.boolean().optional(),
+  custom_css: z.string().max(10000).optional(),
+});
+
+export const themeConfigUpdateSchema = themeConfigCreateSchema.partial().refine(
+  (data) => Object.keys(data).length > 0,
+  { message: "At least one field is required" },
+);
+
+// ----------------------------------------------------------------
+// Creative Studio — Audio Assets
+// ----------------------------------------------------------------
+
+export const audioAssetCreateSchema = z.object({
+  name: z.string().min(1).max(500),
+  storage_path: z.string().min(1).max(2000),
+  public_url: z.string().url().max(2000),
+  size_bytes: z.number().int().positive(),
+  duration_ms: z.number().int().positive().optional(),
+  assigned_to: z.array(z.string().max(200)).optional(),
+  autoplay: z.boolean().optional(),
+  loop: z.boolean().optional(),
+  volume: z.number().min(0).max(1).optional(),
+});
+
+export const audioAssetUpdateSchema = z.object({
+  name: z.string().min(1).max(500).optional(),
+  assigned_to: z.array(z.string().max(200)).optional(),
+  autoplay: z.boolean().optional(),
+  loop: z.boolean().optional(),
+  volume: z.number().min(0).max(1).optional(),
+}).refine((data) => Object.keys(data).length > 0, {
+  message: "At least one field is required",
+});
+
+// ----------------------------------------------------------------
+// Creative Studio — Page Configs
+// ----------------------------------------------------------------
+
+export const pageConfigUpdateSchema = z.object({
+  hero_config: z.object({
+    headline: z.string().max(500),
+    subheadline: z.string().max(1000),
+    backgroundType: z.enum(["color", "image", "video"]),
+    backgroundRef: z.string().max(2000).nullable(),
+    overlayOpacity: z.number().min(0).max(1),
+  }).optional(),
+  layout_config: z.object({
+    columns: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+    spacing: z.enum(["tight", "normal", "loose"]),
+    padding: z.enum(["none", "sm", "md", "lg"]),
+    maxWidthPx: z.number().int().min(320).max(2560),
+  }).optional(),
+  sections: z.array(z.object({
+    id: z.string().min(1).max(100),
+    type: z.enum(["text", "image", "video", "cta", "testimonial", "spacer"]),
+    order: z.number().int().min(0),
+    visible: z.boolean(),
+    config: z.record(z.string(), z.unknown()),
+  })).max(50).optional(),
+  animation_preset_id: z.string().uuid().nullable().optional(),
+  audio_asset_id: z.string().uuid().nullable().optional(),
+  theme_overrides: z.record(z.string().max(50), z.string().max(50)).nullable().optional(),
+  meta_title: z.string().max(200).nullable().optional(),
+  meta_description: z.string().max(500).nullable().optional(),
+  published: z.boolean().optional(),
+}).refine((data) => Object.keys(data).length > 0, {
+  message: "At least one field is required",
+});

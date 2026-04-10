@@ -60,7 +60,8 @@ import NotificationsAdminTab from "@/features/admin/NotificationsAdminTab";
 import CustomizeAdminTab from "@/features/admin/CustomizeAdminTab";
 import ContentManagerTab from "@/features/admin/ContentManagerTab";
 import SurveysAdminTab from "@/features/admin/SurveysAdminTab";
-import { Paintbrush, FileEdit } from "lucide-react";
+import { CreativeStudioTab } from "@/features/admin/creative-studio";
+import { Paintbrush, FileEdit, Wand2 } from "lucide-react";
 
 // ------------------------------------------------------------
 // Animation variants
@@ -132,10 +133,11 @@ function StatCard({
 // Tab definitions
 // ------------------------------------------------------------
 
-type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "presentations" | "events" | "inquiries" | "notifications" | "tools" | "customize" | "content-manager" | "surveys";
+type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "presentations" | "events" | "inquiries" | "notifications" | "tools" | "customize" | "content-manager" | "surveys" | "creative-studio";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "creative-studio", label: "Creative Studio", icon: Wand2 },
   { id: "customize", label: "Customize", icon: Paintbrush },
   { id: "content-manager", label: "Content", icon: FileEdit },
   { id: "surveys", label: "Surveys", icon: ClipboardCheck },
@@ -1360,6 +1362,11 @@ export default function AdminPage() {
         {/* NOTIFICATIONS TAB */}
         {activeTab === "notifications" && (
           <NotificationsAdminTab />
+        )}
+
+        {/* CREATIVE STUDIO TAB */}
+        {activeTab === "creative-studio" && (
+          <CreativeStudioTab />
         )}
 
         {/* CUSTOMIZE TAB */}
