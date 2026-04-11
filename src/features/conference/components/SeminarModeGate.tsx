@@ -1,6 +1,5 @@
 "use client";
 
-import { Clock } from "lucide-react";
 import { useSeminarMode } from "../hooks/useSeminarMode";
 
 interface SeminarModeGateProps {

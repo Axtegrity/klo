@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useConferenceRealtime } from "./useConferenceRealtime";
-import type { Question, ProfanityCheckResult } from "../types";
+import type { Question } from "../types";
 
 interface UseQuestionsOptions {
   sessionId?: string | null;

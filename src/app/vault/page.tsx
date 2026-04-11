@@ -29,23 +29,20 @@ const allCategories = ["All", ...VAULT_CATEGORIES];
 
 export default function VaultPage() {
   const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab");
 
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
+  // Lazy-init from the URL ?tab= param so we don't need a useEffect that
+  // calls setState on mount (which trips react-hooks/set-state-in-effect).
+  const [activeCategory, setActiveCategory] = useState(() => {
+    const tab = searchParams.get("tab");
+    if (tab && [...VAULT_CATEGORIES, "All"].includes(tab)) return tab;
+    return "All";
+  });
   const [level, setLevel] = useState("");
   const [type, setType] = useState("");
   const [freeOnly, setFreeOnly] = useState(false);
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
   const [eventItems, setEventItems] = useState<VaultItem[]>([]);
-  const [eventsLoading, setEventsLoading] = useState(true);
-
-  // Pre-set category from URL tab param
-  useEffect(() => {
-    if (tabParam && [...VAULT_CATEGORIES, "All"].includes(tabParam)) {
-      setActiveCategory(tabParam);
-    }
-  }, [tabParam]);
 
   // Fetch published vault items from Supabase (via /api/content/vault)
   useEffect(() => {
@@ -57,9 +54,7 @@ export default function VaultPage() {
 
   // Fetch dynamic event items
   useEffect(() => {
-    fetchEventItems()
-      .then(setEventItems)
-      .finally(() => setEventsLoading(false));
+    fetchEventItems().then(setEventItems);
   }, []);
 
   const allItems = useMemo(

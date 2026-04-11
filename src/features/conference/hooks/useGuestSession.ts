@@ -35,12 +35,20 @@ export function useGuestSession() {
   const [guest, setGuest] = useState<GuestInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Verify existing token on mount
+  // Verify existing token on mount.
+  // The setLoading(false) early-return is wrapped in a microtask so the
+  // setState doesn't run synchronously in the effect body
+  // (react-hooks/set-state-in-effect).
   useEffect(() => {
+    let cancelled = false;
     const token = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
     if (!token) {
-      setLoading(false);
-      return;
+      Promise.resolve().then(() => {
+        if (!cancelled) setLoading(false);
+      });
+      return () => {
+        cancelled = true;
+      };
     }
 
     fetch("/api/conference/guest-verify", {
@@ -54,12 +62,19 @@ export function useGuestSession() {
         return res.json();
       })
       .then((data) => {
+        if (cancelled) return;
         if (data) setGuest(data);
       })
       .catch(() => {
         localStorage.removeItem(STORAGE_KEY);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const signIn = useCallback(async (params: SignInParams): Promise<SignInResult> => {

@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, GripVertical, Eye, EyeOff, Lock, Plus } from "lucide-react";
-import Card from "@/components/shared/Card";
-import Button from "@/components/shared/Button";
+import { Pencil, GripVertical, Eye, EyeOff, Lock } from "lucide-react";
 import EditModal, { type EditField } from "./EditModal";
 
 interface HomeSection {

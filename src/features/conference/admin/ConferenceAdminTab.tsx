@@ -12,10 +12,7 @@ import {
   ChevronRight,
   ArrowLeft,
   MapPin,
-  Power,
-  Plus,
 } from "lucide-react";
-import SeminarModeToggle from "./SeminarModeToggle";
 import PollManager from "./PollManager";
 import QuestionModerator from "./QuestionModerator";
 import WordCloudManager from "./WordCloudManager";
