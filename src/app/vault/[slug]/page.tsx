@@ -31,26 +31,41 @@ export default function VaultDetailPage({
   const { slug } = use(params);
   const router = useRouter();
   const [eventItem, setEventItem] = useState<VaultItem | null>(null);
-  const [eventLoading, setEventLoading] = useState(false);
+  const [dbItem, setDbItem] = useState<VaultItem | null>(null);
+  const [dbBody, setDbBody] = useState<string>("");
+  const [dynamicLoading, setDynamicLoading] = useState(false);
 
   const staticItem = getVaultItemBySlug(slug);
 
-  // If not found in static data, try fetching from events
+  // If not found in static data, try the admin-managed vault DB first,
+  // then fall back to events.
   useEffect(() => {
-    if (!staticItem) {
-      setEventLoading(true);
-      fetchEventItems()
-        .then((items) => {
-          const found = items.find((i) => i.slug === slug) ?? null;
-          setEventItem(found);
-        })
-        .finally(() => setEventLoading(false));
-    }
+    if (staticItem) return;
+    setDynamicLoading(true);
+    fetch(`/api/content/vault/${encodeURIComponent(slug)}`)
+      .then(async (res) => {
+        if (res.ok) {
+          const json = (await res.json()) as {
+            data?: { item: VaultItem; body: string };
+          };
+          if (json.data?.item) {
+            setDbItem(json.data.item);
+            setDbBody(json.data.body ?? "");
+            return null;
+          }
+        }
+        const items = await fetchEventItems();
+        const found = items.find((i) => i.slug === slug) ?? null;
+        setEventItem(found);
+        return null;
+      })
+      .catch((err) => console.error("Failed to resolve vault slug:", err))
+      .finally(() => setDynamicLoading(false));
   }, [slug, staticItem]);
 
-  const item = staticItem ?? eventItem;
+  const item = staticItem ?? dbItem ?? eventItem;
 
-  if (eventLoading) {
+  if (dynamicLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-klo-gold border-t-transparent rounded-full animate-spin" />
@@ -129,6 +144,20 @@ export default function VaultDetailPage({
                   <InfoCallout callouts={content.callouts} />
                   <ConclusionCTA conclusion={content.conclusion} />
                 </div>
+              ) : dbBody ? (
+                <article className="prose prose-invert max-w-none">
+                  {dbBody
+                    .split(/\n{2,}/)
+                    .filter((p) => p.trim().length > 0)
+                    .map((paragraph, i) => (
+                      <p
+                        key={i}
+                        className="text-klo-text leading-relaxed mb-6 whitespace-pre-line"
+                      >
+                        {paragraph}
+                      </p>
+                    ))}
+                </article>
               ) : (
                 <p className="text-klo-muted">Content not available.</p>
               )}
