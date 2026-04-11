@@ -10,6 +10,13 @@ import {
   BarChart3,
   Inbox,
   ClipboardCheck,
+  Wand2,
+  Image as ImageIcon,
+  Sparkles,
+  LayoutGrid,
+  Music,
+  Palette,
+  FileStack,
   Users,
   BotMessageSquare,
   DollarSign,
@@ -48,6 +55,8 @@ import {
   ScrollText,
   Send,
   RefreshCw,
+  Save,
+  Monitor,
 } from "lucide-react";
 
 // ------------------------------------------------------------
@@ -89,12 +98,12 @@ const TRAINING_SECTIONS: TrainingSection[] = [
     id: "getting-started",
     title: "Getting Started",
     icon: PlayCircle,
-    description: "How to access the admin dashboard and navigate its 12 tabs.",
+    description: "How to access the admin dashboard and navigate its 14 tabs.",
     steps: [
       { icon: Globe, label: "Sign In", detail: "Go to keithlodom.ai and click Sign In, or navigate directly to /auth/signin" },
       { icon: Users, label: "Use Admin Credentials", detail: "Enter your admin email and password. Only owner and admin roles can access the dashboard." },
       { icon: Star, label: "Find the Admin Link", detail: "Once signed in, the gold \"Admin\" link appears in the top navigation bar" },
-      { icon: LayoutDashboard, label: "Explore 12 Tabs", detail: "Overview, Customize, Content (Manager), Events, Conference, Inquiries, Notifications, Presentations, Users, Content (Analytics), Revenue, and Tools" },
+      { icon: LayoutDashboard, label: "Explore 14 Tabs", detail: "Overview, Creative Studio, Customize, Content (Manager), Surveys, Events, Conference, Inquiries, Notifications, Presentations, Users, Content (Analytics), Revenue, and Tools" },
       { icon: Zap, label: "Header Utilities", detail: "Four buttons in the top-right: Changelog (version history), Request Update (submit change requests), Training Guide (this page), and Refresh (reload data)" },
     ],
     tips: [
@@ -122,10 +131,133 @@ const TRAINING_SECTIONS: TrainingSection[] = [
     ],
   },
   {
+    id: "creative-studio",
+    title: "Creative Studio",
+    icon: Wand2,
+    description: "Upload and manage media, configure animations, pick fonts and colors, and compose page backgrounds — the full visual toolkit for the app.",
+    adminTab: "creative-studio",
+    steps: [
+      { icon: Wand2, label: "Six Panels", detail: "Creative Studio is a tab with six sub-panels, shown as a segmented control at the top: Media, Animations, Layout, Music, Theme, and Pages. Each is documented below." },
+      { icon: Save, label: "Save to Apply", detail: "Every panel has its own save/publish action. Changes in the Pages panel only go live when you click \"Save Page\" — the others save as you edit." },
+    ],
+    tips: [
+      "Creative Studio replaces the old \"edit in code\" workflow — anything visual about the home page hero now lives here, not in Content Manager.",
+      "Content Manager still owns the home page TEXT (headline body copy, CTAs, testimonials). Creative Studio owns the home page VISUALS (images, background, animations, fonts).",
+    ],
+    subSections: [
+      {
+        id: "media",
+        title: "Media Library",
+        icon: ImageIcon,
+        description: "Upload, organize, and delete images, videos, and audio files. This is where every graphic used anywhere in the app lives.",
+        steps: [
+          { icon: Upload, label: "Upload", detail: "Click the gold \"Upload\" button (top-right of the panel). Supports images, videos, and audio — select one or many files at once. You can also drag files straight onto the panel." },
+          { icon: FileStack, label: "Folders", detail: "Use the left sidebar to browse folders. Click \"+ New Folder\" at the bottom of the sidebar to create a folder for organizing uploads (e.g. \"hero-backgrounds\", \"speaker-photos\"). New uploads land in whichever folder is active." },
+          { icon: Filter, label: "Filter by Type", detail: "Above the grid: All / Images / Videos / Audio buttons. Useful when you're looking specifically for a background image vs. a speaker audio clip." },
+          { icon: Search, label: "Search", detail: "Top-left search box filters by filename — fastest way to find a specific upload." },
+          { icon: Trash2, label: "Delete", detail: "Hover over any asset card and click the red trash icon. You'll be asked to confirm. Deletion is permanent and removes the file from Supabase Storage — any page still referencing it will break, so remove references first." },
+        ],
+        tips: [
+          "To add a graphic or photo to the home page: upload it here first, then switch to the Pages panel to assign it.",
+          "File uploads go to Supabase Storage and are served via signed URLs — no CDN config needed.",
+          "The asset count displayed next to the type filters shows how many items match your current filter.",
+        ],
+      },
+      {
+        id: "animations",
+        title: "Animation Builder",
+        icon: Sparkles,
+        description: "Configure animation presets that can be assigned to any page. Eight system presets ship by default (Fade In, Fade Up, Slide Left/Right, Scale Up, Bounce In, Parallax Slow) and you can add your own.",
+        steps: [
+          { icon: Eye, label: "Browse Presets", detail: "Left column lists all presets with category (fade/slide/bounce/scale/parallax/custom), trigger (load/scroll/hover/tap), and duration. Click any preset to preview it on the right." },
+          { icon: Plus, label: "Create Custom Preset", detail: "Click \"New Preset\" to build your own — pick category, trigger, duration, easing, and initial/animate states. Not recommended unless you know what you're doing." },
+          { icon: PlayCircle, label: "Live Preview", detail: "Click \"Replay\" above the preview box to re-run the animation without reselecting the preset." },
+          { icon: Trash2, label: "Delete", detail: "Only custom presets can be deleted — system presets show a lock icon and cannot be removed." },
+        ],
+        tips: [
+          "Presets are assigned to pages in the Pages panel, not here. This panel is for managing the library only.",
+          "The parallax preset has no \"duration\" — it's driven by scroll position, not a timer. That's expected.",
+        ],
+      },
+      {
+        id: "layout",
+        title: "Layout Editor",
+        icon: LayoutGrid,
+        description: "Adjust grid spacing, section padding, and responsive breakpoints for the app shell.",
+        steps: [
+          { icon: LayoutGrid, label: "Spacing Controls", detail: "Drag sliders to adjust global padding and gap values. Changes preview in real time." },
+          { icon: Save, label: "Publish", detail: "Click Save to push layout changes live to all users. Layout changes are global — they affect every page that uses the shared shell." },
+        ],
+        tips: [
+          "Use the Pages panel's viewport toggle (390/768/1440) to preview layout changes at mobile/tablet/desktop widths before saving.",
+        ],
+      },
+      {
+        id: "music",
+        title: "Music Manager",
+        icon: Music,
+        description: "Upload and manage background audio tracks that can be assigned to individual pages.",
+        steps: [
+          { icon: Upload, label: "Upload Audio", detail: "Click Upload and select MP3, WAV, or M4A files. Uploaded tracks appear in the list with duration and preview controls." },
+          { icon: Play, label: "Preview", detail: "Click the play button on any track card to preview it inline — no page assignment needed." },
+          { icon: Power, label: "Enable / Disable", detail: "Toggle tracks on or off without deleting them. Disabled tracks won't play even if still assigned to a page." },
+          { icon: Trash2, label: "Delete", detail: "Trash icon removes a track permanently. Confirm before clicking — any page still assigned to it will fall back to silent." },
+        ],
+        tips: [
+          "Audio assets are assigned to pages in the Pages panel, same as animations.",
+          "Keep clips short (under 30 seconds) and set them to loop — long tracks inflate bundle size and annoy users.",
+        ],
+      },
+      {
+        id: "theme",
+        title: "Theme Designer",
+        icon: Palette,
+        description: "Create and activate full visual themes — colors, typography, button styles. Broader than the Customize tab's brand color pickers.",
+        steps: [
+          { icon: Plus, label: "Create Theme", detail: "Click \"+ New Theme\" and give it a name. Edit the color palette, pick body + display fonts, configure primary/secondary button variants." },
+          { icon: Palette, label: "Edit Colors", detail: "Click any color swatch to open the color picker. Changes preview live in the sample buttons on the right." },
+          { icon: FileText, label: "Typography", detail: "Choose body font and display (heading) font from the installed list." },
+          { icon: Power, label: "Activate", detail: "Click \"Activate\" on any theme to make it live. Only one theme is active at a time." },
+          { icon: Trash2, label: "Delete", detail: "Remove custom themes you no longer need. The active theme cannot be deleted — activate a different one first." },
+        ],
+        tips: [
+          "The Theme Designer is stronger than the Customize tab — it covers fonts and button styles too, not just brand colors.",
+          "Prefer themes for big visual shifts (e.g. a dark campaign look) and Customize's brand colors for small tweaks.",
+        ],
+      },
+      {
+        id: "pages",
+        title: "Page Composer",
+        icon: FileStack,
+        description: "The heart of Creative Studio. Pick a page (Home, Assessments, Booking, Vault, etc.) and configure its hero background, overlay opacity, animation preset, audio track, and SEO metadata.",
+        steps: [
+          { icon: FileStack, label: "Select Page", detail: "Use the page dropdown (top-left of the panel) — Home, Advisor, Assessments, Booking, Events, Marketplace, Strategy Rooms, Vault." },
+          { icon: Monitor, label: "Preview Width", detail: "Toggle between 390px (mobile), 768px (tablet), and 1440px (desktop) to see how the hero renders at each breakpoint." },
+          { icon: Pencil, label: "Hero Headline & Subheadline", detail: "Text fields override the default hero copy for the selected page. Leave blank to fall through to the app-level default." },
+          { icon: Palette, label: "Background Type: Color", detail: "Pick \"Solid Color\" and use the color picker or paste a hex value. This replaces the default Keith photo slideshow on the home hero with a flat color." },
+          { icon: ImageIcon, label: "Background Type: Image", detail: "Pick \"Image\" and click the media picker to choose any upload from the Media panel. This replaces the slideshow with a static image — perfect for campaign pages or seasonal swaps." },
+          { icon: PlayCircle, label: "Background Type: Video", detail: "Pick \"Video\" and paste an MP4 or WebM URL to use a full-bleed video loop behind the hero." },
+          { icon: Eye, label: "Overlay Opacity", detail: "Drag the slider from 0%–100% to tune how dark the gradient overlay sits on top of the background. Higher values make text more legible over busy images; lower values let a color background shine through." },
+          { icon: Sparkles, label: "Animation Assignment", detail: "Pick an animation preset (from the Animations panel) to apply to the page's entry animation. \"No animation\" disables it." },
+          { icon: Music, label: "Audio Assignment", detail: "Pick an audio track (from the Music panel) to play on the page. \"No audio\" is the default." },
+          { icon: FileText, label: "SEO Metadata", detail: "Set page meta title and meta description — these drive the browser tab label and social / search snippets." },
+          { icon: Power, label: "Published Toggle", detail: "Flip between Published (live to users) and Draft (hidden). Use Draft while iterating on a big seasonal hero swap." },
+          { icon: Save, label: "Save Page", detail: "The gold \"Save Page\" button (top-right) commits every change on the panel to that specific page. Nothing is live until you click it." },
+        ],
+        tips: [
+          "This is where you answer: \"how do I change the home page background image?\" — select \"Home\" in the page dropdown, set Background Type to Image, pick from the media library, click Save Page.",
+          "The hero preview at the bottom of the panel reflects your unsaved changes immediately so you can see what will ship before clicking Save.",
+          "Setting a background image or color OVERRIDES the default Keith photo slideshow. Clearing it (switch back to Color with no value) restores the slideshow.",
+          "Each page has its own hero config — setting a background image on \"Home\" has no effect on \"Vault\".",
+        ],
+      },
+    ],
+  },
+  {
     id: "customize",
     title: "Customize",
     icon: Paintbrush,
-    description: "Control the app's brand colors, feature visibility, and homepage section order.",
+    description: "Control the app's brand colors, feature visibility, and homepage section order. For deeper visual changes (themes, fonts, hero backgrounds), use Creative Studio instead.",
     adminTab: "customize",
     steps: [
       { icon: Paintbrush, label: "Brand Colors", detail: "Edit Primary (#2764FF), Accent/Gold (#C8A84E), Background (#0D1117), Card Surface (#161B22), and Body Text (#E6EDF3) using color pickers" },
@@ -137,24 +269,47 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       "Changes take effect immediately for all users after saving.",
       "The Hero Banner section cannot be hidden — it's always visible on the homepage.",
       "Drag sections to reorder how they appear on the homepage.",
+      "Customize owns small brand tweaks and which sections appear. Creative Studio → Pages owns the hero's background image, video, or color — they're different panels by design.",
     ],
   },
   {
     id: "content-manager",
     title: "Content Manager",
     icon: FileEdit,
-    description: "Edit all user-facing content across the homepage, vault, and feed — without touching code.",
+    description: "Edit the TEXT of user-facing content across the homepage, vault, and feed — without touching code. For VISUALS (hero background image, fonts, animations) use Creative Studio instead.",
     adminTab: "content-manager",
     steps: [
-      { icon: Globe, label: "Home Page Content", detail: "Edit 7 homepage sections: Hero Banner (heading, tagline, CTAs), Latest Brief, Trending Topics (5 tags), Featured Insight, AI Tool of the Week, Testimonials, and Quick Links" },
+      { icon: Globe, label: "Home Page Content", detail: "Edit 7 homepage sections: Hero Banner (heading text, tagline, CTAs), Latest Brief, Trending Topics (5 tags), Featured Insight, AI Tool of the Week, Testimonials, and Quick Links. Note: the hero's background image/color lives in Creative Studio → Pages, not here." },
       { icon: BookOpen, label: "Vault Library", detail: "Manage 12+ vault items — set title, category, type, level, premium/free toggle, description, author, duration, and file attachments" },
       { icon: FileText, label: "Feed Posts", detail: "Create, edit, delete, and schedule feed posts with engagement tracking" },
-      { icon: Upload, label: "File Uploads", detail: "Attach PDFs and images to any content section" },
+      { icon: Upload, label: "File Uploads (Vault / Feed)", detail: "Attach PDFs and cover images to vault items and feed posts directly from the edit modal. For images used as hero backgrounds or reusable graphics, upload them in Creative Studio → Media first." },
     ],
     tips: [
       "Each content section shows a \"Last edited\" timestamp so you know when it was last updated.",
       "Click any section card to open the edit modal with all editable fields.",
       "Vault items support categories: AI Strategy, Governance, Digital Transformation, Cybersecurity, and more.",
+      "Rule of thumb: Content Manager = words. Creative Studio = pictures, fonts, animations, and hero backgrounds. The edit modal here won't let you change the home page's background photo — that's by design.",
+    ],
+  },
+  {
+    id: "surveys",
+    title: "Surveys",
+    icon: ClipboardCheck,
+    description: "Create, deploy, and export results for multi-question surveys — separate from the single-question polls in the Conference tab.",
+    adminTab: "surveys",
+    steps: [
+      { icon: Plus, label: "Create a Survey", detail: "Click \"+ New Survey\" and give it a title, description, and slug. The slug is the public URL segment — keep it short and lowercase." },
+      { icon: FileText, label: "Add Questions", detail: "Add any mix of question types: single-select, multi-select, short answer, long answer, rating scale, yes/no. Each question can be marked required." },
+      { icon: Eye, label: "Preview", detail: "Click \"Preview\" to see the survey exactly as a respondent will experience it, including auto-advance and scroll behavior." },
+      { icon: Power, label: "Publish / Unpublish", detail: "Toggle Published to make the survey live at /survey/[slug]. Unpublished surveys 404 for non-admins." },
+      { icon: BarChart3, label: "Review Responses", detail: "Click a survey card to open its response table. Filter by completed/partial, sort by submission date, view per-question breakdowns and distribution charts." },
+      { icon: Download, label: "Export CSV", detail: "Download all responses as CSV for deeper analysis in Excel, Sheets, or your analytics tool of choice." },
+      { icon: Trash2, label: "Delete", detail: "Remove a survey and all its responses permanently — requires confirmation." },
+    ],
+    tips: [
+      "Surveys are the right tool for structured intake (e.g. the AI in the Black Church survey). Polls in the Conference tab are better for single-question live moments during an event.",
+      "Respondents can start a survey and come back later — partial responses are saved. The CSV export includes a completion status column so you can filter them out if needed.",
+      "Each survey has its own URL; you can deep-link from email or social posts without needing the homepage to feature it.",
     ],
   },
   {
@@ -473,14 +628,51 @@ const WORKFLOWS = [
     ],
   },
   {
-    title: "Updating Homepage Content",
+    title: "Updating Homepage Text",
     emoji: "✏️",
     steps: [
       "Content (Manager) tab",
       "Click \"Home Page\" section",
-      "Select section to edit (Hero, Brief, Topics, etc.)",
-      "Update text, links, or images in the modal",
+      "Select section to edit (Hero headline/subheadline, Brief, Topics, Testimonials, etc.)",
+      "Update text, links, and CTAs in the modal",
       "Save — changes go live immediately",
+    ],
+  },
+  {
+    title: "Adding / Changing a Home Page Photo",
+    emoji: "🖼️",
+    steps: [
+      "Creative Studio tab",
+      "Media panel → click gold \"Upload\" button → pick one or more images (or drag them in)",
+      "Switch to the Pages panel (inside Creative Studio)",
+      "Select \"Home\" from the page dropdown",
+      "Set Background Type → Image",
+      "Click the media picker → choose the image you just uploaded",
+      "Drag the Overlay Opacity slider to tune how dark the gradient sits on top",
+      "Click \"Save Page\" (gold button, top-right) — the home hero now uses your image",
+    ],
+  },
+  {
+    title: "Removing a Home Page Photo",
+    emoji: "🗑️",
+    steps: [
+      "Creative Studio tab → Pages panel",
+      "Select \"Home\" from the page dropdown",
+      "Option A — swap: set Background Type → Color, pick any hex",
+      "Option B — restore default slideshow: set Background Type → Color, leave the color blank (null)",
+      "Click \"Save Page\"",
+      "If you want to also delete the image file from storage: switch to the Media panel, hover the asset, click the red trash icon, confirm. Only do this if no other page still references it.",
+    ],
+  },
+  {
+    title: "Swapping the Home Page Seasonally",
+    emoji: "🎨",
+    steps: [
+      "Creative Studio → Media → Upload the new seasonal graphic into a folder like \"holiday-2026\"",
+      "Creative Studio → Pages → select \"Home\" → Background Type = Image → pick the graphic",
+      "Toggle the Published switch OFF (top-right of the Pages panel) to stage in Draft",
+      "Preview with the 390 / 768 / 1440 viewport toggle before publishing",
+      "Toggle Published ON → Save Page → live for all users",
     ],
   },
   {
@@ -524,8 +716,10 @@ const WORKFLOWS = [
 
 const TAB_MAP: { id: string; label: string; icon: React.ElementType; color: string; category: string }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard, color: "#2764FF", category: "Analytics" },
+  { id: "creative-studio", label: "Creative Studio", icon: Wand2, color: "#8840FF", category: "Content" },
   { id: "customize", label: "Customize", icon: Paintbrush, color: "#C8A84E", category: "Settings" },
   { id: "content-manager", label: "Content", icon: FileEdit, color: "#21B8CD", category: "Content" },
+  { id: "surveys", label: "Surveys", icon: ClipboardCheck, color: "#6ECF55", category: "Content" },
   { id: "events", label: "Events", icon: Vote, color: "#6ECF55", category: "Events" },
   { id: "conference", label: "Conference", icon: BarChart3, color: "#8840FF", category: "Events" },
   { id: "inquiries", label: "Inquiries", icon: Inbox, color: "#2764FF", category: "Communication" },
@@ -910,10 +1104,21 @@ function SectionCard({
 
   return (
     <div id={`section-${section.id}`} className="rounded-2xl border border-white/5 bg-klo-surface overflow-hidden scroll-mt-24">
-      {/* Header */}
-      <button
+      {/* Header — div+role=button instead of <button> so the nested Open Tab
+          button doesn't produce an invalid HTML button-in-button nesting
+          (React hydration error). Keyboard handler preserves a11y. */}
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
         onClick={onToggle}
-        className="w-full flex items-center gap-4 p-5 text-left hover:bg-white/[0.02] transition-colors"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggle();
+          }
+        }}
+        className="w-full flex items-center gap-4 p-5 text-left hover:bg-white/[0.02] transition-colors cursor-pointer"
       >
         <div className="p-2.5 rounded-xl bg-klo-gold/10 shrink-0">
           <Icon size={20} className="text-klo-gold" />
@@ -937,7 +1142,7 @@ function SectionCard({
         >
           <ChevronDown size={18} />
         </motion.div>
-      </button>
+      </div>
 
       {/* Expanded content */}
       <AnimatePresence>

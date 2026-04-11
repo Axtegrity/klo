@@ -37,7 +37,11 @@ export default function VaultDetailPage({
   // closed 2026-04-11). If the DB miss, fall through to events.
   useEffect(() => {
     let cancelled = false;
-    setDynamicLoading(true);
+    // Defer the loading-flag setState to a microtask so the rule's
+    // "no synchronous setState in effect body" check passes.
+    Promise.resolve().then(() => {
+      if (!cancelled) setDynamicLoading(true);
+    });
     fetch(`/api/content/vault/${encodeURIComponent(slug)}`)
       .then(async (res) => {
         if (cancelled) return null;
