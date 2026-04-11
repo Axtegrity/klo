@@ -44,7 +44,7 @@ jobs:
     steps:
       # Full clone — needed so ESLint can resolve project-relative imports.
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Install bun. Pinning to a major version (not latest) avoids surprise breakage.
       - name: Set up Bun
@@ -105,7 +105,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Initialize CodeQL. This sets up the analysis environment and selects the
       # queries to run. javascript-typescript covers both .js and .ts files.
