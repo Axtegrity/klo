@@ -1,19 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { verifyCreativeStudioAdmin as verifyAdmin } from "@/lib/creative-studio-auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { inquiryUpdateSchema } from "@/lib/validation";
 import { logError, logRequest } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
-
-async function verifyAdmin() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return null;
-  const role = (session.user as { role?: string }).role;
-  if (!["owner", "admin"].includes(role ?? "")) return null;
-  return session;
-}
 
 export async function GET(req: NextRequest) {
   logRequest(req);
