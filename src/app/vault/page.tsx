@@ -9,7 +9,6 @@ import FilterBar from "@/components/vault/FilterBar";
 import ContentCard from "@/components/vault/ContentCard";
 import { VAULT_CATEGORIES } from "@/lib/vault-data";
 import type { VaultItem } from "@/lib/vault-data";
-import { fetchEventItems } from "@/lib/vault-events";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -42,9 +41,13 @@ export default function VaultPage() {
   const [type, setType] = useState("");
   const [freeOnly, setFreeOnly] = useState(false);
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
-  const [eventItems, setEventItems] = useState<VaultItem[]>([]);
 
-  // Fetch published vault items from Supabase (via /api/content/vault)
+  // Fetch published vault items from Supabase (via /api/content/vault).
+  // vault_content is the sole source of truth — event presentations are
+  // NOT merged in here. They live on /events and are controlled by
+  // is_published in the Events admin tab. Merging them here meant the
+  // Vault Content Manager's Hide toggle had no effect on them, which
+  // broke the admin's mental model (ghost CMS, fixed 2026-04-11).
   useEffect(() => {
     fetch("/api/content/vault")
       .then((res) => res.json())
@@ -52,15 +55,7 @@ export default function VaultPage() {
       .catch((err) => console.error("Failed to fetch vault:", err));
   }, []);
 
-  // Fetch dynamic event items
-  useEffect(() => {
-    fetchEventItems().then(setEventItems);
-  }, []);
-
-  const allItems = useMemo(
-    () => [...vaultItems, ...eventItems],
-    [vaultItems, eventItems]
-  );
+  const allItems = useMemo(() => vaultItems, [vaultItems]);
 
   const filteredItems = useMemo(() => {
     return allItems.filter((item) => {
