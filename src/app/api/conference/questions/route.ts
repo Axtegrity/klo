@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { createHash } from "crypto";
 import { getServiceSupabase } from "@/lib/supabase";
 import { verifyConferenceRole } from "@/lib/conference-auth";

@@ -69,8 +69,7 @@ function formatDate(dateStr: string): string {
 /* ------------------------------------------------------------------ */
 
 export default function ConferencePage() {
-  const { data: authSession } = useSession();
-  const isAuthenticated = !!(authSession?.user as { id?: string } | undefined)?.id;
+  useSession(); // session subscription kept for re-render on auth changes
 
   /* ---------- Seminar mode gate ---------- */
   const { seminarMode, loading: seminarLoading } = useSeminarMode();
@@ -90,15 +89,15 @@ export default function ConferencePage() {
   }, []);
 
   /* ---------- Selected event & session ---------- */
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  // Explicit user selections; null means "not chosen yet, fall through to default".
+  const [explicitEventId, setSelectedEventId] = useState<string | null>(null);
+  const [explicitSessionId, setSelectedSessionId] = useState<string | null>(null);
 
-  // Auto-select if only one event
-  useEffect(() => {
-    if (liveEvents.length === 1 && !selectedEventId) {
-      setSelectedEventId(liveEvents[0].id);
-    }
-  }, [liveEvents, selectedEventId]);
+  // Auto-select the only event/session as a render-time default rather than a
+  // useEffect setState (which the react-hooks/set-state-in-effect rule rejects
+  // because the cascading render is observable).
+  const selectedEventId =
+    explicitEventId ?? (liveEvents.length === 1 ? liveEvents[0].id : null);
 
   const selectedEvent = liveEvents.find((e) => e.id === selectedEventId) ?? null;
 
@@ -107,12 +106,8 @@ export default function ConferencePage() {
     selectedEventId ? { eventId: selectedEventId } : undefined
   );
 
-  // Auto-select if only one session
-  useEffect(() => {
-    if (sessions.length === 1 && !selectedSessionId) {
-      setSelectedSessionId(sessions[0].id);
-    }
-  }, [sessions, selectedSessionId]);
+  const selectedSessionId =
+    explicitSessionId ?? (sessions.length === 1 ? sessions[0].id : null);
 
   const selectedSession = sessions.find((s) => s.id === selectedSessionId) ?? null;
 

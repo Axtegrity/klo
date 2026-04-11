@@ -16,7 +16,7 @@ import {
 // PollResults and CollectiveResultsChart available if needed for detailed views
 import { useConferenceRealtime } from "../hooks/useConferenceRealtime";
 import { useSessions } from "../hooks/useSessions";
-import type { PollWithVotes, ConferenceSession } from "../types";
+import type { PollWithVotes } from "../types";
 
 type InputMode = "single" | "batch";
 

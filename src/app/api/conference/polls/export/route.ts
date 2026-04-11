@@ -4,13 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { pollExportSchema } from "@/lib/validation";
 
-interface PollData {
-  question: string;
-  options: string[];
-  votes: number[];
-  totalVotes: number;
-}
-
 // KLO brand colors
 const DARK_BG = rgb(13 / 255, 17 / 255, 23 / 255); // #0D1117
 const CARD_BG = rgb(22 / 255, 27 / 255, 34 / 255); // #161B22

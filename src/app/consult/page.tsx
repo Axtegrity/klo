@@ -12,7 +12,6 @@ import {
   ChevronDown,
 } from "lucide-react";
 import Badge from "@/components/shared/Badge";
-import Card from "@/components/shared/Card";
 import FadeInOnScroll from "@/components/shared/FadeInOnScroll";
 import ConsultIntakeForm from "@/components/consult/ConsultIntakeForm";
 import type { LucideIcon } from "lucide-react";

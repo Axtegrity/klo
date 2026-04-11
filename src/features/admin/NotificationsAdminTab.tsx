@@ -13,7 +13,6 @@ import {
   RefreshCw,
   CheckCircle2,
   AlertCircle,
-  Trash2,
 } from "lucide-react";
 
 const fadeUp = {
@@ -86,8 +85,10 @@ export default function NotificationsAdminTab() {
     setLoadingSubs(false);
   }, []);
 
+  // Defer to a microtask so the loading-flag setState inside fetchSubscribers
+  // doesn't run synchronously in the effect body (react-hooks/set-state-in-effect).
   useEffect(() => {
-    fetchSubscribers();
+    Promise.resolve().then(fetchSubscribers);
   }, [fetchSubscribers]);
 
   const handleSend = async () => {

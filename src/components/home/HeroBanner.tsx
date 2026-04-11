@@ -47,42 +47,69 @@ export default function HeroBanner({
 }: HeroBannerProps = {}) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Admin overrides: a non-null backgroundColor or backgroundImage from
+  // page_configs.hero_config replaces the default Keith photo slideshow.
+  const useSlideshow = !backgroundColor && !backgroundImage;
+
   useEffect(() => {
+    if (!useSlideshow) return;
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % scrollImages.length);
     }, 3000);
     return () => clearInterval(timer);
-  }, []);
+  }, [useSlideshow]);
+
+  // overlayOpacity (0–1) tunes the left-edge darkness of the gradient. Falls
+  // back to 0.95 — the original hard-coded value — when admin hasn't set one.
+  const leftAlpha = typeof overlayOpacity === "number" ? overlayOpacity : 0.95;
+  const midAlpha = leftAlpha * 0.74;
+  const rightAlpha = leftAlpha * 0.32;
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden bg-[#0D1117]" style={{ clipPath: "inset(0)" }}>
-      {/* Crossfade background images — all mounted, opacity toggled */}
+    <section
+      className="relative min-h-screen flex items-center overflow-hidden bg-[#0D1117]"
+      style={{
+        clipPath: "inset(0)",
+        ...(backgroundColor ? { backgroundColor } : {}),
+      }}
+    >
+      {/* Background: admin-override image, admin-override color, or default Keith slideshow */}
       <div className="absolute inset-0">
-        {scrollImages.map((src, i) => (
-          <motion.div
-            key={src}
-            className="absolute inset-0"
-            animate={{ opacity: i === currentIndex ? 1 : 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-          >
-            <Image
-              src={src}
-              alt="Keith L. Odom"
-              fill
-              priority={i === 0}
-              className="object-cover object-top"
-              sizes="100vw"
-            />
-          </motion.div>
-        ))}
+        {backgroundImage ? (
+          <Image
+            src={backgroundImage}
+            alt=""
+            fill
+            priority
+            className="object-cover object-top"
+            sizes="100vw"
+          />
+        ) : useSlideshow ? (
+          scrollImages.map((src, i) => (
+            <motion.div
+              key={src}
+              className="absolute inset-0"
+              animate={{ opacity: i === currentIndex ? 1 : 0 }}
+              transition={{ duration: 0.8, ease: "easeInOut" }}
+            >
+              <Image
+                src={src}
+                alt="Keith L. Odom"
+                fill
+                priority={i === 0}
+                className="object-cover object-top"
+                sizes="100vw"
+              />
+            </motion.div>
+          ))
+        ) : null}
       </div>
 
       {/* Dark gradient overlay */}
       <div
         className="absolute inset-0 z-[1]"
         style={{
-          background:
-            "linear-gradient(to right, rgba(13,17,23,0.95) 0%, rgba(13,17,23,0.7) 50%, rgba(13,17,23,0.3) 100%)",
+          background: `linear-gradient(to right, rgba(13,17,23,${leftAlpha}) 0%, rgba(13,17,23,${midAlpha}) 50%, rgba(13,17,23,${rightAlpha}) 100%)`,
         }}
       />
 

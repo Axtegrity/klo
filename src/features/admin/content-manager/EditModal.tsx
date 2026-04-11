@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { X, Upload, FileText, Trash2, ExternalLink, AlertTriangle } from "lucide-react";
+import { X, Upload, Trash2, ExternalLink, AlertTriangle } from "lucide-react";
 import Button from "@/components/shared/Button";
 
 export interface EditField {
@@ -52,19 +52,6 @@ export default function EditModal({
 
   const update = (key: string, val: string) => {
     setValues((prev) => ({ ...prev, [key]: val }));
-  };
-
-  const getChanges = (): string[] => {
-    const changes: string[] = [];
-    for (const f of fields) {
-      if (values[f.key] !== f.value) {
-        changes.push(`${f.label} updated`);
-      }
-    }
-    if (uploadedFiles.length !== files.length) {
-      changes.push("Files modified");
-    }
-    return changes;
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

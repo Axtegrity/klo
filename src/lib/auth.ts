@@ -1,6 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { compare, hash } from "bcryptjs";
+import { compare } from "bcryptjs";
 import { getServiceSupabase } from "@/lib/supabase";
 
 // Credential accounts

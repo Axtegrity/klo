@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Rss, ChevronDown, ChevronUp, Clock, Calendar } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Badge from "@/components/shared/Badge";
-import Button from "@/components/shared/Button";
 import Card from "@/components/shared/Card";
 import {
   categoryColors,

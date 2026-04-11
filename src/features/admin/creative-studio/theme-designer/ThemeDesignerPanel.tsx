@@ -52,7 +52,7 @@ const FONT_OPTIONS = [
 ];
 
 export default function ThemeDesignerPanel() {
-  const { themes, activeTheme, loading, createTheme, updateTheme, activateTheme, deleteTheme } = useThemeDesigner();
+  const { themes, loading, createTheme, updateTheme, activateTheme, deleteTheme } = useThemeDesigner();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [error, setError] = useState("");

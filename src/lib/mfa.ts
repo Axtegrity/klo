@@ -6,6 +6,7 @@
  */
 
 import { hash, compare } from "bcryptjs";
+import { createCipheriv, createDecipheriv, randomBytes, randomInt } from "crypto";
 import * as OTPAuth from "otpauth";
 
 // ── Encryption ─────────────────────────────────────────────────────────────
@@ -24,7 +25,6 @@ function getEncryptionKey(): Buffer {
  * Returns "iv:authTag:ciphertext" (all hex-encoded).
  */
 export function encryptSecret(plaintext: string): string {
-  const { createCipheriv, randomBytes } = require("crypto") as typeof import("crypto");
   const key = getEncryptionKey();
   const iv = randomBytes(12); // 96-bit IV for GCM
   const cipher = createCipheriv("aes-256-gcm", key, iv);
@@ -40,7 +40,6 @@ export function encryptSecret(plaintext: string): string {
  * Decrypts an "iv:authTag:ciphertext" string produced by encryptSecret.
  */
 export function decryptSecret(encoded: string): string {
-  const { createDecipheriv } = require("crypto") as typeof import("crypto");
   const [ivHex, tagHex, cipherHex] = encoded.split(":");
   if (!ivHex || !tagHex || !cipherHex) throw new Error("Invalid encrypted secret format");
   const key = getEncryptionKey();
@@ -98,7 +97,6 @@ const BACKUP_CODE_COUNT = 8;
 
 /** Generates 8 plaintext backup codes. */
 export function generateBackupCodes(): string[] {
-  const { randomInt } = require("crypto") as typeof import("crypto");
   return Array.from({ length: BACKUP_CODE_COUNT }, () =>
     Array.from({ length: BACKUP_CODE_LENGTH }, () =>
       BACKUP_CODE_CHARSET[randomInt(BACKUP_CODE_CHARSET.length)]

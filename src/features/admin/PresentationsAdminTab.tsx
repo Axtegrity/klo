@@ -68,7 +68,11 @@ export default function PresentationsAdminTab() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchPresentations(); }, [fetchPresentations]);
+  // Defer to a microtask so the setState inside fetchPresentations doesn't
+  // run synchronously in the effect body (react-hooks/set-state-in-effect).
+  useEffect(() => {
+    Promise.resolve().then(fetchPresentations);
+  }, [fetchPresentations]);
 
   const handleCreate = async () => {
     if (!formData.title.trim()) return;

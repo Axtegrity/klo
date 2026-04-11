@@ -14,7 +14,6 @@ import {
   Pencil,
   Check,
   X,
-  ChevronDown,
 } from "lucide-react";
 import type { ConferenceSession } from "../types";
 

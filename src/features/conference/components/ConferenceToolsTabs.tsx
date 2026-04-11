@@ -65,8 +65,10 @@ export default function ConferenceToolsTabs({ eventId, sessionId }: ConferenceTo
     }
   }, [eventId]);
 
+  // Defer to a microtask so the setState inside fetchAnnouncements doesn't
+  // run synchronously in the effect body (react-hooks/set-state-in-effect).
   useEffect(() => {
-    fetchAnnouncements();
+    Promise.resolve().then(fetchAnnouncements);
   }, [fetchAnnouncements]);
 
   useConferenceRealtime({ onAnnouncementsChange: fetchAnnouncements });

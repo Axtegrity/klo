@@ -11,8 +11,7 @@ import { logError, logRequest } from "@/lib/logger";
 /*    MAVEN_SUPABASE_KEY  — Maven Supabase service role key             */
 /* ------------------------------------------------------------------ */
 
-const VALID_TYPES = ["bug_report", "feature_request", "feedback", "change_request"] as const;
-type TaskType = (typeof VALID_TYPES)[number];
+type TaskType = "bug_report" | "feature_request" | "feedback" | "change_request";
 
 const VALID_PRIORITIES = ["low", "normal", "high", "urgent"] as const;
 type Priority = (typeof VALID_PRIORITIES)[number];

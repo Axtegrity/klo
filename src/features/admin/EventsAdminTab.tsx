@@ -102,7 +102,6 @@ export default function EventsAdminTab() {
   const [creatingIndex, setCreatingIndex] = useState<number | null>(null);
 
   // Form state (manual single-event creation)
-  const [formTitle, setFormTitle] = useState("");
   const [formConference, setFormConference] = useState("");
   const [formLocation, setFormLocation] = useState("");
   const [formDate, setFormDate] = useState("");
@@ -141,7 +140,6 @@ export default function EventsAdminTab() {
   }, [fetchEvents]);
 
   const resetForm = () => {
-    setFormTitle("");
     setFormConference("");
     setFormLocation("");
     setFormDate("");

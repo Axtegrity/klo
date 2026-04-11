@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -574,7 +574,9 @@ export default function TrainingPage() {
   const [view, setView] = useState<"map" | "guide" | "workflows">("map");
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [playingSection, setPlayingSection] = useState<string | null>(null);
-  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
+  // useRef instead of useState — HTMLAudioElement is mutable DOM state, and
+  // none of the JSX renders depend on its identity (only on `playingSection`).
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const [audioProgress, setAudioProgress] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
 
@@ -589,16 +591,17 @@ export default function TrainingPage() {
 
   const playAudio = (sectionId: string) => {
     // Stop current audio
-    if (audioRef) {
-      audioRef.pause();
-      audioRef.currentTime = 0;
-      audioRef.onended = null;
-      audioRef.ontimeupdate = null;
+    const current = audioElementRef.current;
+    if (current) {
+      current.pause();
+      current.currentTime = 0;
+      current.onended = null;
+      current.ontimeupdate = null;
     }
 
     if (playingSection === sectionId) {
       setPlayingSection(null);
-      setAudioRef(null);
+      audioElementRef.current = null;
       setAudioProgress(0);
       return;
     }
@@ -609,7 +612,7 @@ export default function TrainingPage() {
     const audio = new Audio(src);
     audio.onended = () => {
       setPlayingSection(null);
-      setAudioRef(null);
+      audioElementRef.current = null;
       setAudioProgress(0);
     };
     audio.ontimeupdate = () => {
@@ -620,7 +623,7 @@ export default function TrainingPage() {
     };
     audio.play();
     setPlayingSection(sectionId);
-    setAudioRef(audio);
+    audioElementRef.current = audio;
   };
 
   return (
@@ -647,11 +650,12 @@ export default function TrainingPage() {
           {/* Audio toggle */}
           <button
             onClick={() => {
-              if (audioEnabled && audioRef) {
-                audioRef.pause();
-                audioRef.currentTime = 0;
+              const current = audioElementRef.current;
+              if (audioEnabled && current) {
+                current.pause();
+                current.currentTime = 0;
                 setPlayingSection(null);
-                setAudioRef(null);
+                audioElementRef.current = null;
                 setAudioProgress(0);
               }
               setAudioEnabled(!audioEnabled);

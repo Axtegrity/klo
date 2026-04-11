@@ -49,7 +49,7 @@ export function useWordCloud(options?: { eventId?: string }) {
         return false;
       }
     },
-    [fetchEntries]
+    [eventId, fetchEntries]
   );
 
   return { entries, loading, submitWord, refetch: fetchEntries };

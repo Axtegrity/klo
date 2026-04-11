@@ -203,7 +203,7 @@ export default function RequestUpdatePage() {
               Request a Site Update
             </h1>
             <p className="text-xs text-klo-muted mt-0.5">
-              Describe what you'd like changed — Tim will handle it
+              Describe what you&rsquo;d like changed — Tim will handle it
             </p>
           </div>
         </div>

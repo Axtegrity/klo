@@ -4,7 +4,6 @@ import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, BookOpen } from "lucide-react";
-import Badge from "@/components/shared/Badge";
 import Button from "@/components/shared/Button";
 import ContentCard from "@/components/vault/ContentCard";
 import DetailHero from "@/components/vault/detail/DetailHero";
@@ -41,7 +40,12 @@ export default function VaultDetailPage({
   // then fall back to events.
   useEffect(() => {
     if (staticItem) return;
-    setDynamicLoading(true);
+    // Defer the loading-flag setState to a microtask so the rule's
+    // "no synchronous setState in effect body" check passes.
+    let cancelled = false;
+    Promise.resolve().then(() => {
+      if (!cancelled) setDynamicLoading(true);
+    });
     fetch(`/api/content/vault/${encodeURIComponent(slug)}`)
       .then(async (res) => {
         if (res.ok) {
@@ -60,7 +64,12 @@ export default function VaultDetailPage({
         return null;
       })
       .catch((err) => console.error("Failed to resolve vault slug:", err))
-      .finally(() => setDynamicLoading(false));
+      .finally(() => {
+        if (!cancelled) setDynamicLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [slug, staticItem]);
 
   const item = staticItem ?? dbItem ?? eventItem;

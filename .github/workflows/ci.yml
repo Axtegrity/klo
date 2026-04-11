@@ -24,6 +24,9 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
+      - name: Lint (max-warnings 0)
+        run: bun run lint
+
       - name: Type Check
         run: bunx tsc --noEmit
 
