@@ -66,14 +66,14 @@ jobs:
       # Run ESLint with the security config. The --max-warnings 0 flag treats any
       # security warning as a build failure — warnings are not informational here.
       #
-      # If your project has a custom lint script in package.json that already includes
-      # security rules, replace this with: bun run lint
+      # --no-error-on-unmatched-pattern keeps the workflow portable across Next.js
+      # projects that use either `app/`, `pages/`, or `src/app/` layouts.
       - name: Run ESLint security rules
         run: |
           bunx eslint \
-            --config eslint-security-config.js \
+            --config eslint-security.standalone.config.js \
             --max-warnings 0 \
-            --format compact \
+            --no-error-on-unmatched-pattern \
             "src/**/*.{ts,tsx,js,jsx}" \
             "app/**/*.{ts,tsx,js,jsx}" \
             "pages/**/*.{ts,tsx,js,jsx}"
