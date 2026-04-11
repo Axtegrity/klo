@@ -9,6 +9,15 @@
 
 base_url: http://localhost:3002
 
+# When running against production, set these env vars:
+#   FUNCTION_AUDIT_EMAIL=keith@keithlodom.io
+#   FUNCTION_AUDIT_PASSWORD=<from Vercel env or Keychain>
+# Local dev (localhost) uses the NODE_ENV=development bypass, no auth needed.
+auth:
+  type: nextauth-credentials
+  email: ${FUNCTION_AUDIT_EMAIL}
+  password: ${FUNCTION_AUDIT_PASSWORD}
+
 cases:
   # ─── Sanity: admin UI accessible ───────────────────────────
   - name: admin-dashboard-loads

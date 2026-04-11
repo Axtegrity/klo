@@ -13,10 +13,6 @@ import PullQuote from "@/components/vault/detail/PullQuote";
 import ImplementationSteps from "@/components/vault/detail/ImplementationSteps";
 import InfoCallout from "@/components/vault/detail/InfoCallout";
 import ConclusionCTA from "@/components/vault/detail/ConclusionCTA";
-import {
-  getVaultItemBySlug,
-  getRelatedItems,
-} from "@/lib/vault-data";
 import type { VaultItem } from "@/lib/vault-data";
 import { getVaultContent } from "@/lib/vault-content";
 import { fetchEventItems } from "@/lib/vault-events";
@@ -32,22 +28,19 @@ export default function VaultDetailPage({
   const [eventItem, setEventItem] = useState<VaultItem | null>(null);
   const [dbItem, setDbItem] = useState<VaultItem | null>(null);
   const [dbBody, setDbBody] = useState<string>("");
-  const [dynamicLoading, setDynamicLoading] = useState(false);
+  const [relatedItems, setRelatedItems] = useState<VaultItem[]>([]);
+  const [dynamicLoading, setDynamicLoading] = useState(true);
 
-  const staticItem = getVaultItemBySlug(slug);
-
-  // If not found in static data, try the admin-managed vault DB first,
-  // then fall back to events.
+  // vault_content is the sole source of truth. We never read from the
+  // static seed here — doing so previously let hidden items render on
+  // direct links, bypassing admin visibility toggles (ghost CMS bug
+  // closed 2026-04-11). If the DB miss, fall through to events.
   useEffect(() => {
-    if (staticItem) return;
-    // Defer the loading-flag setState to a microtask so the rule's
-    // "no synchronous setState in effect body" check passes.
     let cancelled = false;
-    Promise.resolve().then(() => {
-      if (!cancelled) setDynamicLoading(true);
-    });
+    setDynamicLoading(true);
     fetch(`/api/content/vault/${encodeURIComponent(slug)}`)
       .then(async (res) => {
+        if (cancelled) return null;
         if (res.ok) {
           const json = (await res.json()) as {
             data?: { item: VaultItem; body: string };
@@ -59,6 +52,7 @@ export default function VaultDetailPage({
           }
         }
         const items = await fetchEventItems();
+        if (cancelled) return null;
         const found = items.find((i) => i.slug === slug) ?? null;
         setEventItem(found);
         return null;
@@ -70,9 +64,33 @@ export default function VaultDetailPage({
     return () => {
       cancelled = true;
     };
-  }, [slug, staticItem]);
+  }, [slug]);
 
-  const item = staticItem ?? dbItem ?? eventItem;
+  const item = dbItem ?? eventItem;
+
+  // Pull related items from the same DB-backed list the /vault page uses,
+  // so hidden/archived items never appear in the sidebar.
+  useEffect(() => {
+    if (!item) return;
+    let cancelled = false;
+    fetch("/api/content/vault")
+      .then((res) => res.json())
+      .then((json: { data?: VaultItem[] }) => {
+        if (cancelled) return;
+        const list = json.data ?? [];
+        setRelatedItems(
+          list
+            .filter((i) => i.id !== item.id && i.category === item.category)
+            .slice(0, 3),
+        );
+      })
+      .catch(() => {
+        /* non-fatal — sidebar just stays empty */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [item]);
 
   if (dynamicLoading) {
     return (
@@ -110,7 +128,6 @@ export default function VaultDetailPage({
     );
   }
 
-  const relatedItems = getRelatedItems(item, 3);
   const content = getVaultContent(item.id);
 
   return (

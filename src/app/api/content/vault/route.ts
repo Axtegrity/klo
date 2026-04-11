@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
-import { vaultItems as staticVaultItems } from "@/lib/vault-data";
 import type { VaultCategory, VaultType, VaultItem } from "@/lib/vault-data";
 
 // GET /api/content/vault — public endpoint returning all vault items.
-// Merges admin-managed Supabase items (vault_content) with the curated
-// static seed in src/lib/vault-data.ts. DB rows override the static seed
-// when slugs collide, so editors can replace seed entries via the admin UI.
+// vault_content is the SOLE source of truth. Admin visibility toggles
+// (published / hidden / archived) must be authoritative, so we no longer
+// merge the static seed from src/lib/vault-data.ts (see migration
+// 20260410000001_seed_vault_content.sql which seeded those items into
+// the DB). Merging a static fallback re-exposed hidden items — classic
+// ghost CMS bug, closed 2026-04-11.
 //
 // Uses anon Supabase client; RLS policy "vault_content_public_read_published"
 // allows SELECT where visibility = 'published'.
@@ -109,9 +111,5 @@ export async function GET() {
     };
   });
 
-  // DB items take precedence — drop static seed entries with the same slug
-  const dbSlugs = new Set(dbItems.map((i) => i.slug));
-  const staticFiltered = staticVaultItems.filter((i) => !dbSlugs.has(i.slug));
-
-  return NextResponse.json({ data: [...dbItems, ...staticFiltered] });
+  return NextResponse.json({ data: dbItems });
 }
