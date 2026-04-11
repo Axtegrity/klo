@@ -60,8 +60,9 @@ import NotificationsAdminTab from "@/features/admin/NotificationsAdminTab";
 import CustomizeAdminTab from "@/features/admin/CustomizeAdminTab";
 import ContentManagerTab from "@/features/admin/ContentManagerTab";
 import SurveysAdminTab from "@/features/admin/SurveysAdminTab";
+import TestimonialsAdminTab from "@/features/admin/TestimonialsAdminTab";
 import { CreativeStudioTab } from "@/features/admin/creative-studio";
-import { Paintbrush, FileEdit, Wand2 } from "lucide-react";
+import { Paintbrush, FileEdit, Wand2, MessageSquareQuote } from "lucide-react";
 
 // ------------------------------------------------------------
 // Animation variants
@@ -133,13 +134,14 @@ function StatCard({
 // Tab definitions
 // ------------------------------------------------------------
 
-type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "presentations" | "events" | "inquiries" | "notifications" | "tools" | "customize" | "content-manager" | "surveys" | "creative-studio";
+type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "presentations" | "events" | "inquiries" | "notifications" | "tools" | "customize" | "content-manager" | "surveys" | "creative-studio" | "testimonials";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "creative-studio", label: "Creative Studio", icon: Wand2 },
   { id: "customize", label: "Customize", icon: Paintbrush },
   { id: "content-manager", label: "Content", icon: FileEdit },
+  { id: "testimonials", label: "Testimonials", icon: MessageSquareQuote },
   { id: "surveys", label: "Surveys", icon: ClipboardCheck },
   { id: "events", label: "Events", icon: Vote },
   { id: "conference", label: "Conference", icon: BarChart3 },
@@ -1389,6 +1391,11 @@ export default function AdminPage() {
         {/* SURVEYS TAB */}
         {activeTab === "surveys" && (
           <SurveysAdminTab />
+        )}
+
+        {/* TESTIMONIALS TAB */}
+        {activeTab === "testimonials" && (
+          <TestimonialsAdminTab />
         )}
 
         {/* TOOLS TAB */}
