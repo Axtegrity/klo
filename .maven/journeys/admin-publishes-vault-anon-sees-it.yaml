@@ -1,0 +1,102 @@
+# First KLO journey — proves the multi-actor engine works end-to-end and
+# regression-guards the exact class of bug that caused the 2026-04-12
+# incident ("Function Audit Headline mntushsc" polluting the live site).
+#
+# Two actors:
+#   admin — logged in as Keith (OWNER_EMAIL), creates + hides + deletes content
+#   anon  — no auth, represents a public visitor to /vault
+#
+# Six steps verify the propagation loop:
+#   1. admin publishes a new vault item
+#   2. anon hits /api/content/vault, item appears
+#   3. admin hides the item
+#   4. anon hits /api/content/vault, item is gone
+#   5. cleanup: admin permanently deletes the item
+#   6. anon verifies it's gone from the repository too (belt-and-suspenders)
+#
+# Namespacing: every creation is scoped by ${_run.id} so parallel runs
+# never collide with each other. Cleanup deletes by the captured ID so
+# aborted runs never leave orphan data.
+
+name: admin-publishes-vault-anon-sees-it
+description: >
+  Admin → user propagation for the vault. Regression guard for the class
+  of bug that caused the 2026-04-12 incident.
+
+base_url: http://localhost:3000
+
+personas:
+  admin:
+    auth: nextauth-credentials
+    # Email is hardcoded in src/lib/auth.ts (OWNER_EMAIL constant).
+    # Dev-only plaintext "dev-only-password" corresponds to the bcrypt hash
+    # in .env.local OWNER_PASSWORD. Prod Vercel env still has the real hash;
+    # PROD_OWNER_PASSWORD in .env.local preserves the real hash for restore.
+    email: keith@keithlodom.io
+    password: dev-only-password
+  anon:
+    auth: none
+
+choreography:
+  # ─── baseline: anon can read the vault ────────────────────────────
+  - actor: anon
+    action: api_get_status
+    url: /api/content/vault
+    value: 200
+
+  # ─── admin publishes new content ──────────────────────────────────
+  - actor: admin
+    action: api_post
+    url: /api/admin/content-manager/vault
+    capture: created_vault
+    value:
+      title: "Journey Audit — Vault ${_run.id}"
+      slug: "journey-audit-vault-${_run.id}"
+      content_type: briefing
+      category: "AI & Ethics"
+      body: "Journey test content. Cleaned up automatically at the end of the run."
+      excerpt: "Journey test item"
+      tier_required: free
+      visibility: published
+
+  # Give Next.js + Supabase a moment to settle. ISR/cache isn't aggressive
+  # on dev but a real run against prod will want this same pattern.
+  - actor: anon
+    action: wait
+    ms: 500
+
+  # ─── cross-actor assertion: anon sees what admin just published ───
+  - actor: anon
+    action: api_get_contains
+    url: /api/content/vault
+    value: "Journey Audit — Vault ${_run.id}"
+
+  # ─── admin hides the item ─────────────────────────────────────────
+  - actor: admin
+    action: api_patch
+    url: /api/admin/content-manager/vault/${created_vault.data.id}
+    value:
+      visibility: hidden
+
+  - actor: anon
+    action: wait
+    ms: 500
+
+  # ─── cross-actor assertion: hide propagates ───────────────────────
+  - actor: anon
+    action: api_get_not_contains
+    url: /api/content/vault
+    value: "Journey Audit — Vault ${_run.id}"
+
+cleanup:
+  # Permanent delete — runs via try/finally so prod-equivalent state is
+  # never left polluted even if an earlier step threw.
+  - actor: admin
+    action: api_delete
+    url: /api/admin/content-manager/vault/${created_vault.data.id}
+
+  # Belt-and-suspenders: confirm the item is gone from the archive too.
+  - actor: anon
+    action: api_get_not_contains
+    url: /api/content/vault
+    value: "Journey Audit — Vault ${_run.id}"
