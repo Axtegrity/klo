@@ -1,10 +1,18 @@
-const CACHE_NAME = "klo-v1";
+// IMPORTANT: bump this version on every deploy that changes client code.
+// The activate handler deletes caches whose name ≠ CACHE_NAME, so bumping
+// the version is the only way stale JS/HTML leaves a user's device.
+// 2026-04-11: bumped v1→v2 to flush a stale /vault + events bundle that
+// was surviving deploys because v1 was static across releases.
+const CACHE_NAME = "klo-v2";
 
+// Only pre-cache routes whose HTML is safe to serve from cache on a cold
+// load. /vault (and anything else showing dynamic admin-controlled data)
+// must NOT live here — pre-caching them means a user who installs the
+// PWA sees frozen content until the SW revalidates.
 const APP_SHELL = [
   "/",
   "/advisor",
   "/assessments",
-  "/vault",
   "/feed",
   "/booking",
 ];
