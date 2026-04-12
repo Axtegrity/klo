@@ -1,6 +1,6 @@
 -- ============================================================
 -- Seed: State of AI in the Black Church Survey
--- 30 questions across 6 sections
+-- 32 questions across 6 sections
 -- ============================================================
 
 -- Create the survey
@@ -152,9 +152,9 @@ INSERT INTO survey_questions (survey_id, section_id, question_text, question_typ
 
 -- Q19
 ('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'a1000001-0000-0000-0000-000000000004',
- 'Are there ministry areas where AI should never be used?', 'open',
- '[]',
- 19, false),
+ 'Are there ministry areas where AI should never be used?', 'single',
+ '["Pastoral counseling and spiritual guidance", "Sermon preaching and delivery", "Prayer ministry and altar ministry", "Church discipline and sensitive member matters", "Financial decision-making without human oversight", "AI can be used in all areas if properly governed", "Unsure"]',
+ 19, true),
 
 -- Q20
 ('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'a1000001-0000-0000-0000-000000000004',
@@ -208,15 +208,15 @@ INSERT INTO survey_questions (survey_id, section_id, question_text, question_typ
 
 -- Q27
 ('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'a1000001-0000-0000-0000-000000000006',
- 'What opportunity excites you most about AI for the Black Church?', 'open',
- '[]',
- 27, false),
+ 'What opportunity excites you most about AI for the Black Church?', 'single',
+ '["Improving church administration and efficiency", "Enhancing communication and outreach", "Supporting sermon research and teaching preparation", "Expanding digital evangelism and discipleship", "Strengthening youth and next-generation engagement", "Increasing access to knowledge and resources", "I am not yet convinced AI presents meaningful opportunity"]',
+ 27, true),
 
 -- Q28
 ('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'a1000001-0000-0000-0000-000000000006',
- 'What danger concerns you most?', 'open',
- '[]',
- 28, false),
+ 'What danger concerns you most about AI in church settings?', 'single',
+ '["Loss of spiritual authenticity", "Inaccurate or misleading information", "Ethical misuse or manipulation", "Dependence on technology over discernment", "Data privacy and security concerns", "Bias or cultural misrepresentation", "Fear that leaders may rely on AI too heavily"]',
+ 28, true),
 
 -- Q29
 ('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'a1000001-0000-0000-0000-000000000006',
@@ -228,4 +228,16 @@ INSERT INTO survey_questions (survey_id, section_id, question_text, question_typ
 ('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'a1000001-0000-0000-0000-000000000006',
  'Would you support a national initiative focused on AI readiness in Black churches?', 'single',
  '["Yes", "No", "Need more information"]',
- 30, true);
+ 30, true),
+
+-- Q31 (optional)
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'a1000001-0000-0000-0000-000000000006',
+ 'Name of Church', 'open',
+ '[]',
+ 31, false),
+
+-- Q32 (optional)
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'a1000001-0000-0000-0000-000000000006',
+ 'Email Address', 'open',
+ '[]',
+ 32, false);
