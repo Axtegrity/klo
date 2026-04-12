@@ -320,7 +320,19 @@ cases:
         value: "Function Audit Theme ${_run.id}"
 
   # ─── Page Composer: save → runtime rendered ⭐ ────────────
-  - name: page-composer-update-persists
+  # Merged from two cases so the cleanup block can run AFTER both the
+  # persistence check AND the runtime render check. Splitting the two left
+  # a window where the intermediate state (polluted hero_config) could
+  # escape to prod if the runner crashed between cases. Cleanup uses the
+  # runner's `cleanup:` phase (runs in a try/finally), so hero_config is
+  # ALWAYS restored to null — even if admin_steps or verify throws.
+  #
+  # Root cause of the 2026-04-12 prod incident: the previous spec split
+  # these into two cases with no cleanup. The audit wrote
+  # "Function Audit Headline mntushsc" into klo-app.vercel.app's home
+  # hero_config and left it there for ~36 hours. Restoring to null
+  # returns the hero to its code-default Keith photo slideshow.
+  - name: page-composer-save-persists-and-runtime-renders-⭐
     admin_steps:
       - action: api_patch
         url: /api/admin/creative-studio/pages/home
@@ -331,24 +343,29 @@ cases:
             backgroundType: "color"
             backgroundRef: "#0D1117"
             overlayOpacity: 0.5
-    verify:
       - action: api_get_contains
         url: /api/admin/creative-studio/pages
         value: "Function Audit Headline ${_run.id}"
-
-  - name: page-composer-runtime-renders-⭐
-    admin_steps:
-      - action: wait
-        ms: 100
     verify:
       # Critical test: the homepage should display the custom headline.
-      # FAILS until page composer runtime is built.
       - action: goto
         url: /
       - action: wait
         ms: 1000
       - action: expect_text
         selector: "h1"
+        value: "Function Audit Headline ${_run.id}"
+    cleanup:
+      # CRITICAL — always runs via runner finally block. Resets hero_config
+      # to null so the homepage falls back to the built-in Keith slideshow
+      # default. If this cleanup ever fails, the runner reports it as a
+      # Cleanup Warning in the markdown report — do NOT ignore those.
+      - action: api_patch
+        url: /api/admin/creative-studio/pages/home
+        value:
+          hero_config: null
+      - action: api_get_not_contains
+        url: /api/admin/creative-studio/pages
         value: "Function Audit Headline ${_run.id}"
 
   # ─── Media Library ─────────────────────────────────────────
