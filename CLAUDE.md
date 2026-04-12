@@ -100,6 +100,8 @@ TEST2_EMAIL / TEST2_PASSWORD
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
+DEV_SUPABASE_URL                 # optional — URL of dev Supabase project; when set and matched, guard allows writes
+ALLOW_PROD_MUTATIONS             # optional — set to "1" for a session to bypass the prod-write guard (escape hatch)
 ANTHROPIC_API_KEY
 STRIPE_SECRET_KEY
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY

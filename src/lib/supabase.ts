@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { guardSupabase, guardOptionsFromEnv, decide } from "./supabase-guard";
 
 /* ------------------------------------------------------------------ */
 /*  Database type definitions                                          */
@@ -98,7 +99,7 @@ export function getSupabase(): SupabaseClient {
     if (!url || !key) {
       throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set.");
     }
-    _supabase = createClient(url, key);
+    _supabase = guardSupabase(createClient(url, key), guardOptionsFromEnv());
   }
   return _supabase;
 }
@@ -126,12 +127,28 @@ export function getServiceSupabase(): SupabaseClient {
       );
     }
 
-    _serviceSupabase = createClient(url, serviceRoleKey, {
+    const raw = createClient(url, serviceRoleKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
       },
     });
+
+    // Guard the service-role client against accidental prod mutations from
+    // dev sessions. The guard is a no-op when NODE_ENV=production, so the
+    // deployed app is unaffected. See src/lib/supabase-guard.ts for the
+    // precedence rules. The boot log below makes the current mode visible
+    // every time dev starts — if you see "mode=guard-active" and didn't
+    // expect it, you're about to have writes rejected.
+    const guardOpts = guardOptionsFromEnv();
+    const guardDecision = decide(guardOpts);
+    if (guardOpts.nodeEnv !== "production") {
+      console.log(
+        `[supabase-guard] mode=${guardDecision.allow ? "pass-through" : "guard-active"} ` +
+          `reason=${guardDecision.reason} url=${guardOpts.currentUrl}`
+      );
+    }
+    _serviceSupabase = guardSupabase(raw, guardOpts);
   }
   return _serviceSupabase;
 }
