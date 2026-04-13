@@ -1,6 +1,6 @@
 -- ============================================================
 -- Seed: State of AI in the Black Church Survey
--- 32 questions across 6 sections
+-- 30 questions across 6 sections (Q31/Q32 added by later migration)
 -- ============================================================
 
 -- Create the survey
@@ -228,16 +228,7 @@ INSERT INTO survey_questions (survey_id, section_id, question_text, question_typ
 ('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'a1000001-0000-0000-0000-000000000006',
  'Would you support a national initiative focused on AI readiness in Black churches?', 'single',
  '["Yes", "No", "Need more information"]',
- 30, true),
+ 30, true);
 
--- Q31 (optional)
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'a1000001-0000-0000-0000-000000000006',
- 'Name of Church', 'open',
- '[]',
- 31, false),
-
--- Q32 (optional)
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'a1000001-0000-0000-0000-000000000006',
- 'Email Address', 'open',
- '[]',
- 32, false);
+-- Q31 (Name of Church) and Q32 (Email Address) are added by
+-- 20260411000000_update_survey_questions_19_27_28_add_31_32.sql

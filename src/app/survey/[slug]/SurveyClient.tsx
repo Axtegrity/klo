@@ -374,8 +374,15 @@ export default function SurveyClient({ slug }: { slug: string }) {
               )}
 
               {/* Question text */}
-              <h2 className="font-display text-xl md:text-2xl font-semibold text-klo-text leading-snug">
-                {currentStep + 1}. {currentQuestion.question_text}
+              <h2 className="font-display text-xl md:text-2xl font-semibold text-klo-text leading-snug flex items-start gap-3 flex-wrap">
+                <span>
+                  {currentStep + 1}. {currentQuestion.question_text}
+                </span>
+                {!currentQuestion.required && (
+                  <span className="text-xs font-sans font-medium uppercase tracking-wide px-2 py-0.5 rounded-full bg-klo-text/10 text-klo-text/70 mt-2">
+                    Optional
+                  </span>
+                )}
               </h2>
 
               {/* Options */}
