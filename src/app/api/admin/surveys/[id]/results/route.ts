@@ -3,6 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 
+// PostgREST defaults to a 1000-row cap on unpaginated responses. Aggregate
+// queries in this route must paginate so analytics reflect the full dataset.
+const PAGE_SIZE = 1000;
+
 async function verifyAdmin() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;
@@ -49,13 +53,24 @@ export async function GET(
 
   if (filterQuestionId && filterValue) {
     // Find respondents who gave this answer
-    const { data: filtered } = await supabase
-      .from("survey_answers")
-      .select("respondent_id")
-      .eq("question_id", filterQuestionId)
-      .eq("answer_value", filterValue);
+    const filtered: { respondent_id: string }[] = [];
+    for (let offset = 0; ; offset += PAGE_SIZE) {
+      const { data, error } = await supabase
+        .from("survey_answers")
+        .select("respondent_id")
+        .eq("question_id", filterQuestionId)
+        .eq("answer_value", filterValue)
+        .range(offset, offset + PAGE_SIZE - 1);
+      if (error) {
+        console.error("[GET /api/admin/surveys/[id]/results] filter query", error);
+        return NextResponse.json({ error: "Failed to load results" }, { status: 500 });
+      }
+      const chunk = data ?? [];
+      filtered.push(...chunk);
+      if (chunk.length < PAGE_SIZE) break;
+    }
 
-    respondentIds = (filtered ?? []).map((r) => r.respondent_id);
+    respondentIds = filtered.map((r) => r.respondent_id);
 
     if (respondentIds.length === 0) {
       // No matches — return empty aggregates
@@ -90,21 +105,34 @@ export async function GET(
   }
   const { count: totalRespondents } = await totalQuery;
 
-  // Get all answers, optionally filtered by respondent IDs
-  let answersQuery = supabase
-    .from("survey_answers")
-    .select("question_id, answer_value, answer_values, respondent_id")
-    .eq("survey_id", id);
-
-  if (respondentIds) {
-    answersQuery = answersQuery.in("respondent_id", respondentIds);
+  // Get all answers, optionally filtered by respondent IDs. Paginate — a survey
+  // with N respondents × ~30 questions hits the 1000-row cap at ~33 respondents.
+  type AnswerRow = {
+    question_id: string;
+    answer_value: string | null;
+    answer_values: string[] | null;
+    respondent_id: string;
+  };
+  const answers: AnswerRow[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    let page = supabase
+      .from("survey_answers")
+      .select("question_id, answer_value, answer_values, respondent_id")
+      .eq("survey_id", id);
+    if (respondentIds) page = page.in("respondent_id", respondentIds);
+    const { data, error } = await page.range(offset, offset + PAGE_SIZE - 1);
+    if (error) {
+      console.error("[GET /api/admin/surveys/[id]/results] answers query", error);
+      return NextResponse.json({ error: "Failed to load results" }, { status: 500 });
+    }
+    const chunk = (data ?? []) as AnswerRow[];
+    answers.push(...chunk);
+    if (chunk.length < PAGE_SIZE) break;
   }
-
-  const { data: answers } = await answersQuery;
 
   // Aggregate per question
   const aggregated = (questions ?? []).map((q) => {
-    const qAnswers = (answers ?? []).filter((a) => a.question_id === q.id);
+    const qAnswers = answers.filter((a) => a.question_id === q.id);
     const counts: Record<string, number> = {};
     const openResponses: string[] = [];
 
@@ -112,7 +140,7 @@ export async function GET(
       if (q.question_type === "open") {
         if (a.answer_value) openResponses.push(a.answer_value);
       } else if (q.question_type === "multi") {
-        const vals = (a.answer_values as string[]) ?? [];
+        const vals = a.answer_values ?? [];
         for (const v of vals) {
           counts[v] = (counts[v] || 0) + 1;
         }
