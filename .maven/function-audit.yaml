@@ -629,6 +629,22 @@ cases:
         # null is serialised as null — both are valid; absence = column missing.
         value: '"section_images"'
 
+  # ─── Exit button routes back to /admin ──────────────────────
+  # Verifies that clicking Exit in the visual editor navigates to /admin.
+  # No mutation, no cleanup needed — purely a navigation smoke test.
+  - name: home-editor-exit-routes-to-admin
+    admin_steps:
+      - action: goto
+        url: /admin/edit
+      - action: wait_for
+        selector: 'text=Keith L. Odom'
+        timeout: 15000
+      - action: click
+        selector: 'button:has(svg[data-lucide="log-out"])'
+    verify:
+      - action: expect_url
+        value: /admin
+
   # ─── Home editor loads without async-component console errors ⭐
   # Regression guard for PR #56 blocker (2026-04-13): TestimonialsSection
   # was an async server component imported into HomeEditor ("use client").
