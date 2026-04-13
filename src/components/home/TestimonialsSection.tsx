@@ -1,12 +1,43 @@
-import { Star } from "lucide-react";
-import { getApprovedTestimonials } from "@/lib/marketing-server";
+"use client";
 
-// Server component — fetches approved testimonials and renders them on the
-// home page. Returns null when there are no approved entries so the page
-// degrades gracefully instead of showing an empty section.
-export default async function TestimonialsSection() {
-  const testimonials = await getApprovedTestimonials(6);
-  if (testimonials.length === 0) return null;
+// TestimonialsSection — client component that fetches approved testimonials
+// from the public /api/testimonials endpoint.
+//
+// Converted from async server component (PR #56 blocker): HomeEditor.tsx is
+// "use client", so any component in its tree must also be a client component.
+// This renders identically on the public home page (server-rendered root) —
+// a "use client" component is fine in a server component tree.
+
+import { useEffect, useState } from "react";
+import { Star } from "lucide-react";
+
+interface Testimonial {
+  id: string;
+  quote: string;
+  organizer_name: string | null;
+  rating: number;
+  created_at: string;
+}
+
+export default function TestimonialsSection() {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/testimonials")
+      .then((r) => r.json())
+      .then((json: { testimonials?: Testimonial[] }) => {
+        setTestimonials(json.testimonials ?? []);
+      })
+      .catch(() => {
+        // Fail silently — same graceful-degradation as the server version.
+      })
+      .finally(() => setLoaded(true));
+  }, []);
+
+  // Don't render until we've attempted the fetch, and skip section entirely
+  // when there are no approved testimonials.
+  if (!loaded || testimonials.length === 0) return null;
 
   return (
     <section>

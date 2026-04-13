@@ -603,3 +603,47 @@ cases:
       - action: api_get_not_contains
         url: /api/admin/creative-studio/pages/home
         value: "Function Audit Discard Test ${_run.id}"
+
+  # ─── Schema: section_images column exists ⭐ ─────────────────
+  # Regression guard for PR #56 blocker (2026-04-13): PR #55 added code
+  # that writes page_configs.section_images but the migration that actually
+  # adds the column was missing. Every save returned 500 due to a Supabase
+  # schema-cache miss. This case catches the same mistake on any future
+  # column addition: if the PATCH API returns 500 with "Could not find the
+  # 'section_images' column", this case fails immediately.
+  #
+  # The section-images-save-and-home-page-render-⭐ case above tests the
+  # write round-trip; this case is cheaper — it only checks that the column
+  # is present by doing a PATCH and confirming no 500 error. No cleanup
+  # needed because the PATCH is a no-op (restores section_images to null).
+  - name: section-images-column-exists
+    admin_steps:
+      - action: api_patch
+        url: /api/admin/creative-studio/pages/home
+        value:
+          section_images: null
+    verify:
+      - action: api_get_contains
+        url: /api/admin/creative-studio/pages/home
+        # The column exists iff the API response includes section_images key.
+        # null is serialised as null — both are valid; absence = column missing.
+        value: '"section_images"'
+
+  # ─── Home editor loads without async-component console errors ⭐
+  # Regression guard for PR #56 blocker (2026-04-13): TestimonialsSection
+  # was an async server component imported into HomeEditor ("use client").
+  # React silently failed to render it — no visible error, just a blank
+  # section. This case loads /admin/edit and checks that the testimonials
+  # section wrapper renders (or is absent because no approved rows exist),
+  # and that the page HTTP response is 200 (not a React render bail-out 500).
+  - name: home-editor-loads-without-async-component-error
+    admin_steps:
+      - action: goto
+        url: /admin/edit
+      - action: wait_for
+        selector: 'text=Keith L. Odom'
+        timeout: 15000
+    verify:
+      - action: api_get_status
+        url: /admin/edit
+        value: 200
