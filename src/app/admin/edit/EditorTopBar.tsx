@@ -4,11 +4,11 @@
 // Sits above the site nav (z-[100]). Contains:
 //   Left:   page title + unsaved-changes indicator
 //   Center: viewport size toggle (Mobile/Tablet/Desktop)
-//   Right:  Advanced link | Discard | Publish
+//   Right:  Advanced link | Discard | Publish | Exit
 
 import { useRouter } from "next/navigation";
-import { Monitor, Tablet, Smartphone, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { Monitor, Tablet, Smartphone, ChevronDown, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useEditMode } from "@/contexts/EditModeContext";
 import type { ViewportSize } from "@/types/creative-studio";
 
@@ -30,6 +30,7 @@ export default function EditorTopBar({
   const router = useRouter();
   const { isDirty, isSaving, publish, discard } = useEditMode();
   const [publishing, setPublishing] = useState(false);
+  const [justPublished, setJustPublished] = useState(false);
   const [viewportDropdownOpen, setViewportDropdownOpen] = useState(false);
 
   const activeVp = VIEWPORTS.find((v) => v.size === viewport) ?? VIEWPORTS[2];
@@ -38,9 +39,27 @@ export default function EditorTopBar({
     setPublishing(true);
     try {
       await publish();
+      setJustPublished(true);
     } finally {
       setPublishing(false);
     }
+  };
+
+  // Auto-clear the justPublished flag after 2s.
+  useEffect(() => {
+    if (!justPublished) return;
+    const t = setTimeout(() => setJustPublished(false), 2000);
+    return () => clearTimeout(t);
+  }, [justPublished]);
+
+  const handleExit = () => {
+    if (isDirty) {
+      const confirmed = window.confirm(
+        "You have unsaved changes. Exit without publishing?"
+      );
+      if (!confirmed) return;
+    }
+    router.push("/admin");
   };
 
   return (
@@ -145,9 +164,27 @@ export default function EditorTopBar({
           type="button"
           onClick={handlePublish}
           disabled={publishing || isSaving}
-          className="px-4 py-1.5 rounded-lg bg-[#2764FF] text-white text-xs font-semibold hover:bg-[#1d50d4] disabled:opacity-60 disabled:cursor-not-allowed transition-all min-h-[32px]"
+          className={`px-4 py-1.5 rounded-lg text-white text-xs font-semibold disabled:opacity-60 disabled:cursor-not-allowed transition-all min-h-[32px] ${
+            justPublished
+              ? "bg-[#1a7f4b] hover:bg-[#1a7f4b]"
+              : "bg-[#2764FF] hover:bg-[#1d50d4]"
+          }`}
         >
-          {publishing ? "Saving…" : "Publish"}
+          {publishing ? "Saving…" : justPublished ? "Published ✓" : "Publish"}
+        </button>
+
+        {/* Exit — collapses to icon-only below 600px */}
+        <button
+          type="button"
+          onClick={handleExit}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all min-h-[32px] ${
+            justPublished
+              ? "border-[#1a7f4b]/60 text-[#1a7f4b] ring-1 ring-[#1a7f4b]/40 animate-pulse-once"
+              : "border-white/10 text-[#8B949E] hover:text-[#E6EDF3] hover:border-white/20"
+          }`}
+        >
+          <LogOut size={13} />
+          <span className="hidden sm:inline">Exit</span>
         </button>
       </div>
     </div>
