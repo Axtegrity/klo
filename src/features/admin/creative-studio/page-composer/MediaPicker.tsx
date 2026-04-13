@@ -131,7 +131,7 @@ export default function MediaPicker({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 px-4 pt-[72px] pb-4 overflow-y-auto"
             onClick={(e) => e.target === e.currentTarget && setOpen(false)}
           >
             <motion.div

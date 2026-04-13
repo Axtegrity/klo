@@ -168,7 +168,7 @@ export default function PageComposerPanel({ initialPage }: PageComposerPanelProp
               <button
                 key={vp.size}
                 onClick={() => setViewport(vp.size)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium min-h-[36px] ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium min-h-[40px] ${
                   viewport === vp.size ? "bg-klo-slate text-klo-text shadow" : "text-klo-muted hover:text-klo-text"
                 }`}
               >

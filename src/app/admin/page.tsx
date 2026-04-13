@@ -545,12 +545,12 @@ export default function AdminPage() {
                 is available to CreativeStudioTab on the re-render.
               */}
               <button
-                onClick={() => router.push("/admin?tab=creative-studio&page=home")}
+                onClick={() => router.push("/admin/edit")}
                 className="inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-klo-accent/10 border border-klo-accent/20 text-klo-accent hover:bg-klo-accent/20 transition-all min-h-[56px] text-sm font-semibold"
               >
                 <Wand2 size={18} />
                 Edit Home Page
-                <span className="text-xs font-normal text-klo-muted ml-1">— hero, watermarks, background</span>
+                <span className="text-xs font-normal text-klo-muted ml-1">— click any image to change it</span>
               </button>
             </motion.div>
 
