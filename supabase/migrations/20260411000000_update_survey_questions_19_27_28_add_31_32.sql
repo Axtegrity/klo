@@ -30,9 +30,11 @@ SET question_type = 'single',
 WHERE survey_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
   AND sort_order = 28;
 
--- Q31: Name of Church (optional)
+-- Q31: Name of Church (optional) — idempotent: skip if a question with this
+-- survey_id + sort_order already exists. An earlier version of this migration
+-- lacked a guard and duplicated Q31/Q32 in prod on 2026-04-13 when it re-ran.
 INSERT INTO survey_questions (survey_id, section_id, question_text, question_type, options, sort_order, required)
-VALUES (
+SELECT
   'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
   'a1000001-0000-0000-0000-000000000006',
   'Name of Church',
@@ -40,11 +42,15 @@ VALUES (
   '[]',
   31,
   false
+WHERE NOT EXISTS (
+  SELECT 1 FROM survey_questions
+  WHERE survey_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+    AND sort_order = 31
 );
 
--- Q32: Email (optional)
+-- Q32: Email (optional) — same idempotency guard as Q31.
 INSERT INTO survey_questions (survey_id, section_id, question_text, question_type, options, sort_order, required)
-VALUES (
+SELECT
   'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
   'a1000001-0000-0000-0000-000000000006',
   'Email Address',
@@ -52,4 +58,8 @@ VALUES (
   '[]',
   32,
   false
+WHERE NOT EXISTS (
+  SELECT 1 FROM survey_questions
+  WHERE survey_id = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+    AND sort_order = 32
 );

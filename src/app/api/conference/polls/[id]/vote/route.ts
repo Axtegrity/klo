@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { pollVoteSchema } from "@/lib/validation";
+import { shouldRejectTestIdentifier } from "@/lib/test-fingerprint-guard";
 
 export async function POST(
   request: Request,
@@ -13,6 +14,10 @@ export async function POST(
     return NextResponse.json({ error: "Valid option_index and voter_id required" }, { status: 400 });
   }
   const { option_index, voter_id } = parsed.data;
+
+  if (shouldRejectTestIdentifier(voter_id)) {
+    return NextResponse.json({ error: "Invalid voter_id" }, { status: 400 });
+  }
 
   // Use client-generated session ID instead of IP-based fingerprint
   // This allows all users on shared WiFi to vote independently

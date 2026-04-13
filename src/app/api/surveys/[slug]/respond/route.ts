@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { z } from "zod";
 import { checkLimit, surveyLimiter, getClientIp } from "@/lib/ratelimit";
+import { shouldRejectTestIdentifier } from "@/lib/test-fingerprint-guard";
 
 const respondSchema = z.object({
   fingerprint: z.string().min(8).max(128),
@@ -43,6 +44,17 @@ export async function POST(
     );
   }
 
+  const { fingerprint, answers } = parsed.data;
+
+  // Reject reserved test-identifier prefixes in prod so automated probes
+  // (Maven audit agents, stray curl) cannot pollute survey analytics.
+  if (shouldRejectTestIdentifier(fingerprint)) {
+    return NextResponse.json(
+      { error: "Invalid fingerprint" },
+      { status: 400 }
+    );
+  }
+
   // Look up survey and its required questions
   const { data: survey } = await supabase
     .from("surveys")
@@ -54,8 +66,6 @@ export async function POST(
   if (!survey) {
     return NextResponse.json({ error: "Survey not found or closed" }, { status: 404 });
   }
-
-  const { fingerprint, answers } = parsed.data;
 
   // Validate required questions are answered
   const { data: requiredQuestions } = await supabase
