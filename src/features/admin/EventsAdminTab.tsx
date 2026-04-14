@@ -1464,7 +1464,10 @@ function SpotlightPanel({ events }: { events: Event[] }) {
           Save Spotlight Settings
         </button>
         {!autoPick && !manualEventId && (
-          <span className="text-xs text-klo-muted/70">Saving will leave no event selected — /events will render without a spotlight card (countdown still follows its own toggle).</span>
+          <span className="inline-flex items-center gap-1.5 text-xs text-amber-400">
+            <AlertCircle size={14} />
+            No event selected — the spotlight card AND the countdown timer will both stay hidden until you pick an event or turn Auto-Pick back on.
+          </span>
         )}
         {status === "saved" && <span className="inline-flex items-center gap-1.5 text-xs text-emerald-400"><CheckCircle size={14} /> Saved</span>}
         {status === "error" && <span className="inline-flex items-center gap-1.5 text-xs text-red-400"><AlertCircle size={14} /> Error</span>}
