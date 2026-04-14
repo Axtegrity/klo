@@ -178,9 +178,9 @@ export default function TopNav() {
             exit={{ y: "-100%" }}
             transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
             className="fixed inset-0 z-40 bg-[#0D1117]/98 backdrop-blur-lg px-8 lg:hidden overflow-y-auto overscroll-contain"
-            style={{ paddingTop: "calc(72px + env(safe-area-inset-top, 0px) + 16px)", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 32px)" }}
+            style={{ paddingTop: "calc(72px + env(safe-area-inset-top, 0px) + 16px)", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 56px)" }}
           >
-            <ul className="flex flex-col gap-4">
+            <ul className="flex flex-col gap-2">
               {activeNavLinks.map((link, index) => (
                 <motion.li
                   key={link.href}
@@ -192,7 +192,7 @@ export default function TopNav() {
                     href={link.href}
                     onClick={closeMenu}
                     aria-current={isActive(link.href) ? "page" : undefined}
-                    className={`block text-xl font-medium py-3 border-b border-[#21262D]/30 transition-colors duration-200 min-h-[44px] ${
+                    className={`block text-xl font-medium py-4 border-b border-[#21262D]/30 transition-colors duration-200 min-h-[52px] last:border-b-0 ${
                       isActive(link.href)
                         ? "text-[#2764FF] border-[#2764FF]/50"
                         : "text-[#E6EDF3] hover:text-[#2764FF]"
