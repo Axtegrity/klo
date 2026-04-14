@@ -15,6 +15,7 @@ export async function GET() {
     `
     )
     .eq("is_published", true)
+    .eq("display_on_events_page", true)
     .order("event_date", { ascending: false });
 
   // Note: new columns (notes, session_name, room_location, event_status) are included via `*`

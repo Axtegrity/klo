@@ -65,9 +65,32 @@ interface EventItem {
   session_name: string | null;
   room_location: string | null;
   display_name_mode: string | null;
-  show_countdown: boolean;
   event_timezone: string | null;
+  session_end_time: string | null;
+  hosting_entity: string | null;
+  display_on_events_page: boolean;
   event_files: EventFile[];
+}
+
+interface EventSession {
+  id: string;
+  event_id: string;
+  sort_order: number;
+  session_name: string;
+  start_time: string | null;
+  end_time: string | null;
+  location: string | null;
+  room: string | null;
+}
+
+interface SpotlightPayload {
+  event: EventItem | null;
+  sessions: EventSession[];
+  show_countdown: boolean;
+  card_position: "above" | "below";
+  show_live_section: boolean;
+  show_upcoming_section: boolean;
+  show_past_section: boolean;
 }
 
 interface PollResult {
@@ -141,26 +164,56 @@ function formatTime(time: string): string {
   return `${hour}:${String(m).padStart(2, "0")} ${suffix}`;
 }
 
-function isToday(dateStr: string): boolean {
-  if (dateStr === "SAVE THE DATE") return false;
+// Live window: an event is "live" from its start time through its end time.
+// End time prefers `session_end_time`; falls back to `end_date` (multi-day),
+// then to a 90-minute window when a start time was given, else end-of-day.
+const DEFAULT_LIVE_WINDOW_MIN = 90;
+
+function eventStart(event: Pick<EventItem, "event_date" | "event_time">): Date | null {
+  if (event.event_date === "SAVE THE DATE") return null;
+  const t = event.event_time || "00:00";
+  const d = new Date(`${event.event_date}T${t}:00`);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function eventEnd(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time">): Date | null {
+  if (event.event_date === "SAVE THE DATE") return null;
+  const start = eventStart(event);
+  if (event.session_end_time) {
+    const d = new Date(`${event.event_date}T${event.session_end_time}:00`);
+    if (!isNaN(d.getTime())) {
+      if (start && d < start) d.setDate(d.getDate() + 1);
+      return d;
+    }
+  }
+  if (event.end_date && event.end_date !== event.event_date) {
+    const d = new Date(`${event.end_date}T23:59:59`);
+    if (!isNaN(d.getTime())) return d;
+  }
+  if (start && event.event_time) {
+    return new Date(start.getTime() + DEFAULT_LIVE_WINDOW_MIN * 60 * 1000);
+  }
+  const eod = new Date(`${event.event_date}T23:59:59`);
+  return isNaN(eod.getTime()) ? null : eod;
+}
+
+function isLiveNow(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time">): boolean {
+  const start = eventStart(event);
+  const end = eventEnd(event);
+  if (!start || !end) return false;
   const now = new Date();
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  return dateStr === today;
+  return now >= start && now <= end;
 }
 
-function isUpcoming(dateStr: string, eventTime?: string | null): boolean {
-  if (dateStr === "SAVE THE DATE") return true;
-  const timeSuffix = eventTime ? `T${eventTime}:00` : "T23:59:59";
-  const eventDate = new Date(dateStr + timeSuffix);
-  return eventDate >= new Date();
+function isPastEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time">): boolean {
+  if (event.event_date === "SAVE THE DATE") return false;
+  const end = eventEnd(event);
+  return end ? end < new Date() : false;
 }
 
-function isPast(dateStr: string, eventTime?: string | null): boolean {
-  if (dateStr === "SAVE THE DATE") return false;
-  // An event that's today is "live", not "past"
-  if (isToday(dateStr)) return false;
-  const timeSuffix = eventTime ? `T${eventTime}:00` : "T23:59:59";
-  return new Date(dateStr + timeSuffix) < new Date();
+function isUpcomingEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time">): boolean {
+  if (event.event_date === "SAVE THE DATE") return true;
+  return !isLiveNow(event) && !isPastEvent(event);
 }
 
 const fileTypeColors: Record<string, string> = {
@@ -178,20 +231,28 @@ export default function EventsPage() {
   const { data: session } = useSession();
   const isAuthenticated = !!(session?.user as { id?: string } | undefined)?.id;
   const [events, setEvents] = useState<EventItem[]>([]);
+  const [spotlight, setSpotlight] = useState<SpotlightPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventPolls, setEventPolls] = useState<PollResult[]>([]);
   const [pollsLoading, setPollsLoading] = useState(false);
+  // Tick every second so event_start/end windows roll the UI through
+  // countdown → live → past without needing a page refresh.
+  const [, setNowTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setNowTick((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
-    fetch("/api/events")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setEvents(data);
-        }
+    Promise.all([
+      fetch("/api/events").then((r) => r.json()).catch(() => []),
+      fetch("/api/spotlight").then((r) => r.json()).catch(() => null),
+    ])
+      .then(([eventsData, spotlightData]) => {
+        if (Array.isArray(eventsData)) setEvents(eventsData);
+        if (spotlightData) setSpotlight(spotlightData as SpotlightPayload);
       })
-      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
@@ -203,7 +264,7 @@ export default function EventsPage() {
   useEffect(() => {
     if (!selectedEventId) return;
     const ev = events.find((e) => e.id === selectedEventId);
-    if (!ev || !isPast(ev.event_date, ev.event_time)) return;
+    if (!ev || !isPastEvent(ev)) return;
 
     let cancelled = false;
     // Defer the loading-flag setState to a microtask so the rule's
@@ -236,21 +297,30 @@ export default function EventsPage() {
     return isNaN(ts) ? Infinity : ts;
   };
 
-  // Three-way split: Live (today), Upcoming (future), Past (before today)
+  // Three-way split by actual start/end time windows.
   const liveEvents = events
-    .filter((e) => isToday(e.event_date))
+    .filter(isLiveNow)
     .sort((a, b) => sortDate(a.event_date) - sortDate(b.event_date));
   const upcomingEvents = events
-    .filter((e) => !isToday(e.event_date) && isUpcoming(e.event_date, e.event_time))
+    .filter(isUpcomingEvent)
     .sort((a, b) => sortDate(a.event_date) - sortDate(b.event_date));
   const pastEvents = events
-    .filter((e) => isPast(e.event_date, e.event_time))
+    .filter(isPastEvent)
     .sort((a, b) => sortDate(b.event_date) - sortDate(a.event_date));
 
-  // Countdown events: show_countdown enabled, upcoming (not live yet, not past)
-  const countdownEvents = events
-    .filter((e) => e.show_countdown && !isToday(e.event_date) && isUpcoming(e.event_date, e.event_time))
-    .sort((a, b) => sortDate(a.event_date) - sortDate(b.event_date));
+  // Countdown target: spotlighted event's first session start, falling back
+  // to the event's own event_time. Only shown while the target is in the future.
+  const spotlightCountdownTarget = (() => {
+    if (!spotlight?.event) return null;
+    const firstSession = spotlight.sessions[0];
+    const time = firstSession?.start_time || spotlight.event.event_time;
+    const start = eventStart({ event_date: spotlight.event.event_date, event_time: time });
+    return start && start > new Date() ? { dateStr: spotlight.event.event_date, timeStr: time, tz: spotlight.event.event_timezone } : null;
+  })();
+
+  const showLive = spotlight?.show_live_section ?? true;
+  const showUpcoming = spotlight?.show_upcoming_section ?? true;
+  const showPast = spotlight?.show_past_section ?? true;
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
 
@@ -291,19 +361,29 @@ export default function EventsPage() {
         </motion.div>
       </section>
 
-      {/* Countdown Clocks */}
-      {countdownEvents.length > 0 && (
+      {/* Spotlight: numeric countdown + event card (order controlled by admin). */}
+      {spotlight && (spotlight.event || (spotlight.show_countdown && spotlightCountdownTarget)) && (
         <section className="px-6 pb-12">
           <div className="max-w-4xl mx-auto space-y-6">
-            {countdownEvents.map((event) => (
-              <CountdownClock key={event.id} event={event} />
-            ))}
+            {spotlight.card_position === "above" && spotlight.event && (
+              <SpotlightCard event={spotlight.event} sessions={spotlight.sessions} />
+            )}
+            {spotlight.show_countdown && spotlightCountdownTarget && (
+              <CountdownClock
+                eventDate={spotlightCountdownTarget.dateStr}
+                eventTime={spotlightCountdownTarget.timeStr}
+                eventTimezone={spotlightCountdownTarget.tz}
+              />
+            )}
+            {spotlight.card_position === "below" && spotlight.event && (
+              <SpotlightCard event={spotlight.event} sessions={spotlight.sessions} />
+            )}
           </div>
         </section>
       )}
 
       {/* Live Events — only visible when today matches an event date */}
-      {liveEvents.length > 0 && (
+      {showLive && liveEvents.length > 0 && (
         <section className="px-6 pt-0 pb-8">
           <motion.div
             initial="hidden"
@@ -470,7 +550,7 @@ export default function EventsPage() {
             )}
 
             {/* Poll Results (past events only) */}
-            {isPast(selectedEvent.event_date, selectedEvent.event_time) && (
+            {isPastEvent(selectedEvent) && (
               <div className="border-t border-white/5 pt-4">
                 <p className="text-sm font-semibold text-klo-text mb-3 flex items-center gap-1.5">
                   <BarChart3 size={14} />
@@ -520,6 +600,7 @@ export default function EventsPage() {
       )}
 
       {/* Upcoming Events */}
+      {showUpcoming && (
       <section className="px-6 py-16 md:py-24">
         <motion.div
           initial="hidden"
@@ -563,16 +644,17 @@ export default function EventsPage() {
             >
               {upcomingEvents.map((event, i) => (
                 <motion.div key={event.id} variants={fadeUp} custom={i + 1}>
-                  <EventCard event={event} isLive={isToday(event.event_date)} onViewDetails={setSelectedEventId} />
+                  <EventCard event={event} isLive={isLiveNow(event)} onViewDetails={setSelectedEventId} />
                 </motion.div>
               ))}
             </motion.div>
           )}
         </motion.div>
       </section>
+      )}
 
       {/* Past Events */}
-      {pastEvents.length > 0 && (
+      {showPast && pastEvents.length > 0 && (
         <section className="px-6 py-16 md:py-24 bg-klo-dark/40">
           <motion.div
             initial="hidden"
@@ -701,26 +783,30 @@ function getTimeLeft(eventDate: string, eventTime: string | null, eventTimezone:
   return { months: Math.max(0, months), days: Math.max(0, days), hours: Math.max(0, hours), minutes: Math.max(0, minutes), seconds: Math.max(0, seconds), total: diff };
 }
 
-function CountdownClock({ event }: { event: EventItem }) {
+function CountdownClock({
+  eventDate,
+  eventTime,
+  eventTimezone,
+}: {
+  eventDate: string;
+  eventTime: string | null;
+  eventTimezone: string | null;
+}) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(() =>
-    getTimeLeft(event.event_date, event.event_time, event.event_timezone)
+    getTimeLeft(eventDate, eventTime, eventTimezone)
   );
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const tl = getTimeLeft(event.event_date, event.event_time, event.event_timezone);
+      const tl = getTimeLeft(eventDate, eventTime, eventTimezone);
       setTimeLeft(tl);
       if (tl.total <= 0) clearInterval(interval);
     }, 1000);
     return () => clearInterval(interval);
-  }, [event.event_date, event.event_time, event.event_timezone]);
+  }, [eventDate, eventTime, eventTimezone]);
 
   // Don't render if countdown is done
   if (timeLeft.total <= 0) return null;
-
-  const displayName = event.display_name_mode === "session" && event.session_name
-    ? event.session_name
-    : event.conference_name;
 
   const units = [
     ...(timeLeft.months > 0 ? [{ value: timeLeft.months, label: timeLeft.months === 1 ? "Month" : "Months" }] : []),
@@ -738,9 +824,48 @@ function CountdownClock({ event }: { event: EventItem }) {
     >
       <Card className="relative overflow-hidden border-[#2764FF]/20 bg-gradient-to-br from-[#2764FF]/5 via-transparent to-[#21B8CD]/5">
         <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD]" />
-        <div className="text-center py-4 space-y-5">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-[#2764FF] uppercase tracking-wider">Counting Down To</p>
+        <div className="py-4 flex items-center justify-center gap-3 md:gap-5">
+          {units.map((unit) => (
+            <div key={unit.label} className="flex flex-col items-center">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-[#0D1117] border border-white/10 flex items-center justify-center">
+                <span className="font-display text-2xl md:text-3xl font-bold text-klo-text tabular-nums">
+                  {String(unit.value).padStart(2, "0")}
+                </span>
+              </div>
+              <span className="text-[10px] md:text-xs text-klo-muted mt-1.5 uppercase tracking-wider">
+                {unit.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </motion.div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Spotlight Card                                                      */
+/* ------------------------------------------------------------------ */
+
+function SpotlightCard({ event, sessions }: { event: EventItem; sessions: EventSession[] }) {
+  const displayName = event.display_name_mode === "session" && event.session_name
+    ? event.session_name
+    : event.conference_name;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+    >
+      <Card className="relative overflow-hidden border-[#2764FF]/20 bg-gradient-to-br from-[#2764FF]/5 via-transparent to-[#21B8CD]/5">
+        <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD]" />
+        <div className="py-4 space-y-5">
+          <div className="text-center space-y-2">
+            <p className="text-sm font-medium text-[#2764FF] uppercase tracking-wider">Up Next</p>
+            {event.hosting_entity && (
+              <p className="text-sm text-klo-muted">Hosted by {event.hosting_entity}</p>
+            )}
             <h3 className="font-display text-2xl md:text-3xl font-bold text-klo-text">
               {displayName}
             </h3>
@@ -748,7 +873,6 @@ function CountdownClock({ event }: { event: EventItem }) {
               <span className="inline-flex items-center gap-1.5">
                 <Calendar size={14} className="text-[#2764FF]/70" />
                 {formatDateRange(event.start_date, event.end_date, event.event_date)}
-                {event.event_time && ` at ${formatTime(event.event_time)}`}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <MapPin size={14} className="text-[#2764FF]/70" />
@@ -757,20 +881,36 @@ function CountdownClock({ event }: { event: EventItem }) {
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-3 md:gap-5">
-            {units.map((unit) => (
-              <div key={unit.label} className="flex flex-col items-center">
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-[#0D1117] border border-white/10 flex items-center justify-center">
-                  <span className="font-display text-2xl md:text-3xl font-bold text-klo-text tabular-nums">
-                    {String(unit.value).padStart(2, "0")}
+          {sessions.length > 0 && (
+            <div className="mx-auto max-w-2xl px-2 space-y-2">
+              <p className="text-xs uppercase tracking-wider text-klo-muted/70 text-center mb-3">
+                {sessions.length === 1 ? "Session" : "Sessions"}
+              </p>
+              {sessions.map((s) => (
+                <div
+                  key={s.id}
+                  className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 rounded-lg bg-white/[0.03] border border-white/5"
+                >
+                  <span className="font-semibold text-sm text-klo-text flex-1 min-w-[12rem]">
+                    {s.session_name}
                   </span>
+                  {s.start_time && (
+                    <span className="inline-flex items-center gap-1.5 text-xs text-klo-muted">
+                      <Calendar size={12} className="text-[#2764FF]/70" />
+                      {formatTime(s.start_time)}
+                      {s.end_time && ` – ${formatTime(s.end_time)}`}
+                    </span>
+                  )}
+                  {(s.location || s.room) && (
+                    <span className="inline-flex items-center gap-1.5 text-xs text-klo-muted">
+                      <MapPin size={12} className="text-[#2764FF]/70" />
+                      {[s.location, s.room].filter(Boolean).join(" · ")}
+                    </span>
+                  )}
                 </div>
-                <span className="text-[10px] md:text-xs text-klo-muted mt-1.5 uppercase tracking-wider">
-                  {unit.label}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </Card>
     </motion.div>

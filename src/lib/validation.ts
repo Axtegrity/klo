@@ -185,7 +185,8 @@ export const adminEventUpdateSchema = z.object({
   event_status: z.string().max(50).optional(),
   event_status_override: z.string().max(50).optional(),
   display_name_mode: z.string().max(50).optional(),
-  show_countdown: z.boolean().optional(),
+  hosting_entity: z.string().max(500).nullable().optional(),
+  display_on_events_page: z.boolean().optional(),
 }).refine((data) => Object.keys(data).length > 0, {
   message: "At least one field is required",
 });

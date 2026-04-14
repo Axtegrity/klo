@@ -57,3 +57,7 @@ public/credentials-slide.*
 public/training/audio/.content-hashes.json
 # Use bun.lock instead
 package-lock.json
+
+# Local dev helper scripts (auto-signin, QA runner)
+.klo-*.mjs
+.env.local.backup*

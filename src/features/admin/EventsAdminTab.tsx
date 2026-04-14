@@ -21,6 +21,7 @@ import {
   Pencil,
   X,
   Save,
+  Radio,
 } from "lucide-react";
 
 interface EventFile {
@@ -55,7 +56,8 @@ interface Event {
   is_guest_presenter: boolean;
   session_end_time: string | null;
   display_name_mode: string;
-  show_countdown: boolean;
+  hosting_entity: string | null;
+  display_on_events_page: boolean;
   event_status: string;
   event_status_override: boolean;
   event_files: EventFile[];
@@ -286,7 +288,8 @@ export default function EventsAdminTab() {
       is_guest_presenter: event.is_guest_presenter || false,
       session_end_time: event.session_end_time || "",
       display_name_mode: event.display_name_mode || "event",
-      show_countdown: event.show_countdown || false,
+      hosting_entity: event.hosting_entity || "",
+      display_on_events_page: event.display_on_events_page ?? true,
       event_status: event.event_status || "upcoming",
       event_status_override: event.event_status_override || false,
     } as Partial<Event>);
@@ -721,27 +724,68 @@ export default function EventsAdminTab() {
                       <span className="text-xs text-klo-muted/60">Shown as heading on engagement page</span>
                     </div>
 
-                    {/* Countdown Clock Toggle */}
+                    {/* Hosting Entity */}
+                    <div className="flex items-center gap-3">
+                      <label className="text-xs text-klo-muted whitespace-nowrap">Hosting Entity:</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., First Baptist Church"
+                        value={(editFields as Record<string, unknown>).hosting_entity as string ?? ""}
+                        onChange={(e) => setEditFields({ ...editFields, hosting_entity: e.target.value })}
+                        className={`${inputClass} flex-1 max-w-md`}
+                      />
+                      <span className="text-xs text-klo-muted/60">Optional — shown on spotlight card</span>
+                    </div>
+
+                    {/* Display on Events Page Toggle */}
                     <div className="space-y-1">
                       <label className="flex items-center gap-3 cursor-pointer">
                         <button
                           type="button"
-                          onClick={() => setEditFields({ ...editFields, show_countdown: !(editFields as Record<string, unknown>).show_countdown })}
+                          onClick={() => setEditFields({ ...editFields, display_on_events_page: !((editFields as Record<string, unknown>).display_on_events_page ?? true) })}
                           className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
-                            (editFields as Record<string, unknown>).show_countdown ? "bg-[#2764FF]" : "bg-klo-slate"
+                            ((editFields as Record<string, unknown>).display_on_events_page ?? true) ? "bg-[#2764FF]" : "bg-klo-slate"
                           }`}
                           role="switch"
-                          aria-checked={!!(editFields as Record<string, unknown>).show_countdown}
-                          aria-label="Show Countdown Clock"
+                          aria-checked={!!((editFields as Record<string, unknown>).display_on_events_page ?? true)}
+                          aria-label="Display on Events Page"
                         >
                           <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
-                            (editFields as Record<string, unknown>).show_countdown ? "translate-x-5" : ""
+                            ((editFields as Record<string, unknown>).display_on_events_page ?? true) ? "translate-x-5" : ""
                           }`} />
                         </button>
-                        <span className="text-sm text-klo-text">Show Countdown Clock on Events Page</span>
+                        <span className="text-sm text-klo-text">Display on Events Page</span>
                       </label>
-                      <p className="text-xs text-klo-muted/60 pl-14">Displays a live countdown timer. Disappears when the event goes live.</p>
+                      <p className="text-xs text-klo-muted/60 pl-14">When off, hides this event from the public events listing (Live/Upcoming/Past). Direct URL still works.</p>
                     </div>
+
+                    {/* Feature on Home Page Toggle */}
+                    <div className="space-y-1">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFeature(event.id, event.is_featured)}
+                          className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                            event.is_featured ? "bg-klo-gold" : "bg-klo-slate"
+                          }`}
+                          role="switch"
+                          aria-checked={event.is_featured}
+                          aria-label="Feature on Home Page"
+                        >
+                          <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
+                            event.is_featured ? "translate-x-5" : ""
+                          }`} />
+                        </button>
+                        <span className="text-sm text-klo-text inline-flex items-center gap-1.5">
+                          <Star size={14} className={event.is_featured ? "text-klo-gold" : "text-klo-muted"} fill={event.is_featured ? "currentColor" : "none"} />
+                          Feature on Home Page
+                        </span>
+                      </label>
+                      <p className="text-xs text-klo-muted/60 pl-14">{event.is_featured ? "Currently featured — shown on the homepage hero." : "Off — not shown on the homepage."}</p>
+                    </div>
+
+                    {/* Sessions Editor */}
+                    <SessionsEditor eventId={event.id} />
 
                     {/* Event Status Override */}
                     <div className="flex items-center gap-3">
@@ -866,6 +910,9 @@ export default function EventsAdminTab() {
       variants={fadeUp}
       className="space-y-8"
     >
+      {/* Site Spotlight config */}
+      <SpotlightPanel events={events} />
+
       {/* Header with add button */}
       <div className="flex items-center justify-between">
         <div>
@@ -1224,5 +1271,359 @@ export default function EventsAdminTab() {
       {renderEventList(currentEvents, "Current Events")}
       {renderEventList(previousEvents, "Previous Events")}
     </motion.div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Spotlight Panel                                                     */
+/* ------------------------------------------------------------------ */
+
+function SpotlightPanel({ events }: { events: Event[] }) {
+  const [autoPick, setAutoPick] = useState(true);
+  const [showCountdown, setShowCountdown] = useState(true);
+  const [cardPosition, setCardPosition] = useState<"above" | "below">("below");
+  const [manualEventId, setManualEventId] = useState<string | null>(null);
+  const [showLive, setShowLive] = useState(true);
+  const [showUpcoming, setShowUpcoming] = useState(true);
+  const [showPast, setShowPast] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
+
+  useEffect(() => {
+    fetch("/api/admin/spotlight")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d) {
+          setAutoPick(d.mode !== "manual");
+          setShowCountdown(d.show_countdown ?? true);
+          setCardPosition(d.card_position === "above" ? "above" : "below");
+          setManualEventId(d.manual_event_id ?? null);
+          setShowLive(d.show_live_section ?? true);
+          setShowUpcoming(d.show_upcoming_section ?? true);
+          setShowPast(d.show_past_section ?? true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    setStatus("idle");
+    try {
+      const res = await fetch("/api/admin/spotlight", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: autoPick ? "auto" : "manual",
+          manual_event_id: autoPick ? null : manualEventId,
+          show_countdown: showCountdown,
+          card_position: cardPosition,
+          show_live_section: showLive,
+          show_upcoming_section: showUpcoming,
+          show_past_section: showPast,
+        }),
+      });
+      setStatus(res.ok ? "saved" : "error");
+    } catch {
+      setStatus("error");
+    } finally {
+      setSaving(false);
+      setTimeout(() => setStatus("idle"), 2500);
+    }
+  };
+
+  const sorted = [...events].sort((a, b) => (a.event_date < b.event_date ? 1 : -1));
+
+  const Toggle = ({
+    checked,
+    onChange,
+    label,
+    help,
+  }: {
+    checked: boolean;
+    onChange: () => void;
+    label: string;
+    help: string;
+  }) => (
+    <div className="space-y-1">
+      <label className="flex items-center gap-3 cursor-pointer">
+        <button
+          type="button"
+          onClick={onChange}
+          className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${checked ? "bg-[#2764FF]" : "bg-klo-slate"}`}
+          role="switch"
+          aria-checked={checked}
+          aria-label={label}
+        >
+          <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${checked ? "translate-x-5" : ""}`} />
+        </button>
+        <span className="text-sm text-klo-text">{label}</span>
+      </label>
+      <p className="text-xs text-klo-muted/60 pl-14">{help}</p>
+    </div>
+  );
+
+  return (
+    <div className="rounded-2xl p-6 border-2 border-[#2764FF]/40 bg-gradient-to-br from-[#2764FF]/10 via-[#2764FF]/5 to-transparent shadow-lg shadow-[#2764FF]/10 space-y-5">
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-lg bg-[#2764FF]/20 flex items-center justify-center flex-shrink-0">
+          <Radio size={20} className="text-[#2764FF]" />
+        </div>
+        <div>
+          <h2 className="text-lg font-bold text-klo-text">Countdown & Spotlight Controls</h2>
+          <p className="text-sm text-klo-muted mt-1">
+            Controls what appears at the top of the public /events page. Two switches below &mdash; flip and save.
+          </p>
+        </div>
+      </div>
+
+      <Toggle
+        checked={showCountdown}
+        onChange={() => setShowCountdown((v) => !v)}
+        label="Show Countdown Timer"
+        help="When on, the numeric countdown clock appears above the spotlight card. Turn off to hide the clock and show only the event details."
+      />
+
+      <div className="space-y-1">
+        <p className="text-sm text-klo-text">Event Card Position</p>
+        <div className="pl-0 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setCardPosition("above")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${cardPosition === "above" ? "bg-[#2764FF] text-white" : "bg-white/5 text-klo-muted hover:bg-white/10"}`}
+          >
+            Above Countdown
+          </button>
+          <button
+            type="button"
+            onClick={() => setCardPosition("below")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${cardPosition === "below" ? "bg-[#2764FF] text-white" : "bg-white/5 text-klo-muted hover:bg-white/10"}`}
+          >
+            Below Countdown
+          </button>
+        </div>
+        <p className="text-xs text-klo-muted/60">Where the event details card sits relative to the countdown timer on /events.</p>
+      </div>
+
+      <Toggle
+        checked={autoPick}
+        onChange={() => setAutoPick((v) => !v)}
+        label="Auto-Pick Next Event"
+        help="When on, the spotlight automatically follows the nearest upcoming event. Turn off to pick a specific event manually."
+      />
+
+      {!autoPick && (
+        <div className="pl-14 space-y-1">
+          <label className="text-xs text-klo-muted">Spotlight this event:</label>
+          <select
+            value={manualEventId ?? ""}
+            onChange={(e) => setManualEventId(e.target.value || null)}
+            className="w-full max-w-lg px-3 py-2 rounded-lg bg-[#161B22] border border-white/10 text-klo-text text-sm focus:outline-none focus:border-[#2764FF]/40"
+          >
+            <option value="">— Select an event —</option>
+            {sorted.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {ev.event_date} — {ev.conference_name}{ev.session_name ? ` (${ev.session_name})` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      <div className="pt-4 border-t border-white/10 space-y-4">
+        <p className="text-sm font-semibold text-klo-text">Event Lists on /events Page</p>
+        <p className="text-xs text-klo-muted/60 -mt-3">Hide any section to declutter the page. Turn all three off to show only the countdown/spotlight.</p>
+        <Toggle
+          checked={showLive}
+          onChange={() => setShowLive((v) => !v)}
+          label="Show Live Events Section"
+          help="Events currently in progress (today, within start/end window)."
+        />
+        <Toggle
+          checked={showUpcoming}
+          onChange={() => setShowUpcoming((v) => !v)}
+          label="Show Upcoming Events Section"
+          help="All future published events that haven't started yet."
+        />
+        <Toggle
+          checked={showPast}
+          onChange={() => setShowPast((v) => !v)}
+          label="Show Past Events Section"
+          help="Events that have already ended."
+        />
+      </div>
+
+      <div className="flex items-center gap-3 pt-2">
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving || (!autoPick && !manualEventId)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+        >
+          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          Save Spotlight Settings
+        </button>
+        {status === "saved" && <span className="inline-flex items-center gap-1.5 text-xs text-emerald-400"><CheckCircle size={14} /> Saved</span>}
+        {status === "error" && <span className="inline-flex items-center gap-1.5 text-xs text-red-400"><AlertCircle size={14} /> Error</span>}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sessions Editor (up to 10 per event)                                */
+/* ------------------------------------------------------------------ */
+
+interface SessionRow {
+  session_name: string;
+  start_time: string;
+  end_time: string;
+  location: string;
+  room: string;
+}
+
+const EMPTY_ROW: SessionRow = { session_name: "", start_time: "", end_time: "", location: "", room: "" };
+
+function SessionsEditor({ eventId }: { eventId: string }) {
+  const [rows, setRows] = useState<SessionRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
+
+  useEffect(() => {
+    fetch(`/api/admin/events/${eventId}/sessions`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setRows(
+            data.map((s: Record<string, unknown>) => ({
+              session_name: (s.session_name as string) ?? "",
+              start_time: (s.start_time as string) ?? "",
+              end_time: (s.end_time as string) ?? "",
+              location: (s.location as string) ?? "",
+              room: (s.room as string) ?? "",
+            }))
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [eventId]);
+
+  const update = (i: number, patch: Partial<SessionRow>) => {
+    setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  };
+  const remove = (i: number) => setRows((prev) => prev.filter((_, idx) => idx !== i));
+  const add = () => setRows((prev) => (prev.length >= 10 ? prev : [...prev, { ...EMPTY_ROW }]));
+
+  const save = async () => {
+    const cleaned = rows
+      .map((r) => ({
+        session_name: r.session_name.trim(),
+        start_time: r.start_time || null,
+        end_time: r.end_time || null,
+        location: r.location.trim() || null,
+        room: r.room.trim() || null,
+      }))
+      .filter((r) => r.session_name.length > 0);
+    setSaving(true);
+    setStatus("idle");
+    try {
+      const res = await fetch(`/api/admin/events/${eventId}/sessions`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessions: cleaned }),
+      });
+      setStatus(res.ok ? "saved" : "error");
+    } catch {
+      setStatus("error");
+    } finally {
+      setSaving(false);
+      setTimeout(() => setStatus("idle"), 2500);
+    }
+  };
+
+  return (
+    <div className="space-y-3 border-t border-white/5 pt-4 mt-2">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-klo-text">Sessions</h3>
+          <p className="text-xs text-klo-muted/60">Up to 10 sessions. Shown on the spotlight card when this event is featured.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={add}
+            disabled={rows.length >= 10}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 text-klo-muted text-xs hover:bg-white/10 hover:text-klo-text transition-colors disabled:opacity-40"
+          >
+            <Plus size={12} /> Add Session
+          </button>
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+          >
+            {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+            Save Sessions
+          </button>
+          {status === "saved" && <span className="inline-flex items-center gap-1 text-xs text-emerald-400"><CheckCircle size={12} /> Saved</span>}
+          {status === "error" && <span className="inline-flex items-center gap-1 text-xs text-red-400"><AlertCircle size={12} /> Error</span>}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-xs text-klo-muted/60">Loading sessions...</div>
+      ) : rows.length === 0 ? (
+        <div className="text-xs text-klo-muted/60 px-3 py-2 rounded-lg bg-white/[0.02] border border-dashed border-white/10">
+          No sessions yet. Click &ldquo;Add Session&rdquo; to create one.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {rows.map((row, i) => (
+            <div key={i} className="grid grid-cols-1 md:grid-cols-12 gap-2 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/5">
+              <span className="md:col-span-1 text-xs text-klo-muted/60 self-center">#{i + 1}</span>
+              <input
+                type="text"
+                placeholder="Session name (e.g., Opening Keynote)"
+                value={row.session_name}
+                onChange={(e) => update(i, { session_name: e.target.value })}
+                className="md:col-span-4 px-2 py-1.5 rounded bg-[#0D1117] border border-white/10 text-klo-text text-xs focus:outline-none focus:border-[#2764FF]/40"
+              />
+              <input
+                type="time"
+                value={row.start_time}
+                onChange={(e) => update(i, { start_time: e.target.value })}
+                className="md:col-span-2 px-2 py-1.5 rounded bg-[#0D1117] border border-white/10 text-klo-text text-xs focus:outline-none focus:border-[#2764FF]/40"
+                title="Start time"
+              />
+              <input
+                type="time"
+                value={row.end_time}
+                onChange={(e) => update(i, { end_time: e.target.value })}
+                className="md:col-span-2 px-2 py-1.5 rounded bg-[#0D1117] border border-white/10 text-klo-text text-xs focus:outline-none focus:border-[#2764FF]/40"
+                title="End time"
+              />
+              <input
+                type="text"
+                placeholder="Room"
+                value={row.room}
+                onChange={(e) => update(i, { room: e.target.value })}
+                className="md:col-span-2 px-2 py-1.5 rounded bg-[#0D1117] border border-white/10 text-klo-text text-xs focus:outline-none focus:border-[#2764FF]/40"
+              />
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                className="md:col-span-1 p-1.5 rounded hover:bg-red-500/10 text-klo-muted hover:text-red-400 transition-colors self-center justify-self-end"
+                title="Remove session"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
