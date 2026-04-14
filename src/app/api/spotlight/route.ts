@@ -25,8 +25,10 @@ export async function GET() {
 
   let eventId: string | null = null;
 
-  if (cfg?.mode === "manual" && cfg.manual_event_id) {
-    eventId = cfg.manual_event_id;
+  if (cfg?.mode === "manual") {
+    // Respect the admin's "manual" choice strictly — if no event is picked,
+    // return no spotlight rather than silently falling back to auto.
+    eventId = cfg.manual_event_id ?? null;
   } else {
     // Auto: pick the nearest upcoming published + visible event.
     const now = new Date();

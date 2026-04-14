@@ -1457,12 +1457,15 @@ function SpotlightPanel({ events }: { events: Event[] }) {
         <button
           type="button"
           onClick={save}
-          disabled={saving || (!autoPick && !manualEventId)}
+          disabled={saving}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           Save Spotlight Settings
         </button>
+        {!autoPick && !manualEventId && (
+          <span className="text-xs text-klo-muted/70">Saving will leave no event selected — /events will render without a spotlight card (countdown still follows its own toggle).</span>
+        )}
         {status === "saved" && <span className="inline-flex items-center gap-1.5 text-xs text-emerald-400"><CheckCircle size={14} /> Saved</span>}
         {status === "error" && <span className="inline-flex items-center gap-1.5 text-xs text-red-400"><AlertCircle size={14} /> Error</span>}
       </div>
