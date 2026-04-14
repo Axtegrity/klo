@@ -848,9 +848,10 @@ function CountdownClock({
 /* ------------------------------------------------------------------ */
 
 function SpotlightCard({ event, sessions }: { event: EventItem; sessions: EventSession[] }) {
-  const displayName = event.display_name_mode === "session" && event.session_name
-    ? event.session_name
-    : event.conference_name;
+  // Spotlight always leads with the conference/event name so visitors have
+  // context. If a session_name exists and is different, show it as a subtitle.
+  const eventName = event.conference_name || event.title;
+  const subtitle = event.session_name && event.session_name !== eventName ? event.session_name : null;
 
   return (
     <motion.div
@@ -867,9 +868,14 @@ function SpotlightCard({ event, sessions }: { event: EventItem; sessions: EventS
               <p className="text-sm text-klo-muted">Hosted by {event.hosting_entity}</p>
             )}
             <h3 className="font-display text-2xl md:text-3xl font-bold text-klo-text">
-              {displayName}
+              {eventName}
             </h3>
-            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-klo-muted">
+            {subtitle && (
+              <p className="text-base md:text-lg text-klo-muted font-medium italic">
+                &ldquo;{subtitle}&rdquo;
+              </p>
+            )}
+            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-klo-muted pt-1">
               <span className="inline-flex items-center gap-1.5">
                 <Calendar size={14} className="text-[#2764FF]/70" />
                 {formatDateRange(event.start_date, event.end_date, event.event_date)}
