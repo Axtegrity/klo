@@ -13,6 +13,11 @@ const updateSchema = z.object({
   show_live_section: z.boolean().optional(),
   show_upcoming_section: z.boolean().optional(),
   show_past_section: z.boolean().optional(),
+  card_show_host: z.boolean().optional(),
+  card_show_event_name: z.boolean().optional(),
+  card_show_session_subtitle: z.boolean().optional(),
+  card_show_meta: z.boolean().optional(),
+  card_show_sessions_list: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -22,7 +27,7 @@ export async function GET() {
   const supabase = getServiceSupabase();
   const { data, error } = await supabase
     .from("site_spotlight")
-    .select("mode, manual_event_id, show_countdown, card_position, show_live_section, show_upcoming_section, show_past_section, updated_at")
+    .select("mode, manual_event_id, show_countdown, card_position, show_live_section, show_upcoming_section, show_past_section, card_show_host, card_show_event_name, card_show_session_subtitle, card_show_meta, card_show_sessions_list, updated_at")
     .eq("id", 1)
     .maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -34,6 +39,11 @@ export async function GET() {
     show_live_section: true,
     show_upcoming_section: true,
     show_past_section: true,
+    card_show_host: true,
+    card_show_event_name: true,
+    card_show_session_subtitle: true,
+    card_show_meta: true,
+    card_show_sessions_list: true,
   });
 }
 
@@ -58,6 +68,11 @@ export async function PUT(req: NextRequest) {
   if (typeof parsed.data.show_live_section === "boolean") updates.show_live_section = parsed.data.show_live_section;
   if (typeof parsed.data.show_upcoming_section === "boolean") updates.show_upcoming_section = parsed.data.show_upcoming_section;
   if (typeof parsed.data.show_past_section === "boolean") updates.show_past_section = parsed.data.show_past_section;
+  if (typeof parsed.data.card_show_host === "boolean") updates.card_show_host = parsed.data.card_show_host;
+  if (typeof parsed.data.card_show_event_name === "boolean") updates.card_show_event_name = parsed.data.card_show_event_name;
+  if (typeof parsed.data.card_show_session_subtitle === "boolean") updates.card_show_session_subtitle = parsed.data.card_show_session_subtitle;
+  if (typeof parsed.data.card_show_meta === "boolean") updates.card_show_meta = parsed.data.card_show_meta;
+  if (typeof parsed.data.card_show_sessions_list === "boolean") updates.card_show_sessions_list = parsed.data.card_show_sessions_list;
 
   const { data, error } = await supabase
     .from("site_spotlight")

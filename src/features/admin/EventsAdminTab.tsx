@@ -1286,6 +1286,11 @@ function SpotlightPanel({ events }: { events: Event[] }) {
   const [showLive, setShowLive] = useState(true);
   const [showUpcoming, setShowUpcoming] = useState(true);
   const [showPast, setShowPast] = useState(true);
+  const [cardShowHost, setCardShowHost] = useState(true);
+  const [cardShowEventName, setCardShowEventName] = useState(true);
+  const [cardShowSubtitle, setCardShowSubtitle] = useState(true);
+  const [cardShowMeta, setCardShowMeta] = useState(true);
+  const [cardShowSessionsList, setCardShowSessionsList] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
 
@@ -1301,6 +1306,11 @@ function SpotlightPanel({ events }: { events: Event[] }) {
           setShowLive(d.show_live_section ?? true);
           setShowUpcoming(d.show_upcoming_section ?? true);
           setShowPast(d.show_past_section ?? true);
+          setCardShowHost(d.card_show_host ?? true);
+          setCardShowEventName(d.card_show_event_name ?? true);
+          setCardShowSubtitle(d.card_show_session_subtitle ?? true);
+          setCardShowMeta(d.card_show_meta ?? true);
+          setCardShowSessionsList(d.card_show_sessions_list ?? true);
         }
       })
       .catch(() => {});
@@ -1321,6 +1331,11 @@ function SpotlightPanel({ events }: { events: Event[] }) {
           show_live_section: showLive,
           show_upcoming_section: showUpcoming,
           show_past_section: showPast,
+          card_show_host: cardShowHost,
+          card_show_event_name: cardShowEventName,
+          card_show_session_subtitle: cardShowSubtitle,
+          card_show_meta: cardShowMeta,
+          card_show_sessions_list: cardShowSessionsList,
         }),
       });
       setStatus(res.ok ? "saved" : "error");
@@ -1429,6 +1444,41 @@ function SpotlightPanel({ events }: { events: Event[] }) {
           </select>
         </div>
       )}
+
+      <div className="pt-4 border-t border-white/10 space-y-4">
+        <p className="text-sm font-semibold text-klo-text">Spotlight Card — What to Show</p>
+        <p className="text-xs text-klo-muted/60 -mt-3">Fine-tune which details appear on the event card. Each piece can be hidden independently.</p>
+        <Toggle
+          checked={cardShowHost}
+          onChange={() => setCardShowHost((v) => !v)}
+          label="Show &quot;Hosted by&quot; Line"
+          help="Displays the hosting entity above the event name (only if the event has a Hosting Entity filled in)."
+        />
+        <Toggle
+          checked={cardShowEventName}
+          onChange={() => setCardShowEventName((v) => !v)}
+          label="Show Event Name"
+          help="The large conference/event title (h3). Turn off for a minimalist card that leads with the session."
+        />
+        <Toggle
+          checked={cardShowSubtitle}
+          onChange={() => setCardShowSubtitle((v) => !v)}
+          label="Show Session Subtitle"
+          help="The italic session name below the event name (only renders when the session differs from the event)."
+        />
+        <Toggle
+          checked={cardShowMeta}
+          onChange={() => setCardShowMeta((v) => !v)}
+          label="Show Date &amp; Location"
+          help="The date + location line."
+        />
+        <Toggle
+          checked={cardShowSessionsList}
+          onChange={() => setCardShowSessionsList((v) => !v)}
+          label="Show Sessions List"
+          help="The lower block listing every session with name, time, and room. Turn off for a compact card."
+        />
+      </div>
 
       <div className="pt-4 border-t border-white/10 space-y-4">
         <p className="text-sm font-semibold text-klo-text">Event Lists on /events Page</p>

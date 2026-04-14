@@ -11,16 +11,21 @@ export async function GET() {
 
   const { data: cfg, error: cfgErr } = await supabase
     .from("site_spotlight")
-    .select("mode, manual_event_id, show_countdown, card_position, show_live_section, show_upcoming_section, show_past_section")
+    .select("mode, manual_event_id, show_countdown, card_position, show_live_section, show_upcoming_section, show_past_section, card_show_host, card_show_event_name, card_show_session_subtitle, card_show_meta, card_show_sessions_list")
     .eq("id", 1)
     .maybeSingle();
   if (cfgErr) return NextResponse.json({ error: cfgErr.message }, { status: 500 });
 
-  // Always-on section flags — returned even when no event is spotlighted.
+  // Always-on flags — returned even when no event is spotlighted.
   const sections = {
     show_live_section: cfg?.show_live_section ?? true,
     show_upcoming_section: cfg?.show_upcoming_section ?? true,
     show_past_section: cfg?.show_past_section ?? true,
+    card_show_host: cfg?.card_show_host ?? true,
+    card_show_event_name: cfg?.card_show_event_name ?? true,
+    card_show_session_subtitle: cfg?.card_show_session_subtitle ?? true,
+    card_show_meta: cfg?.card_show_meta ?? true,
+    card_show_sessions_list: cfg?.card_show_sessions_list ?? true,
   };
 
   let eventId: string | null = null;
