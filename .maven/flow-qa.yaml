@@ -1,0 +1,69 @@
+# KLO — user-flow QA seed
+# Run: maven-tool flow-qa run
+# Against preview: BASE_URL=https://klo-app-<preview>.vercel.app maven-tool flow-qa run
+project: klo-app
+base_url: ${BASE_URL}
+
+suites:
+  # ─── Public surface (no auth) ─────────────────────────────────────────
+  - name: public-routes
+    cases:
+      - name: home-renders
+        steps:
+          - http: { method: GET, path: /, expect_status: [200, 307] }
+      - name: events-page
+        steps:
+          - http: { method: GET, path: /events, expect_status: [200, 307] }
+      - name: vault-slug-guards-404
+        steps:
+          - http: { method: GET, path: /vault/nonexistent-slug-xyz123, expect_status: 404 }
+
+  # ─── API contract ─────────────────────────────────────────────────────
+  - name: api-contract
+    cases:
+      - name: live-events-returns-array
+        steps:
+          - http:
+              method: GET
+              path: /api/live-events
+              expect_status: 200
+              expect_json_path:
+                events: $array
+
+      - name: testimonials-returns-shape
+        steps:
+          - http:
+              method: GET
+              path: /api/admin/marketing/testimonials
+              expect_status: [200, 401]
+
+      - name: ai-advisor-requires-auth
+        steps:
+          - http:
+              method: POST
+              path: /api/ai-advisor
+              body: { message: "hi" }
+              expect_status: [401, 403]
+
+  # ─── Admin UI (browser, requires TEST_ADMIN_* env) ────────────────────
+  - name: admin-ui
+    browser: true
+    cases:
+      - name: spotlight-save-round-trip
+        note: "Guards the 2026-04-14 Save-button-disabled bug"
+        steps:
+          - goto: /admin/login
+          - fill: { selector: "input[type='email']", value: "${TEST_ADMIN_EMAIL}" }
+          - fill: { selector: "input[type='password']", value: "${TEST_ADMIN_PASSWORD}" }
+          - click: { selector: "button[type='submit']" }
+          - goto: /admin/events
+          - expect_visible: { text: "Events" }
+
+  # ─── Interactive chat (browser) ───────────────────────────────────────
+  - name: ai-advisor-ui
+    browser: true
+    cases:
+      - name: chat-page-renders
+        steps:
+          - goto: /ai-advisor
+          - expect_visible: { selector: "form" }
