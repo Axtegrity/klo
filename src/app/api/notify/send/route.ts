@@ -59,13 +59,19 @@ export async function POST(request: NextRequest) {
 
   const { title, body, url, tag, userId, userIds } = parsed.data;
   const supabase = getServiceSupabase();
+  const rawSenderId = (session.user as { id?: string }).id;
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const sentBy = rawSenderId && UUID_RE.test(rawSenderId) ? rawSenderId : null;
 
-  // Resolve target user set
+  // Resolve target user set + audience type for the audit row.
   let targetIds: string[];
+  let audienceType: "broadcast" | "user" | "users";
   if (userId) {
     targetIds = [userId];
+    audienceType = "user";
   } else if (userIds && userIds.length > 0) {
     targetIds = userIds;
+    audienceType = "users";
   } else {
     const { data: allProfiles, error } = await supabase
       .from("profiles")
@@ -74,6 +80,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
     targetIds = (allProfiles ?? []).map((p) => p.id);
+    audienceType = "broadcast";
   }
 
   if (targetIds.length === 0) {
@@ -142,12 +149,36 @@ export async function POST(request: NextRequest) {
     })(),
   ]);
 
+  const pushCleaned = (pushResult as { cleaned?: number }).cleaned ?? 0;
+
+  // Fire-and-forget audit write — never block the response on it.
+  void supabase
+    .from("notifications_sent")
+    .insert({
+      sent_by: sentBy,
+      title,
+      body,
+      url: url ?? null,
+      tag: tag ?? null,
+      audience_type: audienceType,
+      target_user_ids: audienceType === "broadcast" ? null : targetIds,
+      total_targets: targetIds.length,
+      push_sent: pushResult.sent,
+      push_failed: pushResult.failed,
+      push_cleaned: pushCleaned,
+      email_sent: emailResult.sent,
+      email_failed: emailResult.failed,
+    })
+    .then(({ error }) => {
+      if (error) console.error("[POST /api/notify/send] audit write failed", error);
+    });
+
   return NextResponse.json({
     ok: true,
     total_targets: targetIds.length,
     push_sent: pushResult.sent,
     push_failed: pushResult.failed,
-    push_cleaned: (pushResult as { cleaned?: number }).cleaned ?? 0,
+    push_cleaned: pushCleaned,
     email_sent: emailResult.sent,
     email_failed: emailResult.failed,
   });
