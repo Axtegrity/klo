@@ -44,13 +44,9 @@ export default function CapacitorInit() {
         const { lockPortrait } = await import("@/lib/screen-orientation");
         await lockPortrait();
 
-        // Initialize push notifications
-        const { initPushNotifications } = await import("@/lib/push-notifications");
-        const token = await initPushNotifications();
-        if (token) {
-          // Store token for later use (could send to server)
-          localStorage.setItem("klo-push-token", token);
-        }
+        // Push notifications are initialized by <PushAutoInit /> inside AuthProvider
+        // so registration happens only after a NextAuth session exists. Running it
+        // here fired before login and silently 401'd the /api/push/subscribe write.
 
         // Handle deep links / app URL open
         const { App: CapApp } = await import("@capacitor/app");

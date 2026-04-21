@@ -391,6 +391,53 @@ cases:
       - action: wait
         ms: 100
 
+  # ─── Notify audience endpoint returns stats for 46+ signups ───
+  # Regression guard: /admin Notifications tab depends on this route to
+  # render the audience table + send-target dropdown. If it 500s the
+  # composer silently renders empty and Tim can't send.
+  - name: notify-audience-endpoint-returns-stats
+    admin_steps:
+      - action: api_get_contains
+        url: /api/notify/audience
+        value: '"stats"'
+    verify:
+      - action: api_get_contains
+        url: /api/notify/audience
+        value: '"total"'
+
+  # ─── Opt-in event endpoint accepts decision logs ───
+  # Ensures the universal push opt-in banner can persist enabled/declined/
+  # dismissed decisions. If this breaks the banner re-shows every session
+  # even for users who declined.
+  - name: push-optin-event-endpoint-accepts-decisions
+    admin_steps:
+      - action: api_post
+        url: /api/push/optin-event
+        value:
+          action: "prompt_shown"
+          platform: "function-audit"
+    verify:
+      - action: api_get_contains
+        url: /api/push/optin-event
+        value: '"decision"'
+
+  # ─── Opt-in prompt component mounts for authenticated users ───
+  # Smoke check — the component emits a dialog role into the DOM when
+  # conditions are met. Function-audit browses as an authenticated admin,
+  # which is a valid target for the banner (dev-owner has no decision
+  # logged). This case verifies the home page loads cleanly with the
+  # component imported (a build-time error would 500 here).
+  - name: opt-in-prompt-home-page-loads
+    admin_steps:
+      - action: goto
+        url: /
+      - action: wait
+        ms: 500
+    verify:
+      - action: api_get_status
+        url: /
+        value: 200
+
   # ─── Service worker hygiene ⭐ ────────────────────────────
   # Regression guard for PR #47 (2026-04-11). The PWA service worker
   # had a static CACHE_NAME that never bumped across deploys, and /vault
