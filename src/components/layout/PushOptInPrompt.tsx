@@ -105,9 +105,11 @@ export default function PushOptInPrompt() {
 
     // ----- Native (Capacitor iOS / Android) -----
     let isNative = false;
+    let nativePlatform = "native";
     try {
       const { Capacitor } = await import("@capacitor/core");
       isNative = Capacitor.isNativePlatform();
+      if (isNative) nativePlatform = Capacitor.getPlatform(); // "ios" | "android"
     } catch {
       isNative = false;
     }
@@ -116,7 +118,11 @@ export default function PushOptInPrompt() {
       try {
         const { checkPushPermission } = await import("@/lib/push-notifications");
         const granted = await checkPushPermission();
-        if (granted && !versionMismatch) {
+        if (granted) {
+          // Already opted in. A version bump should NOT re-prompt — they
+          // already get notifications. Silently advance the stored version
+          // so we don't re-evaluate this path on every page load.
+          writePromptVersion(PUSH_PROMPT_VERSION);
           setMode("enabled");
           return;
         }
@@ -131,7 +137,13 @@ export default function PushOptInPrompt() {
             // ignore — show prompt
           }
           if (server.decision === "enabled") {
-            setMode("enabled");
+            // Server-side enabled but OS-level not granted → user revoked
+            // in system settings. Treat as blocked so we route them back.
+            setMode("blocked-native");
+            if (!promptLoggedRef.get()) {
+              logEvent("blocked_shown", nativePlatform);
+              promptLoggedRef.set(true);
+            }
             return;
           }
           if (server.decision === "declined") {
@@ -139,7 +151,7 @@ export default function PushOptInPrompt() {
             // route them to the app settings screen instead.
             setMode("blocked-native");
             if (!promptLoggedRef.get()) {
-              logEvent("blocked_shown", "native");
+              logEvent("blocked_shown", nativePlatform);
               promptLoggedRef.set(true);
             }
             return;
@@ -155,7 +167,7 @@ export default function PushOptInPrompt() {
         }
         setMode("native-ask");
         if (!promptLoggedRef.get() || versionMismatch) {
-          logEvent("prompt_shown", "native");
+          logEvent("prompt_shown", nativePlatform);
           promptLoggedRef.set(true);
         }
         return;
@@ -186,7 +198,10 @@ export default function PushOptInPrompt() {
 
     const reg = await navigator.serviceWorker.ready.catch(() => null);
     const existing = reg ? await reg.pushManager.getSubscription() : null;
-    if (Notification.permission === "granted" && existing && !versionMismatch) {
+    if (Notification.permission === "granted" && existing) {
+      // Already actively subscribed. Even on a version bump, don't bother
+      // them — silently advance the stored version.
+      writePromptVersion(PUSH_PROMPT_VERSION);
       setMode("enabled");
       return;
     }
@@ -210,7 +225,14 @@ export default function PushOptInPrompt() {
       }
 
       if (server.decision === "enabled") {
-        setMode("enabled");
+        // Server says enabled but no live subscription in this browser
+        // (different device or cleared site data). Show prompt so they can
+        // re-subscribe on this browser.
+        setMode("web-ask");
+        if (!promptLoggedRef.get()) {
+          logEvent("prompt_shown", platform.platformTag);
+          promptLoggedRef.set(true);
+        }
         return;
       }
       if (server.decision === "declined") {
