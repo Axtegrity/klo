@@ -5,6 +5,14 @@ import { useSession } from "next-auth/react";
 
 const RUN_FLAG = "klo-push-auto-init-run";
 
+/**
+ * Best-effort token refresh for users who already opted in.
+ *
+ * This component never surfaces an OS permission dialog — that is owned by
+ * <PushOptInPrompt /> so the user always sees an in-app pre-prompt with
+ * context first. Here we only re-persist tokens for already-granted users so
+ * the server row stays current after sign-in or account switches.
+ */
 export default function PushAutoInit() {
   const { status } = useSession();
   const ran = useRef(false);
@@ -21,9 +29,14 @@ export default function PushAutoInit() {
       try {
         const { Capacitor } = await import("@capacitor/core");
 
-        // Native: prompt + register + persist token with a valid session
+        // Native: only re-register if permission was already granted.
+        // Otherwise leave the ask to <PushOptInPrompt /> which shows context.
         if (Capacitor.isNativePlatform()) {
-          const { initPushNotifications } = await import("@/lib/push-notifications");
+          const { checkPushPermission, initPushNotifications } = await import(
+            "@/lib/push-notifications"
+          );
+          const granted = await checkPushPermission();
+          if (!granted) return;
           const token = await initPushNotifications();
           if (token) localStorage.setItem("klo-push-token", token);
           return;
@@ -52,7 +65,7 @@ export default function PushAutoInit() {
           }
         }
       } catch {
-        // Silently ignore — user can still opt in from /profile
+        // Silently ignore — user can still opt in from the prompt or /profile.
       }
     }
     run();

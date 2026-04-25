@@ -6,7 +6,14 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { logError, logRequest } from "@/lib/logger";
 
 const optInEventSchema = z.object({
-  action: z.enum(["prompt_shown", "enabled", "declined", "dismissed", "ios_install_shown"]),
+  action: z.enum([
+    "prompt_shown",
+    "enabled",
+    "declined",
+    "dismissed",
+    "ios_install_shown",
+    "blocked_shown",
+  ]),
   platform: z.string().min(1).max(50),
   userAgent: z.string().max(500).optional(),
 });

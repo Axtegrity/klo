@@ -264,3 +264,18 @@ export const ADMIN_NAV_ITEM: NavigationItem = {
   icon: "ShieldCheck",
   requiresAuth: true,
 };
+
+// ============================================================
+// Push notification opt-in
+// ============================================================
+// Bump this any time we want every existing user (web + native) to be
+// re-asked once whether they'd like push notifications. The client compares
+// it against localStorage["klo-push-prompt-version"]; mismatch forces the
+// pre-prompt modal to show one time, even for users who previously declined
+// or dismissed. App-store updates should bump this in the same release that
+// ships them so updaters are reconfirmed on first launch.
+export const PUSH_PROMPT_VERSION = 2;
+export const PUSH_PROMPT_VERSION_KEY = "klo-push-prompt-version";
+// Wait this long after auth before we ask, so the prompt lands after the
+// user has actually seen the product (first meaningful interaction).
+export const PUSH_PROMPT_DEFER_MS = 12_000;
