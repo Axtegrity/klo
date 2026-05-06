@@ -30,6 +30,14 @@ export interface SectionImages {
   featuredInsight?: SectionImageConfig;
 }
 
+export interface BriefConfig {
+  title: string;
+  date: string;
+  excerpt: string;
+  link: string;
+  cta: string;
+}
+
 export interface PageConfigRow {
   id: string;
   page_slug: string;
@@ -38,6 +46,7 @@ export interface PageConfigRow {
   layout_config: LayoutConfig | null;
   sections: unknown[];
   section_images?: SectionImages | null;
+  brief_config?: BriefConfig | null;
   animation_preset_id: string | null;
   audio_asset_id: string | null;
   meta_title: string | null;

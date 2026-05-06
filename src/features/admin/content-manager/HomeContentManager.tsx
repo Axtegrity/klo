@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pencil, GripVertical, Eye, EyeOff, Lock } from "lucide-react";
 import EditModal, { type EditField } from "./EditModal";
 
@@ -15,7 +15,7 @@ interface HomeSection {
   files?: { name: string; type: string; size: string }[];
 }
 
-const HOME_SECTIONS: HomeSection[] = [
+const DEFAULT_SECTIONS: HomeSection[] = [
   {
     id: "hero",
     label: "Hero Banner",
@@ -39,16 +39,13 @@ const HOME_SECTIONS: HomeSection[] = [
     description: "Featured article card with title, excerpt, and link",
     visible: true,
     canHide: true,
-    lastEdited: "Mar 25, 2026",
+    lastEdited: "\u2014",
     fields: [
       { key: "title", label: "Brief Title", value: "The AI Executive Order: What Leaders Need to Know in 2026", type: "text", maxLength: 120, required: true },
       { key: "date", label: "Date", value: "February 24, 2026", type: "text", maxLength: 40 },
       { key: "excerpt", label: "Excerpt", value: "A concise breakdown of the latest federal guidance on AI governance, what it means for church leaders, and the three action steps every organization should take now.", type: "textarea", maxLength: 400 },
       { key: "link", label: "Read More Link", value: "/vault/executives-ai-briefing-q1-2026", type: "url", maxLength: 200 },
       { key: "cta", label: "Button Label", value: "Read More", type: "text", maxLength: 30 },
-    ],
-    files: [
-      { name: "AI-Executive-Order-Brief-Q1-2026.pdf", type: "application/pdf", size: "1.2 MB" },
     ],
   },
   {
@@ -130,9 +127,31 @@ const HOME_SECTIONS: HomeSection[] = [
 ];
 
 export default function HomeContentManager() {
-  const [sections, setSections] = useState(HOME_SECTIONS);
+  const [sections, setSections] = useState(DEFAULT_SECTIONS);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/creative-studio/pages/home")
+      .then((r) => r.json())
+      .then(({ data }) => {
+        if (!data?.brief_config) return;
+        const bc = data.brief_config;
+        setSections((prev) =>
+          prev.map((s) => {
+            if (s.id !== "brief") return s;
+            return {
+              ...s,
+              lastEdited: new Date(data.updated_at ?? Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+              fields: s.fields.map((f) => ({ ...f, value: (bc as Record<string, string>)[f.key] ?? f.value })),
+            };
+          })
+        );
+      })
+      .catch(() => {});
+  }, []);
 
   const editingSection = sections.find((s) => s.id === editingId);
 
@@ -230,12 +249,44 @@ export default function HomeContentManager() {
           subtitle={editingSection.description}
           fields={editingSection.fields}
           files={editingSection.files}
-          onSave={(values) => {
-            console.log("Save:", editingSection.id, values);
-            setEditingId(null);
+          onSave={async (values) => {
+            if (editingSection.id !== "brief") {
+              setEditingId(null);
+              return;
+            }
+            setSaving(true);
+            setSaveError(null);
+            try {
+              const res = await fetch("/api/admin/creative-studio/pages/home", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ brief_config: values }),
+              });
+              if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body?.error ?? "Save failed");
+              }
+              const now = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+              setSections((prev) =>
+                prev.map((s) =>
+                  s.id === "brief"
+                    ? { ...s, lastEdited: now, fields: s.fields.map((f) => ({ ...f, value: values[f.key] ?? f.value })) }
+                    : s
+                )
+              );
+              setEditingId(null);
+            } catch (err) {
+              setSaveError(err instanceof Error ? err.message : "Save failed");
+            } finally {
+              setSaving(false);
+            }
           }}
-          onClose={() => setEditingId(null)}
+          onClose={() => { setSaveError(null); setEditingId(null); }}
+          isSaving={saving}
         />
+      )}
+      {saveError && (
+        <p className="mt-3 text-sm text-red-400">{saveError}</p>
       )}
     </div>
   );

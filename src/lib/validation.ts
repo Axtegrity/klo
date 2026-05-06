@@ -666,6 +666,13 @@ export const pageConfigUpdateSchema = z.object({
     latestBrief: sectionImageConfigSchema.optional(),
     featuredInsight: sectionImageConfigSchema.optional(),
   }).nullable().optional(),
+  brief_config: z.object({
+    title: z.string().min(1).max(200),
+    date: z.string().max(60),
+    excerpt: z.string().max(500),
+    link: z.string().max(500),
+    cta: z.string().max(40),
+  }).nullable().optional(),
   layout_config: z.object({
     columns: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
     spacing: z.enum(["tight", "normal", "loose"]),

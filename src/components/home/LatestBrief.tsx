@@ -4,20 +4,24 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { FileText, ArrowRight } from "lucide-react";
+import type { BriefConfig } from "@/lib/page-config-server";
 
-const mockBrief = {
+const DEFAULTS: BriefConfig = {
   title: "The AI Executive Order: What Leaders Need to Know in 2026",
   date: "February 24, 2026",
   excerpt:
     "A concise breakdown of the latest federal guidance on AI governance, what it means for enterprise leaders, and three action steps every organization should take this quarter.",
-  slug: "/vault/executives-ai-briefing-q1-2026",
+  link: "/vault/executives-ai-briefing-q1-2026",
+  cta: "Read More",
 };
 
 interface LatestBriefProps {
   backgroundImage?: string | null;
+  briefConfig?: BriefConfig | null;
 }
 
-export default function LatestBrief({ backgroundImage }: LatestBriefProps = {}) {
+export default function LatestBrief({ backgroundImage, briefConfig }: LatestBriefProps = {}) {
+  const brief = briefConfig ?? DEFAULTS;
   // Fall back to the original hardcoded watermark when no admin override is set
   const watermarkSrc = backgroundImage ?? "/images/keith/b.jpg";
 
@@ -38,7 +42,7 @@ export default function LatestBrief({ backgroundImage }: LatestBriefProps = {}) 
         viewport={{ once: true, margin: "-60px" }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <Link href={mockBrief.slug} className="block group">
+        <Link href={brief.link} className="block group">
           <div className="relative bg-[#161B22] border border-[#21262D] rounded-xl p-6 sm:p-8 transition-all duration-300 group-hover:-translate-y-1 hover:border-[#2764FF]/30 hover:shadow-[0_0_30px_rgba(39,100,255,0.1)] overflow-hidden">
             {/* Subtle background watermark image — admin-overridable via page_configs.home.section_images */}
             <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
@@ -55,16 +59,16 @@ export default function LatestBrief({ backgroundImage }: LatestBriefProps = {}) 
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-[#8B949E] uppercase tracking-wider mb-2">
-                  {mockBrief.date}
+                  {brief.date}
                 </p>
                 <h3 className="text-lg sm:text-xl font-semibold text-[#E6EDF3] mb-3 group-hover:text-[#21B8CD] transition-colors duration-200">
-                  {mockBrief.title}
+                  {brief.title}
                 </h3>
                 <p className="text-sm text-[#8B949E] leading-relaxed line-clamp-2 mb-4">
-                  {mockBrief.excerpt}
+                  {brief.excerpt}
                 </p>
                 <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[#2764FF] hover:underline group-hover:gap-2.5 transition-all duration-200">
-                  Read More
+                  {brief.cta}
                   <ArrowRight className="w-4 h-4" />
                 </span>
               </div>

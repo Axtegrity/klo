@@ -21,10 +21,11 @@ interface EditModalProps {
   subtitle?: string;
   fields: EditField[];
   files?: { name: string; type: string; size: string }[];
-  onSave: (values: Record<string, string>) => void;
+  onSave: (values: Record<string, string>) => void | Promise<void>;
   onClose: () => void;
   onDelete?: () => void;
   isNew?: boolean;
+  isSaving?: boolean;
 }
 
 export default function EditModal({
@@ -37,6 +38,7 @@ export default function EditModal({
   onClose,
   onDelete,
   isNew = false,
+  isSaving = false,
 }: EditModalProps) {
   const [values, setValues] = useState<Record<string, string>>(() => {
     const map: Record<string, string> = {};
@@ -279,12 +281,13 @@ export default function EditModal({
                 <Button
                   variant="primary"
                   size="sm"
+                  disabled={isSaving}
                   onClick={() => {
                     setShowSaveConfirm(false);
                     onSave(values);
                   }}
                 >
-                  Confirm
+                  {isSaving ? "Saving…" : "Confirm"}
                 </Button>
                 <Button
                   variant="ghost"
