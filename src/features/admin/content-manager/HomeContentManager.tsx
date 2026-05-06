@@ -260,6 +260,8 @@ export default function HomeContentManager() {
           subtitle={editingSection.description}
           fields={editingSection.fields}
           files={editingSection.files}
+          linkFieldKey={editingSection.id === "brief" || editingSection.id === "insight" ? "link" : undefined}
+          uploadFolder={editingSection.id === "brief" ? "briefs" : editingSection.id === "insight" ? "insights" : undefined}
           onSave={async (values) => {
             const configKey = SECTION_CONFIG_KEY[editingSection.id];
             if (!configKey) {

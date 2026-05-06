@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { X, Upload, Trash2, ExternalLink, AlertTriangle } from "lucide-react";
 import Button from "@/components/shared/Button";
 
@@ -15,6 +15,14 @@ export interface EditField {
   required?: boolean;
 }
 
+interface UploadedFile {
+  name: string;
+  type: string;
+  size: string;
+  file?: File;   // present for newly added files; absent for pre-existing ones
+  url?: string;  // populated after successful upload
+}
+
 interface EditModalProps {
   open: boolean;
   title: string;
@@ -26,6 +34,10 @@ interface EditModalProps {
   onDelete?: () => void;
   isNew?: boolean;
   isSaving?: boolean;
+  /** When set, the first uploaded document's public URL is auto-written into this field key */
+  linkFieldKey?: string;
+  /** Supabase Storage folder for uploads — defaults to "briefs" */
+  uploadFolder?: string;
 }
 
 export default function EditModal({
@@ -39,38 +51,76 @@ export default function EditModal({
   onDelete,
   isNew = false,
   isSaving = false,
+  linkFieldKey,
+  uploadFolder = "briefs",
 }: EditModalProps) {
   const [values, setValues] = useState<Record<string, string>>(() => {
     const map: Record<string, string> = {};
     for (const f of fields) map[f.key] = f.value;
     return map;
   });
-  const [uploadedFiles, setUploadedFiles] = useState(files);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(files);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!open) return null;
 
-  const update = (key: string, val: string) => {
+  const update = useCallback((key: string, val: string) => {
     setValues((prev) => ({ ...prev, [key]: val }));
-  };
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files;
     if (!selected) return;
-    const newFiles = Array.from(selected).map((f) => ({
+    setUploadError(null);
+    const newFiles: UploadedFile[] = Array.from(selected).map((f) => ({
       name: f.name,
       type: f.type || "application/octet-stream",
       size: f.size < 1024 * 1024
         ? `${(f.size / 1024).toFixed(0)} KB`
         : `${(f.size / (1024 * 1024)).toFixed(1)} MB`,
+      file: f,
     }));
     setUploadedFiles((prev) => [...prev, ...newFiles]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const removeFile = (index: number) => {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  /** Upload any pending files; returns merged values with link populated if linkFieldKey is set */
+  const uploadPendingFiles = async (currentValues: Record<string, string>): Promise<Record<string, string>> => {
+    const pending = uploadedFiles.filter((f) => f.file && !f.url);
+    if (pending.length === 0) return currentValues;
+
+    setUploading(true);
+    const merged = { ...currentValues };
+    try {
+      for (const uf of pending) {
+        const fd = new FormData();
+        fd.append("file", uf.file!);
+        fd.append("folder", uploadFolder);
+        const res = await fetch("/api/admin/documents/upload", { method: "POST", body: fd });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body?.error ?? "Upload failed");
+        }
+        const { url } = await res.json();
+        uf.url = url;
+        // Auto-populate the link field with the first uploaded doc's URL
+        if (linkFieldKey && !merged[linkFieldKey]) {
+          merged[linkFieldKey] = url;
+        }
+      }
+      setUploadedFiles((prev) => [...prev]);
+    } finally {
+      setUploading(false);
+    }
+    return merged;
   };
 
   const inputClasses =
@@ -229,6 +279,14 @@ export default function EditModal({
             <p className="text-xs text-klo-muted/50 mt-1.5">
               Max 10 MB per file. Accepted: PDF, Word (.doc/.docx), Text (.txt), PowerPoint (.pptx)
             </p>
+            {uploadError && (
+              <p className="text-xs text-red-400 mt-1.5">{uploadError}</p>
+            )}
+            {linkFieldKey && uploadedFiles.some((f) => f.file) && (
+              <p className="text-xs text-[#21B8CD] mt-1.5">
+                PDF will be uploaded on Save — the &ldquo;Read More&rdquo; link will update automatically.
+              </p>
+            )}
           </div>
         </div>
 
@@ -281,13 +339,21 @@ export default function EditModal({
                 <Button
                   variant="primary"
                   size="sm"
-                  disabled={isSaving}
-                  onClick={() => {
+                  disabled={isSaving || uploading}
+                  onClick={async () => {
                     setShowSaveConfirm(false);
-                    onSave(values);
+                    try {
+                      const merged = await uploadPendingFiles(values);
+                      if (linkFieldKey && merged[linkFieldKey] !== values[linkFieldKey]) {
+                        update(linkFieldKey, merged[linkFieldKey]);
+                      }
+                      await onSave(merged);
+                    } catch (err) {
+                      setUploadError(err instanceof Error ? err.message : "Upload failed");
+                    }
                   }}
                 >
-                  {isSaving ? "Saving…" : "Confirm"}
+                  {uploading ? "Uploading…" : isSaving ? "Saving…" : "Confirm"}
                 </Button>
                 <Button
                   variant="ghost"
