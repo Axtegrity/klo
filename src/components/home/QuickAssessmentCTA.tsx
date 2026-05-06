@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Church, Brain, Shield, Lock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { AssessmentConfig } from "@/lib/page-config-server";
 
 interface AssessmentCard {
   icon: LucideIcon;
@@ -87,18 +88,25 @@ const cardVariants = {
   },
 };
 
-export default function QuickAssessmentCTA() {
+interface QuickAssessmentCTAProps {
+  assessmentConfig?: AssessmentConfig | null;
+}
+
+export default function QuickAssessmentCTA({ assessmentConfig }: QuickAssessmentCTAProps = {}) {
+  const heading    = assessmentConfig?.heading    ?? "Assess Your Readiness";
+  const subheading = assessmentConfig?.subheading ?? "Quick, targeted assessments to benchmark where you stand.";
+
   return (
     <section>
       {/* Section heading */}
       <div className="flex items-center gap-4 mb-3">
         <span className="w-10 h-1 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] rounded-full" />
         <h2 className="font-display text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#E6EDF3] to-[#8B949E] bg-clip-text text-transparent uppercase tracking-wide">
-          Assess Your Readiness
+          {heading}
         </h2>
       </div>
       <p className="text-sm text-[#8B949E] mb-10 ml-14">
-        Quick, targeted assessments to benchmark where you stand.
+        {subheading}
       </p>
 
       {/* Grid */}

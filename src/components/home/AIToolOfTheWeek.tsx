@@ -4,18 +4,23 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Wrench, ArrowRight, Star } from "lucide-react";
+import type { ToolConfig } from "@/lib/page-config-server";
 
-const mockTool = {
+const DEFAULTS: ToolConfig = {
   name: "NotebookLM by Google",
   category: "Productivity",
   description:
     "Google's AI-powered research assistant transforms your documents into interactive study guides, podcasts, and Q&A sessions. Upload PDFs, articles, or notes and let AI synthesize the key insights for you.",
-  whyItMatters:
-    "For pastors preparing sermons, executives digesting reports, or board members reviewing governance docs, NotebookLM cuts research time by up to 70% while preserving source fidelity.",
+  why: "For pastors preparing sermons, executives digesting reports, or board members reviewing governance docs, NotebookLM cuts research time significantly while preserving source fidelity.",
   link: "https://notebooklm.google.com",
 };
 
-export default function AIToolOfTheWeek() {
+interface AIToolOfTheWeekProps {
+  toolConfig?: ToolConfig | null;
+}
+
+export default function AIToolOfTheWeek({ toolConfig }: AIToolOfTheWeekProps = {}) {
+  const tool = toolConfig ?? DEFAULTS;
   return (
     <section>
       {/* Section heading */}
@@ -55,7 +60,7 @@ export default function AIToolOfTheWeek() {
                 {/* Badges row */}
                 <div className="flex items-center gap-3 mb-3">
                   <span className="inline-flex items-center px-3 py-1 text-xs font-semibold tracking-wide uppercase rounded-full bg-[#21262D] text-[#21B8CD]">
-                    {mockTool.category}
+                    {tool.category}
                   </span>
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold tracking-wide uppercase rounded-full bg-[#C8A84E]/15 text-[#C8A84E] border border-[#C8A84E]/20">
                     <Star className="w-3 h-3" />
@@ -65,14 +70,14 @@ export default function AIToolOfTheWeek() {
 
                 {/* Tool name */}
                 <h3 className="text-xl sm:text-2xl font-semibold text-[#E6EDF3] leading-snug">
-                  {mockTool.name}
+                  {tool.name}
                 </h3>
               </div>
             </div>
 
             {/* Description */}
             <p className="text-sm sm:text-base text-[#8B949E] leading-relaxed mb-4 max-w-3xl">
-              {mockTool.description}
+              {tool.description}
             </p>
 
             {/* Why it matters */}
@@ -81,13 +86,13 @@ export default function AIToolOfTheWeek() {
                 Why It Matters
               </p>
               <p className="text-sm text-[#8B949E] leading-relaxed">
-                {mockTool.whyItMatters}
+                {tool.why}
               </p>
             </div>
 
             {/* CTA */}
             <Link
-              href={mockTool.link}
+              href={tool.link}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-[#2764FF] hover:underline hover:gap-2.5 transition-all duration-200"
