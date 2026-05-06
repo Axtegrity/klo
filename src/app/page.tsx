@@ -24,6 +24,7 @@ export default async function Home() {
     sectionImages?.latestBrief?.backgroundType === "image"
       ? (sectionImages.latestBrief.backgroundRef ?? null)
       : null;
+  const briefConfig = pageConfig?.brief_config ?? null;
 
   const featuredInsightImage =
     sectionImages?.featuredInsight?.backgroundType === "image"
@@ -53,7 +54,7 @@ export default async function Home() {
             <UpcomingKeynote />
           </FadeInOnScroll>
           <FadeInOnScroll delay={0.05}>
-            <LatestBrief backgroundImage={latestBriefImage} />
+            <LatestBrief backgroundImage={latestBriefImage} briefConfig={briefConfig} />
           </FadeInOnScroll>
           <FadeInOnScroll delay={0.1}>
             <TrendingTopics />
