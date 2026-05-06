@@ -133,24 +133,35 @@ export default function HomeContentManager() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const SECTION_CONFIG_KEY: Record<string, string> = {
+    brief:          "brief_config",
+    trending:       "trending_config",
+    insight:        "insight_config",
+    tool:           "tool_config",
+    assessment_cta: "assessment_config",
+  };
+
   useEffect(() => {
     fetch("/api/admin/creative-studio/pages/home")
       .then((r) => r.json())
       .then(({ data }) => {
-        if (!data?.brief_config) return;
-        const bc = data.brief_config;
+        if (!data) return;
+        const lastEdited = new Date(data.updated_at ?? Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
         setSections((prev) =>
           prev.map((s) => {
-            if (s.id !== "brief") return s;
+            const configKey = SECTION_CONFIG_KEY[s.id];
+            if (!configKey || !data[configKey]) return s;
+            const cfg = data[configKey] as Record<string, string>;
             return {
               ...s,
-              lastEdited: new Date(data.updated_at ?? Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-              fields: s.fields.map((f) => ({ ...f, value: (bc as Record<string, string>)[f.key] ?? f.value })),
+              lastEdited,
+              fields: s.fields.map((f) => ({ ...f, value: cfg[f.key] ?? f.value })),
             };
           })
         );
       })
       .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const editingSection = sections.find((s) => s.id === editingId);
@@ -250,7 +261,8 @@ export default function HomeContentManager() {
           fields={editingSection.fields}
           files={editingSection.files}
           onSave={async (values) => {
-            if (editingSection.id !== "brief") {
+            const configKey = SECTION_CONFIG_KEY[editingSection.id];
+            if (!configKey) {
               setEditingId(null);
               return;
             }
@@ -260,7 +272,7 @@ export default function HomeContentManager() {
               const res = await fetch("/api/admin/creative-studio/pages/home", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ brief_config: values }),
+                body: JSON.stringify({ [configKey]: values }),
               });
               if (!res.ok) {
                 const body = await res.json().catch(() => ({}));
@@ -269,7 +281,7 @@ export default function HomeContentManager() {
               const now = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
               setSections((prev) =>
                 prev.map((s) =>
-                  s.id === "brief"
+                  s.id === editingSection.id
                     ? { ...s, lastEdited: now, fields: s.fields.map((f) => ({ ...f, value: values[f.key] ?? f.value })) }
                     : s
                 )

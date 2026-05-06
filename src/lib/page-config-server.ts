@@ -38,6 +38,36 @@ export interface BriefConfig {
   cta: string;
 }
 
+export interface TrendingConfig {
+  heading: string;
+  topic1: string;
+  topic2: string;
+  topic3: string;
+  topic4: string;
+  topic5: string;
+}
+
+export interface InsightConfig {
+  category: string;
+  title: string;
+  description: string;
+  link: string;
+  cta: string;
+}
+
+export interface ToolConfig {
+  name: string;
+  category: string;
+  description: string;
+  why: string;
+  link: string;
+}
+
+export interface AssessmentConfig {
+  heading: string;
+  subheading: string;
+}
+
 export interface PageConfigRow {
   id: string;
   page_slug: string;
@@ -47,6 +77,10 @@ export interface PageConfigRow {
   sections: unknown[];
   section_images?: SectionImages | null;
   brief_config?: BriefConfig | null;
+  trending_config?: TrendingConfig | null;
+  insight_config?: InsightConfig | null;
+  tool_config?: ToolConfig | null;
+  assessment_config?: AssessmentConfig | null;
   animation_preset_id: string | null;
   audio_asset_id: string | null;
   meta_title: string | null;

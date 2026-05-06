@@ -24,7 +24,11 @@ export default async function Home() {
     sectionImages?.latestBrief?.backgroundType === "image"
       ? (sectionImages.latestBrief.backgroundRef ?? null)
       : null;
-  const briefConfig = pageConfig?.brief_config ?? null;
+  const briefConfig      = pageConfig?.brief_config      ?? null;
+  const trendingConfig   = pageConfig?.trending_config   ?? null;
+  const insightConfig    = pageConfig?.insight_config    ?? null;
+  const toolConfig       = pageConfig?.tool_config       ?? null;
+  const assessmentConfig = pageConfig?.assessment_config ?? null;
 
   const featuredInsightImage =
     sectionImages?.featuredInsight?.backgroundType === "image"
@@ -57,19 +61,19 @@ export default async function Home() {
             <LatestBrief backgroundImage={latestBriefImage} briefConfig={briefConfig} />
           </FadeInOnScroll>
           <FadeInOnScroll delay={0.1}>
-            <TrendingTopics />
+            <TrendingTopics trendingConfig={trendingConfig} />
           </FadeInOnScroll>
           <FadeInOnScroll delay={0.05}>
-            <FeaturedInsight backgroundImage={featuredInsightImage} />
+            <FeaturedInsight backgroundImage={featuredInsightImage} insightConfig={insightConfig} />
           </FadeInOnScroll>
           <FadeInOnScroll delay={0.1}>
-            <AIToolOfTheWeek />
+            <AIToolOfTheWeek toolConfig={toolConfig} />
           </FadeInOnScroll>
           <FadeInOnScroll delay={0.05}>
             <TestimonialsSection />
           </FadeInOnScroll>
           <FadeInOnScroll delay={0.05}>
-            <QuickAssessmentCTA />
+            <QuickAssessmentCTA assessmentConfig={assessmentConfig} />
           </FadeInOnScroll>
         </div>
       </div>

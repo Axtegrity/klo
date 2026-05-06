@@ -673,6 +673,32 @@ export const pageConfigUpdateSchema = z.object({
     link: z.string().max(500),
     cta: z.string().max(40),
   }).nullable().optional(),
+  trending_config: z.object({
+    heading: z.string().min(1).max(100),
+    topic1: z.string().max(60),
+    topic2: z.string().max(60),
+    topic3: z.string().max(60),
+    topic4: z.string().max(60),
+    topic5: z.string().max(60),
+  }).nullable().optional(),
+  insight_config: z.object({
+    category: z.string().min(1).max(60),
+    title: z.string().min(1).max(200),
+    description: z.string().max(600),
+    link: z.string().max(500),
+    cta: z.string().max(60),
+  }).nullable().optional(),
+  tool_config: z.object({
+    name: z.string().min(1).max(100),
+    category: z.string().max(60),
+    description: z.string().max(500),
+    why: z.string().max(500),
+    link: z.string().max(500),
+  }).nullable().optional(),
+  assessment_config: z.object({
+    heading: z.string().min(1).max(100),
+    subheading: z.string().max(200),
+  }).nullable().optional(),
   layout_config: z.object({
     columns: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
     spacing: z.enum(["tight", "normal", "loose"]),
