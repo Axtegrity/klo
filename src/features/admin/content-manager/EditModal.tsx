@@ -109,11 +109,12 @@ export default function EditModal({
           const body = await res.json().catch(() => ({}));
           throw new Error(body?.error ?? "Upload failed");
         }
-        const { url } = await res.json();
+        const { url, viewerUrl } = await res.json();
         uf.url = url;
-        // Auto-populate the link field with the first uploaded doc's URL
+        // Auto-populate the link field with the viewer URL (opens in-app)
+        // Fall back to raw URL if no viewer URL returned
         if (linkFieldKey && !merged[linkFieldKey]) {
-          merged[linkFieldKey] = url;
+          merged[linkFieldKey] = viewerUrl ?? url;
         }
       }
       setUploadedFiles((prev) => [...prev]);
