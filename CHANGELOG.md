@@ -8,6 +8,18 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [2026-05-07] — Document Viewer & Archive UX
+
+### Fixed
+- **Document viewer now routes through the KLO app** — "Read More" links pointing to raw Supabase storage URLs are automatically wrapped in the `/documents/view` viewer so users see the KLO-branded page, not a blank browser PDF tab.
+- **Future uploads always set the viewer URL** — admin doc uploads now always populate the link field with the viewer URL, not the raw storage URL.
+
+### Improved
+- **Document viewer matches vault visual** — `/documents/view` now uses the same dark hero, gradient overlay, title treatment, back button, and container layout as vault detail pages.
+- **Admin vault archive UX** — archived items no longer appear in the main Published/Hidden list. A collapsible "Archived Items" section at the bottom shows all archived content with per-item Republish buttons. The Archive toggle is now amber so its state is visually distinct.
+
+---
+
 ## [2026-05-07] — Vault Rich Content Fix
 
 ### Fixed
