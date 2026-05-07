@@ -1,6 +1,7 @@
 "use client";
 
-import { Download, ArrowLeft, FileText } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Download, ArrowLeft, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 function getFileExt(url: string): string {
@@ -11,12 +12,23 @@ function getFileExt(url: string): string {
 interface Props {
   url: string;
   name: string;
-  htmlContent?: string | null;
+  docPages?: string[] | null;
 }
 
-export default function DocumentViewerClient({ url, name, htmlContent }: Props) {
+export default function DocumentViewerClient({ url, name, docPages }: Props) {
   const ext = getFileExt(url);
   const isPdf = url.toLowerCase().endsWith(".pdf");
+  const totalPages = docPages?.length ?? 0;
+
+  const [page, setPage] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Scroll paper card into view whenever page changes
+  useEffect(() => {
+    cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [page]);
+
+  const goTo = (n: number) => setPage(Math.max(0, Math.min(totalPages - 1, n)));
 
   return (
     <div className="min-h-screen bg-[#0D1117]">
@@ -48,18 +60,71 @@ export default function DocumentViewerClient({ url, name, htmlContent }: Props) 
       </div>
 
       {/* Content */}
-      {htmlContent ? (
-        /* Mammoth-converted HTML — paper card on dark background */
+      {docPages && totalPages > 0 ? (
+        /* Paginated Word doc — paper card on dark */
         <div className="min-h-[calc(100vh-57px)] bg-[#0D1117] py-10 px-4 sm:px-6">
-          <div className="max-w-3xl mx-auto rounded-xl overflow-hidden shadow-[0_8px_60px_rgba(0,0,0,0.7)]">
+          <div
+            ref={cardRef}
+            className="max-w-3xl mx-auto rounded-xl overflow-hidden shadow-[0_8px_60px_rgba(0,0,0,0.7)] scroll-mt-20"
+          >
             {/* KLO accent stripe */}
             <div className="h-1 bg-gradient-to-r from-[#2764FF] to-[#21B8CD]" />
+
             {/* Paper body */}
             <div className="bg-[#FAFAF8] px-8 py-12 sm:px-14 sm:py-14">
               <div
-                className="klo-doc-body"
-                dangerouslySetInnerHTML={{ __html: htmlContent }}
+                key={page}
+                className="klo-doc-body animate-in fade-in duration-300"
+                dangerouslySetInnerHTML={{ __html: docPages[page] }}
               />
+
+              {/* Page navigation */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-12 pt-6 border-t border-gray-200">
+                  <button
+                    onClick={() => goTo(page - 1)}
+                    disabled={page === 0}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium
+                      disabled:opacity-30 disabled:cursor-not-allowed
+                      text-[#2764FF] hover:bg-[#2764FF]/8 transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Previous
+                  </button>
+
+                  {/* Page dots / counter */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-gray-400 font-medium tabular-nums">
+                      {page + 1} / {totalPages}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {Array.from({ length: totalPages }).map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => goTo(i)}
+                          className={`rounded-full transition-all ${
+                            i === page
+                              ? "w-5 h-2 bg-[#2764FF]"
+                              : "w-2 h-2 bg-gray-300 hover:bg-gray-400"
+                          }`}
+                          aria-label={`Go to page ${i + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => goTo(page + 1)}
+                    disabled={page === totalPages - 1}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium
+                      disabled:opacity-30 disabled:cursor-not-allowed
+                      text-[#2764FF] hover:bg-[#2764FF]/8 transition-colors"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

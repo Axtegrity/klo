@@ -17,17 +17,40 @@ async function convertDocxToHtml(url: string): Promise<string | null> {
   }
 }
 
+// Split mammoth HTML into pages at block boundaries (~1800 chars each)
+function paginateHtml(html: string, targetChars = 1800): string[] {
+  const blockRe = /<(p|h[1-6]|ul|ol|blockquote|hr|table)[\s>]/gi;
+  const splits: number[] = [0];
+  let lastSplit = 0;
+  let m: RegExpExecArray | null;
+
+  while ((m = blockRe.exec(html)) !== null) {
+    if (m.index > 0 && m.index - lastSplit >= targetChars) {
+      splits.push(m.index);
+      lastSplit = m.index;
+    }
+  }
+
+  const pages: string[] = [];
+  for (let i = 0; i < splits.length; i++) {
+    const chunk = html.slice(splits[i], splits[i + 1] ?? html.length).trim();
+    if (chunk) pages.push(chunk);
+  }
+  return pages.length ? pages : [html];
+}
+
 export default async function DocumentViewerPage({ searchParams }: Props) {
   const { url = "", name = "Document" } = await searchParams;
 
   const isDocx = url.toLowerCase().match(/\.docx?$/);
-  const htmlContent = isDocx ? await convertDocxToHtml(url) : null;
+  const html = isDocx ? await convertDocxToHtml(url) : null;
+  const docPages = html ? paginateHtml(html) : null;
 
   return (
     <DocumentViewerClient
       url={url}
       name={decodeURIComponent(name)}
-      htmlContent={htmlContent}
+      docPages={docPages}
     />
   );
 }
