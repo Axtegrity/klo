@@ -17,6 +17,7 @@ import {
   X,
   Trash2,
   Pencil,
+  Plus,
   Save,
   MessageSquareQuote,
   Loader2,
@@ -60,6 +61,8 @@ export default function TestimonialsAdminTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Testimonial | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [savingNew, setSavingNew] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "pending" | "approved">("all");
@@ -143,6 +146,30 @@ export default function TestimonialsAdminTab() {
     }
   }
 
+  async function createTestimonial(data: {
+    email: string;
+    rating: number;
+    quote: string | null;
+    organizer_name: string | null;
+  }) {
+    setSavingNew(true);
+    try {
+      const res = await fetch("/api/admin/marketing/testimonials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, approved: false }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const body = (await res.json()) as { testimonial: Testimonial };
+      setTestimonials((prev) => [body.testimonial, ...prev]);
+      setCreating(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create");
+    } finally {
+      setSavingNew(false);
+    }
+  }
+
   const visible = testimonials.filter((t) => {
     if (filter === "pending") return !t.approved;
     if (filter === "approved") return t.approved;
@@ -172,14 +199,23 @@ export default function TestimonialsAdminTab() {
             Approve ratings, add quotes, and manage what shows on the marketing site.
           </p>
         </div>
-        <button
-          onClick={() => void fetchTestimonials()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm text-klo-text transition-colors"
-          disabled={loading}
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCreating(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-klo-gold/20 hover:bg-klo-gold/30 border border-klo-gold/30 text-sm text-klo-gold font-semibold transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Testimonial
+          </button>
+          <button
+            onClick={() => void fetchTestimonials()}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm text-klo-text transition-colors"
+            disabled={loading}
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -350,6 +386,14 @@ export default function TestimonialsAdminTab() {
           onClose={() => setEditing(null)}
         />
       )}
+
+      {creating && (
+        <TestimonialCreateModal
+          saving={savingNew}
+          onCreate={createTestimonial}
+          onClose={() => setCreating(false)}
+        />
+      )}
     </motion.div>
   );
 }
@@ -460,6 +504,136 @@ function TestimonialEditModal({
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save changes
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function TestimonialCreateModal({
+  saving,
+  onCreate,
+  onClose,
+}: {
+  saving: boolean;
+  onCreate: (data: {
+    email: string;
+    rating: number;
+    quote: string | null;
+    organizer_name: string | null;
+  }) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [email, setEmail] = useState("");
+  const [organizerName, setOrganizerName] = useState("");
+  const [rating, setRating] = useState(5);
+  const [quote, setQuote] = useState("");
+  const [emailError, setEmailError] = useState("");
+
+  function handleSubmit() {
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setEmailError("A valid email address is required.");
+      return;
+    }
+    setEmailError("");
+    void onCreate({
+      email: email.trim(),
+      rating,
+      quote: quote.trim() ? quote.trim() : null,
+      organizer_name: organizerName.trim() ? organizerName.trim() : null,
+    });
+  }
+
+  return (
+    <Modal isOpen={true} onClose={onClose} title="New testimonial">
+      <div className="space-y-4">
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wide text-klo-muted mb-1.5 block">
+            Email <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); setEmailError(""); }}
+            placeholder="attendee@example.com"
+            className="w-full bg-[#0D1117] border border-[#21262D] rounded-lg px-4 py-3 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:ring-2 focus:ring-[#2764FF]/50"
+            maxLength={320}
+          />
+          {emailError && (
+            <p className="text-[11px] text-red-400 mt-1">{emailError}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wide text-klo-muted mb-1.5 block">
+            Organizer name
+          </label>
+          <input
+            type="text"
+            value={organizerName}
+            onChange={(e) => setOrganizerName(e.target.value)}
+            placeholder="e.g. Leadership Summit 2026"
+            className="w-full bg-[#0D1117] border border-[#21262D] rounded-lg px-4 py-3 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:ring-2 focus:ring-[#2764FF]/50"
+            maxLength={200}
+          />
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wide text-klo-muted mb-1.5 block">
+            Rating
+          </label>
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setRating(n)}
+                className="p-1 transition-transform hover:scale-110"
+                aria-label={`${n} stars`}
+              >
+                <Star
+                  className={`w-6 h-6 ${
+                    n <= rating ? "fill-klo-gold text-klo-gold" : "text-klo-muted/30"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wide text-klo-muted mb-1.5 block">
+            Quote
+          </label>
+          <textarea
+            value={quote}
+            onChange={(e) => setQuote(e.target.value)}
+            rows={5}
+            placeholder="Keith's session transformed how our team thinks about leadership under pressure..."
+            className="w-full bg-[#0D1117] border border-[#21262D] rounded-lg px-4 py-3 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:ring-2 focus:ring-[#2764FF]/50 resize-y"
+            maxLength={2000}
+          />
+          <p className="text-[11px] text-klo-muted mt-1">
+            {quote.length}/2000 · Testimonial will be created as pending — approve after creation.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/5">
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="px-4 py-2 rounded-lg text-sm text-klo-muted hover:text-klo-text hover:bg-white/5 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-klo-gold/20 text-klo-gold hover:bg-klo-gold/30 border border-klo-gold/30 transition-colors disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            Create testimonial
           </button>
         </div>
       </div>

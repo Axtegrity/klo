@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
+import { surveyUpdateSchema } from "@/lib/validation";
 
 async function verifyAdmin() {
   const session = await getServerSession(authOptions);
@@ -11,7 +12,7 @@ async function verifyAdmin() {
   return session;
 }
 
-// Toggle survey active/homepage status
+// Update survey metadata (title, slug, description, intro_text, is_active, show_on_homepage)
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -21,16 +22,30 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = await request.json().catch(() => null);
-  if (!body) {
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const allowed = ["is_active", "show_on_homepage", "title", "description", "intro_text"];
-  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  for (const key of allowed) {
-    if (key in body) updates[key] = body[key];
+  const parsed = surveyUpdateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Validation failed", details: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
+
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  const d = parsed.data;
+  if ("title" in d) updates.title = d.title;
+  if ("slug" in d) updates.slug = d.slug;
+  if ("description" in d) updates.description = d.description;
+  if ("intro_text" in d) updates.intro_text = d.intro_text;
+  if ("is_active" in d) updates.is_active = d.is_active;
+  if ("show_on_homepage" in d) updates.show_on_homepage = d.show_on_homepage;
 
   const supabase = getServiceSupabase();
   const { data, error } = await supabase
@@ -41,6 +56,10 @@ export async function PATCH(
     .single();
 
   if (error) {
+    console.error("[PATCH /api/admin/surveys/[id]]", error);
+    if (error.code === "23505") {
+      return NextResponse.json({ error: "A survey with that slug already exists" }, { status: 409 });
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

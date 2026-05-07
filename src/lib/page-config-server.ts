@@ -40,6 +40,7 @@ export interface BriefConfig {
 }
 
 export interface TrendingConfig {
+  date?: string;
   heading: string;
   topic1: string;
   topic2: string;
@@ -57,6 +58,7 @@ export interface InsightConfig {
 }
 
 export interface ToolConfig {
+  date?: string;
   name: string;
   category: string;
   description: string;

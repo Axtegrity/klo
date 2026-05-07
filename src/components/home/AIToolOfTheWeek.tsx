@@ -66,6 +66,9 @@ export default function AIToolOfTheWeek({ toolConfig }: AIToolOfTheWeekProps = {
                     <Star className="w-3 h-3" />
                     Keith&apos;s Pick
                   </span>
+                  {tool.date && (
+                    <span className="text-xs text-[#8B949E]">{tool.date}</span>
+                  )}
                 </div>
 
                 {/* Tool name */}

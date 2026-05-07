@@ -59,6 +59,9 @@ export default function TrendingTopics({ trendingConfig }: TrendingTopicsProps =
             <p className="text-xs font-semibold text-[#8B949E] uppercase tracking-wider">
               Popular this week
             </p>
+            {cfg.date && (
+              <span className="text-xs text-[#8B949E]/70">&middot; {cfg.date}</span>
+            )}
           </div>
 
           {/* Mobile: horizontal scroll / Desktop: flex wrap grid */}

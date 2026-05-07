@@ -53,6 +53,7 @@ const DEFAULT_SECTIONS: HomeSection[] = [
     canHide: true,
     lastEdited: "Mar 20, 2026",
     fields: [
+      { key: "date", label: "Week of / Date", value: "Week of May 5, 2026", type: "text", maxLength: 60 },
       { key: "heading", label: "Section Heading", value: "Trending in Tech & Faith", type: "text", maxLength: 60 },
       { key: "topic1", label: "Topic 1", value: "AI Regulation", type: "text", maxLength: 30 },
       { key: "topic2", label: "Topic 2", value: "Church Tech", type: "text", maxLength: 30 },
@@ -84,6 +85,7 @@ const DEFAULT_SECTIONS: HomeSection[] = [
     canHide: true,
     lastEdited: "Mar 15, 2026",
     fields: [
+      { key: "date", label: "Week of / Date", value: "Week of May 5, 2026", type: "text", maxLength: 60 },
       { key: "name", label: "Tool Name", value: "NotebookLM by Google", type: "text", maxLength: 60, required: true },
       { key: "category", label: "Category", value: "Productivity", type: "select", options: ["Productivity", "Writing", "Research", "Design", "Ministry", "Communication", "Analytics"] },
       { key: "description", label: "Description", value: "An AI-powered notebook that can analyze documents, generate summaries, and answer questions about your uploaded content.", type: "textarea", maxLength: 300 },

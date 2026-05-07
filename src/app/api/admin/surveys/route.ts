@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
+import { surveyCreateSchema } from "@/lib/validation";
 
 async function verifyAdmin() {
   const session = await getServerSession(authOptions);
@@ -49,15 +50,22 @@ export async function GET() {
 }
 
 // Create a new survey
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   if (!(await verifyAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  if (!body?.title || !body?.slug) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const parsed = surveyCreateSchema.safeParse(body);
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "Title and slug are required" },
+      { error: "Validation failed", details: parsed.error.flatten() },
       { status: 400 }
     );
   }
@@ -66,17 +74,21 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("surveys")
     .insert({
-      title: body.title,
-      slug: body.slug,
-      description: body.description ?? null,
-      intro_text: body.intro_text ?? null,
-      is_active: body.is_active ?? false,
-      show_on_homepage: body.show_on_homepage ?? false,
+      title: parsed.data.title,
+      slug: parsed.data.slug,
+      description: parsed.data.description ?? null,
+      intro_text: parsed.data.intro_text ?? null,
+      is_active: parsed.data.is_active ?? false,
+      show_on_homepage: parsed.data.show_on_homepage ?? false,
     })
     .select()
     .single();
 
   if (error) {
+    console.error("[POST /api/admin/surveys]", error);
+    if (error.code === "23505") {
+      return NextResponse.json({ error: "A survey with that slug already exists" }, { status: 409 });
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
