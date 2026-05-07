@@ -78,9 +78,11 @@ export default async function Home() {
           <FadeInOnScroll delay={0.05}>
             <QuickAssessmentCTA assessmentConfig={assessmentConfig} />
           </FadeInOnScroll>
-          <FadeInOnScroll delay={0.05}>
-            <UpcomingStrategyRoom strategyConfig={strategyConfig} />
-          </FadeInOnScroll>
+          {strategyConfig?.visible !== false && (
+            <FadeInOnScroll delay={0.05}>
+              <UpcomingStrategyRoom strategyConfig={strategyConfig} />
+            </FadeInOnScroll>
+          )}
         </div>
       </div>
     </>
