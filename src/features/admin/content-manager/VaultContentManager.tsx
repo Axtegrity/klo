@@ -270,6 +270,9 @@ function EditItemModal({
   const [excerpt, setExcerpt] = useState(item.excerpt ?? "");
   const [body, setBody] = useState(item.body);
   const [authorName, setAuthorName] = useState(item.author_name ?? "");
+  const [publishedAt, setPublishedAt] = useState(
+    item.published_at ? item.published_at.slice(0, 10) : ""
+  );
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -283,6 +286,7 @@ function EditItemModal({
         excerpt: excerpt || undefined,
         body,
         author_name: authorName || undefined,
+        published_at: publishedAt ? new Date(publishedAt).toISOString() : undefined,
       });
     } finally {
       setSaving(false);
@@ -344,10 +348,16 @@ function EditItemModal({
           <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={8} className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm resize-none" />
         </label>
 
-        <label className="block">
-          <span className="text-xs text-klo-muted mb-1 block">Author</span>
-          <input value={authorName} onChange={(e) => setAuthorName(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px]" />
-        </label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label className="block">
+            <span className="text-xs text-klo-muted mb-1 block">Author</span>
+            <input value={authorName} onChange={(e) => setAuthorName(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px]" />
+          </label>
+          <label className="block">
+            <span className="text-xs text-klo-muted mb-1 block">Published Date</span>
+            <input type="date" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px]" />
+          </label>
+        </div>
 
         <div className="flex gap-2 pt-2">
           <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-muted text-sm min-h-[44px]">Cancel</button>
