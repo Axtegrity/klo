@@ -369,3 +369,31 @@ html {
   opacity: 0;
   pointer-events: none;
 }
+
+/* Document viewer — mammoth-converted Word doc styles */
+.klo-doc-body { color: #C9D1D9; line-height: 1.75; font-size: 1rem; }
+.klo-doc-body h1, .klo-doc-body h2, .klo-doc-body h3,
+.klo-doc-body h4, .klo-doc-body h5, .klo-doc-body h6 {
+  color: #E6EDF3; font-weight: 700; margin-top: 2rem; margin-bottom: 0.75rem; line-height: 1.3;
+}
+.klo-doc-body h1 { font-size: 2rem; }
+.klo-doc-body h2 { font-size: 1.5rem; border-bottom: 1px solid #21262D; padding-bottom: 0.5rem; }
+.klo-doc-body h3 { font-size: 1.25rem; }
+.klo-doc-body p  { margin-bottom: 1rem; }
+.klo-doc-body strong, .klo-doc-body b { color: #E6EDF3; font-weight: 600; }
+.klo-doc-body em, .klo-doc-body i { color: #C9D1D9; font-style: italic; }
+.klo-doc-body a  { color: #2764FF; text-decoration: none; }
+.klo-doc-body a:hover { text-decoration: underline; }
+.klo-doc-body ul, .klo-doc-body ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+.klo-doc-body li { margin-bottom: 0.4rem; }
+.klo-doc-body ul li::marker { color: #2764FF; }
+.klo-doc-body ol li::marker { color: #21B8CD; }
+.klo-doc-body blockquote {
+  border-left: 3px solid #2764FF; padding-left: 1rem; margin: 1.5rem 0;
+  color: #8B949E; font-style: italic;
+}
+.klo-doc-body hr { border-color: #21262D; margin: 2rem 0; }
+.klo-doc-body table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+.klo-doc-body th, .klo-doc-body td { border: 1px solid #21262D; padding: 0.6rem 1rem; text-align: left; }
+.klo-doc-body th { background: #161B22; color: #E6EDF3; font-weight: 600; }
+.klo-doc-body img { max-width: 100%; border-radius: 0.5rem; margin: 1rem 0; }
