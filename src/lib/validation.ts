@@ -467,6 +467,31 @@ export const contactFormSchema = z.discriminatedUnion("type", [
 ]);
 
 // ----------------------------------------------------------------
+// Admin: surveys POST (create)
+// ----------------------------------------------------------------
+
+export const surveyCreateSchema = z.object({
+  title: z.string().min(1).max(300),
+  slug: z.string().min(1).max(300).regex(/^[a-z0-9-]+$/, { message: "Slug must be lowercase letters, numbers, and hyphens only" }),
+  description: z.string().max(2000).optional(),
+  intro_text: z.string().max(5000).optional(),
+  is_active: z.boolean().optional(),
+  show_on_homepage: z.boolean().optional(),
+});
+
+// Admin: surveys [id] PATCH (update metadata)
+export const surveyUpdateSchema = z.object({
+  title: z.string().min(1).max(300).optional(),
+  slug: z.string().min(1).max(300).regex(/^[a-z0-9-]+$/, { message: "Slug must be lowercase letters, numbers, and hyphens only" }).optional(),
+  description: z.string().max(2000).optional(),
+  intro_text: z.string().max(5000).optional(),
+  is_active: z.boolean().optional(),
+  show_on_homepage: z.boolean().optional(),
+}).refine((data) => Object.keys(data).length > 0, {
+  message: "At least one field is required",
+});
+
+// ----------------------------------------------------------------
 // Creative Studio — Media Library
 // ----------------------------------------------------------------
 
@@ -675,6 +700,7 @@ export const pageConfigUpdateSchema = z.object({
     cta: z.string().max(40),
   }).nullable().optional(),
   trending_config: z.object({
+    date: z.string().max(60).optional(),
     heading: z.string().min(1).max(100),
     topic1: z.string().max(60),
     topic2: z.string().max(60),
@@ -690,6 +716,7 @@ export const pageConfigUpdateSchema = z.object({
     cta: z.string().max(60),
   }).nullable().optional(),
   tool_config: z.object({
+    date: z.string().max(60).optional(),
     name: z.string().min(1).max(100),
     category: z.string().max(60),
     description: z.string().max(500),

@@ -8,6 +8,20 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [2026-05-07e] — Admin Content Batch: Date Fields, Testimonial Create, Survey CRUD
+
+### Added
+- **AI Tool of the Week — "Week of / Date" field** — admins can now set a date label (e.g. "Week of May 5, 2026") for the featured tool card. Rendered as muted text next to the category badge. Wired through `ToolConfig` interface, `tool_config` Zod schema, `HomeContentManager`, and `AIToolOfTheWeek` component.
+- **Trending Topics — "Week of / Date" field** — admins can set a date label for the trending topics card. Rendered inline next to "Popular this week." Wired through `TrendingConfig` interface, `trending_config` Zod schema, `HomeContentManager`, and `TrendingTopics` component.
+- **Testimonials — "Add Testimonial" button** — admins can now create testimonials manually from the Testimonials tab. Opens a create modal (email, organizer name, star rating, quote). New testimonials are created as pending and appear immediately in the list. POST `/api/admin/marketing/testimonials` already existed with full Zod validation.
+- **Surveys — Create/Edit/Delete from admin UI** — replaced the "Surveys are created via the database seed" empty state with a full CRUD interface: "New Survey" button in header, per-row Edit (pencil) and Delete (trash) buttons, create/edit modal with Title, Slug (auto-generated from title, editable), Description, Intro Text, is_active toggle, show_on_homepage toggle. Slug uniqueness conflict returns a clear 409 error message.
+
+### Changed
+- **Surveys API — POST Zod validation** — `POST /api/admin/surveys` now uses `surveyCreateSchema` (Zod safeParse) instead of ad-hoc body checks.
+- **Surveys API — PATCH Zod validation + slug support** — `PATCH /api/admin/surveys/[id]` now uses `surveyUpdateSchema` (Zod safeParse) and accepts `slug` updates.
+
+---
+
 ## [2026-05-07d] — Hero Label Field
 
 ### Added

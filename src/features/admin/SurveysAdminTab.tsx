@@ -13,7 +13,13 @@ import {
   ChevronDown,
   ChevronUp,
   ClipboardList,
+  Plus,
+  Pencil,
+  Trash2,
+  Save,
+  Loader2,
 } from "lucide-react";
+import Modal from "@/components/shared/Modal";
 
 // ------------------------------------------------------------
 // Types
@@ -24,6 +30,7 @@ interface Survey {
   title: string;
   slug: string;
   description: string | null;
+  intro_text: string | null;
   is_active: boolean;
   show_on_homepage: boolean;
   response_count: number;
@@ -65,6 +72,13 @@ export default function SurveysAdminTab() {
   const [results, setResults] = useState<SurveyResults | null>(null);
   const [resultsLoading, setResultsLoading] = useState(false);
 
+  // CRUD modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingSurvey, setEditingSurvey] = useState<Survey | null>(null);
+  const [savingModal, setSavingModal] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [crudError, setCrudError] = useState<string | null>(null);
+
   // Cross-filter state
   const [filterQuestionId, setFilterQuestionId] = useState<string>("");
   const [filterValue, setFilterValue] = useState<string>("");
@@ -84,6 +98,78 @@ export default function SurveysAdminTab() {
   useEffect(() => {
     fetchSurveys();
   }, [fetchSurveys]);
+
+  async function handleCreate(fields: {
+    title: string;
+    slug: string;
+    description: string;
+    intro_text: string;
+    is_active: boolean;
+    show_on_homepage: boolean;
+  }) {
+    setSavingModal(true);
+    setCrudError(null);
+    try {
+      const res = await fetch("/api/admin/surveys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fields),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
+      setShowCreateModal(false);
+      await fetchSurveys();
+    } catch (err) {
+      setCrudError(err instanceof Error ? err.message : "Failed to create");
+    } finally {
+      setSavingModal(false);
+    }
+  }
+
+  async function handleEdit(id: string, fields: {
+    title: string;
+    slug: string;
+    description: string;
+    intro_text: string;
+    is_active: boolean;
+    show_on_homepage: boolean;
+  }) {
+    setSavingModal(true);
+    setCrudError(null);
+    try {
+      const res = await fetch(`/api/admin/surveys/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fields),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
+      setEditingSurvey(null);
+      await fetchSurveys();
+    } catch (err) {
+      setCrudError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setSavingModal(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this survey? All associated responses will also be removed. This cannot be undone.")) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/admin/surveys/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setSurveys((prev) => prev.filter((s) => s.id !== id));
+      if (selectedSurvey?.id === id) {
+        setSelectedSurvey(null);
+        setResults(null);
+      }
+    } catch (err) {
+      setCrudError(err instanceof Error ? err.message : "Failed to delete");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const fetchResults = useCallback(
     async (surveyId: string, fqId?: string, fv?: string) => {
@@ -188,20 +274,41 @@ export default function SurveysAdminTab() {
   if (!selectedSurvey) {
     return (
       <div className="space-y-6">
-        <h2 className="text-lg font-semibold text-klo-text flex items-center gap-2">
-          <ClipboardList size={20} />
-          Surveys
-        </h2>
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-lg font-semibold text-klo-text flex items-center gap-2">
+            <ClipboardList size={20} />
+            Surveys
+          </h2>
+          <button
+            onClick={() => { setCrudError(null); setShowCreateModal(true); }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2764FF]/10 hover:bg-[#2764FF]/20 border border-[#2764FF]/30 text-sm text-[#2764FF] font-semibold transition-colors"
+          >
+            <Plus size={16} />
+            New Survey
+          </button>
+        </div>
+
+        {crudError && (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {crudError}
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center py-8">
             <div className="w-6 h-6 border-2 border-[#2764FF]/30 border-t-[#2764FF] rounded-full animate-spin" />
           </div>
         ) : surveys.length === 0 ? (
-          <div className="glass rounded-2xl p-8 border border-white/5 text-center">
-            <p className="text-klo-muted text-sm">
-              No surveys yet. Surveys are created via the database seed.
-            </p>
+          <div className="glass rounded-2xl p-10 border border-white/5 text-center">
+            <ClipboardList size={36} className="text-klo-muted/30 mx-auto mb-3" />
+            <p className="text-klo-muted text-sm mb-4">No surveys yet.</p>
+            <button
+              onClick={() => { setCrudError(null); setShowCreateModal(true); }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#2764FF]/10 hover:bg-[#2764FF]/20 border border-[#2764FF]/30 text-sm text-[#2764FF] font-semibold transition-colors"
+            >
+              <Plus size={16} />
+              Create your first survey
+            </button>
           </div>
         ) : (
           <div className="space-y-3">
@@ -284,11 +391,51 @@ export default function SurveysAdminTab() {
                     >
                       <BarChart3 size={16} />
                     </button>
+                    <button
+                      onClick={() => { setCrudError(null); setEditingSurvey(s); }}
+                      className="p-2 rounded-lg text-klo-muted hover:text-klo-text hover:bg-white/5 transition-colors"
+                      title="Edit survey"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => void handleDelete(s.id)}
+                      disabled={deletingId === s.id}
+                      className="p-2 rounded-lg text-red-300/60 hover:text-red-300 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                      title="Delete survey"
+                    >
+                      {deletingId === s.id ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={16} />
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+        )}
+
+        {showCreateModal && (
+          <SurveyFormModal
+            mode="create"
+            saving={savingModal}
+            error={crudError}
+            onSubmit={(fields) => void handleCreate(fields)}
+            onClose={() => { setShowCreateModal(false); setCrudError(null); }}
+          />
+        )}
+
+        {editingSurvey && (
+          <SurveyFormModal
+            mode="edit"
+            initial={editingSurvey}
+            saving={savingModal}
+            error={crudError}
+            onSubmit={(fields) => void handleEdit(editingSurvey.id, fields)}
+            onClose={() => { setEditingSurvey(null); setCrudError(null); }}
+          />
         )}
       </div>
     );
@@ -570,5 +717,198 @@ export default function SurveysAdminTab() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+// ------------------------------------------------------------
+// Survey Create/Edit Modal
+// ------------------------------------------------------------
+
+interface SurveyFormFields {
+  title: string;
+  slug: string;
+  description: string;
+  intro_text: string;
+  is_active: boolean;
+  show_on_homepage: boolean;
+}
+
+function toSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+function SurveyFormModal({
+  mode,
+  initial,
+  saving,
+  error,
+  onSubmit,
+  onClose,
+}: {
+  mode: "create" | "edit";
+  initial?: Survey;
+  saving: boolean;
+  error: string | null;
+  onSubmit: (fields: SurveyFormFields) => void;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [slug, setSlug] = useState(initial?.slug ?? "");
+  const [slugManual, setSlugManual] = useState(mode === "edit");
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [introText, setIntroText] = useState(initial?.intro_text ?? "");
+  const [isActive, setIsActive] = useState(initial?.is_active ?? false);
+  const [showOnHomepage, setShowOnHomepage] = useState(initial?.show_on_homepage ?? false);
+  const [validationError, setValidationError] = useState("");
+
+  function handleTitleChange(val: string) {
+    setTitle(val);
+    if (!slugManual) {
+      setSlug(toSlug(val));
+    }
+  }
+
+  function handleSlugChange(val: string) {
+    setSlugManual(true);
+    setSlug(val.toLowerCase().replace(/[^a-z0-9-]/g, ""));
+  }
+
+  function handleSubmit() {
+    if (!title.trim()) {
+      setValidationError("Title is required.");
+      return;
+    }
+    if (!slug.trim() || !/^[a-z0-9-]+$/.test(slug.trim())) {
+      setValidationError("Slug must be lowercase letters, numbers, and hyphens only.");
+      return;
+    }
+    setValidationError("");
+    onSubmit({
+      title: title.trim(),
+      slug: slug.trim(),
+      description: description.trim(),
+      intro_text: introText.trim(),
+      is_active: isActive,
+      show_on_homepage: showOnHomepage,
+    });
+  }
+
+  const inputClass = "w-full bg-[#0D1117] border border-[#21262D] rounded-lg px-4 py-3 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:ring-2 focus:ring-[#2764FF]/50";
+  const labelClass = "text-xs font-semibold uppercase tracking-wide text-klo-muted mb-1.5 block";
+
+  return (
+    <Modal isOpen={true} onClose={onClose} title={mode === "create" ? "Create survey" : "Edit survey"}>
+      <div className="space-y-4">
+        {(validationError || error) && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+            {validationError || error}
+          </div>
+        )}
+
+        <div>
+          <label className={labelClass}>
+            Title <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            placeholder="AI Readiness Survey"
+            className={inputClass}
+            maxLength={300}
+          />
+        </div>
+
+        <div>
+          <label className={labelClass}>
+            Slug <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            value={slug}
+            onChange={(e) => handleSlugChange(e.target.value)}
+            placeholder="ai-readiness-survey"
+            className={inputClass}
+            maxLength={300}
+          />
+          <p className="text-[11px] text-klo-muted mt-1">
+            Lowercase letters, numbers, and hyphens only. Auto-generated from title.
+          </p>
+        </div>
+
+        <div>
+          <label className={labelClass}>Description</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+            placeholder="A brief description shown to participants..."
+            className={`${inputClass} resize-y`}
+            maxLength={2000}
+          />
+        </div>
+
+        <div>
+          <label className={labelClass}>Intro text</label>
+          <textarea
+            value={introText}
+            onChange={(e) => setIntroText(e.target.value)}
+            rows={3}
+            placeholder="Welcome copy shown before the survey begins..."
+            className={`${inputClass} resize-y`}
+            maxLength={5000}
+          />
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <div
+              onClick={() => setIsActive((v) => !v)}
+              className={`relative w-10 h-5 rounded-full transition-colors ${isActive ? "bg-emerald-500" : "bg-white/10"}`}
+            >
+              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${isActive ? "translate-x-5" : "translate-x-0.5"}`} />
+            </div>
+            <span className="text-sm text-klo-text">Active</span>
+          </label>
+
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <div
+              onClick={() => setShowOnHomepage((v) => !v)}
+              className={`relative w-10 h-5 rounded-full transition-colors ${showOnHomepage ? "bg-[#2764FF]" : "bg-white/10"}`}
+            >
+              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${showOnHomepage ? "translate-x-5" : "translate-x-0.5"}`} />
+            </div>
+            <span className="text-sm text-klo-text">Show on homepage</span>
+          </label>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/5">
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="px-4 py-2 rounded-lg text-sm text-klo-muted hover:text-klo-text hover:bg-white/5 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-[#2764FF]/20 text-[#2764FF] hover:bg-[#2764FF]/30 border border-[#2764FF]/30 transition-colors disabled:opacity-50"
+          >
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            {mode === "create" ? "Create survey" : "Save changes"}
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }
