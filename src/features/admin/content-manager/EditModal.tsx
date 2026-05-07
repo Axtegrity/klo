@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { X, Upload, Trash2, ExternalLink, AlertTriangle } from "lucide-react";
+import { X, Upload, Trash2, ExternalLink } from "lucide-react";
 import Button from "@/components/shared/Button";
 
 export interface EditField {
@@ -63,7 +63,6 @@ export default function EditModal({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const update = useCallback((key: string, val: string) => {
@@ -333,46 +332,24 @@ export default function EditModal({
             <Button variant="ghost" size="sm" onClick={onClose}>
               Cancel
             </Button>
-            {showSaveConfirm ? (
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <AlertTriangle size={14} className="text-amber-400 shrink-0" />
-                <span className="text-xs text-amber-400">This goes live immediately.</span>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  disabled={isSaving || uploading}
-                  onClick={async () => {
-                    setShowSaveConfirm(false);
-                    try {
-                      const merged = await uploadPendingFiles(values);
-                      if (linkFieldKey && merged[linkFieldKey] !== values[linkFieldKey]) {
-                        update(linkFieldKey, merged[linkFieldKey]);
-                      }
-                      await onSave(merged);
-                    } catch (err) {
-                      setUploadError(err instanceof Error ? err.message : "Upload failed");
-                    }
-                  }}
-                >
-                  {uploading ? "Uploading…" : isSaving ? "Saving…" : "Confirm"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowSaveConfirm(false)}
-                >
-                  Back
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setShowSaveConfirm(true)}
-              >
-                {isNew ? "Create & Publish" : "Save Changes"}
-              </Button>
-            )}
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={isSaving || uploading}
+              onClick={async () => {
+                try {
+                  const merged = await uploadPendingFiles(values);
+                  if (linkFieldKey && merged[linkFieldKey] !== values[linkFieldKey]) {
+                    update(linkFieldKey, merged[linkFieldKey]);
+                  }
+                  await onSave(merged);
+                } catch (err) {
+                  setUploadError(err instanceof Error ? err.message : "Upload failed");
+                }
+              }}
+            >
+              {uploading ? "Uploading…" : isSaving ? "Saving…" : isNew ? "Create & Publish" : "Save Changes"}
+            </Button>
           </div>
         </div>
       </div>
