@@ -15,6 +15,7 @@ import TitleFade from "@/components/layout/TitleFade";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import ActiveSurveyProvider from "@/components/layout/ActiveSurveyProvider";
 import ThemeInjector from "@/components/layout/ThemeInjector";
+import { ToastProvider } from "@/contexts/ToastContext";
 import JsonLd, {
   personJsonLd,
   organizationJsonLd,
@@ -118,6 +119,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="font-body antialiased bg-[#0D1117] text-klo-text no-overscroll">
+        <ToastProvider>
         <AuthProvider>
           <PushAutoInit />
           <PushOptInPrompt />
@@ -141,6 +143,7 @@ export default async function RootLayout({
           </BiometricGate>
           </ActiveSurveyProvider>
         </AuthProvider>
+        </ToastProvider>
         <TitleFade />
         <CapacitorInit />
         <ServiceWorkerRegister />

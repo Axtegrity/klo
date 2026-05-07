@@ -41,17 +41,70 @@
         { "action": "waitForSelector", "selector": "input[type='email'], input[name='email']", "timeout": 5000 },
         { "action": "assertVisible", "selector": "input[type='email'], input[name='email']" }
       ]
+    },
+    {
+      "name": "Admin Login Succeeds",
+      "critical": true,
+      "requiresAuth": true,
+      "steps": [
+        { "action": "goto", "path": "/auth/signin" },
+        { "action": "fill", "selector": "input[type='email'], input[name='email']", "value": "ENV:ADMIN_QA_EMAIL" },
+        { "action": "fill", "selector": "input[type='password'], input[name='password']", "value": "ENV:ADMIN_QA_PASSWORD" },
+        { "action": "click", "selector": "button[type='submit']" },
+        { "action": "waitForNavigation", "timeout": 8000 },
+        { "action": "assertNotUrl", "pattern": "/auth/signin" }
+      ]
+    },
+    {
+      "name": "Admin CMS Loads",
+      "critical": true,
+      "requiresAuth": true,
+      "steps": [
+        { "action": "goto", "path": "/admin" },
+        { "action": "waitForSelector", "selector": "[class*='admin'], [class*='creative'], h1, h2", "timeout": 8000 },
+        { "action": "assertNotUrl", "pattern": "/auth/signin" }
+      ]
+    },
+    {
+      "name": "Admin Home CMS Sections Visible",
+      "critical": true,
+      "requiresAuth": true,
+      "steps": [
+        { "action": "goto", "path": "/admin" },
+        { "action": "waitForSelector", "selector": "button, [role='button']", "timeout": 8000 },
+        { "action": "assertVisible", "selector": "button, [role='button']" }
+      ]
+    },
+    {
+      "name": "Admin Edit Modal Opens",
+      "critical": true,
+      "requiresAuth": true,
+      "steps": [
+        { "action": "goto", "path": "/admin" },
+        { "action": "waitForSelector", "selector": "button:has(svg), [aria-label*='edit'], [aria-label*='Edit']", "timeout": 8000 },
+        { "action": "click", "selector": "button:has(svg):first-of-type" },
+        { "action": "waitForSelector", "selector": "[role='dialog'], .modal, input, textarea", "timeout": 5000 },
+        { "action": "assertVisible", "selector": "[role='dialog'], .modal, input, textarea" }
+      ]
+    },
+    {
+      "name": "Admin Upload Document Route Responds",
+      "critical": true,
+      "requiresAuth": true,
+      "steps": [
+        { "action": "apiCheck", "path": "/api/admin/documents/upload", "method": "GET", "expectedStatus": [401, 405] }
+      ]
     }
   ],
 
   "auth": {
     "loginUrl": "/auth/signin",
     "credentials": {
-      "email": "ENV:FORENSIC_QA_EMAIL",
-      "password": "ENV:FORENSIC_QA_PASSWORD"
+      "email": "ENV:ADMIN_QA_EMAIL",
+      "password": "ENV:ADMIN_QA_PASSWORD"
     },
-    "successIndicator": "a[href*='dashboard'], [data-testid='user-menu'], .user-avatar",
-    "enabled": false
+    "successIndicator": "nav, [href*='/admin'], [href*='/profile'], main",
+    "enabled": true
   },
 
   "consoleErrors": {

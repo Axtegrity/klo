@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Pencil, GripVertical, Eye, EyeOff, Lock } from "lucide-react";
 import EditModal, { type EditField } from "./EditModal";
+import { useToast } from "@/contexts/ToastContext";
 
 interface HomeSection {
   id: string;
@@ -127,6 +128,7 @@ const DEFAULT_SECTIONS: HomeSection[] = [
 ];
 
 export default function HomeContentManager() {
+  const { toast } = useToast();
   const [sections, setSections] = useState(DEFAULT_SECTIONS);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -289,8 +291,11 @@ export default function HomeContentManager() {
                 )
               );
               setEditingId(null);
+              toast("success", `${editingSection.label} saved — changes are live.`);
             } catch (err) {
-              setSaveError(err instanceof Error ? err.message : "Save failed");
+              const msg = err instanceof Error ? err.message : "Save failed";
+              setSaveError(msg);
+              toast("error", msg);
             } finally {
               setSaving(false);
             }
