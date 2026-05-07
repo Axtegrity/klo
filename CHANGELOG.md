@@ -8,6 +8,13 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [2026-05-07] — Vault Rich Content Fix
+
+### Fixed
+- **Vault brief content now displays** — selecting a vault topic (e.g. "Navigating the Moral Frontier of Generative AI in Ministry") now renders the full structured brief (overview, takeaways, pull quote, implementation steps, conclusion) instead of blank. Root cause: API routes returned items with a `db-<uuid>` ID but the rich-content map keys are `v-001`–`v-017`; the lookup always missed. Fix reads `legacy_id` from each row's metadata JSONB (stored at seed time) so the lookup succeeds.
+
+---
+
 ## [2026-05-07] — Admin Feedback & QA Standards
 
 ### Added

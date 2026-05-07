@@ -93,7 +93,7 @@ export async function GET() {
     const wordCount = body ? body.trim().split(/\s+/).length : 0;
     const minutes = Math.max(1, Math.round(wordCount / 200));
     return {
-      id: `db-${row.id}`,
+      id: (meta.legacy_id as string) ?? `db-${row.id}`,
       title: row.title,
       slug: row.slug,
       category: normalizeCategory(row.category),
