@@ -694,10 +694,20 @@ export const pageConfigUpdateSchema = z.object({
     description: z.string().max(500),
     why: z.string().max(500),
     link: z.string().max(500),
+    cta: z.string().max(40).optional(),
   }).nullable().optional(),
   assessment_config: z.object({
     heading: z.string().min(1).max(100),
     subheading: z.string().max(200),
+  }).nullable().optional(),
+  strategy_config: z.object({
+    heading: z.string().max(100).optional(),
+    title: z.string().max(200).optional(),
+    date: z.string().max(60).optional(),
+    description: z.string().max(500).optional(),
+    seats: z.string().max(40).optional(),
+    cta: z.string().max(40).optional(),
+    link: z.string().max(500).optional(),
   }).nullable().optional(),
   layout_config: z.object({
     columns: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),

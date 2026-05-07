@@ -4,25 +4,33 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Calendar, Users, ArrowRight, Shield } from "lucide-react";
+import type { StrategyConfig } from "@/lib/page-config-server";
 
-const mockSession = {
+const DEFAULTS: StrategyConfig = {
+  heading: "Next Strategy Room",
   title: "AI Governance for Faith Organizations",
   date: "April 15, 2026",
   description:
     "Explore responsible AI adoption frameworks tailored for faith-based organizations. This session covers ethical AI policies, risk management, and governance structures that align technology decisions with your mission and values.",
-  seatsRemaining: 8,
-  totalSeats: 20,
-  tier: "Executive" as const,
+  seats: "8 of 20",
+  cta: "Register",
+  link: "/strategy-rooms",
 };
 
-export default function UpcomingStrategyRoom() {
+interface UpcomingStrategyRoomProps {
+  strategyConfig?: StrategyConfig | null;
+}
+
+export default function UpcomingStrategyRoom({ strategyConfig }: UpcomingStrategyRoomProps = {}) {
+  const session = strategyConfig ?? DEFAULTS;
+
   return (
     <section>
       {/* Section heading */}
       <div className="flex items-center gap-4 mb-8">
         <span className="w-10 h-1 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] rounded-full" />
         <h2 className="font-display text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#E6EDF3] to-[#8B949E] bg-clip-text text-transparent uppercase tracking-wide">
-          Next Strategy Room
+          {session.heading}
         </h2>
       </div>
 
@@ -34,59 +42,46 @@ export default function UpcomingStrategyRoom() {
         transition={{ duration: 0.5, ease: "easeOut" as const }}
       >
         <div className="group relative bg-[#161B22] border border-[#21262D] rounded-xl overflow-hidden transition-all duration-300 hover:border-[#2764FF]/30 hover:shadow-[0_0_30px_rgba(39,100,255,0.1)]">
-          {/* Subtle background watermark image */}
           <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
             <Image src="/images/keith/c.jpg" alt="" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
           </div>
-          {/* Left accent bar */}
           <div className="absolute left-0 top-8 bottom-8 w-0.5 bg-gradient-to-b from-[#2764FF] to-[#21B8CD] rounded-full opacity-50 group-hover:opacity-100 transition-opacity" />
           <div className="relative z-10 flex flex-col sm:flex-row">
-
-            {/* Content */}
             <div className="flex-1 p-6 sm:p-8 lg:p-10">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                {/* Details */}
                 <div className="space-y-4 flex-1 min-w-0">
-                  {/* Badges row */}
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 text-sm text-[#21B8CD] font-medium">
                       <Calendar className="w-4 h-4" />
-                      <span className="font-mono tracking-wide">{mockSession.date}</span>
+                      <span className="font-mono tracking-wide">{session.date}</span>
                     </div>
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold tracking-wide uppercase rounded-full bg-[#C8A84E]/15 text-[#C8A84E] border border-[#C8A84E]/20">
                       <Shield className="w-3 h-3" />
-                      {mockSession.tier}
+                      Executive
                     </span>
                   </div>
 
-                  {/* Title */}
                   <h3 className="text-lg sm:text-xl font-semibold text-[#E6EDF3] leading-snug">
-                    {mockSession.title}
+                    {session.title}
                   </h3>
 
-                  {/* Description */}
                   <p className="text-sm text-[#8B949E] leading-relaxed max-w-2xl">
-                    {mockSession.description}
+                    {session.description}
                   </p>
 
-                  {/* Seats indicator */}
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-[#8B949E]" />
                     <span className="text-sm text-[#8B949E]">
-                      <span className="text-[#21B8CD] font-semibold">
-                        {mockSession.seatsRemaining}
-                      </span>{" "}
-                      of {mockSession.totalSeats} seats remaining
+                      <span className="text-[#21B8CD] font-semibold">{session.seats}</span> seats remaining
                     </span>
                   </div>
                 </div>
 
-                {/* CTA */}
                 <Link
-                  href="/strategy-rooms"
+                  href={session.link}
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-[#2764FF]/25 hover:scale-105 active:scale-[0.98] shrink-0 w-full sm:w-auto lg:w-auto"
                 >
-                  Register
+                  {session.cta}
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>

@@ -137,6 +137,7 @@ export default function HomeContentManager() {
     insight:        "insight_config",
     tool:           "tool_config",
     assessment_cta: "assessment_config",
+    strategy_room:  "strategy_config",
   };
 
   useEffect(() => {
