@@ -41,6 +41,7 @@ export default async function Home() {
     <>
       {/* Hero — full width. Admin-overridable via page_configs.hero_config */}
       <HeroBanner
+        label={hero?.label || undefined}
         headline={hero?.headline || undefined}
         subheadline={hero?.subheadline || undefined}
         backgroundColor={hero?.backgroundType === "color" ? hero?.backgroundRef : null}

@@ -31,6 +31,7 @@ const scrollImages = [
 ];
 
 interface HeroBannerProps {
+  label?: string;
   headline?: string;
   subheadline?: string;
   backgroundColor?: string | null;
@@ -39,6 +40,7 @@ interface HeroBannerProps {
 }
 
 export default function HeroBanner({
+  label,
   headline,
   subheadline,
   backgroundColor,
@@ -135,7 +137,7 @@ export default function HeroBanner({
             variants={fadeUp}
             className="text-xs sm:text-sm uppercase tracking-[0.2em] text-[#8B949E] font-medium mb-6"
           >
-            Technology Innovator &bull; Strategic Advisor &bull; Speaker
+            {label || "Technology Innovator • Strategic Advisor • Speaker"}
           </motion.p>
 
           {/* Name / headline — admin-overridable via page_configs.hero_config */}
