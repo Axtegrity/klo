@@ -66,11 +66,11 @@ export default function EditModal({
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (!open) return null;
-
   const update = useCallback((key: string, val: string) => {
     setValues((prev) => ({ ...prev, [key]: val }));
   }, []);
+
+  if (!open) return null;
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files;
