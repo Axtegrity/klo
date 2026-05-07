@@ -49,12 +49,19 @@ export default function DocumentViewerClient({ url, name, htmlContent }: Props) 
 
       {/* Content */}
       {htmlContent ? (
-        /* Mammoth-converted HTML — Word doc rendered as styled prose */
-        <div className="max-w-4xl mx-auto px-6 py-10">
-          <div
-            className="klo-doc-body"
-            dangerouslySetInnerHTML={{ __html: htmlContent }}
-          />
+        /* Mammoth-converted HTML — paper card on dark background */
+        <div className="min-h-[calc(100vh-57px)] bg-[#0D1117] py-10 px-4 sm:px-6">
+          <div className="max-w-3xl mx-auto rounded-xl overflow-hidden shadow-[0_8px_60px_rgba(0,0,0,0.7)]">
+            {/* KLO accent stripe */}
+            <div className="h-1 bg-gradient-to-r from-[#2764FF] to-[#21B8CD]" />
+            {/* Paper body */}
+            <div className="bg-[#FAFAF8] px-8 py-12 sm:px-14 sm:py-14">
+              <div
+                className="klo-doc-body"
+                dangerouslySetInnerHTML={{ __html: htmlContent }}
+              />
+            </div>
+          </div>
         </div>
       ) : isPdf ? (
         /* Native PDF viewer */
