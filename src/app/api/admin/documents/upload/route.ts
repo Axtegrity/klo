@@ -44,5 +44,8 @@ export async function POST(req: NextRequest) {
 
   const { data: urlData } = supabase.storage.from("documents").getPublicUrl(storagePath);
 
-  return NextResponse.json({ url: urlData.publicUrl, name: file.name }, { status: 201 });
+  const publicUrl = urlData.publicUrl;
+  const viewerUrl = `/documents/view?url=${encodeURIComponent(publicUrl)}&name=${encodeURIComponent(file.name)}`;
+
+  return NextResponse.json({ url: publicUrl, viewerUrl, name: file.name }, { status: 201 });
 }
