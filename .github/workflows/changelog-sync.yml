@@ -1,0 +1,128 @@
+name: Changelog Sync
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync-changelog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Parse commit and sync changelog
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          COMMIT_AUTHOR=$(git log -1 --pretty=%an)
+          COMMIT_BODY=$(git log -1 --pretty=%b)
+
+          echo "Commit: $COMMIT_MSG"
+          echo "Author: $COMMIT_AUTHOR"
+
+          # Skip bots, merges, chores, and nightly commits
+          if echo "$COMMIT_AUTHOR" | grep -qiE 'dependabot|github-actions|renovate'; then
+            echo "Skipping: bot author"
+            exit 0
+          fi
+          if echo "$COMMIT_MSG" | grep -qiE '^(chore|style|ci|docs|test|build|revert)\b'; then
+            echo "Skipping: chore/infra commit"
+            exit 0
+          fi
+          if echo "$COMMIT_MSG" | grep -qiE '^Merge (pull request|branch)'; then
+            echo "Skipping: merge commit"
+            exit 0
+          fi
+          if echo "$COMMIT_MSG" | grep -qiE '(nightly|auto-commit|skip changelog)'; then
+            echo "Skipping: flagged commit"
+            exit 0
+          fi
+
+          # Map conventional commit prefix → changelog type
+          if echo "$COMMIT_MSG" | grep -qE '^feat(\(.+\))?!?:'; then
+            TYPE="feature"
+          elif echo "$COMMIT_MSG" | grep -qE '^fix(\(.+\))?!?:'; then
+            TYPE="fix"
+          elif echo "$COMMIT_MSG" | grep -qE '^(perf|refactor)(\(.+\))?!?:'; then
+            TYPE="improvement"
+          else
+            TYPE="improvement"
+          fi
+
+          # Strip conventional commit prefix from title
+          TITLE=$(echo "$COMMIT_MSG" | sed -E 's/^[a-z]+(\([^)]+\))?!?: //')
+          DESCRIPTION=$(echo "$COMMIT_BODY" | head -c 500 | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+
+          echo "Type: $TYPE"
+          echo "Title: $TITLE"
+
+          # Fetch latest version from Supabase
+          LATEST=$(curl -s \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            "$SUPABASE_URL/rest/v1/changelog?select=version&order=created_at.desc&limit=1" \
+          )
+
+          CURRENT_VERSION=$(echo "$LATEST" | grep -oE '"version":"[^"]+"' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+
+          if [ -z "$CURRENT_VERSION" ]; then
+            CURRENT_VERSION="1.0.0"
+          fi
+
+          echo "Current version: $CURRENT_VERSION"
+
+          # Bump minor version
+          MAJOR=$(echo "$CURRENT_VERSION" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT_VERSION" | cut -d. -f2)
+          PATCH=$(echo "$CURRENT_VERSION" | cut -d. -f3)
+
+          if [ "$TYPE" = "feature" ]; then
+            NEW_MINOR=$((MINOR + 1))
+            NEW_VERSION="$MAJOR.$NEW_MINOR.0"
+          else
+            NEW_PATCH=$((PATCH + 1))
+            NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+          fi
+
+          echo "New version: $NEW_VERSION"
+
+          # Build JSON payload — escape double quotes in strings
+          TITLE_ESC=$(echo "$TITLE" | sed 's/"/\\"/g')
+          DESC_ESC=$(echo "$DESCRIPTION" | sed 's/"/\\"/g')
+
+          PAYLOAD=$(cat <<EOF
+          {
+            "version": "$NEW_VERSION",
+            "type": "$TYPE",
+            "title": "$TITLE_ESC",
+            "description": "$DESC_ESC"
+          }
+          EOF
+          )
+
+          # Insert into Supabase
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "$PAYLOAD" \
+            "$SUPABASE_URL/rest/v1/changelog" \
+          )
+
+          if [ "$HTTP_STATUS" = "201" ]; then
+            echo "Changelog entry inserted: $NEW_VERSION — $TITLE"
+          else
+            echo "Insert failed with HTTP $HTTP_STATUS"
+            exit 1
+          fi
