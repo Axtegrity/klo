@@ -113,7 +113,7 @@ export default function EditModal({
         uf.url = url;
         // Auto-populate the link field with the viewer URL (opens in-app)
         // Fall back to raw URL if no viewer URL returned
-        if (linkFieldKey && !merged[linkFieldKey]) {
+        if (linkFieldKey) {
           merged[linkFieldKey] = viewerUrl ?? url;
         }
       }

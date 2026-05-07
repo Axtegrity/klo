@@ -6,7 +6,7 @@ import type { Visibility } from "./useContent";
 const OPTIONS: { id: Visibility; label: string; icon: React.ElementType; colorClass: string }[] = [
   { id: "published", label: "Published", icon: Eye, colorClass: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10" },
   { id: "hidden",    label: "Hidden",    icon: EyeOff, colorClass: "text-yellow-400 border-yellow-500/30 bg-yellow-500/10" },
-  { id: "archived",  label: "Archived",  icon: Archive, colorClass: "text-klo-muted border-white/10 bg-klo-dark/50" },
+  { id: "archived",  label: "Archived",  icon: Archive, colorClass: "text-amber-400 border-amber-500/30 bg-amber-500/10" },
 ];
 
 interface Props {

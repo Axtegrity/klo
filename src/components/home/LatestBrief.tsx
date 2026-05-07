@@ -25,6 +25,12 @@ export default function LatestBrief({ backgroundImage, briefConfig }: LatestBrie
   // Fall back to the original hardcoded watermark when no admin override is set
   const watermarkSrc = backgroundImage ?? "/images/keith/b.jpg";
 
+  // Raw storage URLs go through the in-app document viewer instead of opening bare
+  const href =
+    brief.link.startsWith("http") && brief.link.includes("/storage/")
+      ? `/documents/view?url=${encodeURIComponent(brief.link)}&name=${encodeURIComponent(brief.title)}`
+      : brief.link;
+
   return (
     <section>
       {/* Section heading */}
@@ -42,7 +48,7 @@ export default function LatestBrief({ backgroundImage, briefConfig }: LatestBrie
         viewport={{ once: true, margin: "-60px" }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <Link href={brief.link} className="block group">
+        <Link href={href} className="block group">
           <div className="relative bg-[#161B22] border border-[#21262D] rounded-xl p-6 sm:p-8 transition-all duration-300 group-hover:-translate-y-1 hover:border-[#2764FF]/30 hover:shadow-[0_0_30px_rgba(39,100,255,0.1)] overflow-hidden">
             {/* Subtle background watermark image — admin-overridable via page_configs.home.section_images */}
             <div className="absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">

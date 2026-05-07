@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Plus, Pencil, Trash2, RefreshCw, X, Star, AlertTriangle } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, RefreshCw, X, Star, AlertTriangle, Archive, ChevronDown, Eye } from "lucide-react";
 import VisibilityToggle from "./VisibilityToggle";
 import { useContent, type BaseContentItem, type Visibility } from "./useContent";
 
@@ -46,7 +46,7 @@ export default function VaultContentManager() {
     deleteItem,
     createItem,
     refetch,
-  } = useContent<VaultItem>({ type: "vault", initialVisibility: "all" });
+  } = useContent<VaultItem>({ type: "vault", initialVisibility: "published" });
 
   const [editingItem, setEditingItem] = useState<VaultItem | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -86,7 +86,7 @@ export default function VaultContentManager() {
         </div>
 
         <div className="flex gap-1 p-1 rounded-xl bg-klo-dark/30 border border-white/5">
-          {(["all", "published", "hidden", "archived"] as const).map((v) => (
+          {(["published", "hidden"] as const).map((v) => (
             <button
               key={v}
               onClick={() => setVisibility(v)}
@@ -192,6 +192,9 @@ export default function VaultContentManager() {
           />
         )}
       </AnimatePresence>
+
+      {/* Archived folder — lives below active content, never mixed in */}
+      <ArchivedSection onItemRepublished={refetch} />
     </div>
   );
 }
@@ -267,6 +270,9 @@ function EditItemModal({
   const [excerpt, setExcerpt] = useState(item.excerpt ?? "");
   const [body, setBody] = useState(item.body);
   const [authorName, setAuthorName] = useState(item.author_name ?? "");
+  const [publishedAt, setPublishedAt] = useState(
+    item.published_at ? item.published_at.slice(0, 10) : ""
+  );
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -280,6 +286,7 @@ function EditItemModal({
         excerpt: excerpt || undefined,
         body,
         author_name: authorName || undefined,
+        published_at: publishedAt ? new Date(publishedAt).toISOString() : undefined,
       });
     } finally {
       setSaving(false);
@@ -341,10 +348,16 @@ function EditItemModal({
           <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={8} className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm resize-none" />
         </label>
 
-        <label className="block">
-          <span className="text-xs text-klo-muted mb-1 block">Author</span>
-          <input value={authorName} onChange={(e) => setAuthorName(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px]" />
-        </label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label className="block">
+            <span className="text-xs text-klo-muted mb-1 block">Author</span>
+            <input value={authorName} onChange={(e) => setAuthorName(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px]" />
+          </label>
+          <label className="block">
+            <span className="text-xs text-klo-muted mb-1 block">Published Date</span>
+            <input type="date" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px]" />
+          </label>
+        </div>
 
         <div className="flex gap-2 pt-2">
           <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-muted text-sm min-h-[44px]">Cancel</button>
@@ -442,6 +455,92 @@ function CreateItemModal({
         </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+function ArchivedSection({ onItemRepublished }: { onItemRepublished?: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const [republishError, setRepublishError] = useState("");
+  const { items, loading, setItemVisibility, refetch } = useContent<VaultItem>({
+    type: "vault",
+    initialVisibility: "archived",
+  });
+
+  const handleRepublish = async (id: string) => {
+    try {
+      await setItemVisibility(id, "published");
+      onItemRepublished?.();
+    } catch (err) {
+      setRepublishError(err instanceof Error ? err.message : "Republish failed");
+    }
+  };
+
+  return (
+    <div className="mt-4 rounded-xl border border-amber-500/15 overflow-hidden">
+      <button
+        onClick={() => { setExpanded((v) => !v); if (!expanded) refetch(); }}
+        className="w-full flex items-center justify-between px-4 py-3 bg-amber-500/5 hover:bg-amber-500/10 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Archive size={15} className="text-amber-400" />
+          <span className="text-sm font-medium text-amber-400">Archived Items</span>
+          {items.length > 0 && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20">
+              {items.length}
+            </span>
+          )}
+        </div>
+        <ChevronDown size={15} className={`text-amber-400/60 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
+      </button>
+
+      {expanded && (
+        <div className="px-4 pb-4 pt-3 space-y-2 bg-klo-dark/10">
+          {republishError && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+              <AlertTriangle size={13} className="text-red-400 shrink-0" />
+              <p className="text-xs text-red-300 flex-1">{republishError}</p>
+              <button onClick={() => setRepublishError("")} className="min-h-[32px] min-w-[32px] flex items-center justify-center"><X size={13} className="text-red-400" /></button>
+            </div>
+          )}
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <RefreshCw size={18} className="animate-spin text-klo-muted" />
+            </div>
+          ) : items.length === 0 ? (
+            <p className="text-sm text-klo-muted text-center py-6">No archived items.</p>
+          ) : (
+            items.map((item) => (
+              <ArchivedCard key={item.id} item={item} onRepublish={() => handleRepublish(item.id)} />
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ArchivedCard({ item, onRepublish }: { item: VaultItem; onRepublish: () => Promise<void> }) {
+  const [republishing, setRepublishing] = useState(false);
+
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-klo-dark/40 border border-amber-500/10">
+      <Archive size={13} className="text-amber-400/60 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-klo-text/70 truncate">{item.title}</p>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-klo-accent/10 text-klo-accent">{item.category}</span>
+          <span className="text-[10px] text-klo-muted capitalize">{item.content_type}</span>
+        </div>
+      </div>
+      <button
+        onClick={async () => { setRepublishing(true); try { await onRepublish(); } finally { setRepublishing(false); } }}
+        disabled={republishing}
+        className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium hover:bg-emerald-500/20 transition-colors min-h-[36px] disabled:opacity-50"
+      >
+        {republishing ? <RefreshCw size={12} className="animate-spin" /> : <Eye size={12} />}
+        Republish
+      </button>
+    </div>
   );
 }
 
