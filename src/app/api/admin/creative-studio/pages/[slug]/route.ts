@@ -39,9 +39,37 @@ export async function PATCH(
   const supabase = getServiceSupabase();
   const email = session.user?.email ?? "unknown";
 
+  // Read current row so we can deep-merge JSONB columns rather than replacing
+  // them wholesale. Without this, saving hero text wipes the background image
+  // config (and vice-versa) because two admin panels share the same column.
+  const { data: current } = await supabase
+    .from("page_configs")
+    .select("*")
+    .eq("page_slug", slug)
+    .maybeSingle();
+
+  const mergedData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(parsed.data)) {
+    const existing = (current as Record<string, unknown> | null)?.[key];
+    if (
+      value !== null &&
+      value !== undefined &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      existing !== null &&
+      existing !== undefined &&
+      typeof existing === "object" &&
+      !Array.isArray(existing)
+    ) {
+      mergedData[key] = { ...(existing as Record<string, unknown>), ...(value as Record<string, unknown>) };
+    } else {
+      mergedData[key] = value;
+    }
+  }
+
   const { data, error } = await supabase
     .from("page_configs")
-    .update({ ...parsed.data, updated_by: email })
+    .update({ ...mergedData, updated_by: email })
     .eq("page_slug", slug)
     .select()
     .single();
