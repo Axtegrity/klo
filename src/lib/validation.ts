@@ -709,6 +709,7 @@ export const pageConfigUpdateSchema = z.object({
     topic5: z.string().max(60),
   }).nullable().optional(),
   insight_config: z.object({
+    date: z.string().max(60).optional(),
     category: z.string().min(1).max(60),
     title: z.string().min(1).max(200),
     description: z.string().max(600),
@@ -729,6 +730,7 @@ export const pageConfigUpdateSchema = z.object({
     subheading: z.string().max(200),
   }).nullable().optional(),
   strategy_config: z.object({
+    visible: z.boolean().optional(),
     heading: z.string().max(100).optional(),
     title: z.string().max(200).optional(),
     date: z.string().max(60).optional(),

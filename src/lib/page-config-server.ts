@@ -50,6 +50,7 @@ export interface TrendingConfig {
 }
 
 export interface InsightConfig {
+  date?: string;
   category: string;
   title: string;
   description: string;
@@ -73,6 +74,7 @@ export interface AssessmentConfig {
 }
 
 export interface StrategyConfig {
+  visible?: boolean;
   heading: string;
   title: string;
   date: string;

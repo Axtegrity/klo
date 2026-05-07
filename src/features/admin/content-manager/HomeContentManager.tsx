@@ -70,6 +70,7 @@ const DEFAULT_SECTIONS: HomeSection[] = [
     canHide: true,
     lastEdited: "Mar 18, 2026",
     fields: [
+      { key: "date", label: "Date", value: "", type: "text", maxLength: 60 },
       { key: "category", label: "Category", value: "AI & Ethics", type: "text", maxLength: 30 },
       { key: "title", label: "Title", value: "Navigating the Moral Frontier of Generative AI in Ministry", type: "text", maxLength: 120, required: true },
       { key: "description", label: "Description", value: "An exploration of the ethical considerations faith leaders must address when adopting generative AI tools in their organizations.", type: "textarea", maxLength: 400 },
@@ -168,12 +169,28 @@ export default function HomeContentManager() {
 
   const editingSection = sections.find((s) => s.id === editingId);
 
-  const toggleVisibility = (id: string) => {
+  const toggleVisibility = async (id: string) => {
     const section = sections.find((s) => s.id === id);
     if (!section || !section.canHide) return;
+    const newVisible = !section.visible;
     setSections((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, visible: !s.visible } : s))
+      prev.map((s) => (s.id === id ? { ...s, visible: newVisible } : s))
     );
+    // Persist strategy_room visibility to the DB
+    if (id === "strategy_room") {
+      try {
+        await fetch("/api/admin/creative-studio/pages/home", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ strategy_config: { visible: newVisible } }),
+        });
+      } catch {
+        // Revert on failure
+        setSections((prev) =>
+          prev.map((s) => (s.id === id ? { ...s, visible: !newVisible } : s))
+        );
+      }
+    }
   };
 
   const handleDragStart = (index: number) => setDragIndex(index);

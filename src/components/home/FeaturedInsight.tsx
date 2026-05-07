@@ -55,7 +55,7 @@ export default function FeaturedInsight({ backgroundImage, insightConfig }: Feat
 
             <div className="relative z-10">
               {/* Badges row */}
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-4 flex-wrap">
                 {/* Category badge */}
                 <span className="inline-flex items-center px-3 py-1 text-xs font-semibold tracking-wide uppercase rounded-full bg-[#21262D] text-[#21B8CD]">
                   {insight.category}
@@ -64,6 +64,9 @@ export default function FeaturedInsight({ backgroundImage, insightConfig }: Feat
                   <Sparkles className="w-3 h-3" />
                   Premium
                 </span>
+                {insight.date && (
+                  <span className="text-xs text-[#8B949E]/70">{insight.date}</span>
+                )}
               </div>
 
               {/* Title */}
