@@ -8,6 +8,15 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [2026-05-07b] — Hero Banner Admin Fix + Strategy Config
+
+### Fixed
+- **Hero banner edits now persist correctly** — the admin PATCH route previously replaced the entire `hero_config` JSONB column, so saving headline/tagline via the Home Content Manager would wipe the background image set by the Page Composer (and vice-versa). The route now reads the current row and deep-merges JSONB columns so each admin panel only updates its own fields.
+- **All JSONB config columns protected** — the merge semantics apply to every column (`hero_config`, `brief_config`, `trending_config`, `insight_config`, `tool_config`, `assessment_config`, `strategy_config`), so no future admin save can silently clobber another panel's fields.
+- **Strategy Room saves no longer error on live site** — `strategy_config` column was missing from the production database; migration added.
+
+---
+
 ## [2026-05-07] — Document Viewer & Archive UX
 
 ### Fixed
