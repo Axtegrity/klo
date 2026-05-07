@@ -1,0 +1,206 @@
+#!/bin/bash
+# =============================================================================
+# Maven Pre-Commit Hook v2 — Security Gate + ESLint
+# =============================================================================
+# Layer 1: Sensitive data gate (secrets, env files, large files, business docs)
+# Layer 2: ESLint security lint on staged JS/TS files
+#
+# Auto-installed via the "prepare" script in package.json:
+#   git config core.hooksPath .githooks
+# Anyone who runs "bun install" gets this hook automatically.
+# =============================================================================
+
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+BLOCKED=0
+WARNINGS=0
+
+# Get list of staged files (added/modified, not deleted)
+STAGED=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null)
+[ -z "$STAGED" ] && exit 0
+
+# -------------------------------------------------------------------------
+# 1. Block sensitive file patterns
+# -------------------------------------------------------------------------
+SENSITIVE_PATTERNS=(
+  "internal-"
+  "confidential"
+  "-private"
+  "-secret"
+  "credentials"
+  ".pem"
+  ".p12"
+  ".pfx"
+  ".key"
+  "id_rsa"
+  "id_ed25519"
+)
+
+for file in $STAGED; do
+  fname=$(basename "$file" | tr '[:upper:]' '[:lower:]')
+  # Skip shell scripts (tools reference secret names legitimately)
+  [[ "$fname" == *.sh || "$fname" == *.bash ]] && continue
+  for pattern in "${SENSITIVE_PATTERNS[@]}"; do
+    if [[ "$fname" == *"$pattern"* ]]; then
+      echo -e "${RED}BLOCKED${NC}: $file matches sensitive pattern '${pattern}'"
+      BLOCKED=1
+    fi
+  done
+done
+
+# -------------------------------------------------------------------------
+# 2. Block .env files (even if not in .gitignore)
+# -------------------------------------------------------------------------
+for file in $STAGED; do
+  fname=$(basename "$file")
+  if [[ "$fname" == .env* || "$fname" == *.env ]] && [[ "$fname" != *.example ]]; then
+    echo -e "${RED}BLOCKED${NC}: $file is an environment file — never commit .env files"
+    BLOCKED=1
+  fi
+done
+
+# -------------------------------------------------------------------------
+# 3. Scan file contents for hardcoded secrets
+# -------------------------------------------------------------------------
+SECRET_PATTERNS=(
+  'sk-ant-[a-zA-Z0-9_-]{20,}'       # Anthropic API key
+  'sk-proj-[a-zA-Z0-9_-]{20,}'      # OpenAI API key
+  'sk_live_[a-zA-Z0-9]{20,}'        # Stripe live secret
+  'sk_test_[a-zA-Z0-9]{20,}'        # Stripe test secret
+  'whsec_[a-zA-Z0-9]{20,}'          # Stripe webhook secret
+  'ghp_[a-zA-Z0-9]{36}'             # GitHub PAT
+  'gho_[a-zA-Z0-9]{36}'             # GitHub OAuth
+  'xoxb-[a-zA-Z0-9-]+'              # Slack bot token
+  'xoxp-[a-zA-Z0-9-]+'              # Slack user token
+  're_[a-zA-Z0-9]{20,}'             # Resend API key
+  'SG\.[a-zA-Z0-9_-]{22}\.'         # SendGrid API key
+  'AKIA[A-Z0-9]{16}'                # AWS access key
+  'eyJhbGciOi[a-zA-Z0-9_-]{50,}'   # JWT tokens (long ones)
+  'password\s*[:=]\s*["\x27][^"\x27]{8,}' # Hardcoded passwords
+  'sbp_[a-zA-Z0-9]{40,}'            # Supabase service role key
+  'supabase_service_role_key'        # Supabase key variable in content
+)
+
+for file in $STAGED; do
+  # Skip binaries, lock files, fonts, and hook files (contain pattern strings by design)
+  [[ "$file" == .githooks/* ]] && continue
+  [[ "$file" == *.png || "$file" == *.jpg || "$file" == *.jpeg || "$file" == *.gif || "$file" == *.svg ]] && continue
+  [[ "$file" == *.pdf || "$file" == *.ico || "$file" == *.webp ]] && continue
+  [[ "$file" == *.lock || "$file" == *lock.json || "$file" == *.lockb ]] && continue
+  [[ "$file" == *.woff* || "$file" == *.ttf || "$file" == *.eot || "$file" == *.otf ]] && continue
+  [[ "$file" == *.mp4 || "$file" == *.mp3 || "$file" == *.wav || "$file" == *.webm ]] && continue
+
+  content=$(git diff --cached --diff-filter=ACM -p -- "$file" 2>/dev/null | grep '^+' | grep -v '^+++')
+
+  for pattern in "${SECRET_PATTERNS[@]}"; do
+    if echo "$content" | grep -qE "$pattern" 2>/dev/null; then
+      echo -e "${RED}BLOCKED${NC}: $file contains a potential secret matching '${pattern%%\\*}...'"
+      BLOCKED=1
+      break
+    fi
+  done
+done
+
+# -------------------------------------------------------------------------
+# 4. Warn on large files (>500KB)
+# -------------------------------------------------------------------------
+for file in $STAGED; do
+  size=$(git cat-file -s ":$file" 2>/dev/null || echo 0)
+  if [ "$size" -gt 512000 ]; then
+    size_kb=$((size / 1024))
+    echo -e "${YELLOW}WARNING${NC}: $file is ${size_kb}KB — consider Git LFS or external storage"
+    WARNINGS=1
+  fi
+done
+
+# -------------------------------------------------------------------------
+# 5. Block business-sensitive content in code repos
+# -------------------------------------------------------------------------
+BUSINESS_KEYWORDS=(
+  "profit.margin"
+  "gross.margin"
+  "net.margin"
+  "revenue.target"
+  "COGS"
+  "net.profit"
+  "gross.profit"
+  "hourly.rate"
+  "cost.per.client"
+  "internal.pricing"
+)
+
+for file in $STAGED; do
+  [[ "$file" == .githooks/* ]] && continue
+  [[ "$file" == *.png || "$file" == *.jpg || "$file" == *.pdf || "$file" == *.ico ]] && continue
+  [[ "$file" == *.lock || "$file" == *lock.json || "$file" == *.lockb ]] && continue
+  [[ "$file" == *.html || "$file" == *.pptx || "$file" == *.docx ]] && continue
+  [[ "$file" == *.sh || "$file" == *.bash ]] && continue
+  [[ "$file" == presentations/* || "$file" == docs/* || "$file" == deploy/* || "$file" == ops/* ]] && continue
+
+  content=$(git diff --cached --diff-filter=ACM -p -- "$file" 2>/dev/null | grep '^+' | grep -v '^+++')
+
+  for keyword in "${BUSINESS_KEYWORDS[@]}"; do
+    if echo "$content" | grep -qiE "$keyword" 2>/dev/null; then
+      echo -e "${RED}BLOCKED${NC}: $file contains business-sensitive keyword '${keyword}' — move to Google Drive or local docs"
+      BLOCKED=1
+      break
+    fi
+  done
+done
+
+# -------------------------------------------------------------------------
+# 6. ESLint security check on staged JS/TS files
+# -------------------------------------------------------------------------
+STAGED_JS=$(echo "$STAGED" | grep -E '\.(js|jsx|ts|tsx|mjs)$' | grep -v node_modules | grep -v '.next/' | grep -v 'dist/')
+
+if [ -n "$STAGED_JS" ]; then
+  # Check if eslint-security.config exists
+  if [ -f "eslint-security.config.js" ] || [ -f "eslint-security.config.mjs" ]; then
+    ESLINT_BIN=""
+    if [ -f "node_modules/.bin/eslint" ]; then
+      ESLINT_BIN="node_modules/.bin/eslint"
+    elif command -v bunx &>/dev/null; then
+      ESLINT_BIN="bunx eslint"
+    fi
+
+    if [ -n "$ESLINT_BIN" ]; then
+      SECURITY_CONFIG=""
+      # Prefer the standalone variant (includes TS parser) when available
+      [ -f "eslint-security.standalone.config.js" ] && SECURITY_CONFIG="eslint-security.standalone.config.js"
+      [ -f "eslint-security.standalone.config.mjs" ] && SECURITY_CONFIG="eslint-security.standalone.config.mjs"
+      # Fall back to the rules-only fragment if no standalone exists
+      [ -z "$SECURITY_CONFIG" ] && [ -f "eslint-security.config.js" ] && SECURITY_CONFIG="eslint-security.config.js"
+      [ -z "$SECURITY_CONFIG" ] && [ -f "eslint-security.config.mjs" ] && SECURITY_CONFIG="eslint-security.config.mjs"
+
+      # Run ESLint security rules on staged files only (errors only, not warnings)
+      ESLINT_OUTPUT=$($ESLINT_BIN --config "$SECURITY_CONFIG" --no-warn-ignored --quiet $STAGED_JS 2>&1)
+      ESLINT_EXIT=$?
+
+      if [ $ESLINT_EXIT -ne 0 ]; then
+        echo ""
+        echo -e "${RED}ESLint security errors found:${NC}"
+        echo "$ESLINT_OUTPUT" | head -30
+        BLOCKED=1
+      fi
+    fi
+  fi
+fi
+
+# -------------------------------------------------------------------------
+# Result
+# -------------------------------------------------------------------------
+if [ "$BLOCKED" -eq 1 ]; then
+  echo ""
+  echo -e "${RED}Commit blocked by Maven pre-commit hook v2.${NC}"
+  echo "Fix the issues above, or bypass with: git commit --no-verify (not recommended)"
+  exit 1
+fi
+
+if [ "$WARNINGS" -eq 1 ]; then
+  echo -e "${YELLOW}Warnings detected but commit allowed.${NC}"
+fi
+
+echo -e "${GREEN}Maven pre-commit: all checks passed.${NC}"
+exit 0
