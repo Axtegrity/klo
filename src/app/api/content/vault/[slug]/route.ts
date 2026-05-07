@@ -72,7 +72,7 @@ export async function GET(
   const minutes = Math.max(1, Math.round(wordCount / 200));
 
   const item: VaultItem = {
-    id: `db-${data.id}`,
+    id: (meta.legacy_id as string) ?? `db-${data.id}`,
     title: data.title,
     slug: data.slug,
     category: normalizeCategory(data.category),
