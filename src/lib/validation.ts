@@ -492,6 +492,49 @@ export const surveyUpdateSchema = z.object({
 });
 
 // ----------------------------------------------------------------
+// Strategy Rooms — session create/update
+// ----------------------------------------------------------------
+
+// Shared URL field: accepts a valid https/http URL, empty string, or null/undefined.
+// Rejects arbitrary non-URL strings (e.g. "#anchor-only" slugs).
+const urlOrEmpty = z
+  .union([
+    z.string().max(2000).url(),
+    z.literal(""),
+    z.null(),
+  ])
+  .optional();
+
+export const strategySessionCreateSchema = z.object({
+  slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/),
+  title: z.string().min(1).max(300),
+  description: z.string().max(2000).optional(),
+  date: z.string().max(60).optional(),
+  session_date: z.string().optional(), // ISO date string
+  time: z.string().max(60).optional(),
+  facilitator: z.string().max(200).optional(),
+  total_seats: z.number().int().min(1).max(1000),
+  attendees_override: z.number().int().min(0).optional(),
+  is_past: z.boolean().optional(),
+  tier: z.enum(['pro', 'executive']),
+  topics: z.array(z.string().max(100)).max(20).optional(),
+  agenda: z.array(z.object({
+    time: z.string().max(50),
+    title: z.string().max(200),
+    description: z.string().max(500),
+  })).max(20).optional(),
+  key_takeaways: z.array(z.string().max(500)).max(20).optional(),
+  replay_url: urlOrEmpty,
+  notes_url: urlOrEmpty,
+  published: z.boolean().optional(),
+});
+
+export const strategySessionUpdateSchema = strategySessionCreateSchema.partial().refine(
+  (data) => Object.keys(data).length > 0,
+  { message: 'At least one field is required' }
+);
+
+// ----------------------------------------------------------------
 // Creative Studio — Media Library
 // ----------------------------------------------------------------
 

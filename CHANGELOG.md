@@ -8,6 +8,31 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [2026-05-07f] — Strategy Rooms: Full Database-Backed System
+
+### Added
+- **Strategy Rooms database tables** — `strategy_sessions` and `strategy_registrations` tables with RLS policies; migrations `20260507000001` and `20260507000002` (seed all 8 mock sessions).
+- **Public API: `GET /api/strategy-rooms`** — returns all published sessions with live `registered_count`; supports `?limit=N`.
+- **Public API: `GET /api/strategy-rooms/[slug]`** — single session by slug with `registered_count` and `is_registered` for logged-in users.
+- **Registration API: `POST/DELETE /api/strategy-rooms/[slug]/register`** — server-side tier gating (pro/executive), seat availability check, upsert with conflict-safe insert, confirmation email on success.
+- **Admin API: `GET/POST /api/admin/strategy-rooms`** — list all sessions (including unpublished) with counts; create new sessions with Zod validation.
+- **Admin API: `PUT/DELETE /api/admin/strategy-rooms/[id]`** — update or delete sessions by UUID; delete blocked when active registrations exist.
+- **Strategy Rooms admin tab** — full CRUD interface in the admin dashboard: create/edit modal, inline publish toggle, delete with confirmation, all with loading states and success/error toasts.
+- **`StrategyRoomsAdminTab`** wired into `src/app/admin/page.tsx` as the "Strategy Rooms" tab.
+- **Strategy Room confirmation email** — `sendStrategyRoomConfirmation()` in `src/lib/email.ts`; fire-and-forget, never fails the registration request.
+- **`StrategySessionRow` and `StrategyRegistrationRow` interfaces** added to `src/lib/supabase.ts`.
+- **Zod schemas** `strategySessionCreateSchema` and `strategySessionUpdateSchema` added to `src/lib/validation.ts`.
+
+### Changed
+- **`/strategy-rooms`** — converted to server component; fetches live data from Supabase directly; tab UI extracted to `StrategyRoomsClient` (client component) with real register/unregister API calls, loading states, and toast feedback.
+- **`/strategy-rooms/[id]`** — converted to server component; fetches session + related sessions from DB; interactive parts extracted to `StrategyRoomDetailClient`.
+- **Home page** — `UpcomingStrategyRoom` now auto-pulls the next upcoming published session from the DB; falls back to admin `strategy_config`, then to component defaults.
+
+### Removed
+- **`src/lib/strategy-rooms-data.ts`** — mock data file deleted; `sampleDiscussionComments` moved to `src/lib/strategy-rooms-discussion-mock.ts` (discussion thread deferred to future phase).
+
+---
+
 ## [2026-05-07e] — Admin Content Batch: Date Fields, Testimonial Create, Survey CRUD
 
 ### Added
