@@ -58,7 +58,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https:",
               "font-src 'self' https://fonts.gstatic.com",
               "connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://vercel.live https://*.sentry.io https://*.ingest.sentry.io",
-              "frame-src 'self' https://js.stripe.com https://vercel.live",
+              "frame-src 'self' https://js.stripe.com https://vercel.live https://*.supabase.co",
               "frame-ancestors 'self' capacitor: https://localhost",
               "base-uri 'self'",
               "form-action 'self'",

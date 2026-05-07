@@ -67,7 +67,6 @@
   },
   "overrides": {
     "tar": "^7.5.13",
-    "@xmldom/xmldom": "^0.9.9",
     "minimatch": "^10.2.5",
     "lodash": "^4.18.1",
     "handlebars": "^4.7.9",
