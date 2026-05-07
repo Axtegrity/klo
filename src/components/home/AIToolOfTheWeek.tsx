@@ -97,7 +97,7 @@ export default function AIToolOfTheWeek({ toolConfig }: AIToolOfTheWeekProps = {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-[#2764FF] hover:underline hover:gap-2.5 transition-all duration-200"
             >
-              Learn More
+              {tool.cta ?? "Learn More"}
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

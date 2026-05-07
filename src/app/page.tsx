@@ -6,6 +6,7 @@ import FeaturedInsight from "@/components/home/FeaturedInsight";
 import AIToolOfTheWeek from "@/components/home/AIToolOfTheWeek";
 import QuickAssessmentCTA from "@/components/home/QuickAssessmentCTA";
 import UpcomingKeynote from "@/components/home/UpcomingKeynote";
+import UpcomingStrategyRoom from "@/components/home/UpcomingStrategyRoom";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import FadeInOnScroll from "@/components/shared/FadeInOnScroll";
 import { getPageConfig } from "@/lib/page-config-server";
@@ -29,6 +30,7 @@ export default async function Home() {
   const insightConfig    = pageConfig?.insight_config    ?? null;
   const toolConfig       = pageConfig?.tool_config       ?? null;
   const assessmentConfig = pageConfig?.assessment_config ?? null;
+  const strategyConfig   = pageConfig?.strategy_config   ?? null;
 
   const featuredInsightImage =
     sectionImages?.featuredInsight?.backgroundType === "image"
@@ -74,6 +76,9 @@ export default async function Home() {
           </FadeInOnScroll>
           <FadeInOnScroll delay={0.05}>
             <QuickAssessmentCTA assessmentConfig={assessmentConfig} />
+          </FadeInOnScroll>
+          <FadeInOnScroll delay={0.05}>
+            <UpcomingStrategyRoom strategyConfig={strategyConfig} />
           </FadeInOnScroll>
         </div>
       </div>

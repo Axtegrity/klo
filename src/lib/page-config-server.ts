@@ -61,11 +61,22 @@ export interface ToolConfig {
   description: string;
   why: string;
   link: string;
+  cta?: string;
 }
 
 export interface AssessmentConfig {
   heading: string;
   subheading: string;
+}
+
+export interface StrategyConfig {
+  heading: string;
+  title: string;
+  date: string;
+  description: string;
+  seats: string;
+  cta: string;
+  link: string;
 }
 
 export interface PageConfigRow {
@@ -81,6 +92,7 @@ export interface PageConfigRow {
   insight_config?: InsightConfig | null;
   tool_config?: ToolConfig | null;
   assessment_config?: AssessmentConfig | null;
+  strategy_config?: StrategyConfig | null;
   animation_preset_id: string | null;
   audio_asset_id: string | null;
   meta_title: string | null;

@@ -66,11 +66,11 @@ export default function EditModal({
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (!open) return null;
-
   const update = useCallback((key: string, val: string) => {
     setValues((prev) => ({ ...prev, [key]: val }));
   }, []);
+
+  if (!open) return null;
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files;
@@ -113,7 +113,7 @@ export default function EditModal({
         uf.url = url;
         // Auto-populate the link field with the viewer URL (opens in-app)
         // Fall back to raw URL if no viewer URL returned
-        if (linkFieldKey) {
+        if (linkFieldKey && !merged[linkFieldKey]) {
           merged[linkFieldKey] = viewerUrl ?? url;
         }
       }
