@@ -8,6 +8,13 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [2026-05-07c] — Admin Save One-Click Fix
+
+### Fixed
+- **Admin saves now work on first click** — the Home Content Manager edit modal required two clicks to save (Save Changes → Confirm), causing every admin edit to silently not save if the user didn't notice the second confirmation step. Removed the confirmation dialog. Save Changes now saves immediately; the success/error toast is the only feedback needed.
+
+---
+
 ## [2026-05-07b] — Hero Banner Admin Fix + Strategy Config
 
 ### Fixed
