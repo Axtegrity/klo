@@ -50,6 +50,9 @@ export const mfaVerifyLimiter = createLimiter("mfa-verify", 10, "1 m");
 // Survey submission: 5 per hour per IP (prevent spam submissions)
 export const surveyLimiter = createLimiter("survey", 5, "1 h");
 
+// Strategy room registration: 10 per hour per user (prevent seat-squatting abuse)
+export const strategyRegisterLimiter = createLimiter("strategy-register", 10, "1 h");
+
 // ── Helper ─────────────────────────────────────────────────
 
 export async function checkLimit(

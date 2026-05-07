@@ -52,6 +52,43 @@ export interface StrategyRoom {
   created_at: string;
 }
 
+export interface StrategySessionRow {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  date: string | null;
+  session_date: string | null;
+  time: string | null;
+  facilitator: string | null;
+  total_seats: number;
+  attendees_override: number | null;
+  is_past: boolean;
+  tier: 'pro' | 'executive';
+  topics: string[];
+  agenda: { time: string; title: string; description: string }[];
+  key_takeaways: string[];
+  replay_url: string | null;
+  notes_url: string | null;
+  discussion_count: number;
+  published: boolean;
+  created_at: string;
+  updated_at: string;
+  // computed — added by API
+  registered_count?: number;
+  is_registered?: boolean;
+}
+
+export interface StrategyRegistrationRow {
+  id: string;
+  session_id: string;
+  user_id: string;
+  user_email: string;
+  user_name: string | null;
+  registered_at: string;
+  status: string;
+}
+
 export interface Subscription {
   id: string;
   user_id: string;

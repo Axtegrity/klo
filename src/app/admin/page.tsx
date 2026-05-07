@@ -62,6 +62,7 @@ import ContentManagerTab from "@/features/admin/ContentManagerTab";
 import SurveysAdminTab from "@/features/admin/SurveysAdminTab";
 import TestimonialsAdminTab from "@/features/admin/TestimonialsAdminTab";
 import { CreativeStudioTab } from "@/features/admin/creative-studio";
+import StrategyRoomsAdminTab from "@/features/admin/StrategyRoomsAdminTab";
 import { Paintbrush, FileEdit, Wand2, MessageSquareQuote } from "lucide-react";
 
 // ------------------------------------------------------------
@@ -134,7 +135,7 @@ function StatCard({
 // Tab definitions
 // ------------------------------------------------------------
 
-type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "presentations" | "events" | "inquiries" | "notifications" | "tools" | "customize" | "content-manager" | "surveys" | "creative-studio" | "testimonials";
+type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "presentations" | "events" | "inquiries" | "notifications" | "tools" | "customize" | "content-manager" | "surveys" | "creative-studio" | "testimonials" | "strategy-rooms";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -151,6 +152,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "users", label: "Users", icon: Users },
   { id: "content", label: "Analytics", icon: BotMessageSquare },
   { id: "revenue", label: "Revenue", icon: DollarSign },
+  { id: "strategy-rooms", label: "Strategy Rooms", icon: Users },
   { id: "tools", label: "Tools", icon: Lock },
 ];
 
@@ -1424,6 +1426,11 @@ export default function AdminPage() {
         {/* TESTIMONIALS TAB */}
         {activeTab === "testimonials" && (
           <TestimonialsAdminTab />
+        )}
+
+        {/* STRATEGY ROOMS TAB */}
+        {activeTab === "strategy-rooms" && (
+          <StrategyRoomsAdminTab />
         )}
 
         {/* TOOLS TAB */}
