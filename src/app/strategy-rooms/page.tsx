@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Users } from "lucide-react";
 import { getServiceSupabase } from "@/lib/supabase";
 import type { StrategySessionRow } from "@/lib/supabase";
@@ -35,7 +34,7 @@ async function fetchSessions(): Promise<StrategySessionRow[]> {
     }
 
     // Check if logged-in user is registered for any session
-    let userRegisteredSet = new Set<string>();
+    const userRegisteredSet = new Set<string>();
     try {
       const userSession = await getServerSession(authOptions);
       if (userSession?.user) {

@@ -287,7 +287,7 @@ export default function StrategyRoomsAdminTab() {
                 {sessions.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-klo-muted">
-                      No sessions yet. Click "New Session" to create one.
+                      No sessions yet. Click &ldquo;New Session&rdquo; to create one.
                     </td>
                   </tr>
                 )}
