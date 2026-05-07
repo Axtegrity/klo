@@ -25,6 +25,7 @@ const DEFAULT_SECTIONS: HomeSection[] = [
     canHide: false,
     lastEdited: "Mar 28, 2026",
     fields: [
+      { key: "label", label: "Label (above name)", value: "Technology Innovator • Strategic Advisor • Speaker", type: "text", maxLength: 200 },
       { key: "headline", label: "Main Heading", value: "Keith L. Odom", type: "text", maxLength: 500, required: true },
       { key: "subheadline", label: "Tagline", value: "Empowering organizations with AI-driven strategy and digital transformation", type: "textarea", maxLength: 1000 },
     ],

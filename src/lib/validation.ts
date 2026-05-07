@@ -656,6 +656,7 @@ const sectionImageConfigSchema = z.object({
 
 export const pageConfigUpdateSchema = z.object({
   hero_config: z.object({
+    label: z.string().max(200).optional(),
     headline: z.string().max(500).optional(),
     subheadline: z.string().max(1000).optional(),
     backgroundType: z.enum(["color", "image", "video"]).optional(),

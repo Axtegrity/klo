@@ -8,6 +8,13 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [2026-05-07d] — Hero Label Field
+
+### Added
+- **Hero banner label line is now admin-editable** — the "Technology Innovator • Strategic Advisor • Speaker" text above Keith's name can now be changed from the admin Home Content Manager. Wired through HeroConfig type, Zod schema, HeroBanner component, and page.tsx.
+
+---
+
 ## [2026-05-07c] — Admin Save One-Click Fix
 
 ### Fixed

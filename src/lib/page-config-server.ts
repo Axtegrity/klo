@@ -5,6 +5,7 @@
 import { getServiceSupabase } from "@/lib/supabase";
 
 export interface HeroConfig {
+  label?: string;
   headline: string;
   subheadline: string;
   backgroundType: "color" | "image" | "video";
