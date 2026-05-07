@@ -656,11 +656,11 @@ const sectionImageConfigSchema = z.object({
 
 export const pageConfigUpdateSchema = z.object({
   hero_config: z.object({
-    headline: z.string().max(500),
-    subheadline: z.string().max(1000),
-    backgroundType: z.enum(["color", "image", "video"]),
-    backgroundRef: z.string().max(2000).nullable(),
-    overlayOpacity: z.number().min(0).max(1),
+    headline: z.string().max(500).optional(),
+    subheadline: z.string().max(1000).optional(),
+    backgroundType: z.enum(["color", "image", "video"]).optional(),
+    backgroundRef: z.string().max(2000).nullable().optional(),
+    overlayOpacity: z.number().min(0).max(1).optional(),
   }).nullable().optional(),
   section_images: z.object({
     latestBrief: sectionImageConfigSchema.optional(),

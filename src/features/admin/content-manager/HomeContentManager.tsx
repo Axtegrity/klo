@@ -25,13 +25,8 @@ const DEFAULT_SECTIONS: HomeSection[] = [
     canHide: false,
     lastEdited: "Mar 28, 2026",
     fields: [
-      { key: "label", label: "Label", value: "Technology Innovator \u2022 Strategic Advisor \u2022 Speaker", type: "text", maxLength: 100 },
-      { key: "heading", label: "Main Heading", value: "Keith L. Odom", type: "text", maxLength: 60, required: true },
-      { key: "tagline", label: "Tagline", value: "Empowering organizations with AI-driven strategy and digital transformation", type: "textarea", maxLength: 200 },
-      { key: "cta1_label", label: "Primary Button Label", value: "KLO Intelligence", type: "text", maxLength: 40 },
-      { key: "cta1_link", label: "Primary Button Link", value: "/advisor", type: "url", maxLength: 200 },
-      { key: "cta2_label", label: "Secondary Button Label", value: "Book a Consultation", type: "text", maxLength: 40 },
-      { key: "cta2_link", label: "Secondary Button Link", value: "/consult", type: "url", maxLength: 200 },
+      { key: "headline", label: "Main Heading", value: "Keith L. Odom", type: "text", maxLength: 500, required: true },
+      { key: "subheadline", label: "Tagline", value: "Empowering organizations with AI-driven strategy and digital transformation", type: "textarea", maxLength: 1000 },
     ],
   },
   {
@@ -136,6 +131,7 @@ export default function HomeContentManager() {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const SECTION_CONFIG_KEY: Record<string, string> = {
+    hero:           "hero_config",
     brief:          "brief_config",
     trending:       "trending_config",
     insight:        "insight_config",
