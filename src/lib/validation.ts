@@ -686,6 +686,7 @@ export const vaultContentUpsertSchema = z.object({
   author_name: z.string().max(200).optional(),
   published_at: z.string().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  featured_in_feed: z.boolean().optional(),
 });
 
 export const vaultContentUpdateSchema = vaultContentUpsertSchema.partial().refine(

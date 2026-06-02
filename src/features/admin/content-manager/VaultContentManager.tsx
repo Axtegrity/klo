@@ -17,6 +17,7 @@ interface VaultItem extends BaseContentItem {
   tier_required: string;
   author_name: string | null;
   published_at: string | null;
+  featured_in_feed: boolean;
 }
 
 const CATEGORIES = [
@@ -273,6 +274,7 @@ function EditItemModal({
   const [publishedAt, setPublishedAt] = useState(
     item.published_at ? item.published_at.slice(0, 10) : ""
   );
+  const [featuredInFeed, setFeaturedInFeed] = useState(item.featured_in_feed ?? false);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -287,6 +289,7 @@ function EditItemModal({
         body,
         author_name: authorName || undefined,
         published_at: publishedAt ? new Date(publishedAt).toISOString() : undefined,
+        featured_in_feed: featuredInFeed,
       });
     } finally {
       setSaving(false);
@@ -358,6 +361,19 @@ function EditItemModal({
             <input type="date" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px]" />
           </label>
         </div>
+
+        <label className="flex items-center gap-3 min-h-[44px] cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={featuredInFeed}
+            onChange={(e) => setFeaturedInFeed(e.target.checked)}
+            className="w-4 h-4 rounded border border-white/20 bg-klo-dark/50 accent-klo-accent"
+          />
+          <div>
+            <span className="text-sm font-medium text-klo-text">Feature in Executive Feed</span>
+            <p className="text-xs text-klo-muted mt-0.5">Surfaces this article on the public /feed page</p>
+          </div>
+        </label>
 
         <div className="flex gap-2 pt-2">
           <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-muted text-sm min-h-[44px]">Cancel</button>
