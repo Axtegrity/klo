@@ -1,6 +1,7 @@
 /**
  * validate-training-sync.ts
- * 
+ * Updated: includes strategy-rooms tab validation.
+ *
  * Validates that admin training documentation stays in sync with actual admin interface.
  * Runs as part of CI/CD pipeline or pre-commit hook.
  * 
