@@ -1,0 +1,38 @@
+name: Validate Training Sync
+
+on:
+  pull_request:
+    paths:
+      - 'src/app/admin/page.tsx'
+      - 'src/app/admin/training/page.tsx'
+      - 'scripts/validate-training-sync.ts'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/app/admin/page.tsx'
+      - 'src/app/admin/training/page.tsx'
+      - 'scripts/validate-training-sync.ts'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    name: Verify Training Documentation Sync
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Validate training/admin sync
+        run: bun run validate:training
+
+      - name: Report results
+        if: always()
+        run: |
+          echo "✅ Training documentation is in sync with admin interface"

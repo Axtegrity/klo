@@ -23,6 +23,7 @@ import {
   Lock,
   Radio,
   MessageSquare,
+  MessageSquareQuote,
   Cloud,
   Megaphone,
   Shield,
@@ -98,12 +99,12 @@ const TRAINING_SECTIONS: TrainingSection[] = [
     id: "getting-started",
     title: "Getting Started",
     icon: PlayCircle,
-    description: "How to access the admin dashboard and navigate its 14 tabs.",
+    description: "How to access the admin dashboard and navigate its 15 tabs.",
     steps: [
       { icon: Globe, label: "Sign In", detail: "Go to keithlodom.ai and click Sign In, or navigate directly to /auth/signin" },
       { icon: Users, label: "Use Admin Credentials", detail: "Enter your admin email and password. Only owner and admin roles can access the dashboard." },
       { icon: Star, label: "Find the Admin Link", detail: "Once signed in, the gold \"Admin\" link appears in the top navigation bar" },
-      { icon: LayoutDashboard, label: "Explore 14 Tabs", detail: "Overview, Creative Studio, Customize, Content (Manager), Surveys, Events, Conference, Inquiries, Notifications, Presentations, Users, Content (Analytics), Revenue, and Tools" },
+      { icon: LayoutDashboard, label: "Explore 15 Tabs", detail: "Overview, Creative Studio, Customize, Content (Manager), Testimonials, Surveys, Events, Conference, Inquiries, Notifications, Presentations, Users, Analytics, Revenue, and Tools" },
       { icon: Zap, label: "Header Utilities", detail: "Four buttons in the top-right: Changelog (version history), Request Update (submit change requests), Training Guide (this page), and Refresh (reload data)" },
     ],
     tips: [
@@ -289,6 +290,26 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       "Click any section card to open the edit modal with all editable fields.",
       "Vault items support categories: AI Strategy, Governance, Digital Transformation, Cybersecurity, and more.",
       "Rule of thumb: Content Manager = words. Creative Studio = pictures, fonts, animations, and hero backgrounds. The edit modal here won't let you change the home page's background photo — that's by design.",
+    ],
+  },
+  {
+    id: "testimonials",
+    title: "Testimonials",
+    icon: MessageSquareQuote,
+    description: "Manage member testimonials and success stories displayed on the website.",
+    adminTab: "testimonials",
+    steps: [
+      { icon: Plus, label: "Add Testimonial", detail: "Click \"+ Add Testimonial\" and enter the member's name, title/role, quote text, and optional profile image" },
+      { icon: Star, label: "Feature Testimonial", detail: "Mark testimonials as featured to highlight them on the homepage and in marketing materials" },
+      { icon: Eye, label: "Publish / Unpublish", detail: "Toggle visibility to show or hide testimonials from public-facing pages" },
+      { icon: Pencil, label: "Edit Testimonial", detail: "Click the pencil icon to update any testimonial's content, author info, or settings" },
+      { icon: Trash2, label: "Delete Testimonial", detail: "Remove testimonials permanently with a confirmation prompt" },
+    ],
+    tips: [
+      "Use real quotes from members — testimonials are more credible when they're specific and authentic.",
+      "Feature your strongest 3-5 testimonials on the homepage for maximum impact.",
+      "Include a mix of member roles and backgrounds to appeal to diverse audiences.",
+      "Update testimonials quarterly to keep the site feeling current and fresh.",
     ],
   },
   {
@@ -556,6 +577,29 @@ const TRAINING_SECTIONS: TrainingSection[] = [
     ],
   },
   {
+    id: "strategy-rooms",
+    title: "Strategy Rooms",
+    icon: Users,
+    description: "Create and manage strategy sessions — set tiers, dates, topics, seat limits, and publish replays for Pro and Executive members.",
+    adminTab: "strategy-rooms",
+    steps: [
+      { icon: Plus, label: "Create Session", detail: "Click '+ New Session' to open the form. Fill in Title, Slug (auto-generated), Description, Date, Time, and Facilitator." },
+      { icon: Users, label: "Tier", detail: "Set access tier to 'pro' (Pro + Executive members) or 'executive' (Executive only)." },
+      { icon: Filter, label: "Topics", detail: "Enter comma-separated topics — these appear as tags on the session card for members." },
+      { icon: Users, label: "Seat Limit", detail: "Total Seats controls capacity. Use Attendees Override to manually set the displayed attendee count if needed." },
+      { icon: Eye, label: "Publish / Unpublish", detail: "Toggle the Published switch to make a session visible or hidden to members. Sessions default to unpublished." },
+      { icon: PlayCircle, label: "Replay URL", detail: "After a session ends, paste the replay video URL so members can watch on-demand." },
+      { icon: FileText, label: "Notes URL", detail: "Add a link to session notes or resources — members see this alongside the replay." },
+      { icon: Pencil, label: "Edit Session", detail: "Click the pencil icon on any session row to open the edit modal and update any field." },
+      { icon: Trash2, label: "Delete Session", detail: "Click the trash icon and confirm deletion. This is permanent — the session and its registrations are removed." },
+    ],
+    tips: [
+      "Always set Published to off while building a session — members won't see it until you're ready.",
+      "Past sessions (is_past toggled on) display in the 'Past' section with replay access instead of registration.",
+      "Slugs must be unique — the form auto-generates one from the title but you can edit it.",
+    ],
+  },
+  {
     id: "tools",
     title: "Tools (Danger Zone)",
     icon: Lock,
@@ -741,6 +785,7 @@ const TAB_MAP: { id: string; label: string; icon: React.ElementType; color: stri
   { id: "creative-studio", label: "Creative Studio", icon: Wand2, color: "#8840FF", category: "Content" },
   { id: "customize", label: "Customize", icon: Paintbrush, color: "#C8A84E", category: "Settings" },
   { id: "content-manager", label: "Content", icon: FileEdit, color: "#21B8CD", category: "Content" },
+  { id: "testimonials", label: "Testimonials", icon: MessageSquareQuote, color: "#F77A81", category: "Content" },
   { id: "surveys", label: "Surveys", icon: ClipboardCheck, color: "#6ECF55", category: "Content" },
   { id: "events", label: "Events", icon: Vote, color: "#6ECF55", category: "Events" },
   { id: "conference", label: "Conference", icon: BarChart3, color: "#8840FF", category: "Events" },
@@ -773,6 +818,7 @@ const AUDIO_MAP: Record<string, string> = {
   "creative-studio": "/training/audio/creative-studio.mp3",
   "customize": "/training/audio/customize.mp3",
   "content-manager": "/training/audio/content-manager.mp3",
+  "testimonials": "/training/audio/testimonials.mp3",
   "surveys": "/training/audio/surveys.mp3",
   "events": "/training/audio/events.mp3",
   "conference": "/training/audio/conference.mp3",
@@ -944,7 +990,7 @@ export default function TrainingPage() {
                   Quick Start
                 </h2>
                 <p className="text-sm text-klo-muted leading-relaxed mb-4">
-                  Your admin dashboard has <span className="text-klo-text font-semibold">12 tabs</span> organized into 5 categories.
+                  Your admin dashboard has <span className="text-klo-text font-semibold">15 tabs</span> organized into functional groups.
                   Tap any tab below to jump to its detailed guide, or use the header buttons for Changelog, Request Update, and this Training Guide.
                 </p>
                 <div className="flex flex-wrap gap-2">

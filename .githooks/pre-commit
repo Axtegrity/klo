@@ -151,7 +151,27 @@ for file in $STAGED; do
 done
 
 # -------------------------------------------------------------------------
-# 6. ESLint security check on staged JS/TS files
+# 6. KLO Training/Admin Sync Validation
+# -------------------------------------------------------------------------
+if [ -f "scripts/validate-training-sync.ts" ]; then
+  TRAINING_CHANGES=$(echo "$STAGED" | grep -E '(admin/page\.tsx|admin/training/page\.tsx|training/)' || echo "")
+  if [ -n "$TRAINING_CHANGES" ]; then
+    # Run the training sync validation
+    if command -v bunx &>/dev/null; then
+      VALIDATION_OUTPUT=$(bunx ts-node scripts/validate-training-sync.ts 2>&1)
+      VALIDATION_EXIT=$?
+      if [ $VALIDATION_EXIT -ne 0 ]; then
+        echo ""
+        echo -e "${RED}Training/Admin sync validation failed:${NC}"
+        echo "$VALIDATION_OUTPUT"
+        BLOCKED=1
+      fi
+    fi
+  fi
+fi
+
+# -------------------------------------------------------------------------
+# 7. ESLint security check on staged JS/TS files
 # -------------------------------------------------------------------------
 STAGED_JS=$(echo "$STAGED" | grep -E '\.(js|jsx|ts|tsx|mjs)$' | grep -v node_modules | grep -v '.next/' | grep -v 'dist/')
 
