@@ -74,6 +74,9 @@ function FeedCard({ post, index }: { post: FeedPost; index: number }) {
           <Badge variant={getCategoryColor(post.category)}>
             {post.category}
           </Badge>
+          {post.isPremium && (
+            <Badge variant="gold">Executive</Badge>
+          )}
         </div>
 
         <h2 className="font-display text-xl font-bold text-klo-text mb-3 leading-tight">
@@ -91,37 +94,62 @@ function FeedCard({ post, index }: { post: FeedPost; index: number }) {
           </span>
         </div>
 
-        <div className="text-klo-muted leading-relaxed prose-invert">
-          <ReactMarkdown
-            components={{
-              p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
-              strong: ({ children }) => (
-                <strong className="text-klo-text font-semibold">
-                  {children}
-                </strong>
-              ),
-            }}
-          >
-            {expanded ? post.content : firstParagraph}
-          </ReactMarkdown>
-
-          {hasMoreContent && (
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="mt-3 inline-flex items-center gap-1.5 text-[#2764FF] text-sm font-medium hover:brightness-110 transition-all cursor-pointer"
+        {post.isPremium ? (
+          <div className="rounded-lg bg-gradient-to-r from-[#2764FF]/10 to-[#21B8CD]/10 border border-[#2764FF]/20 p-4 space-y-3">
+            <p className="text-sm text-klo-muted leading-relaxed prose-invert">
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                  strong: ({ children }) => (
+                    <strong className="text-klo-text font-semibold">
+                      {children}
+                    </strong>
+                  ),
+                }}
+              >
+                {firstParagraph}
+              </ReactMarkdown>
+            </p>
+            <a
+              href="/pricing"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white text-sm font-medium hover:brightness-110 transition-all"
             >
-              {expanded ? (
-                <>
-                  Show Less <ChevronUp size={16} />
-                </>
-              ) : (
-                <>
-                  Read More <ChevronDown size={16} />
-                </>
-              )}
-            </button>
-          )}
-        </div>
+              Upgrade to Read Full Article
+            </a>
+          </div>
+        ) : (
+          <div className="text-klo-muted leading-relaxed prose-invert">
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                strong: ({ children }) => (
+                  <strong className="text-klo-text font-semibold">
+                    {children}
+                  </strong>
+                ),
+              }}
+            >
+              {expanded ? post.content : firstParagraph}
+            </ReactMarkdown>
+
+            {hasMoreContent && (
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="mt-3 inline-flex items-center gap-1.5 text-[#2764FF] text-sm font-medium hover:brightness-110 transition-all cursor-pointer"
+              >
+                {expanded ? (
+                  <>
+                    Show Less <ChevronUp size={16} />
+                  </>
+                ) : (
+                  <>
+                    Read More <ChevronDown size={16} />
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        )}
       </Card>
     </motion.div>
   );

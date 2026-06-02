@@ -8,6 +8,15 @@ import type { VaultCategory, VaultType, VaultItem } from "@/lib/vault-data";
 //
 // Returns { item: VaultItem, body: string } so the detail page can render
 // the long-form body when no rich entry exists in src/lib/vault-content.ts.
+//
+// SECURITY: Premium content (tier_required != 'free') returns only first paragraph with hard char cap.
+// Truncation happens server-side before JSON serialization.
+
+function getFirstParagraph(content: string, maxChars: number = 280): string {
+  const paragraphs = content.split("\n\n");
+  const firstPara = paragraphs[0] || content;
+  return firstPara.slice(0, maxChars);
+}
 
 const VALID_CATEGORIES: VaultCategory[] = [
   "AI & Ethics",
@@ -59,7 +68,7 @@ export async function GET(
 
   if (error) {
     console.error("[GET /api/content/vault/[slug]]", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   if (!data) {
@@ -67,9 +76,15 @@ export async function GET(
   }
 
   const meta = (data.metadata ?? {}) as Record<string, unknown>;
-  const body: string = data.body ?? "";
-  const wordCount = body ? body.trim().split(/\s+/).length : 0;
+  const fullBody: string = data.body ?? "";
+  const isPremium = data.tier_required !== "free";
+  const responseBody = isPremium ? getFirstParagraph(fullBody) : fullBody;
+  const wordCount = responseBody ? responseBody.trim().split(/\s+/).length : 0;
   const minutes = Math.max(1, Math.round(wordCount / 200));
+  // Premium content: excerpt capped at 120 chars. Never leak body text. Non-premium: excerpt or body slice
+  const description = isPremium
+    ? ((data.excerpt ?? "Executive content — subscribe to read").slice(0, 120))
+    : (data.excerpt ?? fullBody.slice(0, 240));
 
   const item: VaultItem = {
     id: (meta.legacy_id as string) ?? `db-${data.id}`,
@@ -78,10 +93,10 @@ export async function GET(
     category: normalizeCategory(data.category),
     level: ((meta.level as string) ?? "Executive") as VaultItem["level"],
     type: normalizeType(data.content_type),
-    isPremium: data.tier_required !== "free",
+    isPremium,
     thumbnailGradient:
       (meta.thumbnail_gradient as string) ?? "from-blue-600 to-indigo-900",
-    description: data.excerpt ?? body.slice(0, 240),
+    description,
     duration:
       (meta.duration as string) ??
       (wordCount > 0 ? `${minutes} min read` : "Quick read"),
@@ -89,5 +104,5 @@ export async function GET(
     author: data.author_name ?? "Keith L. Odom",
   };
 
-  return NextResponse.json({ data: { item, body } });
+  return NextResponse.json({ data: { item, body: responseBody } });
 }

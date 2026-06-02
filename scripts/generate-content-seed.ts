@@ -1,13 +1,13 @@
 #!/usr/bin/env bun
 /**
- * Generates the seed migration SQL from hardcoded vault-data.ts and feed-data.ts.
+ * Generates the seed migration SQL from hardcoded vault-data.ts.
  * Run: bun run scripts/generate-content-seed.ts
  * Writes to: supabase/migrations/20260410000001_seed_content.sql
+ * Note: Feed now pulls from vault articles via featured_in_feed flag.
  */
 
 import { writeFileSync } from "node:fs";
 import { vaultItems } from "../src/lib/vault-data";
-import { feedPosts } from "../src/lib/feed-data";
 
 function esc(value: string | undefined | null): string {
   if (value === undefined || value === null) return "NULL";
@@ -27,8 +27,8 @@ function arr(values: string[]): string {
 
 const lines: string[] = [];
 lines.push("-- ============================================================");
-lines.push("-- Seed content: port hardcoded vault + feed data to Supabase");
-lines.push("-- Auto-generated from src/lib/vault-data.ts and feed-data.ts");
+lines.push("-- Seed content: port hardcoded vault data to Supabase");
+lines.push("-- Auto-generated from src/lib/vault-data.ts");
 lines.push("-- ============================================================\n");
 
 // --- Vault items ---
@@ -68,31 +68,7 @@ for (const item of vaultItems) {
   );
 }
 
-lines.push("\n-- Feed posts");
-for (const post of feedPosts) {
-  const metadata = {
-    legacy_id: post.id,
-    category: post.category,
-    read_time: post.readTime,
-    is_premium: post.isPremium,
-  };
-
-  const publishedAt = post.publishedAt
-    ? `'${post.publishedAt}T00:00:00Z'::timestamptz`
-    : "now()";
-
-  const tags = arr([post.category]);
-
-  lines.push(
-    `INSERT INTO feed_posts (author_id, title, body, post_type, tags, visibility, published_at, metadata)
-SELECT NULL, ${esc(post.title)}, ${esc(post.content)}, 'insight', ${tags}, 'published', ${publishedAt}, ${jsonb(metadata)}
-WHERE NOT EXISTS (
-  SELECT 1 FROM feed_posts WHERE metadata->>'legacy_id' = ${esc(post.id)}
-);`
-  );
-}
-
 const output = lines.join("\n\n") + "\n";
 const outPath = "supabase/migrations/20260410000001_seed_content.sql";
 writeFileSync(outPath, output);
-console.log(`Wrote ${vaultItems.length} vault items + ${feedPosts.length} feed posts to ${outPath}`);
+console.log(`Wrote ${vaultItems.length} vault items to ${outPath}`);
