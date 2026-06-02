@@ -44,7 +44,7 @@ export async function GET() {
 
   if (vaultError) {
     console.error("[GET /api/content/feed] vault query failed:", vaultError);
-    return NextResponse.json({ error: vaultError.message }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   // Query feed_posts
@@ -57,7 +57,7 @@ export async function GET() {
 
   if (feedError) {
     console.error("[GET /api/content/feed] feed_posts query failed:", feedError);
-    return NextResponse.json({ error: feedError.message }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   // Map vault articles to FeedPost
