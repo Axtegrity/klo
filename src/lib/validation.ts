@@ -693,9 +693,11 @@ export const vaultContentUpdateSchema = vaultContentUpsertSchema.partial().refin
   { message: "At least one field is required" },
 );
 
-const categoryValidation = (data: any) => {
-  if (data.metadata?.category) {
-    const cat = data.metadata.category;
+const categoryValidation = (
+  data: Record<string, unknown>
+): boolean => {
+  if (data.metadata && typeof data.metadata === 'object' && 'category' in data.metadata) {
+    const cat = (data.metadata as Record<string, unknown>).category;
     if (typeof cat !== 'string') return false;
     if (cat.length > 100) return false;
     if (cat.trim().length === 0) return false;
