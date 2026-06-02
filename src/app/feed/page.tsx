@@ -9,7 +9,6 @@ import Badge from "@/components/shared/Badge";
 import Card from "@/components/shared/Card";
 import {
   getCategoryColor,
-  type FeedCategory,
   type FeedPost,
 } from "@/lib/feed-data";
 
@@ -57,11 +56,6 @@ function getFirstParagraph(content: string): string {
 
 function categoryToSlug(category: string): string {
   return category.toLowerCase().replace(/\s+/g, "-");
-}
-
-function slugToCategory(slug: string): string {
-  // Inverse: slug like "ai-regulation" stays as is for matching
-  return slug;
 }
 
 function FeedCard({ post, index }: { post: FeedPost; index: number }) {
