@@ -244,6 +244,9 @@ function EditPostModal({
   const [body, setBody] = useState(post.body);
   const [postType, setPostType] = useState(post.post_type);
   const [tags, setTags] = useState(post.tags.join(", "));
+  const [category, setCategory] = useState(
+    (post.metadata?.category as string) ?? ""
+  );
   const [isPinned, setIsPinned] = useState(post.is_pinned);
   const [saving, setSaving] = useState(false);
 
@@ -256,6 +259,7 @@ function EditPostModal({
         post_type: postType,
         tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
         is_pinned: isPinned,
+        metadata: { ...post.metadata, category: category || null },
       });
     } finally {
       setSaving(false);
@@ -294,10 +298,15 @@ function EditPostModal({
             </select>
           </label>
           <label className="block">
-            <span className="text-xs text-klo-muted mb-1 block">Tags (comma-separated)</span>
-            <input value={tags} onChange={(e) => setTags(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px]" />
+            <span className="text-xs text-klo-muted mb-1 block">Category</span>
+            <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. AI Breakthroughs" className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px]" />
           </label>
         </div>
+
+        <label className="block">
+          <span className="text-xs text-klo-muted mb-1 block">Tags (comma-separated)</span>
+          <input value={tags} onChange={(e) => setTags(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px]" />
+        </label>
 
         <label className="block">
           <span className="text-xs text-klo-muted mb-1 block">Body</span>
@@ -330,6 +339,7 @@ function CreatePostModal({
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [postType, setPostType] = useState("insight");
+  const [category, setCategory] = useState("");
   const [saving, setSaving] = useState(false);
 
   const handleCreate = async () => {
@@ -342,6 +352,7 @@ function CreatePostModal({
         post_type: postType,
         tags: [],
         visibility: "published",
+        metadata: { category: category || null },
       });
     } finally {
       setSaving(false);
@@ -372,12 +383,18 @@ function CreatePostModal({
           <input value={title} onChange={(e) => setTitle(e.target.value)} autoFocus className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px]" />
         </label>
 
-        <label className="block">
-          <span className="text-xs text-klo-muted mb-1 block">Type</span>
-          <select value={postType} onChange={(e) => setPostType(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px]">
-            {POST_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block">
+            <span className="text-xs text-klo-muted mb-1 block">Type</span>
+            <select value={postType} onChange={(e) => setPostType(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px]">
+              {POST_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-xs text-klo-muted mb-1 block">Category</span>
+            <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. AI Breakthroughs" className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px]" />
+          </label>
+        </div>
 
         <label className="block">
           <span className="text-xs text-klo-muted mb-1 block">Body</span>

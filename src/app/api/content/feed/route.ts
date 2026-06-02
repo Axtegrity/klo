@@ -10,19 +10,12 @@ import type { FeedCategory, FeedPost } from "@/lib/feed-data";
 // RLS policy "feed_posts_public_read_published" allows anon SELECT
 // where visibility = 'published'.
 
-const VALID_CATEGORIES: FeedCategory[] = [
-  "AI Breakthroughs",
-  "Regulatory Shifts",
-  "Tech Ethics",
-  "Church Implications",
-  "Leadership",
-];
-
 function normalizeCategory(c: string | undefined): FeedCategory {
-  if (c && (VALID_CATEGORIES as string[]).includes(c)) {
+  // Allow any category string. If not provided, use first tag or default to "Uncategorized"
+  if (c) {
     return c as FeedCategory;
   }
-  return "Leadership";
+  return "Uncategorized" as FeedCategory;
 }
 
 interface DbRow {
