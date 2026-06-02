@@ -8,6 +8,11 @@ import type { FeedPost } from "@/lib/feed-data";
 //
 // RLS policies allow anon SELECT where visibility = 'published'.
 
+function getFirstParagraph(content: string): string {
+  const paragraphs = content.split("\n\n");
+  return paragraphs[0] || content;
+}
+
 interface VaultRow {
   id: string;
   title: string;
@@ -63,36 +68,40 @@ export async function GET() {
   // Map vault articles to FeedPost
   const vaultItems: FeedPost[] = ((vaultData ?? []) as VaultRow[]).map((row) => {
     const meta = (row.metadata ?? {}) as Record<string, unknown>;
-    const wordCount = row.body ? row.body.trim().split(/\s+/).length : 0;
+    const isPremium = row.tier_required !== "free";
+    const contentBody = isPremium ? getFirstParagraph(row.body) : row.body;
+    const wordCount = contentBody ? contentBody.trim().split(/\s+/).length : 0;
     const minutes = Math.max(1, Math.round(wordCount / 200));
     return {
       id: `vault-${row.id}`,
       title: row.title,
       category: row.category,
-      content: row.body,
+      content: contentBody,
       publishedAt: (row.published_at ?? row.created_at).slice(0, 10),
       readTime:
         (meta.duration as string) ??
         (wordCount > 0 ? `${minutes} min read` : "Quick read"),
-      isPremium: row.tier_required !== "free",
+      isPremium,
     };
   });
 
   // Map feed_posts to FeedPost
   const feedItems: FeedPost[] = ((feedData ?? []) as FeedPostRow[]).map((row) => {
     const meta = (row.metadata ?? {}) as Record<string, unknown>;
-    const wordCount = row.body ? row.body.trim().split(/\s+/).length : 0;
+    const isPremium = (meta.is_premium as boolean) ?? false;
+    const contentBody = isPremium ? getFirstParagraph(row.body) : row.body;
+    const wordCount = contentBody ? contentBody.trim().split(/\s+/).length : 0;
     const minutes = Math.max(1, Math.round(wordCount / 200));
     return {
       id: `feed-${row.id}`,
       title: row.title ?? "Untitled",
       category: (meta.category as string) ?? row.tags?.[0] ?? "Uncategorized",
-      content: row.body,
+      content: contentBody,
       publishedAt: (row.published_at ?? row.created_at).slice(0, 10),
       readTime:
         (meta.read_time as string) ??
         (wordCount > 0 ? `${minutes} min read` : "Quick read"),
-      isPremium: (meta.is_premium as boolean) ?? false,
+      isPremium,
     };
   });
 
