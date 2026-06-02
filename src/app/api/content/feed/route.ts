@@ -8,9 +8,10 @@ import type { FeedPost } from "@/lib/feed-data";
 //
 // RLS policies allow anon SELECT where visibility = 'published'.
 
-function getFirstParagraph(content: string): string {
+function getFirstParagraph(content: string, maxChars: number = 280): string {
   const paragraphs = content.split("\n\n");
-  return paragraphs[0] || content;
+  const firstPara = paragraphs[0] || content;
+  return firstPara.slice(0, maxChars);
 }
 
 interface VaultRow {
@@ -88,7 +89,8 @@ export async function GET() {
   // Map feed_posts to FeedPost
   const feedItems: FeedPost[] = ((feedData ?? []) as FeedPostRow[]).map((row) => {
     const meta = (row.metadata ?? {}) as Record<string, unknown>;
-    const isPremium = (meta.is_premium as boolean) ?? false;
+    // Use explicit true check to avoid string coercion ("false" string would coerce truthy)
+    const isPremium = meta.is_premium === true;
     const contentBody = isPremium ? getFirstParagraph(row.body) : row.body;
     const wordCount = contentBody ? contentBody.trim().split(/\s+/).length : 0;
     const minutes = Math.max(1, Math.round(wordCount / 200));
