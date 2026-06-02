@@ -16,11 +16,11 @@ const TOPIC_COLORS = [
 
 const DEFAULTS: TrendingConfig = {
   heading: "Trending in Tech & Faith",
-  topic1: "AI Regulation",
-  topic2: "Church Tech",
-  topic3: "Cybersecurity",
-  topic4: "Digital Ethics",
-  topic5: "AI in Education",
+  topic1: "AI & Ethics",
+  topic2: "Church & Tech",
+  topic3: "Governance",
+  topic4: "Leadership",
+  topic5: "Youth & Workforce",
 };
 
 interface TrendingTopicsProps {
