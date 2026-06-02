@@ -282,13 +282,14 @@ const TRAINING_SECTIONS: TrainingSection[] = [
     steps: [
       { icon: Globe, label: "Home Page Content", detail: "Edit 7 homepage sections: Hero Banner (heading text, tagline, CTAs), Latest Brief, Trending Topics (5 tags), Featured Insight, AI Tool of the Week, Testimonials, and Quick Links. Note: the hero's background image/color lives in Creative Studio → Pages, not here." },
       { icon: BookOpen, label: "Vault Library", detail: "Manage 12+ vault items — set title, category, type, level, premium/free toggle, description, author, duration, and file attachments" },
-      { icon: FileText, label: "Feed Posts", detail: "Create, edit, delete, and schedule feed posts with engagement tracking" },
+      { icon: FileText, label: "Feed Posts", detail: "Create, edit, delete, and organize feed posts with categories, tags, and visibility controls. Assign posts to custom categories (e.g., \"AI Breakthroughs\", \"Leadership\") — trending topics on the homepage link to these categories." },
       { icon: Upload, label: "File Uploads (Vault / Feed)", detail: "Attach PDFs and cover images to vault items and feed posts directly from the edit modal. For images used as hero backgrounds or reusable graphics, upload them in Creative Studio → Media first." },
     ],
     tips: [
       "Each content section shows a \"Last edited\" timestamp so you know when it was last updated.",
       "Click any section card to open the edit modal with all editable fields.",
-      "Vault items support categories: AI Strategy, Governance, Digital Transformation, Cybersecurity, and more.",
+      "Vault items and Feed Posts both support custom categories. Create any category name you want — the feed automatically extracts unique categories from published posts.",
+      "When you edit a trending topic label in the Customize tab (e.g., \"AI Regulation\"), the category on feed posts matching that label will display the posts. No code changes needed.",
       "Rule of thumb: Content Manager = words. Creative Studio = pictures, fonts, animations, and hero backgrounds. The edit modal here won't let you change the home page's background photo — that's by design.",
     ],
   },
