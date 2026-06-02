@@ -10,6 +10,7 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 - bump Next.js to 16.2.6 (CVE-2026-44573/44574/44575/44578/45109 — middleware auth bypass + DoS)
 
 ### Added
+- **Vault feed quick-toggle button** — ⭐ Feed button on each vault article in the admin library allows Keith to instantly feature articles in the Executive Feed without opening an edit modal; toggle fires async API call with loading spinner, success/error toast feedback, and disabled state during flight.
 - **Training sync validation system** — CI workflow + pre-commit hook that enforces every admin tab has a corresponding training section; blocks merges when admin tabs and training docs are out of sync.
 - **Strategy Rooms training section** — admin training page now documents the Strategy Rooms tab: create/edit/publish/delete flows, tier selection, seat limits, replay URL, and notes URL.
 

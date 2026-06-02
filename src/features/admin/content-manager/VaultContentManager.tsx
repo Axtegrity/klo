@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Plus, Pencil, Trash2, RefreshCw, X, Star, AlertTriangle, Archive, ChevronDown, Eye } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, RefreshCw, X, Star, AlertTriangle, Archive, ChevronDown, Eye, Loader2 } from "lucide-react";
 import VisibilityToggle from "./VisibilityToggle";
 import { useContent, type BaseContentItem, type Visibility } from "./useContent";
+import { useToast } from "@/contexts/ToastContext";
 
 interface VaultItem extends BaseContentItem {
   title: string;
@@ -48,11 +49,13 @@ export default function VaultContentManager() {
     createItem,
     refetch,
   } = useContent<VaultItem>({ type: "vault", initialVisibility: "published" });
+  const { toast } = useToast();
 
   const [editingItem, setEditingItem] = useState<VaultItem | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [togglingFeatured, setTogglingFeatured] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
     try {
@@ -135,6 +138,7 @@ export default function VaultContentManager() {
             <VaultCard
               key={item.id}
               item={item}
+              isTogglingFeatured={togglingFeatured === item.id}
               onEdit={() => setEditingItem(item)}
               onDelete={() => setDeleteConfirm(item.id)}
               onVisibilityChange={async (v) => {
@@ -142,6 +146,20 @@ export default function VaultContentManager() {
                   await setItemVisibility(item.id, v);
                 } catch (err) {
                   setError(err instanceof Error ? err.message : "Update failed");
+                }
+              }}
+              onToggleFeatured={async () => {
+                setTogglingFeatured(item.id);
+                try {
+                  await updateItem(item.id, {
+                    featured_in_feed: !item.featured_in_feed,
+                  });
+                  toast("success", `Article ${item.featured_in_feed ? "removed from" : "added to"} feed`);
+                } catch (err) {
+                  const message = err instanceof Error ? err.message : "Update failed";
+                  toast("error", message);
+                } finally {
+                  setTogglingFeatured(null);
                 }
               }}
             />
@@ -205,11 +223,15 @@ function VaultCard({
   onEdit,
   onDelete,
   onVisibilityChange,
+  onToggleFeatured,
+  isTogglingFeatured,
 }: {
   item: VaultItem;
   onEdit: () => void;
   onDelete: () => void;
   onVisibilityChange: (v: Visibility) => void;
+  onToggleFeatured: () => void;
+  isTogglingFeatured: boolean;
 }) {
   return (
     <motion.div
@@ -243,6 +265,23 @@ function VaultCard({
       <div className="flex items-center gap-2 sm:flex-col sm:items-end">
         <VisibilityToggle value={item.visibility} onChange={onVisibilityChange} size="sm" />
         <div className="flex gap-1">
+          <button
+            onClick={onToggleFeatured}
+            disabled={isTogglingFeatured}
+            title={item.featured_in_feed ? "Remove from Executive Feed" : "Add to Executive Feed"}
+            className={`px-3 py-2 rounded-lg min-h-[36px] flex items-center gap-1.5 transition-all disabled:opacity-50 ${
+              item.featured_in_feed
+                ? "bg-klo-gold/20 text-klo-gold hover:bg-klo-gold/30 disabled:hover:bg-klo-gold/20"
+                : "text-klo-muted hover:bg-white/5 hover:text-klo-text disabled:hover:bg-transparent"
+            }`}
+          >
+            {isTogglingFeatured ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Star size={14} fill={item.featured_in_feed ? "currentColor" : "none"} />
+            )}
+            <span className="text-xs font-medium">Feed</span>
+          </button>
           <button onClick={onEdit} className="p-2 rounded-lg hover:bg-white/5 text-klo-muted hover:text-klo-text min-h-[36px] min-w-[36px] flex items-center justify-center">
             <Pencil size={14} />
           </button>
@@ -370,7 +409,7 @@ function EditItemModal({
             className="w-4 h-4 rounded border border-white/20 bg-klo-dark/50 accent-klo-accent"
           />
           <div>
-            <span className="text-sm font-medium text-klo-text">Feature in Executive Feed</span>
+            <span className="text-sm font-medium text-klo-text block">Feature in Executive Feed</span>
             <p className="text-xs text-klo-muted mt-0.5">Surfaces this article on the public /feed page</p>
           </div>
         </label>
