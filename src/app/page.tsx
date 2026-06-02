@@ -9,11 +9,54 @@ import UpcomingKeynote from "@/components/home/UpcomingKeynote";
 import UpcomingStrategyRoom from "@/components/home/UpcomingStrategyRoom";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import FadeInOnScroll from "@/components/shared/FadeInOnScroll";
-import { getPageConfig, type StrategyConfig } from "@/lib/page-config-server";
+import { getPageConfig, type StrategyConfig, type TrendingConfig } from "@/lib/page-config-server";
 import { getServiceSupabase } from "@/lib/supabase";
 
 // Force dynamic so admin edits to page_configs reflect immediately
 export const dynamic = "force-dynamic";
+
+async function getTrendingTopicsFromFeaturedArticles(): Promise<TrendingConfig | null> {
+  try {
+    const supabase = getServiceSupabase();
+    const { data: featured } = await supabase
+      .from("vault_content")
+      .select("category")
+      .eq("featured_in_feed", true)
+      .eq("visibility", "published");
+
+    if (!featured || featured.length === 0) return null;
+
+    // Count articles per category
+    const categoryCounts = featured.reduce(
+      (acc: Record<string, number>, item: { category: string }) => {
+        acc[item.category] = (acc[item.category] || 0) + 1;
+        return acc;
+      },
+      {}
+    );
+
+    // Get top 5 categories by count
+    const topCategories = Object.entries(categoryCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([category]) => category);
+
+    // Return null if no featured articles
+    if (topCategories.length === 0) return null;
+
+    // Build trending config from featured categories (1 to 5, depending on how many Keith featured)
+    return {
+      heading: "Trending in Tech & Faith",
+      topic1: topCategories[0],
+      topic2: topCategories[1],
+      topic3: topCategories[2],
+      topic4: topCategories[3],
+      topic5: topCategories[4],
+    };
+  } catch {
+    return null;
+  }
+}
 
 async function getNextStrategySession(): Promise<StrategyConfig | null> {
   try {
@@ -64,7 +107,8 @@ export default async function Home() {
       ? (sectionImages.latestBrief.backgroundRef ?? null)
       : null;
   const briefConfig      = pageConfig?.brief_config      ?? null;
-  const trendingConfig   = pageConfig?.trending_config   ?? null;
+  // Pull trending topics from featured vault articles (Keith's star selections)
+  const trendingConfig   = (await getTrendingTopicsFromFeaturedArticles()) ?? pageConfig?.trending_config ?? null;
   const insightConfig    = pageConfig?.insight_config    ?? null;
   const toolConfig       = pageConfig?.tool_config       ?? null;
   const assessmentConfig = pageConfig?.assessment_config ?? null;
