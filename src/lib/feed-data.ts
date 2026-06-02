@@ -1,9 +1,4 @@
-export type FeedCategory =
-  | "AI Breakthroughs"
-  | "Regulatory Shifts"
-  | "Tech Ethics"
-  | "Church Implications"
-  | "Leadership";
+export type FeedCategory = string;
 
 export interface FeedPost {
   id: string;
@@ -15,13 +10,17 @@ export interface FeedPost {
   isPremium: boolean;
 }
 
-export const categoryColors: Record<FeedCategory, string> = {
+export const categoryColors: Record<string, string> = {
   "AI Breakthroughs": "blue",
   "Regulatory Shifts": "gold",
   "Tech Ethics": "green",
   "Church Implications": "muted",
-  Leadership: "gold",
+  "Leadership": "gold",
 } as const;
+
+export function getCategoryColor(category: string): "blue" | "gold" | "green" | "muted" {
+  return (categoryColors[category] ?? "muted") as "blue" | "gold" | "green" | "muted";
+}
 
 export const feedPosts: FeedPost[] = [
   {
