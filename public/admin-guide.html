@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Guide — Keith Odom Leadership &amp; Impact</title>
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Brand tokens ── */
+    :root {
+      --gold:     #C8A84E;
+      --gold-lt:  #E8D5A0;
+      --navy:     #161B22;
+      --dark:     #0D1117;
+      --slate:    #21262D;
+      --text:     #E6EDF3;
+      --muted:    #8B949E;
+      --accent:   #2764FF;
+      --cyan:     #21B8CD;
+      --surface:  #161B22;
+      --border:   rgba(255,255,255,0.07);
+      --radius:   14px;
+    }
+
+    /* ── Base ── */
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ── */
+    .page-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── Hero banner ── */
+    .hero {
+      background: linear-gradient(135deg, #161B22 0%, #0D1117 100%);
+      border: 1px solid rgba(200,168,78,0.2);
+      border-radius: var(--radius);
+      padding: 40px 36px;
+      margin-bottom: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at top left, rgba(39,100,255,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-size: clamp(26px, 5vw, 38px);
+      font-weight: 800;
+      line-height: 1.2;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .hero h1 span {
+      background: linear-gradient(90deg, #2764FF, #21B8CD);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      color: var(--muted);
+      font-size: 15px;
+      max-width: 540px;
+    }
+    .read-time {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 14px;
+    }
+
+    /* ── Table of contents ── */
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin-bottom: 48px;
+    }
+    .toc h2 {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .toc ol {
+      list-style: none;
+      counter-reset: toc;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toc ol li {
+      counter-increment: toc;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .toc ol li::before {
+      content: counter(toc);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(39,100,255,0.15);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .toc a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .toc a:hover { color: var(--accent); }
+
+    /* ── Section ── */
+    .section {
+      margin-bottom: 56px;
+      scroll-margin-top: 24px;
+    }
+
+    /* ── Section heading ── */
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-icon {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      background: rgba(200,168,78,0.1);
+      border: 1px solid rgba(200,168,78,0.2);
+    }
+    .section-icon.blue {
+      background: rgba(39,100,255,0.1);
+      border-color: rgba(39,100,255,0.2);
+    }
+    .section-icon.cyan {
+      background: rgba(33,184,205,0.1);
+      border-color: rgba(33,184,205,0.2);
+    }
+    .section-icon.green {
+      background: rgba(110,207,85,0.1);
+      border-color: rgba(110,207,85,0.2);
+    }
+    .section h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+    .section-sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ── Step ── */
+    .steps { display: flex; flex-direction: column; gap: 16px; }
+    .step {
+      display: flex;
+      gap: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      transition: border-color 0.2s;
+    }
+    .step:hover { border-color: rgba(39,100,255,0.25); }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+    .step-body { flex: 1; min-width: 0; }
+    .step-body strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .step-body p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+    .step-body p + p { margin-top: 8px; }
+
+    /* ── Code / button label ── */
+    code {
+      font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+      font-size: 12px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 7px;
+      color: var(--gold-lt);
+    }
+
+    /* ── Callout boxes ── */
+    .callout {
+      display: flex;
+      gap: 14px;
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin: 16px 0;
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+    .callout-icon { font-size: 18px; flex-shrink: 0; line-height: 1.5; }
+    .callout-body { flex: 1; }
+    .callout-body strong { display: block; margin-bottom: 2px; font-size: 13px; font-weight: 700; }
+
+    .callout.tip {
+      background: rgba(110,207,85,0.07);
+      border: 1px solid rgba(110,207,85,0.2);
+      color: #A8E890;
+    }
+    .callout.warning {
+      background: rgba(247,122,129,0.07);
+      border: 1px solid rgba(247,122,129,0.2);
+      color: #FAA0A7;
+    }
+    .callout.info {
+      background: rgba(39,100,255,0.07);
+      border: 1px solid rgba(39,100,255,0.2);
+      color: #8BAEFF;
+    }
+    .callout.gold {
+      background: rgba(200,168,78,0.07);
+      border: 1px solid rgba(200,168,78,0.2);
+      color: var(--gold-lt);
+    }
+
+    /* ── Path breadcrumb ── */
+    .path {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      margin: 10px 0 16px;
+      color: var(--muted);
+    }
+    .path span { color: var(--text); font-weight: 600; }
+    .path-sep { opacity: 0.4; }
+
+    /* ── Field reference table ── */
+    .field-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+    .field-table th {
+      background: rgba(255,255,255,0.04);
+      text-align: left;
+      padding: 10px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .field-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      color: var(--text);
+    }
+    .field-table td:first-child { font-weight: 600; color: var(--gold-lt); }
+    .field-table tr:last-child td { border-bottom: none; }
+
+    /* ── FAQ ── */
+    .faq { display: flex; flex-direction: column; gap: 2px; }
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .faq-q {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .faq-q::before {
+      content: "?";
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(39,100,255,0.15);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .faq-a {
+      padding: 0 20px 18px 54px;
+      font-size: 13.5px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* ── Closing card ── */
+    .closing {
+      background: linear-gradient(135deg, rgba(200,168,78,0.08) 0%, rgba(39,100,255,0.06) 100%);
+      border: 1px solid rgba(200,168,78,0.2);
+      border-radius: var(--radius);
+      padding: 36px 32px;
+      text-align: center;
+      margin-top: 56px;
+    }
+    .closing h2 { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 12px; }
+    .closing p { font-size: 14px; color: var(--muted); max-width: 460px; margin: 0 auto 20px; }
+    .closing a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 12px 28px;
+      border-radius: 10px;
+      transition: opacity 0.2s;
+    }
+    .closing a:hover { opacity: 0.85; }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 40px 0;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 520px) {
+      .page-wrap { padding: 28px 16px 60px; }
+      .hero { padding: 28px 20px; }
+      .section-header { flex-direction: column; gap: 12px; }
+      .closing { padding: 28px 20px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- ══════════════════════════════════
+       HERO
+  ══════════════════════════════════ -->
+  <div class="hero">
+    <div class="hero-eyebrow">&#9670; Leadership &amp; Impact Platform</div>
+    <h1>Your Admin Panel,<br><span>Made Simple</span></h1>
+    <p>Everything you need to manage your content, update articles, control what appears in your Executive Feed, and keep your platform running smoothly — explained step by step.</p>
+    <div class="read-time">&#128337; About 5 minutes to read</div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       TABLE OF CONTENTS
+  ══════════════════════════════════ -->
+  <div class="toc">
+    <h2>What's inside</h2>
+    <ol>
+      <li><a href="#getting-in">Getting into your admin panel</a></li>
+      <li><a href="#vault-articles">Adding and editing vault articles</a></li>
+      <li><a href="#executive-feed">Featuring an article in the Executive Feed</a></li>
+      <li><a href="#categories">Managing categories</a></li>
+      <li><a href="#publish-hide">Publishing or hiding content</a></li>
+      <li><a href="#faq">FAQ — common questions and mistakes</a></li>
+    </ol>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       SECTION 1 — Getting In
+  ══════════════════════════════════ -->
+  <div class="section" id="getting-in">
+    <div class="section-header">
+      <div class="section-icon">&#128274;</div>
+      <div>
+        <h2>Getting into your admin panel</h2>
+        <div class="section-sub">How to log in and find your way around</div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Go to your admin page</strong>
+          <p>Open your browser and go to <code>app.keithlodom.io/admin</code> (or <code>klo-app.vercel.app/admin</code> if you are using the preview link).</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Sign in with your admin account</strong>
+          <p>Enter your admin email and password on the sign-in page. This is the account Tim set up for you — not a public account.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>You will land on the Admin Dashboard</strong>
+          <p>You will see a dark screen with stats at the top and a row of tabs across the middle. The tabs are: <code>Overview</code>, <code>Creative Studio</code>, <code>Customize</code>, <code>Content</code>, and more. You will live mostly in the <code>Content</code> tab.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout tip" style="margin-top:20px;">
+      <div class="callout-icon">&#128161;</div>
+      <div class="callout-body">
+        <strong>Tip: Bookmark the admin page</strong>
+        You can bookmark <code>/admin</code> in your browser so you do not have to type it every time.
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       SECTION 2 — Vault Articles
+  ══════════════════════════════════ -->
+  <div class="section" id="vault-articles">
+    <div class="section-header">
+      <div class="section-icon blue">&#128218;</div>
+      <div>
+        <h2>Adding and editing vault articles</h2>
+        <div class="section-sub">Your Vault Library is where all your written content lives</div>
+      </div>
+    </div>
+
+    <div class="path">
+      Admin Dashboard
+      <span class="path-sep">›</span>
+      <span>Content</span> tab
+      <span class="path-sep">›</span>
+      <span>Vault Library</span>
+    </div>
+
+    <p style="font-size:14px;color:var(--muted);margin-bottom:20px;">The Content tab has four sections inside it: <em>Home Page</em>, <em>Vault Library</em>, <em>Feed Posts</em>, and <em>Repository</em>. Click <code>Vault Library</code> to manage your articles.</p>
+
+    <h3 style="font-size:16px;font-weight:700;color:var(--gold);margin:0 0 14px;">To add a brand-new article:</h3>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Click the blue "New Item" button</strong>
+          <p>You will find this button in the top-right area of the Vault Library section.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>A form pops up — fill in the Title</strong>
+          <p>Type the name of your article in the <code>Title</code> field. This is the headline everyone sees. Make it clear and direct.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Choose a Category and Type</strong>
+          <p>Pick a <code>Category</code> from the dropdown (for example: Leadership, Governance, AI &amp; Ethics). Then pick a <code>Type</code> — most articles are simply <em>article</em>. Videos use <em>video</em>, and so on.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <strong>Write your content in the Body field</strong>
+          <p>The big text area labeled <code>Body</code> is where your full article goes. Paste from a document or type directly. No special formatting needed — plain text is fine.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <strong>Click "Create"</strong>
+          <p>The blue <code>Create</code> button saves your new article. It will go live immediately as a published item.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout info" style="margin-top:20px;">
+      <div class="callout-icon">&#128270;</div>
+      <div class="callout-body">
+        <strong>New articles are free-tier by default</strong>
+        When you create a new article it is visible to all users. After you create it, you can open it to edit and change the <code>Tier</code> to restrict it to paying members.
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <h3 style="font-size:16px;font-weight:700;color:var(--gold);margin:0 0 14px;">To edit an existing article:</h3>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Find the article in the list</strong>
+          <p>Scroll through your vault items or use the search bar at the top — type part of the title and the list will filter automatically.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Click the pencil icon (&#9998;)</strong>
+          <p>Every article row has a small pencil icon on the right side. Click it to open the edit form for that article.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Make your changes</strong>
+          <p>Update any field — title, body, category, author, published date, tier, or anything else. You can change as many fields as you want in one go.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <strong>Click the blue "Save" button</strong>
+          <p>Your changes go live as soon as you click <code>Save</code>. You will see the button change to <em>Saving...</em> for a moment, then the form closes. Done.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout tip" style="margin-top:20px;">
+      <div class="callout-icon">&#9997;&#65039;</div>
+      <div class="callout-body">
+        <strong>The Excerpt field is optional but helpful</strong>
+        If you fill in the <code>Excerpt</code> field, that short summary appears in the card preview on the site. If you leave it blank, the app automatically uses the first few lines of your body text.
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:700;color:var(--text);margin:24px 0 12px;">What each field means:</h3>
+    <table class="field-table">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>What it does</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Title</td>
+          <td>The headline of the article — shown everywhere it appears</td>
+        </tr>
+        <tr>
+          <td>Category</td>
+          <td>Groups the article so members can filter by topic</td>
+        </tr>
+        <tr>
+          <td>Type</td>
+          <td>Labels what kind of content this is (article, video, guide, etc.)</td>
+        </tr>
+        <tr>
+          <td>Tier</td>
+          <td>Controls who can read it: <em>free</em> = everyone, others = paying members only</td>
+        </tr>
+        <tr>
+          <td>Excerpt</td>
+          <td>A short 1–2 sentence preview shown in the card list</td>
+        </tr>
+        <tr>
+          <td>Body</td>
+          <td>The full article text</td>
+        </tr>
+        <tr>
+          <td>Author</td>
+          <td>The name that appears at the bottom of the article</td>
+        </tr>
+        <tr>
+          <td>Published Date</td>
+          <td>The date shown on the article — you can backdate it if needed</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       SECTION 3 — Executive Feed Toggle
+  ══════════════════════════════════ -->
+  <div class="section" id="executive-feed">
+    <div class="section-header">
+      <div class="section-icon cyan">&#11088;</div>
+      <div>
+        <h2>Featuring an article in the Executive Feed</h2>
+        <div class="section-sub">Put your best content front and center on the public /feed page</div>
+      </div>
+    </div>
+
+    <p style="font-size:14px;color:var(--muted);margin-bottom:20px;">The Executive Intelligence Feed is the main public-facing feed on your site. Only vault articles you specifically flag will appear there — you are in full control.</p>
+
+    <div class="path">
+      Admin Dashboard
+      <span class="path-sep">›</span>
+      <span>Content</span> tab
+      <span class="path-sep">›</span>
+      <span>Vault Library</span>
+      <span class="path-sep">›</span>
+      click the &#9998; pencil on any article
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Open the article you want to feature</strong>
+          <p>Find the article in your Vault Library and click its pencil icon to open the edit form.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Scroll to the bottom of the edit form</strong>
+          <p>Near the bottom you will see a checkbox labeled <code>Feature in Executive Feed</code>.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Check the box to turn it on</strong>
+          <p>Click the checkbox. A small checkmark will appear. Underneath it you will see the note: <em>"Surfaces this article on the public /feed page."</em></p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <strong>Click Save</strong>
+          <p>That is it. The article will now show up in your Executive Feed. Visitors to your site will see it on the feed page.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout gold">
+      <div class="callout-icon">&#128161;</div>
+      <div class="callout-body">
+        <strong>To remove an article from the feed</strong>
+        Open the same article again, uncheck the <code>Feature in Executive Feed</code> box, and click Save. The article stays in your vault — it just comes off the public feed.
+      </div>
+    </div>
+
+    <div class="callout info" style="margin-top:12px;">
+      <div class="callout-icon">&#128203;</div>
+      <div class="callout-body">
+        <strong>There is no limit on how many articles you can feature</strong>
+        You can feature as many or as few as you want. Recommended: pick your strongest 3–6 pieces so the feed stays sharp and focused.
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       SECTION 4 — Categories
+  ══════════════════════════════════ -->
+  <div class="section" id="categories">
+    <div class="section-header">
+      <div class="section-icon green">&#127991;</div>
+      <div>
+        <h2>Managing categories</h2>
+        <div class="section-sub">Keep your content organized so members can find what they need</div>
+      </div>
+    </div>
+
+    <p style="font-size:14px;color:var(--muted);margin-bottom:20px;">Categories are the labels that group your vault articles. Your current categories are:</p>
+
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;">
+      <code>AI &amp; Ethics</code>
+      <code>Church &amp; Tech</code>
+      <code>Governance</code>
+      <code>Leadership</code>
+      <code>Youth &amp; Workforce</code>
+      <code>Previous Events</code>
+      <code>Current Events</code>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:700;color:var(--gold);margin:0 0 14px;">To assign a category to an article:</h3>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Open any article in edit mode</strong>
+          <p>Click the pencil icon next to the article in your Vault Library list.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Click the "Category" dropdown</strong>
+          <p>You will see a dropdown menu with all your available categories. Click it to open the list.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Pick the right category and click Save</strong>
+          <p>Choose the one that best fits the article topic. One article belongs to one category. Click <code>Save</code> to apply it.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout info" style="margin-top:20px;">
+      <div class="callout-icon">&#128269;</div>
+      <div class="callout-body">
+        <strong>Want to add a new category?</strong>
+        Categories are managed in the app settings by Tim. Send Tim a quick note with the category name you want to add and he can get it in the list for you. This keeps things clean and consistent.
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:700;color:var(--text);margin:24px 0 12px;">Browsing by category in the admin panel:</h3>
+    <p style="font-size:14px;color:var(--muted);">You can see how many articles are in each category right on the admin Analytics tab. Go to the <code>Analytics</code> tab and look for <em>Vault Content by Type</em>. It shows a breakdown so you can spot any gaps.</p>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       SECTION 5 — Publish / Hide
+  ══════════════════════════════════ -->
+  <div class="section" id="publish-hide">
+    <div class="section-header">
+      <div class="section-icon blue">&#128065;</div>
+      <div>
+        <h2>Publishing or hiding content</h2>
+        <div class="section-sub">Control exactly what members see — and when</div>
+      </div>
+    </div>
+
+    <p style="font-size:14px;color:var(--muted);margin-bottom:20px;">Every vault article has a visibility state. Think of it like a light switch with three settings:</p>
+
+    <table class="field-table" style="margin-bottom:24px;">
+      <thead>
+        <tr>
+          <th>State</th>
+          <th>What it means</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Published</td>
+          <td>Visible to members. This is the normal "live" state.</td>
+        </tr>
+        <tr>
+          <td>Hidden</td>
+          <td>Not visible to members, but not deleted. You can un-hide it anytime.</td>
+        </tr>
+        <tr>
+          <td>Archived</td>
+          <td>Removed from the main list but still stored. Still used by KLO Intelligence. Can be republished.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="font-size:16px;font-weight:700;color:var(--gold);margin:0 0 14px;">To change an article's visibility:</h3>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Find the article in your Vault Library list</strong>
+          <p>Use the search bar if you need to narrow it down.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Look for the visibility toggle on the right side of the article card</strong>
+          <p>Each article row shows a small toggle control. It will say the current state: <em>Published</em> or <em>Hidden</em>.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Click the toggle to switch states</strong>
+          <p>Click it once to change. The change saves automatically — you do not need to click a separate Save button for visibility.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout warning">
+      <div class="callout-icon">&#9888;&#65039;</div>
+      <div class="callout-body">
+        <strong>Hiding is not the same as deleting</strong>
+        If you hide an article, it disappears from the member view — but it is still in your vault. You can make it visible again anytime. Deleting is permanent and cannot be undone. When in doubt, hide first.
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <h3 style="font-size:16px;font-weight:700;color:var(--text);margin:0 0 14px;">To filter by published vs. hidden:</h3>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Look at the toggle bar near the search box</strong>
+          <p>You will see two buttons: <code>published</code> and <code>hidden</code>.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Click "hidden" to see all your hidden articles</strong>
+          <p>This shows only the articles you have turned off. Useful for reviewing what is sitting in draft mode.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Click "published" to go back to the live view</strong>
+          <p>This shows everything that is currently visible to your members.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout tip" style="margin-top:20px;">
+      <div class="callout-icon">&#128230;</div>
+      <div class="callout-body">
+        <strong>Archived items are at the bottom</strong>
+        At the very bottom of your Vault Library you will see a gold-colored row labeled <em>Archived Items</em>. Click it to expand and see everything you have archived. You can republish any of them with one click.
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       FAQ
+  ══════════════════════════════════ -->
+  <div class="section" id="faq">
+    <div class="section-header">
+      <div class="section-icon">&#10067;</div>
+      <div>
+        <h2>FAQ</h2>
+        <div class="section-sub">Common questions and "wait — what just happened?" moments</div>
+      </div>
+    </div>
+
+    <div class="faq">
+
+      <div class="faq-item">
+        <div class="faq-q">I clicked Save but I do not see my changes on the site.</div>
+        <div class="faq-a">
+          Give it 5–10 seconds and then do a hard refresh on your browser (hold <code>Shift</code> and click the reload button, or press <code>Ctrl + Shift + R</code> on Windows / <code>Cmd + Shift + R</code> on Mac). Your changes are saved — sometimes the browser shows you a cached version of the old page.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">I hid an article by accident. How do I get it back?</div>
+        <div class="faq-a">
+          No problem. Click the <code>hidden</code> filter button above the vault list to see all your hidden articles. Find the article and click its visibility toggle to set it back to <em>Published</em>. Done.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">I deleted an article by accident. Can I get it back?</div>
+        <div class="faq-a">
+          Unfortunately, a permanent delete cannot be reversed from the admin panel. Contact Tim as soon as possible — he may be able to recover it from a recent database backup if you catch it quickly.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">An article shows "Premium" on the site. What does that mean?</div>
+        <div class="faq-a">
+          The article has its <code>Tier</code> set to something other than <em>free</em>. That means only paying members at that tier can read the full content. To make it available to everyone, open the article, change the Tier dropdown to <em>free</em>, and click Save.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">I turned on "Feature in Executive Feed" but the article is not showing up on the feed page.</div>
+        <div class="faq-a">
+          Check two things: (1) Make sure the article is set to <em>Published</em> — a hidden article will not appear in the feed even if the toggle is on. (2) Do a hard refresh on the feed page (Shift + reload). If it is still missing after that, reach out to Tim.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">What is the difference between "Vault Library" and "Feed Posts"?</div>
+        <div class="faq-a">
+          Vault articles are your full-length written content — guides, briefings, leadership pieces. Feed posts are shorter community-style updates like announcements and discussions. The Executive Feed on the public site pulls from vault articles that have the feature flag turned on — not from feed posts.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">What does "Archived" mean — is the content deleted?</div>
+        <div class="faq-a">
+          No. Archived content is stored safely and still used by KLO Intelligence (the AI that powers your advisor). It is just removed from the active member-facing view. Think of it as a back room — the content is there, members just cannot browse to it. You can republish it anytime from the Archived section at the bottom of the vault list.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">Can I add a new category myself?</div>
+        <div class="faq-a">
+          Not from the admin panel — categories are set in the code by Tim. If you want a new one, just text or email Tim with the name and he will add it. Usually takes less than a day.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">I see a "Request Update" button at the top of the admin dashboard. What is that?</div>
+        <div class="faq-a">
+          That button is a direct line to Tim to request a feature or change in the app itself. Use it anytime you want something added or adjusted — Tim will see it and get back to you.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">Is it safe to explore the admin panel? Will I break anything?</div>
+        <div class="faq-a">
+          Yes, it is safe to explore. The only actions that make permanent changes are deleting content and resetting assessment results (which is in the Tools tab under "Danger Zone"). Everything else — editing, hiding, featuring — is fully reversible. Click around with confidence.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       CLOSING
+  ══════════════════════════════════ -->
+  <div class="closing">
+    <div style="font-size:40px;margin-bottom:16px;">&#127775;</div>
+    <h2>You have got this, Keith.</h2>
+    <p>Your platform is built to be managed by you — no technical background needed. Every action you take here shapes what your community experiences. Go lead.</p>
+    <p style="margin-top:12px;">And any time you get stuck or want something changed, Tim is one message away.</p>
+    <a href="mailto:timjeromeadams@gmail.com">&#128172; Message Tim</a>
+  </div>
+
+</div>
+</body>
+</html>
