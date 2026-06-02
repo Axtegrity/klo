@@ -144,6 +144,15 @@ export default function VaultContentManager() {
                   setError(err instanceof Error ? err.message : "Update failed");
                 }
               }}
+              onToggleFeatured={async () => {
+                try {
+                  await updateItem(item.id, {
+                    featured_in_feed: !item.featured_in_feed,
+                  });
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "Update failed");
+                }
+              }}
             />
           ))}
         </div>
@@ -205,11 +214,13 @@ function VaultCard({
   onEdit,
   onDelete,
   onVisibilityChange,
+  onToggleFeatured,
 }: {
   item: VaultItem;
   onEdit: () => void;
   onDelete: () => void;
   onVisibilityChange: (v: Visibility) => void;
+  onToggleFeatured: () => void;
 }) {
   return (
     <motion.div
@@ -243,6 +254,18 @@ function VaultCard({
       <div className="flex items-center gap-2 sm:flex-col sm:items-end">
         <VisibilityToggle value={item.visibility} onChange={onVisibilityChange} size="sm" />
         <div className="flex gap-1">
+          <button
+            onClick={onToggleFeatured}
+            title={item.featured_in_feed ? "Remove from Executive Feed" : "Add to Executive Feed"}
+            className={`px-3 py-2 rounded-lg min-h-[36px] flex items-center gap-1.5 transition-all ${
+              item.featured_in_feed
+                ? "bg-klo-gold/20 text-klo-gold hover:bg-klo-gold/30"
+                : "text-klo-muted hover:bg-white/5 hover:text-klo-text"
+            }`}
+          >
+            <Star size={14} fill={item.featured_in_feed ? "currentColor" : "none"} />
+            <span className="text-xs font-medium">Feed</span>
+          </button>
           <button onClick={onEdit} className="p-2 rounded-lg hover:bg-white/5 text-klo-muted hover:text-klo-text min-h-[36px] min-w-[36px] flex items-center justify-center">
             <Pencil size={14} />
           </button>
@@ -370,7 +393,11 @@ function EditItemModal({
             className="w-4 h-4 rounded border border-white/20 bg-klo-dark/50 accent-klo-accent"
           />
           <div>
+<<<<<<< HEAD
             <span className="text-sm font-medium text-klo-text">Feature in Executive Feed</span>
+=======
+            <span className="text-sm font-medium text-klo-text block">Feature in Executive Feed</span>
+>>>>>>> 75d5514 (feat: add quick-toggle Feed button to vault articles)
             <p className="text-xs text-klo-muted mt-0.5">Surfaces this article on the public /feed page</p>
           </div>
         </label>
