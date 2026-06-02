@@ -693,7 +693,17 @@ export const vaultContentUpdateSchema = vaultContentUpsertSchema.partial().refin
   { message: "At least one field is required" },
 );
 
-export const feedPostUpsertSchema = z.object({
+const categoryValidation = (data: any) => {
+  if (data.metadata?.category) {
+    const cat = data.metadata.category;
+    if (typeof cat !== 'string') return false;
+    if (cat.length > 100) return false;
+    if (cat.trim().length === 0) return false;
+  }
+  return true;
+};
+
+const feedPostBase = z.object({
   title: z.string().max(500).nullable().optional(),
   body: z.string().min(1).max(100000),
   post_type: z.string().max(50).optional(),
@@ -702,23 +712,21 @@ export const feedPostUpsertSchema = z.object({
   published_at: z.string().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   is_pinned: z.boolean().optional(),
-}).refine(
-  (data) => {
-    if (data.metadata?.category) {
-      const cat = data.metadata.category;
-      if (typeof cat !== 'string') return false;
-      if (cat.length > 100) return false;
-      if (cat.trim().length === 0) return false;
-    }
-    return true;
-  },
-  { message: "metadata.category must be a non-empty string, max 100 chars", path: ["metadata", "category"] }
-);
+});
 
-export const feedPostUpdateSchema = feedPostUpsertSchema.partial().refine(
-  (data) => Object.keys(data).length > 0,
-  { message: "At least one field is required" },
-);
+export const feedPostUpsertSchema = feedPostBase.refine(categoryValidation, {
+  message: "metadata.category must be a non-empty string, max 100 chars",
+  path: ["metadata", "category"],
+});
+
+export const feedPostUpdateSchema = feedPostBase.partial()
+  .refine(categoryValidation, {
+    message: "metadata.category must be a non-empty string, max 100 chars",
+    path: ["metadata", "category"],
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field is required",
+  });
 
 export const contentListQuerySchema = z.object({
   visibility: visibilitySchema.optional(),
