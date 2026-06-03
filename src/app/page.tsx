@@ -11,7 +11,6 @@ import TestimonialsSection from "@/components/home/TestimonialsSection";
 import FadeInOnScroll from "@/components/shared/FadeInOnScroll";
 import { getPageConfig, type StrategyConfig, type TrendingConfig } from "@/lib/page-config-server";
 import { getServiceSupabase } from "@/lib/supabase";
-import { categoryToSlug } from "@/lib/category-slug";
 
 // Force dynamic so admin edits to page_configs reflect immediately
 export const dynamic = "force-dynamic";
