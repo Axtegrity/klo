@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { TrendingUp } from "lucide-react";
 import type { TrendingConfig } from "@/lib/page-config-server";
+import { categoryToSlug } from "@/lib/category-slug";
 
 const TOPIC_COLORS = [
   "border-[#21B8CD]/30 bg-[#21B8CD]/10 text-[#21B8CD] hover:border-[#21B8CD]/60 hover:bg-[#21B8CD]/15",
@@ -69,7 +70,7 @@ export default function TrendingTopics({ trendingConfig }: TrendingTopicsProps =
             {topics.map((label, i) => (
               <Link
                 key={label}
-                href={`/feed?category=${encodeURIComponent(label.toLowerCase().replace(/\s+/g, "-"))}`}
+                href={`/feed?category=${categoryToSlug(label)}`}
                 className={`shrink-0 inline-flex items-center px-5 py-3 text-sm font-medium rounded-full border transition-all duration-200 active:scale-[0.97] min-h-[44px] ${TOPIC_COLORS[i % TOPIC_COLORS.length]}`}
               >
                 {label}
