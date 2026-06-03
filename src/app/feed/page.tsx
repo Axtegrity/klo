@@ -11,6 +11,7 @@ import {
   getCategoryColor,
   type FeedPost,
 } from "@/lib/feed-data";
+import { categoryToSlug } from "@/lib/category-slug";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -52,14 +53,6 @@ function formatDate(dateStr: string): string {
 function getFirstParagraph(content: string): string {
   const paragraphs = content.split("\n\n");
   return paragraphs[0] || content;
-}
-
-function categoryToSlug(category: string): string {
-  return category
-    .toLowerCase()
-    .replace(/[^\w-]/g, "-") // Replace non-word chars (excluding dash) with dash
-    .replace(/-+/g, "-") // Collapse multiple dashes
-    .replace(/^-+|-+$/g, ""); // Trim leading/trailing dashes
 }
 
 function FeedCard({ post, index }: { post: FeedPost; index: number }) {

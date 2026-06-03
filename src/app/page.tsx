@@ -11,23 +11,35 @@ import TestimonialsSection from "@/components/home/TestimonialsSection";
 import FadeInOnScroll from "@/components/shared/FadeInOnScroll";
 import { getPageConfig, type StrategyConfig, type TrendingConfig } from "@/lib/page-config-server";
 import { getServiceSupabase } from "@/lib/supabase";
+import { categoryToSlug } from "@/lib/category-slug";
 
 // Force dynamic so admin edits to page_configs reflect immediately
 export const dynamic = "force-dynamic";
 
-async function getTrendingTopicsFromFeaturedArticles(): Promise<TrendingConfig | null> {
+async function getTrendingTopicsFromFeaturedArticles(
+  adminHeading?: string
+): Promise<TrendingConfig | null> {
   try {
     const supabase = getServiceSupabase();
-    const { data: featured } = await supabase
+    const { data: featured, error } = await supabase
       .from("vault_content")
       .select("category")
       .eq("featured_in_feed", true)
       .eq("visibility", "published");
 
+    if (error) {
+      console.error("[getTrendingTopicsFromFeaturedArticles]", error);
+      return null;
+    }
+
     if (!featured || featured.length === 0) return null;
 
+    // Filter out empty categories to prevent broken trending buttons
+    const validCategories = featured.filter((item) => item.category?.trim());
+    if (validCategories.length === 0) return null;
+
     // Count articles per category
-    const categoryCounts = featured.reduce(
+    const categoryCounts = validCategories.reduce(
       (acc: Record<string, number>, item: { category: string }) => {
         acc[item.category] = (acc[item.category] || 0) + 1;
         return acc;
@@ -46,14 +58,15 @@ async function getTrendingTopicsFromFeaturedArticles(): Promise<TrendingConfig |
 
     // Build trending config from featured categories (1 to 5, depending on how many Keith featured)
     return {
-      heading: "Trending in Tech & Faith",
+      heading: adminHeading ?? "Trending in Tech & Faith",
       topic1: topCategories[0],
       topic2: topCategories[1],
       topic3: topCategories[2],
       topic4: topCategories[3],
       topic5: topCategories[4],
     };
-  } catch {
+  } catch (err) {
+    console.error("[getTrendingTopicsFromFeaturedArticles]", err);
     return null;
   }
 }
@@ -108,7 +121,7 @@ export default async function Home() {
       : null;
   const briefConfig      = pageConfig?.brief_config      ?? null;
   // Pull trending topics from featured vault articles (Keith's star selections)
-  const trendingConfig   = (await getTrendingTopicsFromFeaturedArticles()) ?? pageConfig?.trending_config ?? null;
+  const trendingConfig   = (await getTrendingTopicsFromFeaturedArticles(pageConfig?.trending_config?.heading)) ?? pageConfig?.trending_config ?? null;
   const insightConfig    = pageConfig?.insight_config    ?? null;
   const toolConfig       = pageConfig?.tool_config       ?? null;
   const assessmentConfig = pageConfig?.assessment_config ?? null;
