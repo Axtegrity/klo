@@ -40,6 +40,8 @@ jobs:
   eslint-security:
     name: ESLint Security Rules
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       # Full clone — needed so ESLint can resolve project-relative imports.
