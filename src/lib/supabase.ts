@@ -68,6 +68,7 @@ export interface StrategySessionRow {
   topics: string[];
   agenda: { time: string; title: string; description: string }[];
   key_takeaways: string[];
+  join_url: string | null;
   replay_url: string | null;
   notes_url: string | null;
   discussion_count: number;

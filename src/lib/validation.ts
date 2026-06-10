@@ -524,6 +524,7 @@ export const strategySessionCreateSchema = z.object({
     description: z.string().max(500),
   })).max(20).optional(),
   key_takeaways: z.array(z.string().max(500)).max(20).optional(),
+  join_url: urlOrEmpty,
   replay_url: urlOrEmpty,
   notes_url: urlOrEmpty,
   published: z.boolean().optional(),

@@ -534,10 +534,22 @@ const isPast = session.is_past;
                             Register for Session
                           </Button>
                         )}
-                        <Button variant="ghost" disabled={!isRegistered}>
-                          <Zap size={16} />
-                          Join Session
-                        </Button>
+                        {isRegistered && session.join_url ? (
+                          <a
+                            href={session.join_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-500/15 border border-green-500/30 text-green-400 hover:bg-green-500/25 transition-colors text-sm font-medium min-h-[44px]"
+                          >
+                            <Zap size={16} />
+                            Join Session
+                          </a>
+                        ) : (
+                          <Button variant="ghost" disabled>
+                            <Zap size={16} />
+                            {isRegistered ? "Link coming soon" : "Join Session"}
+                          </Button>
+                        )}
                       </div>
 
                       <div className="mt-5">
