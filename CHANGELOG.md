@@ -10,6 +10,13 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 - bump Next.js to 16.2.6 (CVE-2026-44573/44574/44575/44578/45109 — middleware auth bypass + DoS)
 
 ### Added
+- **Strategy Room join URL field** — admins can now paste a Zoom/Teams/Meet link onto any session; shown as a clickable green "Join Session" button only to registered members; non-registered users see a disabled button. DB migration `20260609000001` adds `join_url text` column to `strategy_sessions` (applied to both prod and dev Supabase 2026-06-09). Root-cause context: the "Join Session" button on the detail page (`StrategyRoomDetailClient.tsx:537`) existed as a dead stub — disabled when not registered, but never wired to a URL even when registered. Fix: added `join_url` to `strategy_sessions` table, `StrategySessionRow` type, Zod validation schema, admin form modal, and detail page button logic.
+- **Home page strategy room widget — live tier badge** — the "Next Strategy Room" card on the home page now renders the correct Pro or Executive tier badge pulled from the real session record. Root-cause context: `UpcomingStrategyRoom` hardcoded "Executive" regardless of actual session tier. Fix: added `tier` field to `StrategyConfig` interface, passed it from `getNextStrategySession()` in `page.tsx`, and updated the widget to branch on `session.tier`.
+- **Dev Supabase — strategy sessions tables** — applied `create_strategy_sessions`, `seed_strategy_sessions`, and `add_join_url_to_strategy_sessions` migrations to `klo-app-dev` (project `ykregzbladhwzyagkkdf`) so local dev no longer falls back to hardcoded defaults for strategy room features (2026-06-10).
+
+### Fixed
+- **Home page strategy room widget data source confirmed** — widget already pulled live data (title, date, description, seats) from `strategy_sessions` via `getNextStrategySession()` in `page.tsx`; fell back to `page_configs.strategy_config` only when no upcoming published session existed. The only gap was the hardcoded tier badge (fixed above).
+
 - **Vault feed quick-toggle button** — ⭐ Feed button on each vault article in the admin library allows Keith to instantly feature articles in the Executive Feed without opening an edit modal; toggle fires async API call with loading spinner, success/error toast feedback, and disabled state during flight.
 - **Training sync validation system** — CI workflow + pre-commit hook that enforces every admin tab has a corresponding training section; blocks merges when admin tabs and training docs are out of sync.
 - **Strategy Rooms training section** — admin training page now documents the Strategy Rooms tab: create/edit/publish/delete flows, tier selection, seat limits, replay URL, and notes URL.
