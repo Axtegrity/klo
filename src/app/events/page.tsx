@@ -204,11 +204,13 @@ function eventEnd(event: Pick<EventItem, "event_date" | "event_time" | "end_date
 }
 
 function isLiveNow(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time">): boolean {
-  const start = eventStart(event);
   const end = eventEnd(event);
-  if (!start || !end) return false;
+  if (!end) return false;
   const now = new Date();
-  return now >= start && now <= end;
+  // Treat the event as live from the start of its event_date (midnight local)
+  // so it never shows in the upcoming list on the day it begins.
+  const dayStart = new Date(`${event.event_date}T00:00:00`);
+  return now >= dayStart && now <= end;
 }
 
 function isPastEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time">): boolean {
