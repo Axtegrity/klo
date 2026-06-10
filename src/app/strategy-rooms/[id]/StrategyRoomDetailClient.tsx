@@ -96,22 +96,39 @@ function TierBadge({ tier }: { tier: "pro" | "executive" }) {
 // ── Countdown Timer ──────────────────────────────────────────────────────────
 
 function CountdownTimer({ dateStr }: { dateStr: string }) {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number } | null>(null);
 
   useEffect(() => {
     function calculate() {
-      const target = new Date(dateStr).getTime();
-      const now = Date.now();
-      const diff = Math.max(0, target - now);
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      setTimeLeft({ days, hours, minutes });
+      // Append T12:00:00 so bare ISO dates (e.g. "2026-07-15") parse as local
+      // noon rather than UTC midnight, which would skew the display by the
+      // user's timezone offset.
+      const normalized = /^\d{4}-\d{2}-\d{2}$/.test(dateStr)
+        ? `${dateStr}T12:00:00`
+        : dateStr;
+      const diff = new Date(normalized).getTime() - Date.now();
+      if (diff <= 0) {
+        setTimeLeft(null);
+        return;
+      }
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+      });
     }
     calculate();
     const interval = setInterval(calculate, 60000);
     return () => clearInterval(interval);
   }, [dateStr]);
+
+  if (!timeLeft) {
+    return (
+      <p className="text-sm text-klo-muted italic">
+        Session date has passed — check your email for replay access.
+      </p>
+    );
+  }
 
   return (
     <div className="flex items-center gap-4">
@@ -123,7 +140,7 @@ function CountdownTimer({ dateStr }: { dateStr: string }) {
         <div key={item.label} className="text-center">
           <div className="w-16 h-16 bg-[#68E9FA]/10 border border-[#68E9FA]/20 rounded-xl flex items-center justify-center mb-1">
             <span className="font-display text-2xl font-bold text-klo-gold">
-              {item.value}
+              {String(item.value).padStart(2, "0")}
             </span>
           </div>
           <span className="text-[10px] uppercase tracking-wider text-klo-muted">
