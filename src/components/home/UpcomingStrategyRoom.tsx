@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Calendar, Users, ArrowRight, Shield } from "lucide-react";
+import { Calendar, Users, ArrowRight, Shield, Lock } from "lucide-react";
 import type { StrategyConfig } from "@/lib/page-config-server";
 
 const DEFAULTS: StrategyConfig = {
@@ -15,6 +15,7 @@ const DEFAULTS: StrategyConfig = {
   seats: "8 of 20",
   cta: "Register",
   link: "/strategy-rooms",
+  tier: "executive",
 };
 
 interface UpcomingStrategyRoomProps {
@@ -55,10 +56,17 @@ export default function UpcomingStrategyRoom({ strategyConfig }: UpcomingStrateg
                       <Calendar className="w-4 h-4" />
                       <span className="font-mono tracking-wide">{session.date}</span>
                     </div>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold tracking-wide uppercase rounded-full bg-[#C8A84E]/15 text-[#C8A84E] border border-[#C8A84E]/20">
-                      <Shield className="w-3 h-3" />
-                      Executive
-                    </span>
+                    {session.tier === 'pro' ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold tracking-wide uppercase rounded-full bg-[#2764FF]/15 text-[#2764FF] border border-[#2764FF]/20">
+                        <Lock className="w-3 h-3" />
+                        Pro
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold tracking-wide uppercase rounded-full bg-[#C8A84E]/15 text-[#C8A84E] border border-[#C8A84E]/20">
+                        <Shield className="w-3 h-3" />
+                        Executive
+                      </span>
+                    )}
                   </div>
 
                   <h3 className="text-lg sm:text-xl font-semibold text-[#E6EDF3] leading-snug">

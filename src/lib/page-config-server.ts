@@ -82,6 +82,7 @@ export interface StrategyConfig {
   seats: string;
   cta: string;
   link: string;
+  tier?: 'pro' | 'executive';
 }
 
 export interface PageConfigRow {

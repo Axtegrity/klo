@@ -76,7 +76,7 @@ async function getNextStrategySession(): Promise<StrategyConfig | null> {
 
     const { data: session } = await supabase
       .from("strategy_sessions")
-      .select("id, slug, title, date, description, total_seats")
+      .select("id, slug, title, date, description, total_seats, tier")
       .eq("published", true)
       .eq("is_past", false)
       .order("session_date", { ascending: true, nullsFirst: false })
@@ -101,6 +101,7 @@ async function getNextStrategySession(): Promise<StrategyConfig | null> {
       seats: `${seatsRemaining} of ${session.total_seats}`,
       cta: "Register",
       link: `/strategy-rooms/${session.slug}`,
+      tier: session.tier as 'pro' | 'executive',
     };
   } catch {
     return null;
