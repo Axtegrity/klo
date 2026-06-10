@@ -40,7 +40,7 @@ export async function GET() {
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const { data: candidates } = await supabase
       .from("event_presentations")
-      .select("id, event_date, event_time")
+      .select("id, event_date, event_time, end_date")
       .eq("is_published", true)
       .eq("display_on_events_page", true)
       .gte("event_date", todayStr)
@@ -50,9 +50,12 @@ export async function GET() {
       .limit(10);
 
     if (candidates && candidates.length > 0) {
+      // Pick the first event that hasn't ended yet. Using end_date (or event_date
+      // for single-day events) means a multi-day event stays spotlighted for its
+      // full run — not just until its start time passes.
       const pick = candidates.find((c) => {
-        const t = c.event_time || "23:59";
-        return new Date(`${c.event_date}T${t}:00`) >= now;
+        const endStr = c.end_date || c.event_date;
+        return new Date(`${endStr}T23:59:59`) >= now;
       });
       eventId = pick?.id ?? null;
     }
