@@ -543,10 +543,10 @@ const TRAINING_SECTIONS: TrainingSection[] = [
     id: "content",
     title: "Content Analytics",
     icon: BotMessageSquare,
-    description: "View assessment results, vault content metrics, and strategy room activity — with charts and filtering.",
+    description: "View assessment results and vault content metrics — with charts and filtering.",
     adminTab: "content",
     steps: [
-      { icon: BarChart3, label: "Stat Cards", detail: "See totals for Vault Content, Assessments Completed, and Active Strategy Rooms at a glance" },
+      { icon: BarChart3, label: "Stat Cards", detail: "See totals for Vault Content and Assessments Completed at a glance" },
       { icon: BarChart3, label: "Assessment Charts", detail: "Line chart of completions over 30 days, plus breakdowns by assessment type and vault content type" },
       { icon: Search, label: "Search Results", detail: "Find assessment results by user name" },
       { icon: Filter, label: "Filter by Type", detail: "Leadership (LPAI), Strategic Vision (FPAI), and other assessment types" },
@@ -575,29 +575,6 @@ const TRAINING_SECTIONS: TrainingSection[] = [
     tips: [
       "The conversion funnel shows exactly where users drop off — use it to identify where to focus marketing efforts.",
       "MRR updates in real-time based on active Stripe subscriptions.",
-    ],
-  },
-  {
-    id: "strategy-rooms",
-    title: "Strategy Rooms",
-    icon: Users,
-    description: "Create and manage strategy sessions — set tiers, dates, topics, seat limits, and publish replays for Pro and Executive members.",
-    adminTab: "strategy-rooms",
-    steps: [
-      { icon: Plus, label: "Create Session", detail: "Click '+ New Session' to open the form. Fill in Title, Slug (auto-generated), Description, Date, Time, and Facilitator." },
-      { icon: Users, label: "Tier", detail: "Set access tier to 'pro' (Pro + Executive members) or 'executive' (Executive only)." },
-      { icon: Filter, label: "Topics", detail: "Enter comma-separated topics — these appear as tags on the session card for members." },
-      { icon: Users, label: "Seat Limit", detail: "Total Seats controls capacity. Use Attendees Override to manually set the displayed attendee count if needed." },
-      { icon: Eye, label: "Publish / Unpublish", detail: "Toggle the Published switch to make a session visible or hidden to members. Sessions default to unpublished." },
-      { icon: PlayCircle, label: "Replay URL", detail: "After a session ends, paste the replay video URL so members can watch on-demand." },
-      { icon: FileText, label: "Notes URL", detail: "Add a link to session notes or resources — members see this alongside the replay." },
-      { icon: Pencil, label: "Edit Session", detail: "Click the pencil icon on any session row to open the edit modal and update any field." },
-      { icon: Trash2, label: "Delete Session", detail: "Click the trash icon and confirm deletion. This is permanent — the session and its registrations are removed." },
-    ],
-    tips: [
-      "Always set Published to off while building a session — members won't see it until you're ready.",
-      "Past sessions (is_past toggled on) display in the 'Past' section with replay access instead of registration.",
-      "Slugs must be unique — the form auto-generates one from the title but you can edit it.",
     ],
   },
   {

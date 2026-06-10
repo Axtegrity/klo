@@ -26,7 +26,6 @@ export async function GET(req: NextRequest) {
     subscriptionsRes,
     advisorRes,
     assessmentsRes,
-    strategyRoomsRes,
     vaultRes,
   ] = await Promise.all([
     supabase.from("profiles").select("id, role"),
@@ -35,7 +34,6 @@ export async function GET(req: NextRequest) {
     supabase.from("subscriptions").select("tier, status"),
     supabase.from("advisor_usage").select("message_count, tokens_used"),
     supabase.from("assessment_results").select("assessment_type"),
-    supabase.from("strategy_rooms").select("is_active"),
     supabase.from("vault_content").select("content_type, tier_required"),
   ]);
 
@@ -65,10 +63,6 @@ export async function GET(req: NextRequest) {
     assessmentsByType[a.assessment_type] = (assessmentsByType[a.assessment_type] ?? 0) + 1;
   }
 
-  // Strategy rooms
-  const roomData = strategyRoomsRes.data ?? [];
-  const activeRooms = roomData.filter((r) => r.is_active).length;
-
   // Vault content
   const vaultData = vaultRes.data ?? [];
   const vaultByType: Record<string, number> = {};
@@ -97,9 +91,6 @@ export async function GET(req: NextRequest) {
     assessments: {
       totalCompleted: assessmentData.length,
       byType: assessmentsByType,
-    },
-    strategyRooms: {
-      activeRooms,
     },
     vault: {
       totalContent: vaultData.length,
