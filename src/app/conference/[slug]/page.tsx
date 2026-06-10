@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import {
   CalendarDays,
   MapPin,
+  Play,
   Radio,
   Sparkles,
   ChevronDown,
@@ -14,6 +15,7 @@ import Badge from "@/components/shared/Badge";
 import SeminarModeGate from "@/features/conference/components/SeminarModeGate";
 import ConferenceToolsTabs from "@/features/conference/components/ConferenceToolsTabs";
 import { useSessions } from "@/features/conference/hooks/useSessions";
+import { useConferenceRoles } from "@/features/conference/hooks/useConferenceRoles";
 import type { ConferenceSession } from "@/features/conference/types";
 
 interface EventData {
@@ -95,6 +97,7 @@ export default function EventConferencePage() {
   const [eventLoading, setEventLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  const { isAdmin } = useConferenceRoles();
   const [selectedSession, setSelectedSession] = useState<ConferenceSession | null>(null);
   const { sessions, loading: sessionsLoading } = useSessions(
     event ? { eventId: event.id, activeOnly: true } : undefined
@@ -287,7 +290,7 @@ export default function EventConferencePage() {
           className="max-w-4xl mx-auto"
         >
           <motion.div variants={fadeUp} custom={0} className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-[#2764FF]/10 flex items-center justify-center">
                 <Sparkles size={20} className="text-[#2764FF]" />
               </div>
@@ -295,7 +298,16 @@ export default function EventConferencePage() {
                 Interactive Tools
               </h2>
             </div>
-            <p className="text-klo-muted">
+            {isAdmin && event.id && (
+              <a
+                href={`/conference/present?event_id=${event.id}`}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#2764FF]/10 text-[#2764FF] border border-[#2764FF]/20 rounded-xl text-sm font-semibold hover:bg-[#2764FF]/20 transition-colors"
+              >
+                <Play size={14} fill="currentColor" />
+                Presenter Remote
+              </a>
+            )}
+            <p className="text-klo-muted w-full">
               Participate in live polls, ask questions, and contribute to the word cloud.
             </p>
           </motion.div>
