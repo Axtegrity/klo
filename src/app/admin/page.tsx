@@ -29,6 +29,8 @@ import {
   UserX,
   UserCheck,
   Shield,
+  Menu,
+  X,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import {
@@ -154,6 +156,14 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "tools", label: "Tools", icon: Lock },
 ];
 
+const TAB_GROUPS: { label: string; ids: TabId[] }[] = [
+  { label: "Dashboard", ids: ["overview"] },
+  { label: "Content", ids: ["creative-studio", "customize", "content-manager", "testimonials", "surveys"] },
+  { label: "Events", ids: ["events", "conference"] },
+  { label: "Engagement", ids: ["inquiries", "notifications", "presentations"] },
+  { label: "Platform", ids: ["users", "content", "revenue", "tools"] },
+];
+
 // ------------------------------------------------------------
 // Custom tooltip
 // ------------------------------------------------------------
@@ -212,6 +222,8 @@ export default function AdminPage() {
   const [inquiriesNewCount, setInquiriesNewCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Delete modals
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -437,23 +449,94 @@ export default function AdminPage() {
     : [];
 
   return (
-    <div className="min-h-screen px-4 sm:px-6 py-24 md:py-32">
+    <div className="min-h-screen flex">
+
+      {/* ── Mobile overlay ── */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* ── Left Sidebar ── */}
+      <aside
+        className={`fixed left-0 top-0 h-screen w-56 flex flex-col border-r border-white/5 bg-[#080C12] z-40 transition-transform duration-200 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
+        {/* Close button — mobile only */}
+        <button
+          onClick={() => setSidebarOpen(false)}
+          className="md:hidden absolute top-4 right-3 p-1.5 rounded-lg text-klo-muted hover:text-klo-text transition-colors"
+        >
+          <X size={18} />
+        </button>
+
+        <div className="pt-24 flex-1 overflow-y-auto px-3 pb-6 space-y-5">
+          {TAB_GROUPS.map((group) => (
+            <div key={group.label}>
+              <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-klo-muted/50">
+                {group.label}
+              </p>
+              <div className="space-y-0.5">
+                {group.ids.map((id) => {
+                  const tab = TABS.find((t) => t.id === id)!;
+                  const Icon = tab.icon;
+                  const isActive = activeTab === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => { setActiveTab(id); setSidebarOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all text-left ${
+                        isActive
+                          ? "bg-klo-slate text-klo-text"
+                          : "text-klo-muted hover:text-klo-text hover:bg-white/5"
+                      }`}
+                    >
+                      <Icon size={15} className="shrink-0" />
+                      <span className="truncate">{tab.label}</span>
+                      {id === "inquiries" && inquiriesNewCount > 0 && (
+                        <span className="ml-auto inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] font-bold shrink-0">
+                          {inquiriesNewCount}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      {/* ── Main content ── */}
+      <div className="flex-1 md:ml-56 px-4 sm:px-6 py-24 md:py-28">
       <motion.div
         initial="hidden"
         animate="visible"
         variants={staggerContainer}
-        className="max-w-7xl mx-auto"
+        className="max-w-6xl mx-auto"
       >
         {/* Header */}
         <motion.div variants={fadeUp} custom={0} className="mb-8">
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h1 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
-                Admin Dashboard
-              </h1>
-              <p className="text-klo-muted mt-1">
-                Monitor app health, growth, and engagement
-              </p>
+            <div className="flex items-center gap-3">
+              {/* Hamburger — mobile only */}
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="md:hidden p-2 rounded-lg text-klo-muted hover:text-klo-text hover:bg-white/5 transition-colors"
+              >
+                <Menu size={20} />
+              </button>
+              <div>
+                <h1 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
+                  Admin Dashboard
+                </h1>
+                <p className="text-klo-muted mt-1">
+                  Monitor app health, growth, and engagement
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap justify-end">
               <button
@@ -485,34 +568,6 @@ export default function AdminPage() {
                 Refresh
               </button>
             </div>
-          </div>
-        </motion.div>
-
-        {/* Tabs */}
-        <motion.div variants={fadeUp} custom={1} className="mb-8">
-          <div className="flex gap-1 p-1 rounded-xl bg-klo-dark/50 border border-white/5 overflow-x-auto scroll-touch scrollbar-hide">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap shrink-0 min-h-[44px] ${
-                    activeTab === tab.id
-                      ? "bg-klo-slate text-klo-text shadow-md"
-                      : "text-klo-muted hover:text-klo-text"
-                  }`}
-                >
-                  <Icon size={15} />
-                  {tab.label}
-                  {tab.id === "inquiries" && inquiriesNewCount > 0 && (
-                    <span className="ml-0.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] font-bold">
-                      {inquiriesNewCount}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
           </div>
         </motion.div>
 
@@ -1541,6 +1596,7 @@ export default function AdminPage() {
           </div>
         </Modal>
       </motion.div>
+      </div>
     </div>
   );
 }
