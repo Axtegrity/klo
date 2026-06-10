@@ -4,6 +4,24 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [2026-06-10] — Conference Polish, Presenter Remote, Events Admin
+
+### Added
+- **Presenter Remote** — phone-friendly stage remote at `/conference/present?event_id=X` for Keith to drive polls on stage; shows live vote count, Show/Hide Results toggle, Next button to advance queue; accessible to admin/owner only (PR #124)
+- **Admin Events search box** — search input above the event list filters by event name, conference, or location as you type; includes clear (✕) button (PR #127)
+
+### Fixed
+- **Conference polls — server-side deploy gate** — `POST /api/conference/polls/[id]/deploy` now checks whether a poll is already active/deployed before setting it live; prevents double-deploy from concurrent requests (PR #123)
+- **Conference polls — sequential deploy** — `deployAllPolls` in PollManager now uses a sequential `for...of` loop instead of `Promise.all`; eliminates race condition where two polls could go active simultaneously (PR #123)
+- **Conference polls — session_id fallback** — deploy route now closes sibling polls by `session_id` when `event_id` is absent, so polls without an event assignment still correctly deactivate each other (PR #123)
+- **Conference polls — stale results on advance** — closing a poll now resets `show_results: false` so the audience never sees the previous poll's results when the next poll goes live (PR #123)
+- **Conference — owner role not recognized as admin** — `useConferenceRoles` only checked `appRole === "admin"`, so the owner account (Keith) was treated as an attendee; Presenter Remote button was hidden and poll controls were disabled; fixed by adding `appRole === "owner"` to the admin check (PR #125)
+- **Q&A single-release — questions visible immediately** — `released` column in `conference_questions` defaulted to `true`, meaning every submitted question was immediately visible to guests even in single-release sessions; DB migration 20260610000002 sets `DEFAULT false` and updates the `submit_conference_question` RPC to explicitly pass `released = false` (PR #126)
+- **Florida Cocoa polls reset** — all 12 Florida Cocoa Church of God 102nd State Convention polls were stuck in "all active" state from a pre-fix deploy; reset directly in DB: `is_deployed=false, is_active=false, show_results=false` on all 12 so the Presenter Remote queue works correctly for the live event
+- **Admin Events sort order** — events API was ordered `ascending: false` (furthest-away first); changed to `ascending: true` so the next closest event (Florida Cocoa, June 10) appears at the top of the list (PR #127)
+
+---
+
 ## [Unreleased]
 
 ### Security
