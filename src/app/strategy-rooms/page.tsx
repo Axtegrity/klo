@@ -65,8 +65,13 @@ async function fetchSessions(): Promise<StrategySessionRow[]> {
 
 export default async function StrategyRoomsPage() {
   const sessions = await fetchSessions();
-  const upcoming = sessions.filter((s) => !s.is_past);
-  const past = sessions.filter((s) => s.is_past);
+  const today = new Date().toISOString().split("T")[0];
+  const upcoming = sessions.filter(
+    (s) => !s.is_past && (!s.session_date || s.session_date >= today)
+  );
+  const past = sessions.filter(
+    (s) => s.is_past || (s.session_date != null && s.session_date < today)
+  );
 
   return (
     <div className="min-h-screen px-6 py-24">

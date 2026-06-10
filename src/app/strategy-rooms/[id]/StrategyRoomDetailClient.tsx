@@ -95,35 +95,47 @@ function TierBadge({ tier }: { tier: "pro" | "executive" }) {
 
 // ── Countdown Timer ──────────────────────────────────────────────────────────
 
-function CountdownTimer({ dateStr }: { dateStr: string }) {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
+type CountdownState =
+  | { type: "future"; days: number; hours: number; minutes: number }
+  | { type: "live" }
+  | { type: "none" };
 
-  useEffect(() => {
-    function calculate() {
-      const target = new Date(dateStr).getTime();
-      const now = Date.now();
-      const diff = Math.max(0, target - now);
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      setTimeLeft({ days, hours, minutes });
-    }
-    calculate();
-    const interval = setInterval(calculate, 60000);
-    return () => clearInterval(interval);
-  }, [dateStr]);
+function normalizeDate(dateStr: string): Date {
+  // Bare ISO date strings (e.g. "2026-07-15") parse as UTC midnight.
+  // Appending T12:00:00 keeps them in local noon so the countdown doesn't
+  // jump by the user's UTC offset.
+  return new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? `${dateStr}T12:00:00` : dateStr
+  );
+}
 
+function computeCountdownState(dateStr: string): CountdownState {
+  const target = normalizeDate(dateStr);
+  const now = new Date();
+  const isToday = target.toDateString() === now.toDateString();
+  if (isToday) return { type: "live" };
+  const diff = target.getTime() - now.getTime();
+  if (diff <= 0) return { type: "none" };
+  return {
+    type: "future",
+    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+    minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+  };
+}
+
+function CountdownBoxes({ days, hours, minutes }: { days: number; hours: number; minutes: number }) {
   return (
     <div className="flex items-center gap-4">
       {[
-        { label: "Days", value: timeLeft.days },
-        { label: "Hours", value: timeLeft.hours },
-        { label: "Minutes", value: timeLeft.minutes },
+        { label: "Days", value: days },
+        { label: "Hours", value: hours },
+        { label: "Minutes", value: minutes },
       ].map((item) => (
         <div key={item.label} className="text-center">
           <div className="w-16 h-16 bg-[#68E9FA]/10 border border-[#68E9FA]/20 rounded-xl flex items-center justify-center mb-1">
             <span className="font-display text-2xl font-bold text-klo-gold">
-              {item.value}
+              {String(item.value).padStart(2, "0")}
             </span>
           </div>
           <span className="text-[10px] uppercase tracking-wider text-klo-muted">
@@ -133,6 +145,31 @@ function CountdownTimer({ dateStr }: { dateStr: string }) {
       ))}
     </div>
   );
+}
+
+function CountdownTimer({ dateStr }: { dateStr: string }) {
+  const [state, setState] = useState<CountdownState>(() => computeCountdownState(dateStr));
+
+  useEffect(() => {
+    const interval = setInterval(() => setState(computeCountdownState(dateStr)), 60000);
+    return () => clearInterval(interval);
+  }, [dateStr]);
+
+  if (state.type === "live") {
+    return (
+      <div className="flex items-center gap-3 py-2">
+        <span className="relative flex h-3 w-3">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
+        </span>
+        <span className="text-green-400 font-semibold text-sm">Session is Live</span>
+      </div>
+    );
+  }
+
+  if (state.type === "none") return null;
+
+  return <CountdownBoxes days={state.days} hours={state.hours} minutes={state.minutes} />;
 }
 
 // ── Discussion Comment ────────────────────────────────────────────────────────
@@ -328,12 +365,20 @@ function TierGateModal({
 
 // ── Main Client Component ─────────────────────────────────────────────────────
 
+interface NextSession {
+  slug: string;
+  title: string;
+  session_date: string;
+  date: string | null;
+}
+
 interface Props {
   session: StrategySessionRow;
   related: StrategySessionRow[];
+  nextSession?: NextSession | null;
 }
 
-export default function StrategyRoomDetailClient({ session, related }: Props) {
+export default function StrategyRoomDetailClient({ session, related, nextSession }: Props) {
   const router = useRouter();
   const { toast } = useToast();
 
@@ -511,7 +556,9 @@ const isPast = session.is_past;
                   <motion.div variants={fadeUp} custom={3}>
                     <Card className="mb-6">
                       <h2 className="font-display text-lg font-bold text-klo-text mb-5">
-                        Session Starts In
+                        {session.session_date && computeCountdownState(session.session_date).type === "live"
+                          ? "Session is Happening Now"
+                          : "Session Starts In"}
                       </h2>
                       {session.session_date && <CountdownTimer dateStr={session.session_date} />}
 
@@ -608,6 +655,33 @@ const isPast = session.is_past;
                     </motion.div>
                   )}
                 </>
+              )}
+
+              {/* Up Next — shown when this session is past or its date has already passed */}
+              {nextSession && (isPast || (session.session_date && computeCountdownState(session.session_date).type === "none")) && (
+                <motion.div variants={fadeUp} custom={3}>
+                  <Card className="mb-6 border border-[#2764FF]/20 bg-[#2764FF]/5">
+                    <h2 className="font-display text-lg font-bold text-klo-text mb-4">Up Next</h2>
+                    <p className="text-sm text-klo-muted mb-4">
+                      <span className="text-klo-text font-medium">{nextSession.title}</span>
+                      {nextSession.date ? ` — ${nextSession.date}` : ""}
+                    </p>
+                    <CountdownBoxes
+                      {...(() => {
+                        const s = computeCountdownState(nextSession.session_date);
+                        return s.type === "future" ? s : { days: 0, hours: 0, minutes: 0 };
+                      })()}
+                    />
+                    <div className="mt-4">
+                      <a
+                        href={`/strategy-rooms/${nextSession.slug}`}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#2764FF]/15 border border-[#2764FF]/30 text-[#2764FF] hover:bg-[#2764FF]/25 transition-colors text-sm font-medium"
+                      >
+                        View Session
+                      </a>
+                    </div>
+                  </Card>
+                </motion.div>
               )}
 
               {/* Past sections */}
