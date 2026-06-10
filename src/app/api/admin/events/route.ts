@@ -20,7 +20,7 @@ export async function GET() {
       event_files (*)
     `
     )
-    .order("event_date", { ascending: false });
+    .order("event_date", { ascending: true });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
