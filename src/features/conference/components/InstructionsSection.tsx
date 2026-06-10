@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown, Presentation, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Card from "@/components/shared/Card";
+import { useConferenceRoles } from "@/features/conference/hooks/useConferenceRoles";
 
 interface AccordionItemProps {
   title: string;
@@ -49,17 +50,21 @@ function AccordionItem({ title, icon: Icon, children }: AccordionItemProps) {
 }
 
 export default function InstructionsSection() {
+  const { isPresenter } = useConferenceRoles();
+
   return (
     <Card>
       <h3 className="text-base font-semibold text-klo-text mb-2">How It Works</h3>
-      <AccordionItem title="For the Presenter" icon={Presentation}>
-        <p>1. Go to the Admin Dashboard and select the &quot;Conference&quot; tab.</p>
-        <p>2. Toggle &quot;Seminar Mode&quot; ON to activate interactive tools for attendees.</p>
-        <p>3. Create polls with multiple-choice options — they appear live for everyone.</p>
-        <p>4. Open the Monitor View to project results, top questions, and word cloud on screen.</p>
-        <p>5. Moderate questions: mark as answered, hide, or delete from the admin panel.</p>
-        <p>6. Toggle seminar mode OFF when done to deactivate tools.</p>
-      </AccordionItem>
+      {isPresenter && (
+        <AccordionItem title="For the Presenter" icon={Presentation}>
+          <p>1. Go to the Admin Dashboard and select the &quot;Conference&quot; tab.</p>
+          <p>2. Toggle &quot;Seminar Mode&quot; ON to activate interactive tools for attendees.</p>
+          <p>3. Create polls with multiple-choice options — they appear live for everyone.</p>
+          <p>4. Open the Monitor View to project results, top questions, and word cloud on screen.</p>
+          <p>5. Moderate questions: mark as answered, hide, or delete from the admin panel.</p>
+          <p>6. Toggle seminar mode OFF when done to deactivate tools.</p>
+        </AccordionItem>
+      )}
       <AccordionItem title="For Attendees" icon={Users}>
         <p>1. Switch between Polls, Q&amp;A, and Word Cloud using the tabs above.</p>
         <p>2. Vote on active polls — each person gets one vote per poll.</p>
