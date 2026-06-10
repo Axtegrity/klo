@@ -35,7 +35,24 @@ export async function GET(request: Request) {
 
   // Filter by event or session — require a scope for non-admin callers
   if (eventId) {
-    query = query.eq("event_id", eventId);
+    if (isPrivileged) {
+      // Admin view: include questions tagged with event_id AND legacy questions
+      // that only have session_id (submitted before event_id wiring was added).
+      const { data: eventSessions } = await supabase
+        .from("conference_sessions")
+        .select("id")
+        .eq("event_id", eventId);
+      const sessionIds = (eventSessions ?? []).map((s: { id: string }) => s.id);
+      if (sessionIds.length > 0) {
+        query = query.or(
+          `event_id.eq.${eventId},session_id.in.(${sessionIds.join(",")})`
+        );
+      } else {
+        query = query.eq("event_id", eventId);
+      }
+    } else {
+      query = query.eq("event_id", eventId);
+    }
   } else if (sessionId) {
     query = query.eq("session_id", sessionId);
   } else if (!isPrivileged) {
@@ -106,7 +123,7 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Question text required" }, { status: 400 });
   }
-  const { text, author_name, session_id } = parsed.data;
+  const { text, author_name, session_id, event_id: question_event_id } = parsed.data;
 
   const fingerprint = getFingerprint(request);
   const supabase = getServiceSupabase();
@@ -136,6 +153,7 @@ export async function POST(request: Request) {
     p_author_name: author_name?.trim() || "Anonymous",
     p_session_id: session_id || null,
     p_fingerprint: fingerprint,
+    p_event_id: question_event_id || null,
   });
 
   if (error) {
