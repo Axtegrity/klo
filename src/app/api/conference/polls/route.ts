@@ -18,8 +18,11 @@ export async function GET(request: Request) {
   const sessionId = searchParams.get("session_id");
   const eventId = searchParams.get("event_id");
 
+  const adminSession = await verifyAdmin();
+  const isAdmin = !!adminSession;
+
   // If attendee is requesting by session, verify session is active
-  if (sessionId) {
+  if (sessionId && !isAdmin) {
     const { data: sess } = await supabase
       .from("conference_sessions")
       .select("is_active")
@@ -37,6 +40,11 @@ export async function GET(request: Request) {
     pollsQuery = pollsQuery.eq("event_id", eventId);
   } else if (sessionId) {
     pollsQuery = pollsQuery.or(`session_id.eq.${sessionId},session_id.is.null`);
+  }
+
+  // Non-admins only see deployed polls — drafts are admin-only
+  if (!isAdmin) {
+    pollsQuery = pollsQuery.eq("is_deployed", true);
   }
 
   const [pollsRes, voteCountsRes] = await Promise.all([

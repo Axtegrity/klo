@@ -8,6 +8,12 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ### Security
 - bump Next.js to 16.2.6 (CVE-2026-44573/44574/44575/44578/45109 — middleware auth bypass + DoS)
+- **Conference: Monitor View gated to admins** — "Monitor View" button was shown to all users; now only admins see it.
+- **Conference: draft polls hidden from guests** — `GET /api/conference/polls` now filters to `is_deployed=true` for non-admin callers; draft questions were previously exposed.
+- **Conference: questions scoped per event** — `GET /api/conference/questions` returns `[]` when neither `event_id` nor `session_id` is provided and caller is not admin; previously returned questions across all conferences.
+
+### Fixed
+- **Conference: `likeQuestion` called wrong endpoint** — authenticated heart-likes now route to `/api/conference/questions/[id]/like`; anonymous ChevronUp upvotes use `/upvote`. Previously both paths hit `/upvote`, causing authenticated upvotes to silently record as likes.
 
 ### Added
 - **Events page search + filter** — search bar filters events by title/description/location in real time; filter tabs (Upcoming / All Events / Past) default to "Upcoming" so guests see future events first; all three sections (Live, Upcoming, Past) respect both the search query and active filter.

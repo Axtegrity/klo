@@ -106,7 +106,7 @@ export function useQuestions(options?: UseQuestionsOptions) {
       if (likedQuestions.has(questionId)) return false;
 
       try {
-        const res = await fetch(`/api/conference/questions/${questionId}/upvote`, {
+        const res = await fetch(`/api/conference/questions/${questionId}/like`, {
           method: "POST",
         });
 

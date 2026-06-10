@@ -33,11 +33,13 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false })
     .limit(100);
 
-  // Filter by event or session
+  // Filter by event or session — require a scope for non-admin callers
   if (eventId) {
     query = query.eq("event_id", eventId);
   } else if (sessionId) {
     query = query.eq("session_id", sessionId);
+  } else if (!isPrivileged) {
+    return NextResponse.json([]);
   }
 
   // Non-privileged users: apply release_mode from the relevant session
