@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import { createHash } from "crypto";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 
 function getFingerprint(req: Request): string {
@@ -17,30 +15,8 @@ export async function POST(
   const { id } = await params;
   const supabase = getServiceSupabase();
 
-  // Check if the user is authenticated — if so, use authenticated likes
-  const session = await getServerSession(authOptions);
-  const userId = (session?.user as { id?: string } | undefined)?.id;
-
-  if (userId) {
-    // Authenticated like via RPC (atomic insert + increment)
-    const { data, error } = await supabase.rpc("like_conference_question", {
-      p_question_id: id,
-      p_user_id: userId,
-    });
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    const result = data as { ok: boolean; reason?: string };
-    if (!result.ok) {
-      return NextResponse.json({ error: result.reason }, { status: 409 });
-    }
-
-    return NextResponse.json({ success: true, type: "like" }, { status: 201 });
-  }
-
-  // Anonymous fingerprint upvote (V1 behavior preserved)
+  // Anonymous fingerprint upvote — all users use this path.
+  // Authenticated likes use the separate /like endpoint.
   const fingerprint = getFingerprint(request);
 
   const { error: upvoteError } = await supabase

@@ -8,6 +8,12 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ### Security
 - bump Next.js to 16.2.6 (CVE-2026-44573/44574/44575/44578/45109 — middleware auth bypass + DoS)
+- **Conference: Monitor View gated to admins** — "Monitor View" button was shown to all users; now only admins see it.
+- **Conference: draft polls hidden from guests** — `GET /api/conference/polls` now filters to `is_deployed=true` for non-admin callers; draft questions were previously exposed.
+- **Conference: questions scoped per event** — `GET /api/conference/questions` returns `[]` when neither `event_id` nor `session_id` is provided and caller is not admin; previously returned questions across all conferences.
+
+### Fixed
+- **Conference: `likeQuestion` called wrong endpoint** — authenticated heart-likes now route to `/api/conference/questions/[id]/like`; anonymous ChevronUp upvotes use `/upvote`. Previously both paths hit `/upvote`, causing authenticated upvotes to silently record as likes.
 
 ### Added
 - **Strategy Room join URL field** — admins can now paste a Zoom/Teams/Meet link onto any session; shown as a clickable green "Join Session" button only to registered members; non-registered users see a disabled button. DB migration `20260609000001` adds `join_url text` column to `strategy_sessions` (applied to both prod and dev Supabase 2026-06-09). Root-cause context: the "Join Session" button on the detail page (`StrategyRoomDetailClient.tsx:537`) existed as a dead stub — disabled when not registered, but never wired to a URL even when registered. Fix: added `join_url` to `strategy_sessions` table, `StrategySessionRow` type, Zod validation schema, admin form modal, and detail page button logic.
