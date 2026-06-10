@@ -21,6 +21,7 @@ interface SessionFormState {
   is_past: boolean;
   tier: "pro" | "executive";
   topics: string; // comma-separated
+  join_url: string;
   replay_url: string;
   notes_url: string;
   published: boolean;
@@ -39,6 +40,7 @@ const EMPTY_FORM: SessionFormState = {
   is_past: false,
   tier: "pro",
   topics: "",
+  join_url: "",
   replay_url: "",
   notes_url: "",
   published: false,
@@ -58,6 +60,7 @@ function sessionToForm(s: StrategySessionRow): SessionFormState {
     is_past: s.is_past,
     tier: s.tier,
     topics: s.topics.join(", "),
+    join_url: s.join_url ?? "",
     replay_url: s.replay_url ?? "",
     notes_url: s.notes_url ?? "",
     published: s.published,
@@ -157,6 +160,7 @@ export default function StrategyRoomsAdminTab() {
       if (form.attendees_override.trim() !== "") {
         payload.attendees_override = parseInt(form.attendees_override, 10);
       }
+      if (form.join_url.trim()) payload.join_url = form.join_url.trim();
       if (form.replay_url.trim()) payload.replay_url = form.replay_url.trim();
       if (form.notes_url.trim()) payload.notes_url = form.notes_url.trim();
 
@@ -523,6 +527,20 @@ export default function StrategyRoomsAdminTab() {
               value={form.topics}
               onChange={(e) => setForm((p) => ({ ...p, topics: e.target.value }))}
               placeholder="AI Governance, Ethics, Faith Organizations"
+              className="w-full px-4 py-2.5 rounded-xl bg-klo-dark border border-white/10 text-klo-text placeholder:text-klo-muted text-sm focus:outline-none focus:border-klo-gold/50"
+            />
+          </div>
+
+          {/* Join URL — visible to registered members before the session */}
+          <div>
+            <label className="block text-xs text-klo-muted mb-1.5">
+              Join URL <span className="text-klo-muted/60">(Zoom / Teams / Meet link — shown only to registered members)</span>
+            </label>
+            <input
+              type="url"
+              value={form.join_url}
+              onChange={(e) => setForm((p) => ({ ...p, join_url: e.target.value }))}
+              placeholder="https://zoom.us/j/..."
               className="w-full px-4 py-2.5 rounded-xl bg-klo-dark border border-white/10 text-klo-text placeholder:text-klo-muted text-sm focus:outline-none focus:border-klo-gold/50"
             />
           </div>
