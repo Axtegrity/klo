@@ -214,18 +214,23 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
   const deployAllPolls = async () => {
     if (queuedPolls.length === 0) return;
     setDeployingAll(true);
+    const failed: string[] = [];
     try {
-      await Promise.all(
-        queuedPolls.map((p) =>
-          fetch(`/api/conference/polls/${p.id}/deploy`, { method: "POST" })
-        )
-      );
-      setDeployedSet((prev) => {
-        const next = new Set(prev);
-        queuedPolls.forEach((p) => next.add(p.id));
-        return next;
-      });
-      showSuccess(`${queuedPolls.length} poll${queuedPolls.length !== 1 ? "s" : ""} deployed!`);
+      // Sequential — each deploy closes siblings before the next one fires,
+      // so the single-active-poll guarantee is never broken by a race.
+      for (const p of queuedPolls) {
+        const res = await fetch(`/api/conference/polls/${p.id}/deploy`, { method: "POST" });
+        if (res.ok) {
+          setDeployedSet((prev) => new Set(prev).add(p.id));
+        } else {
+          failed.push(p.question);
+        }
+      }
+      if (failed.length === 0) {
+        showSuccess(`${queuedPolls.length} poll${queuedPolls.length !== 1 ? "s" : ""} deployed!`);
+      } else {
+        setError(`${failed.length} poll${failed.length !== 1 ? "s" : ""} failed to deploy: ${failed.join(", ")}`);
+      }
       fetchPolls();
     } finally {
       setDeployingAll(false);
