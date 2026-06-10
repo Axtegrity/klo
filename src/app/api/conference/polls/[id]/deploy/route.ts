@@ -19,6 +19,23 @@ export async function POST(
   const { id } = await params;
   const supabase = getServiceSupabase();
 
+  // Find the poll's event_id so we can close sibling polls
+  const { data: target } = await supabase
+    .from("conference_polls")
+    .select("event_id")
+    .eq("id", id)
+    .single();
+
+  // Close all other active polls for the same event before going live
+  if (target?.event_id) {
+    await supabase
+      .from("conference_polls")
+      .update({ is_active: false, closed_at: new Date().toISOString() })
+      .eq("event_id", target.event_id)
+      .eq("is_active", true)
+      .neq("id", id);
+  }
+
   const { data, error } = await supabase
     .from("conference_polls")
     .update({ is_deployed: true, is_active: true })
