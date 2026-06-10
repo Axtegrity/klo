@@ -359,7 +359,7 @@ export const sessionCreateSchema = z.object({
   description: z.string().max(5000).optional(),
   scheduled_at: z.string().optional(),
   qa_enabled: z.boolean().optional(),
-  release_mode: z.string().max(50).optional(),
+  release_mode: z.enum(["all", "single", "hide_all"]).optional(),
   speaker: z.string().max(200).optional(),
   room: z.string().max(200).optional(),
   time_label: z.string().max(200).optional(),
@@ -377,7 +377,7 @@ export const sessionUpdateSchema = z.object({
   scheduled_at: z.string().optional(),
   is_active: z.boolean().optional(),
   qa_enabled: z.boolean().optional(),
-  release_mode: z.string().max(50).optional(),
+  release_mode: z.enum(["all", "single", "hide_all"]).optional(),
   speaker: z.string().max(200).optional(),
   room: z.string().max(200).optional(),
   time_label: z.string().max(200).optional(),
@@ -403,7 +403,7 @@ export const conferenceSettingsUpdateSchema = z.object({
   event_id: z.string().optional(),
   session_id: z.string().optional(),
   qa_enabled: z.boolean().optional(),
-  release_mode: z.string().max(50).optional(),
+  release_mode: z.enum(["all", "single", "hide_all"]).optional(),
 });
 
 // ----------------------------------------------------------------

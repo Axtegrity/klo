@@ -37,7 +37,7 @@ export async function PUT(
   if (validatedBody.is_active === true) {
     const { data: thisSession } = await supabase
       .from("conference_sessions")
-      .select("event_id")
+      .select("event_id, release_mode")
       .eq("id", id)
       .single();
 
@@ -64,11 +64,13 @@ export async function PUT(
       ]);
     }
 
-    // Push this session's content ON — reopen deployed polls, re-release questions
-    await Promise.all([
-      supabase.from("conference_polls").update({ is_active: true }).eq("session_id", id).eq("is_deployed", true),
-      supabase.from("conference_questions").update({ released: true }).eq("session_id", id).eq("is_hidden", false).is("archived_at", null),
-    ]);
+    // Push this session's content ON — reopen deployed polls; only mass-release
+    // questions when mode is "all" (single/hide_all require manual per-question control)
+    const effectiveMode = validatedBody.release_mode ?? thisSession?.release_mode;
+    await supabase.from("conference_polls").update({ is_active: true }).eq("session_id", id).eq("is_deployed", true);
+    if (!effectiveMode || effectiveMode === "all") {
+      await supabase.from("conference_questions").update({ released: true }).eq("session_id", id).eq("is_hidden", false).is("archived_at", null);
+    }
   }
 
   // If deactivating this session, pull back its content

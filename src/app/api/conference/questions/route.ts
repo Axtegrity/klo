@@ -59,12 +59,16 @@ export async function GET(request: Request) {
     } else if (eventId) {
       const { data: sess } = await supabase
         .from("conference_sessions")
-        .select("release_mode")
+        .select("id, release_mode")
         .eq("event_id", eventId)
         .eq("is_active", true)
         .limit(1)
         .maybeSingle();
       releaseMode = toMode(sess?.release_mode);
+      // Scope questions to the active session so mode and data are always aligned
+      if (sess?.id) {
+        query = query.eq("session_id", sess.id);
+      }
     }
 
     if (releaseMode === "hide_all") return NextResponse.json([]);
