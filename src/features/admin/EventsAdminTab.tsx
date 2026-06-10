@@ -22,6 +22,7 @@ import {
   X,
   Save,
   Radio,
+  Search,
 } from "lucide-react";
 
 interface EventFile {
@@ -95,6 +96,7 @@ export default function EventsAdminTab() {
   const [showForm, setShowForm] = useState(false);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   // Document parse state
   const [parsing, setParsing] = useState(false);
@@ -411,8 +413,15 @@ export default function EventsAdminTab() {
     return new Date(dateStr + timeSuffix) < new Date();
   };
 
-  const currentEvents = events.filter((e) => !isEventPast(e.event_date, e.event_time));
-  const previousEvents = events.filter((e) => isEventPast(e.event_date, e.event_time));
+  const searchLower = search.toLowerCase();
+  const matchesSearch = (e: Event) =>
+    !search ||
+    e.title.toLowerCase().includes(searchLower) ||
+    e.conference_name.toLowerCase().includes(searchLower) ||
+    e.conference_location.toLowerCase().includes(searchLower);
+
+  const currentEvents = events.filter((e) => !isEventPast(e.event_date, e.event_time) && matchesSearch(e));
+  const previousEvents = events.filter((e) => isEventPast(e.event_date, e.event_time) && matchesSearch(e));
 
   const inputClass =
     "w-full px-4 py-2.5 rounded-xl bg-klo-dark border border-white/10 text-klo-text placeholder:text-klo-muted text-sm focus:outline-none focus:border-klo-gold/50";
@@ -1266,6 +1275,26 @@ export default function EventsAdminTab() {
           </form>
         </motion.div>
       )}
+
+      {/* Search */}
+      <div className="relative">
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-klo-muted pointer-events-none" />
+        <input
+          type="text"
+          placeholder="Search events by name, conference, or location..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-klo-dark border border-white/10 text-klo-text placeholder:text-klo-muted text-sm focus:outline-none focus:border-klo-gold/50"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-klo-muted hover:text-klo-text transition-colors"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
 
       {/* Event lists */}
       {renderEventList(currentEvents, "Current Events")}
