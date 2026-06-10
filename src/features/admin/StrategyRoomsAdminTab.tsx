@@ -457,7 +457,11 @@ export default function StrategyRoomsAdminTab() {
               <input
                 type="date"
                 value={form.session_date}
-                onChange={(e) => setForm((p) => ({ ...p, session_date: e.target.value }))}
+                onChange={(e) => {
+                  const d = e.target.value;
+                  const isPastDate = !!d && d < new Date().toISOString().split("T")[0];
+                  setForm((p) => ({ ...p, session_date: d, is_past: isPastDate ? true : p.is_past }));
+                }}
                 className="w-full px-4 py-2.5 rounded-xl bg-klo-dark border border-white/10 text-klo-text placeholder:text-klo-muted text-sm focus:outline-none focus:border-klo-gold/50"
               />
             </div>
