@@ -40,22 +40,45 @@ export async function GET(request: Request) {
     query = query.eq("session_id", sessionId);
   }
 
-  // Non-privileged users: hide hidden questions, hide archived, only show released
-  // Also verify parent session is active (if question belongs to a session)
+  // Non-privileged users: apply release_mode from the relevant session
   if (!isPrivileged) {
-    query = query.eq("is_hidden", false).is("archived_at", null).eq("released", true);
+    type ReleaseMode = "all" | "single" | "hide_all";
+    const toMode = (v: string | null | undefined): ReleaseMode =>
+      v === "all" || v === "hide_all" ? v : "single";
 
-    // Filter out questions from inactive sessions
+    let releaseMode: ReleaseMode = "single"; // safest default
+
     if (sessionId) {
       const { data: sess } = await supabase
         .from("conference_sessions")
-        .select("is_active")
+        .select("is_active, release_mode")
         .eq("id", sessionId)
         .single();
-      if (!sess?.is_active) {
-        return NextResponse.json([]);
+      if (!sess?.is_active) return NextResponse.json([]);
+      releaseMode = toMode(sess.release_mode);
+    } else if (eventId) {
+      const { data: sess } = await supabase
+        .from("conference_sessions")
+        .select("id, release_mode")
+        .eq("event_id", eventId)
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+      releaseMode = toMode(sess?.release_mode);
+      // Scope questions to the active session so mode and data are always aligned
+      if (sess?.id) {
+        query = query.eq("session_id", sess.id);
       }
     }
+
+    if (releaseMode === "hide_all") return NextResponse.json([]);
+
+    query = query.eq("is_hidden", false).is("archived_at", null);
+    if (releaseMode === "single") {
+      // Only show questions the moderator has explicitly released
+      query = query.eq("released", true);
+    }
+    // "all" mode: skip released filter — every submitted question is visible immediately
   } else if (showArchived) {
     // Admin requesting archived only
     query = query.not("archived_at", "is", null);
