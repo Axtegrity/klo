@@ -316,8 +316,6 @@ export default function EventsPage() {
     events.filter(isPastEvent).sort((a, b) => sortDate(b.event_date) - sortDate(a.event_date)),
     [events, sortDate]);
 
-  // Clear open modal when the user changes the filter tab.
-  useEffect(() => { setSelectedEventId(null); }, [activeFilter]);
 
   const matchesSearch = useCallback((ev: EventItem) => {
     const q = searchQuery.trim().toLowerCase();
@@ -432,7 +430,7 @@ export default function EventsPage() {
             {(["upcoming", "all", "past"] as const).map((f) => (
               <button
                 key={f}
-                onClick={() => setActiveFilter(f)}
+                onClick={() => { setActiveFilter(f); setSelectedEventId(null); }}
                 className={`px-4 py-1.5 rounded-full text-xs font-semibold transition capitalize ${
                   activeFilter === f
                     ? "bg-[#2764FF] text-white"
