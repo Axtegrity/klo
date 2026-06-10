@@ -57,6 +57,7 @@ export function useQuestions(options?: UseQuestionsOptions) {
             text,
             author_name: authorName,
             session_id: sessionId || undefined,
+            event_id: eventId || undefined,
           }),
         });
 

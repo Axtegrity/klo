@@ -337,6 +337,7 @@ export const questionSubmitSchema = z.object({
   text: z.string().min(1).max(2000),
   author_name: z.string().max(200).optional(),
   session_id: z.string().optional(),
+  event_id: z.string().optional(),
 });
 
 // ----------------------------------------------------------------
