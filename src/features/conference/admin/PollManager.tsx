@@ -197,9 +197,14 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
     }
     setDeployingId(id);
     try {
-      await fetch(`/api/conference/polls/${id}/deploy`, { method: "POST" });
+      const res = await fetch(`/api/conference/polls/${id}/deploy`, { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(body?.error || `Failed to deploy poll (${res.status})`);
+        return;
+      }
       setDeployedSet((prev) => new Set(prev).add(id));
-      showSuccess("Poll deployed!");
+      showSuccess("Poll deployed! Other active polls have been closed.");
       fetchPolls();
     } finally {
       setDeployingId(null);
