@@ -151,7 +151,6 @@ function CountdownTimer({ dateStr }: { dateStr: string }) {
   const [state, setState] = useState<CountdownState>(() => computeCountdownState(dateStr));
 
   useEffect(() => {
-    setState(computeCountdownState(dateStr));
     const interval = setInterval(() => setState(computeCountdownState(dateStr)), 60000);
     return () => clearInterval(interval);
   }, [dateStr]);
