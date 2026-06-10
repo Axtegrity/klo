@@ -61,6 +61,33 @@ async function fetchSession(slug: string): Promise<StrategySessionRow | null> {
   }
 }
 
+interface NextSession {
+  slug: string;
+  title: string;
+  session_date: string;
+  date: string | null;
+}
+
+async function fetchNextUpcomingSession(currentId: string): Promise<NextSession | null> {
+  try {
+    const supabase = getServiceSupabase();
+    const today = new Date().toISOString().split("T")[0];
+    const { data } = await supabase
+      .from("strategy_sessions")
+      .select("slug, title, session_date, date")
+      .eq("published", true)
+      .eq("is_past", false)
+      .neq("id", currentId)
+      .gt("session_date", today)
+      .order("session_date", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    return data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchRelatedSessions(
   current: StrategySessionRow
 ): Promise<StrategySessionRow[]> {
@@ -95,7 +122,10 @@ export default async function StrategyRoomDetailPage({ params }: Props) {
     notFound();
   }
 
-  const related = await fetchRelatedSessions(session);
+  const [related, nextSession] = await Promise.all([
+    fetchRelatedSessions(session),
+    fetchNextUpcomingSession(session.id),
+  ]);
 
-  return <StrategyRoomDetailClient session={session} related={related} />;
+  return <StrategyRoomDetailClient session={session} related={related} nextSession={nextSession} />;
 }
