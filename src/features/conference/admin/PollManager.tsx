@@ -518,131 +518,110 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
         </div>
       ) : (
         <>
-          {/* Poll Queue */}
-          {queuedPolls.length > 0 && (
+          {/* Unified poll list — Deploy and Pull Back on the same card */}
+          {filteredPolls.length > 0 ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-klo-text flex items-center gap-2">
                   <FileText size={16} className="text-klo-muted" />
-                  Poll Queue ({queuedPolls.length})
+                  Polls ({filteredPolls.length})
                 </h3>
-                <button
-                  onClick={deployAllPolls}
-                  disabled={deployingAll}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:brightness-110 transition-colors text-xs font-semibold disabled:opacity-50"
-                  title="Deploy all queued polls at once"
-                >
-                  <Rocket size={14} />
-                  {deployingAll ? "Deploying..." : `Deploy All (${queuedPolls.length})`}
-                </button>
-              </div>
-              {queuedPolls.map((poll) => (
-                <div key={poll.id} className="glass rounded-2xl p-4 border border-white/5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-klo-text truncate">{poll.question}</p>
-                      <p className="text-xs text-klo-muted mt-1">
-                        {(poll.options as string[]).length} options — Queued
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => deployPoll(poll.id)}
-                        disabled={deployingId === poll.id || deployingAll}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors text-xs font-medium disabled:opacity-50"
-                        title="Deploy to attendees"
-                      >
-                        <Rocket size={14} />
-                        {deployingId === poll.id ? "Deploying..." : "Deploy"}
-                      </button>
-                      <button
-                        onClick={() => deletePoll(poll.id)}
-                        className="p-2 rounded-lg text-klo-muted hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                        title="Delete poll"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
+                <div className="flex items-center gap-2">
+                  {deployedPolls.length > 0 && (
+                    <button
+                      onClick={handleExportPDF}
+                      disabled={exporting}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2764FF]/10 text-[#2764FF] hover:bg-[#2764FF]/20 transition-colors text-xs font-medium disabled:opacity-40"
+                    >
+                      <Download size={14} />
+                      {exporting ? "Exporting..." : "Download PDF"}
+                    </button>
+                  )}
+                  {queuedPolls.length > 0 && (
+                    <button
+                      onClick={deployAllPolls}
+                      disabled={deployingAll}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:brightness-110 transition-colors text-xs font-semibold disabled:opacity-50"
+                      title="Deploy all queued polls at once"
+                    >
+                      <Rocket size={14} />
+                      {deployingAll ? "Deploying..." : `Deploy All (${queuedPolls.length})`}
+                    </button>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
 
-          {/* Results — one unified view */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-klo-text flex items-center gap-2">
-                <Rocket size={16} className="text-emerald-400" />
-                Results ({deployedPolls.length} poll{deployedPolls.length !== 1 ? "s" : ""})
-              </h3>
-              {deployedPolls.length > 0 && (
-                <button
-                  onClick={handleExportPDF}
-                  disabled={exporting}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2764FF]/10 text-[#2764FF] hover:bg-[#2764FF]/20 transition-colors text-xs font-medium disabled:opacity-40"
-                >
-                  <Download size={14} />
-                  {exporting ? "Exporting..." : "Download PDF"}
-                </button>
-              )}
-            </div>
-
-            {deployedPolls.length === 0 ? (
-              <p className="text-sm text-klo-muted text-center py-4">
-                No deployed polls yet. Create and deploy polls from the queue above.
-              </p>
-            ) : (
-              <div className="glass rounded-2xl border border-white/5 divide-y divide-white/5">
-                {deployedPolls.map((poll) => {
-                  const options = poll.options as string[];
-                  const maxVotes = Math.max(...poll.votes);
-                  return (
-                    <div key={poll.id} className="p-4 space-y-3">
-                      {/* Question header + controls */}
+              {filteredPolls.map((poll) => {
+                const pollOptions = poll.options as string[];
+                const maxVotes = Math.max(...poll.votes);
+                return (
+                  <div key={poll.id} className="glass rounded-2xl border border-white/5">
+                    <div className="p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-klo-text">{poll.question}</p>
-                          <p className="text-xs text-klo-muted mt-0.5">
-                            {poll.totalVotes} vote{poll.totalVotes !== 1 ? "s" : ""}
-                            {poll.is_active ? (
-                              <span className="text-emerald-400 ml-2">Live</span>
+                          <p className="text-xs text-klo-muted mt-1">
+                            {pollOptions.length} options
+                            {poll.is_deployed ? (
+                              <>
+                                {" — "}
+                                {poll.totalVotes} vote{poll.totalVotes !== 1 ? "s" : ""}
+                                {poll.is_active ? (
+                                  <span className="text-emerald-400 ml-1.5">Live</span>
+                                ) : (
+                                  <span className="text-klo-muted/60 ml-1.5">Closed</span>
+                                )}
+                              </>
                             ) : (
-                              <span className="text-klo-muted/60 ml-2">Closed</span>
+                              <span className="text-klo-muted/60"> — Queued</span>
                             )}
                           </p>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            onClick={() => togglePoll(poll.id, "is_active", !poll.is_active)}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              poll.is_active
-                                ? "text-emerald-400 hover:bg-emerald-500/10"
-                                : "text-klo-muted hover:bg-white/5"
-                            }`}
-                            title={poll.is_active ? "End poll — removes from attendees' screens" : "Reopen poll"}
-                          >
-                            {poll.is_active ? <Power size={14} /> : <PowerOff size={14} />}
-                          </button>
-                          <button
-                            onClick={() => togglePoll(poll.id, "show_results", !poll.show_results)}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              poll.show_results
-                                ? "text-[#2764FF] hover:bg-[#2764FF]/10"
-                                : "text-klo-muted hover:bg-white/5"
-                            }`}
-                            title={poll.show_results ? "Hide results from attendees" : "Show results to attendees"}
-                          >
-                            {poll.show_results ? <Eye size={14} /> : <EyeOff size={14} />}
-                          </button>
-                          <button
-                            onClick={() => undeployPoll(poll.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-colors text-xs font-medium"
-                            title="Move back to queue — removes from attendees' screens"
-                          >
-                            <Undo2 size={12} />
-                            Pull Back
-                          </button>
+                          {poll.is_deployed ? (
+                            <>
+                              <button
+                                onClick={() => undeployPoll(poll.id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-colors text-xs font-medium"
+                                title="Move back to queue — removes from attendees' screens"
+                              >
+                                <Undo2 size={12} />
+                                Pull Back
+                              </button>
+                              <button
+                                onClick={() => togglePoll(poll.id, "is_active", !poll.is_active)}
+                                className={`p-1.5 rounded-lg transition-colors ${
+                                  poll.is_active
+                                    ? "text-emerald-400 hover:bg-emerald-500/10"
+                                    : "text-klo-muted hover:bg-white/5"
+                                }`}
+                                title={poll.is_active ? "End poll — removes from attendees' screens" : "Reopen poll"}
+                              >
+                                {poll.is_active ? <Power size={14} /> : <PowerOff size={14} />}
+                              </button>
+                              <button
+                                onClick={() => togglePoll(poll.id, "show_results", !poll.show_results)}
+                                className={`p-1.5 rounded-lg transition-colors ${
+                                  poll.show_results
+                                    ? "text-[#2764FF] hover:bg-[#2764FF]/10"
+                                    : "text-klo-muted hover:bg-white/5"
+                                }`}
+                                title={poll.show_results ? "Hide results from attendees" : "Show results to attendees"}
+                              >
+                                {poll.show_results ? <Eye size={14} /> : <EyeOff size={14} />}
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => deployPoll(poll.id)}
+                              disabled={deployingId === poll.id || deployingAll}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors text-xs font-medium disabled:opacity-50"
+                              title="Deploy to attendees"
+                            >
+                              <Rocket size={14} />
+                              {deployingId === poll.id ? "Deploying..." : "Deploy"}
+                            </button>
+                          )}
                           <button
                             onClick={() => deletePoll(poll.id)}
                             className="p-1.5 rounded-lg text-klo-muted hover:text-red-400 hover:bg-red-500/10 transition-colors"
@@ -652,47 +631,55 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
                           </button>
                         </div>
                       </div>
-
-                      {/* Inline results — always visible */}
-                      {poll.totalVotes > 0 ? (
-                        <div className="space-y-2">
-                          {options.map((opt, idx) => {
-                            const votes = poll.votes[idx] || 0;
-                            const pct = poll.totalVotes > 0 ? Math.round((votes / poll.totalVotes) * 100) : 0;
-                            const isLeading = votes === maxVotes && maxVotes > 0;
-                            return (
-                              <div key={idx}>
-                                <div className="flex items-center justify-between text-xs mb-0.5">
-                                  <span className={isLeading ? "text-klo-text font-semibold" : "text-klo-muted"}>
-                                    {opt}
-                                  </span>
-                                  <span className={isLeading ? "text-klo-text font-semibold" : "text-klo-muted"}>
-                                    {votes} ({pct}%)
-                                  </span>
-                                </div>
-                                <div className="w-full h-2 rounded-full bg-white/5">
-                                  <div
-                                    className="h-full rounded-full transition-all duration-500"
-                                    style={{
-                                      width: `${pct}%`,
-                                      backgroundColor: isLeading ? "#D4A853" : "#2764FF",
-                                      opacity: isLeading ? 1 : 0.6,
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-klo-muted/60">No votes yet</p>
-                      )}
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+
+                    {/* Vote results — shown inline once deployed */}
+                    {poll.is_deployed && (
+                      <div className="px-4 pb-4 border-t border-white/5 pt-3">
+                        {poll.totalVotes > 0 ? (
+                          <div className="space-y-2">
+                            {pollOptions.map((opt, idx) => {
+                              const votes = poll.votes[idx] || 0;
+                              const pct = poll.totalVotes > 0 ? Math.round((votes / poll.totalVotes) * 100) : 0;
+                              const isLeading = votes === maxVotes && maxVotes > 0;
+                              return (
+                                <div key={idx}>
+                                  <div className="flex items-center justify-between text-xs mb-0.5">
+                                    <span className={isLeading ? "text-klo-text font-semibold" : "text-klo-muted"}>
+                                      {opt}
+                                    </span>
+                                    <span className={isLeading ? "text-klo-text font-semibold" : "text-klo-muted"}>
+                                      {votes} ({pct}%)
+                                    </span>
+                                  </div>
+                                  <div className="w-full h-2 rounded-full bg-white/5">
+                                    <div
+                                      className="h-full rounded-full transition-all duration-500"
+                                      style={{
+                                        width: `${pct}%`,
+                                        backgroundColor: isLeading ? "#D4A853" : "#2764FF",
+                                        opacity: isLeading ? 1 : 0.6,
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-klo-muted/60">No votes yet</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-klo-muted text-center py-4">
+              No polls yet. Create polls above and deploy them to attendees.
+            </p>
+          )}
         </>
       )}
     </div>
