@@ -472,8 +472,13 @@ export default function EventsAdminTab() {
   };
 
   // Auto-classify by date: past events go to "Previous" regardless of manual category
-  const isEventPast = (dateStr: string, eventTime?: string | null) => {
+  // Event is past only after its end_date (if set) or event_date has passed.
+  // Mirrors the isPastEvent logic on the public /events page.
+  // seminar_mode = event is live now → never past.
+  const isEventPast = (dateStr: string, eventTime?: string | null, endDate?: string | null, seminarMode?: boolean) => {
     if (!dateStr || dateStr === "SAVE THE DATE") return false;
+    if (seminarMode) return false;
+    if (endDate) return new Date(`${endDate}T23:59:59`) < new Date();
     const timeSuffix = eventTime ? `T${eventTime}:00` : "T23:59:59";
     return new Date(dateStr + timeSuffix) < new Date();
   };
@@ -485,8 +490,8 @@ export default function EventsAdminTab() {
     e.conference_name.toLowerCase().includes(searchLower) ||
     e.conference_location.toLowerCase().includes(searchLower);
 
-  const currentEvents = events.filter((e) => !isEventPast(e.event_date, e.event_time) && matchesSearch(e));
-  const previousEvents = events.filter((e) => isEventPast(e.event_date, e.event_time) && matchesSearch(e));
+  const currentEvents = events.filter((e) => !isEventPast(e.event_date, e.event_time, e.end_date, e.seminar_mode) && matchesSearch(e));
+  const previousEvents = events.filter((e) => isEventPast(e.event_date, e.event_time, e.end_date, e.seminar_mode) && matchesSearch(e));
 
   const inputClass =
     "w-full px-4 py-2.5 rounded-xl bg-klo-dark border border-white/10 text-klo-text placeholder:text-klo-muted text-sm focus:outline-none focus:border-klo-gold/50";
