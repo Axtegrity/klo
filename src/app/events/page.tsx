@@ -20,6 +20,7 @@ import {
   X,
   ChevronDown,
   Search,
+  BookOpen,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Badge from "@/components/shared/Badge";
@@ -46,6 +47,7 @@ interface EventFile {
   file_type: string;
   file_url: string;
   file_size: string | null;
+  is_visible: boolean;
 }
 
 interface EventItem {
@@ -1075,6 +1077,7 @@ function EventCard({
 }) {
   const files = event.event_files ?? [];
   const hasFiles = files.length > 0;
+  const visibleFiles = files.filter((f) => f.is_visible);
 
   return (
     <Card className="relative overflow-hidden">
@@ -1164,23 +1167,56 @@ function EventCard({
                 <ArrowRight size={14} />
               </span>
             )}
-            {/* Past event presentation CTA */}
-            {isPastEvent && (
+            {/* Past event — direct download if one visible file, multi-file modal otherwise */}
+            {isPastEvent && visibleFiles.length === 1 && (
+              <a
+                href={visibleFiles[0].file_url}
+                download
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors"
+              >
+                <Download size={14} />
+                Download Slides
+              </a>
+            )}
+            {isPastEvent && visibleFiles.length > 1 && (
               <button
-                onClick={() => hasFiles ? onViewDetails?.(event.id) : undefined}
-                disabled={!hasFiles}
-                className={`inline-flex items-center gap-2 px-5 py-2.5 font-semibold text-sm rounded-lg transition-colors ${
-                  hasFiles
-                    ? "bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white hover:brightness-110 cursor-pointer"
-                    : "bg-white/5 text-klo-muted/50 border border-white/5 cursor-not-allowed"
-                }`}
+                onClick={() => onViewDetails?.(event.id)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors"
               >
                 <FileText size={14} />
-                {hasFiles ? "View Presentation" : "No Presentation"}
+                {visibleFiles.length} Files
               </button>
+            )}
+            {isPastEvent && visibleFiles.length === 0 && (
+              <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-klo-muted/50 border border-white/5 font-semibold text-sm rounded-lg cursor-not-allowed">
+                <FileText size={14} />
+                No Slides Yet
+              </span>
             )}
           </div>
         </div>
+
+        {/* Visible files strip — shown on live/upcoming cards when Keith shares files */}
+        {!isPastEvent && visibleFiles.length > 0 && (
+          <div className="border-t border-white/5 pt-3 mt-1 flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1 text-xs text-klo-muted">
+              <BookOpen size={12} />
+              Session Resources:
+            </span>
+            {visibleFiles.map((file) => (
+              <a
+                key={file.id}
+                href={file.file_url}
+                download
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#2764FF]/10 border border-[#2764FF]/20 text-[#2764FF] text-xs font-medium hover:bg-[#2764FF]/20 transition-colors"
+              >
+                <Download size={11} />
+                {file.file_name}
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </Card>
   );
