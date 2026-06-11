@@ -109,6 +109,15 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        // Playwright QA bypass — only active when PLAYWRIGHT_QA=1 (never set in production)
+        if (process.env.PLAYWRIGHT_QA === "1") {
+          const qaEmail = process.env.QA_ADMIN_EMAIL?.trim();
+          const qaPassword = process.env.QA_ADMIN_PASSWORD?.trim();
+          if (qaEmail && qaPassword && credentials.email === qaEmail && credentials.password === qaPassword) {
+            return { id: "qa-admin", name: "QA Admin", email: qaEmail, role: "admin" };
+          }
+        }
+
         // Check hardcoded admin/owner/moderator accounts first
         for (const account of CREDENTIAL_ACCOUNTS) {
           const password = process.env[account.envVar]?.trim();
