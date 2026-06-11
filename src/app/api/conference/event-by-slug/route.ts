@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from("event_presentations")
-    .select("id, title, slug, conference_name, conference_location, event_date, event_time, description, access_code, seminar_mode, is_published, start_date, end_date, event_files(id, file_name, file_type, file_url, file_size, is_visible)")
+    .select("id, title, slug, conference_name, conference_location, event_date, event_time, description, access_code, seminar_mode, is_published, start_date, end_date, event_files(*)")
     .eq("slug", slug)
     .eq("is_published", true)
     .single();
@@ -22,7 +22,5 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
   }
 
-  return NextResponse.json(data, {
-    headers: { "Cache-Control": "public, s-maxage=10, stale-while-revalidate=30" },
-  });
+  return NextResponse.json(data, { headers: { "Cache-Control": "no-store" } });
 }
