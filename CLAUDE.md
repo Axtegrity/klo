@@ -161,6 +161,19 @@ Sentry wrapped via `withSentryConfig`. Do not remove or weaken these.
 - **GitHub**: github.com/Axtegrity/klo
 
 ## Testing
+
+### PR Merge Gate — Both Seats Required (MANDATORY)
+Before merging ANY PR that touches attendee-facing features (polls, Q&A, conference page, events page, voting, real-time):
+
+1. Post the Vercel preview URL with two checklists — admin steps and attendee steps
+2. Explicitly ask Tim: "Have you tested from both the admin seat and the attendee seat?"
+3. **Do NOT merge until Tim confirms both.** If no answer, block the merge:
+   > "We haven't confirmed the attendee experience yet. If we merge now, Keith's audience discovers the bug before we do. Test on the preview URL first."
+4. If Tim explicitly overrides, log it and merge — but state the risk clearly first.
+
+**Why:** The polling deploy bug (2026-06-11) shipped because we only tested the admin UI. The attendee vote flow was broken in production. Keith's audience found it before we did.
+
+### General Testing Rules
 - Playwright for E2E — test files must be `.mjs` (ESM-only project)
 - Accessibility: `@axe-core/playwright` is installed — use it in E2E for a11y checks
 - Write tests for: auth flows, API route validation, subscription gating logic
