@@ -27,6 +27,8 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  Share2,
+  MonitorOff,
 } from "lucide-react";
 
 interface EventFile {
@@ -132,6 +134,7 @@ export default function EventsAdminTab() {
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
   const [editFields, setEditFields] = useState<Partial<Event>>({});
   const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -308,7 +311,7 @@ export default function EventsAdminTab() {
     try {
       // Sanitize: empty strings → null for nullable DB columns
       const payload = { ...editFields };
-      for (const key of ["start_date", "end_date", "event_time", "website_url", "access_code", "description"] as const) {
+      for (const key of ["start_date", "end_date", "event_time", "website_url", "access_code", "description", "session_name", "room_location", "session_end_time", "notes"] as const) {
         if (key in payload && (payload as Record<string, unknown>)[key] === "") {
           (payload as Record<string, unknown>)[key] = null;
         }
@@ -322,6 +325,11 @@ export default function EventsAdminTab() {
         setEditingEvent(null);
         setEditFields({});
         fetchEvents();
+        setSaveMsg({ type: "success", text: "Saved — changes are live." });
+        setTimeout(() => setSaveMsg(null), 4000);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setSaveMsg({ type: "error", text: err.error || "Save failed. Please try again." });
       }
     } finally {
       setSaving(false);
@@ -404,11 +412,18 @@ export default function EventsAdminTab() {
   };
 
   const handleToggleFileVisible = async (eventId: string, fileId: string, currentlyVisible: boolean) => {
-    await fetch(`/api/admin/events/${eventId}/files?fileId=${fileId}`, {
+    const res = await fetch(`/api/admin/events/${eventId}/files?fileId=${fileId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ is_visible: !currentlyVisible }),
     });
+    if (!res.ok) {
+      setSaveMsg({ type: "error", text: "Failed to update file visibility." });
+      setTimeout(() => setSaveMsg(null), 4000);
+    } else {
+      setSaveMsg({ type: "success", text: currentlyVisible ? "File hidden from attendees." : "File shared with attendees — visible on conference page." });
+      setTimeout(() => setSaveMsg(null), 4000);
+    }
     fetchEvents();
   };
 
@@ -422,11 +437,28 @@ export default function EventsAdminTab() {
   };
 
   const handleTogglePublish = async (eventId: string, currentlyPublished: boolean) => {
-    await fetch(`/api/admin/events/${eventId}`, {
+    const res = await fetch(`/api/admin/events/${eventId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ is_published: !currentlyPublished }),
     });
+    if (!res.ok) {
+      setSaveMsg({ type: "error", text: "Failed to update publish status." });
+      setTimeout(() => setSaveMsg(null), 4000);
+    }
+    fetchEvents();
+  };
+
+  const handleToggleDisplayOnEventsPage = async (eventId: string, currentlyShowing: boolean) => {
+    const res = await fetch(`/api/admin/events/${eventId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ display_on_events_page: !currentlyShowing }),
+    });
+    if (!res.ok) {
+      setSaveMsg({ type: "error", text: "Failed to update events page visibility." });
+      setTimeout(() => setSaveMsg(null), 4000);
+    }
     fetchEvents();
   };
 
@@ -524,6 +556,20 @@ export default function EventsAdminTab() {
                     title={event.is_published ? "Unpublish (hide from Events page)" : "Publish (show on Events page)"}
                   >
                     {event.is_published ? <Globe size={16} /> : <GlobeOff size={16} />}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleDisplayOnEventsPage(event.id, event.display_on_events_page);
+                    }}
+                    className={`p-2 rounded-lg transition-colors ${
+                      event.display_on_events_page
+                        ? "text-[#2764FF] bg-[#2764FF]/10"
+                        : "text-klo-muted hover:text-[#2764FF] hover:bg-[#2764FF]/10"
+                    }`}
+                    title={event.display_on_events_page ? "Showing on Events page — click to hide" : "Hidden from Events page — click to show"}
+                  >
+                    {event.display_on_events_page ? <Eye size={16} /> : <EyeOff size={16} />}
                   </button>
                   <button
                     onClick={(e) => {
@@ -940,17 +986,18 @@ export default function EventsAdminTab() {
                             >
                               <ExternalLink size={14} />
                             </a>
-                            {/* Toggle visibility to attendees */}
+                            {/* Share with attendees toggle */}
                             <button
                               onClick={(e) => { e.stopPropagation(); handleToggleFileVisible(event.id, file.id, file.is_visible); }}
-                              className={`p-1 rounded transition-colors ${
+                              className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors shrink-0 ${
                                 file.is_visible
-                                  ? "text-emerald-400 hover:bg-red-500/10 hover:text-red-400"
-                                  : "text-klo-muted hover:bg-emerald-500/10 hover:text-emerald-400"
+                                  ? "bg-emerald-500/15 text-emerald-400 hover:bg-red-500/10 hover:text-red-400"
+                                  : "bg-white/5 text-klo-muted hover:bg-emerald-500/10 hover:text-emerald-400"
                               }`}
-                              title={file.is_visible ? "Hide from attendees" : "Show to attendees"}
+                              title={file.is_visible ? "Click to hide from attendees" : "Click to share with attendees"}
                             >
-                              {file.is_visible ? <Eye size={14} /> : <EyeOff size={14} />}
+                              {file.is_visible ? <Share2 size={11} /> : <MonitorOff size={11} />}
+                              {file.is_visible ? "Shared" : "Share with Attendees"}
                             </button>
                             <button
                               onClick={() => handleDeleteFile(event.id, file.id)}
@@ -962,8 +1009,7 @@ export default function EventsAdminTab() {
                           </div>
                         ))}
                         <p className="text-[10px] text-klo-muted pt-1">
-                          <Eye size={10} className="inline mr-1" />
-                          Eye icon = visible to attendees on conference page &amp; vault
+                          "Share with Attendees" = visible on conference page &amp; vault. Click again to hide.
                         </p>
                       </div>
                     ) : (
@@ -994,6 +1040,18 @@ export default function EventsAdminTab() {
       variants={fadeUp}
       className="space-y-8"
     >
+      {/* Global save feedback toast */}
+      {saveMsg && (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium ${
+          saveMsg.type === "success"
+            ? "bg-emerald-500/20 border border-emerald-500/30 text-emerald-300"
+            : "bg-red-500/20 border border-red-500/30 text-red-300"
+        }`}>
+          {saveMsg.type === "success" ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+          {saveMsg.text}
+        </div>
+      )}
+
       {/* Site Spotlight config */}
       <SpotlightPanel events={events} />
 

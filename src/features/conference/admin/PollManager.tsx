@@ -637,10 +637,11 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
                           </button>
                           <button
                             onClick={() => undeployPoll(poll.id)}
-                            className="p-1.5 rounded-lg text-klo-muted hover:text-yellow-400 hover:bg-yellow-500/10 transition-colors"
-                            title="Move back to queue — undeploy this poll"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-colors text-xs font-medium"
+                            title="Move back to queue — removes from attendees' screens"
                           >
-                            <Undo2 size={14} />
+                            <Undo2 size={12} />
+                            Pull Back
                           </button>
                           <button
                             onClick={() => deletePoll(poll.id)}
