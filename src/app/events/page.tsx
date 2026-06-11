@@ -1076,7 +1076,6 @@ function EventCard({
   onViewDetails?: (id: string) => void;
 }) {
   const files = event.event_files ?? [];
-  const hasFiles = files.length > 0;
   const visibleFiles = files.filter((f) => f.is_visible);
 
   return (
