@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Play, BarChart2, SkipForward, ChevronDown, ChevronUp } from "lucide-react";
+import { Play, BarChart2, StopCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useConferenceRealtime } from "../hooks/useConferenceRealtime";
 import type { PollWithVotes } from "../types";
 
@@ -152,38 +152,33 @@ export default function PresenterRemote({ eventId }: PresenterRemoteProps) {
               {live.show_results ? "Hide Results" : "Show Results"}
             </button>
 
-            {queued.length > 0 ? (
-              <button
-                onClick={nextPoll}
-                disabled={busy}
-                className="flex-1 flex items-center justify-center gap-2 py-4 bg-white/10 text-klo-text border border-white/10 rounded-2xl font-bold text-base hover:bg-white/15 transition-all disabled:opacity-50"
-              >
-                <SkipForward size={20} />
-                Next
-              </button>
-            ) : (
-              <button
-                onClick={closePoll}
-                disabled={busy}
-                className="flex-1 flex items-center justify-center gap-2 py-4 bg-red-500/10 text-red-400 border border-red-500/20 rounded-2xl font-bold text-base hover:bg-red-500/20 transition-all disabled:opacity-50"
-              >
-                End Poll
-              </button>
-            )}
+            <button
+              onClick={closePoll}
+              disabled={busy}
+              className="flex-1 flex items-center justify-center gap-2 py-4 bg-red-500/10 text-red-400 border border-red-500/20 rounded-2xl font-bold text-base hover:bg-red-500/20 transition-all disabled:opacity-50"
+            >
+              <StopCircle size={20} />
+              Close Poll
+            </button>
           </div>
         </div>
       ) : queued.length > 0 ? (
-        /* ── NO ACTIVE POLL — START PROMPT ── */
+        /* ── NO ACTIVE POLL — READY FOR NEXT ── */
         <div className="glass rounded-3xl p-6 border border-[#2764FF]/20 space-y-5 text-center">
-          <p className="text-xs font-semibold text-klo-muted uppercase tracking-wider">Up First</p>
+          <p className="text-xs font-semibold text-klo-muted uppercase tracking-wider">
+            {done.length === 0 ? "Up First" : "Next Question"}
+          </p>
           <p className="text-2xl font-bold text-klo-text leading-snug">{queued[0].question}</p>
+          <p className="text-xs text-klo-muted">
+            {(queued[0].options as string[]).join(" · ")}
+          </p>
           <button
             onClick={() => startPoll(queued[0].id)}
             disabled={busy}
             className="w-full flex items-center justify-center gap-3 py-5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white rounded-2xl font-bold text-xl hover:brightness-110 transition-all disabled:opacity-50"
           >
             <Play size={24} fill="white" />
-            Start Poll
+            {done.length === 0 ? "Start Poll" : "Start Next Poll"}
           </button>
         </div>
       ) : (
