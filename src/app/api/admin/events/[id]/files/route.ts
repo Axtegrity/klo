@@ -96,6 +96,39 @@ export async function POST(
   return NextResponse.json(data, { status: 201 });
 }
 
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await verifyAdmin();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  await params;
+  const { searchParams } = new URL(req.url);
+  const fileId = searchParams.get("fileId");
+  if (!fileId) {
+    return NextResponse.json({ error: "fileId required" }, { status: 400 });
+  }
+
+  const body = await req.json();
+  const supabase = getServiceSupabase();
+
+  const { data, error } = await supabase
+    .from("event_files")
+    .update({ is_visible: body.is_visible })
+    .eq("id", fileId)
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

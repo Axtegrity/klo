@@ -42,16 +42,6 @@ export interface VaultContent {
   updated_at: string;
 }
 
-export interface StrategyRoom {
-  id: string;
-  name: string;
-  description: string | null;
-  created_by: string;
-  participants: string[];
-  is_active: boolean;
-  created_at: string;
-}
-
 export interface StrategySessionRow {
   id: string;
   slug: string;
@@ -68,6 +58,7 @@ export interface StrategySessionRow {
   topics: string[];
   agenda: { time: string; title: string; description: string }[];
   key_takeaways: string[];
+  join_url: string | null;
   replay_url: string | null;
   notes_url: string | null;
   discussion_count: number;
@@ -116,7 +107,6 @@ export interface Database {
       profiles: { Row: Profile };
       assessment_results: { Row: AssessmentResult };
       vault_content: { Row: VaultContent };
-      strategy_rooms: { Row: StrategyRoom };
       subscriptions: { Row: Subscription };
       push_subscriptions: { Row: PushSubscription };
     };

@@ -162,31 +162,32 @@ export const adminEventCreateSchema = z.object({
 
 export const adminEventUpdateSchema = z.object({
   title: z.string().max(500).optional(),
-  description: z.string().max(10000).optional(),
+  description: z.string().max(10000).nullable().optional(),
   conference_name: z.string().max(500).optional(),
   conference_location: z.string().max(500).optional(),
   event_category: z.string().max(100).optional(),
-  event_date: z.string().optional(),
-  event_time: z.string().max(50).optional(),
+  event_date: z.string().nullable().optional(),
+  event_time: z.string().max(50).nullable().optional(),
   event_timezone: z.string().max(100).optional(),
   is_published: z.boolean().optional(),
   is_featured: z.boolean().optional(),
   slug: z.string().max(500).optional(),
-  access_code: z.string().max(50).optional(),
+  access_code: z.string().max(50).nullable().optional(),
   seminar_mode: z.boolean().optional(),
-  website_url: z.string().max(2000).optional(),
-  start_date: z.string().optional(),
-  end_date: z.string().optional(),
-  notes: z.string().max(10000).optional(),
-  session_name: z.string().max(500).optional(),
-  room_location: z.string().max(500).optional(),
+  website_url: z.string().max(2000).nullable().optional(),
+  start_date: z.string().nullable().optional(),
+  end_date: z.string().nullable().optional(),
+  notes: z.string().max(10000).nullable().optional(),
+  session_name: z.string().max(500).nullable().optional(),
+  room_location: z.string().max(500).nullable().optional(),
   is_guest_presenter: z.boolean().optional(),
-  session_end_time: z.string().max(50).optional(),
-  event_status: z.string().max(50).optional(),
-  event_status_override: z.string().max(50).optional(),
+  session_end_time: z.string().max(50).nullable().optional(),
+  event_status: z.string().max(50).nullable().optional(),
+  event_status_override: z.string().max(50).nullable().optional(),
   display_name_mode: z.string().max(50).optional(),
   hosting_entity: z.string().max(500).nullable().optional(),
   display_on_events_page: z.boolean().optional(),
+  pinned_as_next: z.boolean().optional(),
 }).refine((data) => Object.keys(data).length > 0, {
   message: "At least one field is required",
 });
@@ -302,6 +303,7 @@ export const pollCreateSchema = z.object({
 
 export const pollUpdateSchema = z.object({
   is_active: z.boolean().optional(),
+  is_deployed: z.boolean().optional(),
   show_results: z.boolean().optional(),
 });
 
@@ -337,6 +339,7 @@ export const questionSubmitSchema = z.object({
   text: z.string().min(1).max(2000),
   author_name: z.string().max(200).optional(),
   session_id: z.string().optional(),
+  event_id: z.string().optional(),
 });
 
 // ----------------------------------------------------------------
@@ -359,7 +362,7 @@ export const sessionCreateSchema = z.object({
   description: z.string().max(5000).optional(),
   scheduled_at: z.string().optional(),
   qa_enabled: z.boolean().optional(),
-  release_mode: z.string().max(50).optional(),
+  release_mode: z.enum(["all", "single", "hide_all"]).optional(),
   speaker: z.string().max(200).optional(),
   room: z.string().max(200).optional(),
   time_label: z.string().max(200).optional(),
@@ -377,7 +380,7 @@ export const sessionUpdateSchema = z.object({
   scheduled_at: z.string().optional(),
   is_active: z.boolean().optional(),
   qa_enabled: z.boolean().optional(),
-  release_mode: z.string().max(50).optional(),
+  release_mode: z.enum(["all", "single", "hide_all"]).optional(),
   speaker: z.string().max(200).optional(),
   room: z.string().max(200).optional(),
   time_label: z.string().max(200).optional(),
@@ -403,7 +406,7 @@ export const conferenceSettingsUpdateSchema = z.object({
   event_id: z.string().optional(),
   session_id: z.string().optional(),
   qa_enabled: z.boolean().optional(),
-  release_mode: z.string().max(50).optional(),
+  release_mode: z.enum(["all", "single", "hide_all"]).optional(),
 });
 
 // ----------------------------------------------------------------
@@ -524,6 +527,7 @@ export const strategySessionCreateSchema = z.object({
     description: z.string().max(500),
   })).max(20).optional(),
   key_takeaways: z.array(z.string().max(500)).max(20).optional(),
+  join_url: urlOrEmpty,
   replay_url: urlOrEmpty,
   notes_url: urlOrEmpty,
   published: z.boolean().optional(),
@@ -686,6 +690,7 @@ export const vaultContentUpsertSchema = z.object({
   author_name: z.string().max(200).optional(),
   published_at: z.string().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  featured_in_feed: z.boolean().optional(),
 });
 
 export const vaultContentUpdateSchema = vaultContentUpsertSchema.partial().refine(
@@ -693,7 +698,19 @@ export const vaultContentUpdateSchema = vaultContentUpsertSchema.partial().refin
   { message: "At least one field is required" },
 );
 
-export const feedPostUpsertSchema = z.object({
+const categoryValidation = (
+  data: Record<string, unknown>
+): boolean => {
+  if (data.metadata && typeof data.metadata === 'object' && 'category' in data.metadata) {
+    const cat = (data.metadata as Record<string, unknown>).category;
+    if (typeof cat !== 'string') return false;
+    if (cat.length > 100) return false;
+    if (cat.trim().length === 0) return false;
+  }
+  return true;
+};
+
+const feedPostBase = z.object({
   title: z.string().max(500).nullable().optional(),
   body: z.string().min(1).max(100000),
   post_type: z.string().max(50).optional(),
@@ -704,10 +721,19 @@ export const feedPostUpsertSchema = z.object({
   is_pinned: z.boolean().optional(),
 });
 
-export const feedPostUpdateSchema = feedPostUpsertSchema.partial().refine(
-  (data) => Object.keys(data).length > 0,
-  { message: "At least one field is required" },
-);
+export const feedPostUpsertSchema = feedPostBase.refine(categoryValidation, {
+  message: "metadata.category must be a non-empty string, max 100 chars",
+  path: ["metadata", "category"],
+});
+
+export const feedPostUpdateSchema = feedPostBase.partial()
+  .refine(categoryValidation, {
+    message: "metadata.category must be a non-empty string, max 100 chars",
+    path: ["metadata", "category"],
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field is required",
+  });
 
 export const contentListQuerySchema = z.object({
   visibility: visibilitySchema.optional(),

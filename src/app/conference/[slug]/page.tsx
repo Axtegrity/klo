@@ -6,15 +6,28 @@ import { motion } from "framer-motion";
 import {
   CalendarDays,
   MapPin,
+  Play,
   Radio,
   Sparkles,
   ChevronDown,
+  Download,
+  FileText,
 } from "lucide-react";
 import Badge from "@/components/shared/Badge";
 import SeminarModeGate from "@/features/conference/components/SeminarModeGate";
 import ConferenceToolsTabs from "@/features/conference/components/ConferenceToolsTabs";
 import { useSessions } from "@/features/conference/hooks/useSessions";
+import { useConferenceRoles } from "@/features/conference/hooks/useConferenceRoles";
 import type { ConferenceSession } from "@/features/conference/types";
+
+interface EventFile {
+  id: string;
+  file_name: string;
+  file_type: string;
+  file_url: string;
+  file_size: string | null;
+  is_visible: boolean;
+}
 
 interface EventData {
   id: string;
@@ -29,6 +42,7 @@ interface EventData {
   seminar_mode: boolean;
   start_date: string | null;
   end_date: string | null;
+  event_files: EventFile[];
 }
 
 const fadeUp = {
@@ -95,6 +109,7 @@ export default function EventConferencePage() {
   const [eventLoading, setEventLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  const { isAdmin } = useConferenceRoles();
   const [selectedSession, setSelectedSession] = useState<ConferenceSession | null>(null);
   const { sessions, loading: sessionsLoading } = useSessions(
     event ? { eventId: event.id, activeOnly: true } : undefined
@@ -287,7 +302,7 @@ export default function EventConferencePage() {
           className="max-w-4xl mx-auto"
         >
           <motion.div variants={fadeUp} custom={0} className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-[#2764FF]/10 flex items-center justify-center">
                 <Sparkles size={20} className="text-[#2764FF]" />
               </div>
@@ -295,7 +310,16 @@ export default function EventConferencePage() {
                 Interactive Tools
               </h2>
             </div>
-            <p className="text-klo-muted">
+            {isAdmin && event.id && (
+              <a
+                href={`/conference/present?event_id=${event.id}`}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#2764FF]/10 text-[#2764FF] border border-[#2764FF]/20 rounded-xl text-sm font-semibold hover:bg-[#2764FF]/20 transition-colors"
+              >
+                <Play size={14} fill="currentColor" />
+                Presenter Remote
+              </a>
+            )}
+            <p className="text-klo-muted w-full">
               Participate in live polls, ask questions, and contribute to the word cloud.
             </p>
           </motion.div>
@@ -305,6 +329,39 @@ export default function EventConferencePage() {
               <ConferenceToolsTabs eventId={event.id} sessionId={selectedSession?.id} />
             </SeminarModeGate>
           </motion.div>
+
+          {/* ── Resources — visible files Keith has shared ── */}
+          {event.event_files?.filter((f) => f.is_visible).length > 0 && (
+            <motion.div variants={fadeUp} custom={2} className="pt-2">
+              <div className="glass rounded-2xl border border-white/5 overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
+                  <FileText size={15} className="text-[#2764FF]" />
+                  <p className="text-sm font-semibold text-klo-text">Session Resources</p>
+                </div>
+                <div className="divide-y divide-white/5">
+                  {event.event_files.filter((f) => f.is_visible).map((file) => (
+                    <div key={file.id} className="flex items-center gap-3 px-4 py-3">
+                      <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#2764FF]/10 text-[#2764FF] shrink-0">
+                        {file.file_type}
+                      </span>
+                      <span className="text-sm text-klo-text truncate flex-1">{file.file_name}</span>
+                      {file.file_size && (
+                        <span className="text-xs text-klo-muted shrink-0">{file.file_size}</span>
+                      )}
+                      <a
+                        href={file.file_url}
+                        download
+                        className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2764FF] hover:bg-[#2764FF]/80 text-white text-xs font-semibold transition-colors"
+                      >
+                        <Download size={12} />
+                        Download
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
         </motion.div>
       </section>
     </div>

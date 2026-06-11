@@ -22,6 +22,13 @@ import {
   X,
   Save,
   Radio,
+  Search,
+  ArrowUpCircle,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  Share2,
+  MonitorOff,
 } from "lucide-react";
 
 interface EventFile {
@@ -30,6 +37,7 @@ interface EventFile {
   file_type: string;
   file_url: string;
   file_size: string | null;
+  is_visible: boolean;
 }
 
 interface Event {
@@ -60,6 +68,7 @@ interface Event {
   display_on_events_page: boolean;
   event_status: string;
   event_status_override: boolean;
+  pinned_as_next: boolean;
   event_files: EventFile[];
 }
 
@@ -95,6 +104,12 @@ export default function EventsAdminTab() {
   const [showForm, setShowForm] = useState(false);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  // Accordion section open/closed state
+  const [spotlightOpen, setSpotlightOpen] = useState(false);
+  const [currentOpen, setCurrentOpen] = useState(true);
+  const [previousOpen, setPreviousOpen] = useState(false);
 
   // Document parse state
   const [parsing, setParsing] = useState(false);
@@ -124,6 +139,7 @@ export default function EventsAdminTab() {
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
   const [editFields, setEditFields] = useState<Partial<Event>>({});
   const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -300,7 +316,7 @@ export default function EventsAdminTab() {
     try {
       // Sanitize: empty strings → null for nullable DB columns
       const payload = { ...editFields };
-      for (const key of ["start_date", "end_date", "event_time", "website_url", "access_code", "description"] as const) {
+      for (const key of ["start_date", "end_date", "event_time", "website_url", "access_code", "description", "session_name", "room_location", "session_end_time", "notes"] as const) {
         if (key in payload && (payload as Record<string, unknown>)[key] === "") {
           (payload as Record<string, unknown>)[key] = null;
         }
@@ -314,6 +330,11 @@ export default function EventsAdminTab() {
         setEditingEvent(null);
         setEditFields({});
         fetchEvents();
+        setSaveMsg({ type: "success", text: "Saved — changes are live." });
+        setTimeout(() => setSaveMsg(null), 4000);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setSaveMsg({ type: "error", text: err.error || "Save failed. Please try again." });
       }
     } finally {
       setSaving(false);
@@ -395,12 +416,58 @@ export default function EventsAdminTab() {
     fetchEvents();
   };
 
-  const handleTogglePublish = async (eventId: string, currentlyPublished: boolean) => {
+  const handleToggleFileVisible = async (eventId: string, fileId: string, currentlyVisible: boolean) => {
+    const res = await fetch(`/api/admin/events/${eventId}/files?fileId=${fileId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_visible: !currentlyVisible }),
+    });
+    if (!res.ok) {
+      setSaveMsg({ type: "error", text: "Failed to update file visibility." });
+      setTimeout(() => setSaveMsg(null), 4000);
+    } else {
+      setSaveMsg({ type: "success", text: currentlyVisible ? "File hidden from attendees." : "File shared with attendees — visible on conference page." });
+      setTimeout(() => setSaveMsg(null), 4000);
+    }
+    fetchEvents();
+  };
+
+  const handleToggleUpNext = async (eventId: string, currentlyPinned: boolean) => {
     await fetch(`/api/admin/events/${eventId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pinned_as_next: !currentlyPinned }),
+    });
+    fetchEvents();
+  };
+
+  const handleTogglePublish = async (eventId: string, currentlyPublished: boolean) => {
+    const res = await fetch(`/api/admin/events/${eventId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ is_published: !currentlyPublished }),
     });
+    if (res.ok) {
+      setSaveMsg({ type: "success", text: currentlyPublished ? "Event unpublished." : "Event published — now live." });
+    } else {
+      setSaveMsg({ type: "error", text: "Failed to update publish status." });
+    }
+    setTimeout(() => setSaveMsg(null), 4000);
+    fetchEvents();
+  };
+
+  const handleToggleDisplayOnEventsPage = async (eventId: string, currentlyShowing: boolean) => {
+    const res = await fetch(`/api/admin/events/${eventId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ display_on_events_page: !currentlyShowing }),
+    });
+    if (res.ok) {
+      setSaveMsg({ type: "success", text: currentlyShowing ? "Hidden from Events page." : "Now showing on Events page." });
+    } else {
+      setSaveMsg({ type: "error", text: "Failed to update events page visibility." });
+    }
+    setTimeout(() => setSaveMsg(null), 4000);
     fetchEvents();
   };
 
@@ -411,15 +478,22 @@ export default function EventsAdminTab() {
     return new Date(dateStr + timeSuffix) < new Date();
   };
 
-  const currentEvents = events.filter((e) => !isEventPast(e.event_date, e.event_time));
-  const previousEvents = events.filter((e) => isEventPast(e.event_date, e.event_time));
+  const searchLower = search.toLowerCase();
+  const matchesSearch = (e: Event) =>
+    !search ||
+    e.title.toLowerCase().includes(searchLower) ||
+    e.conference_name.toLowerCase().includes(searchLower) ||
+    e.conference_location.toLowerCase().includes(searchLower);
+
+  const currentEvents = events.filter((e) => !isEventPast(e.event_date, e.event_time) && matchesSearch(e));
+  const previousEvents = events.filter((e) => isEventPast(e.event_date, e.event_time) && matchesSearch(e));
 
   const inputClass =
     "w-full px-4 py-2.5 rounded-xl bg-klo-dark border border-white/10 text-klo-text placeholder:text-klo-muted text-sm focus:outline-none focus:border-klo-gold/50";
 
   const renderEventList = (items: Event[], label: string) => (
     <div>
-      <h3 className="text-lg font-semibold text-klo-text mb-4">{label}</h3>
+      {label && <h3 className="text-lg font-semibold text-klo-text mb-4">{label}</h3>}
       {items.length === 0 ? (
         <p className="text-klo-muted text-sm">No events yet</p>
       ) : (
@@ -471,6 +545,11 @@ export default function EventsAdminTab() {
                           Seminar Live
                         </span>
                       )}
+                      {event.pinned_as_next && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#2764FF]/10 text-[#2764FF]">
+                          Up Next
+                        </span>
+                      )}
                     </div>
                   </div>
                   <button
@@ -490,6 +569,20 @@ export default function EventsAdminTab() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      handleToggleDisplayOnEventsPage(event.id, event.display_on_events_page);
+                    }}
+                    className={`p-2 rounded-lg transition-colors ${
+                      event.display_on_events_page
+                        ? "text-[#2764FF] bg-[#2764FF]/10"
+                        : "text-klo-muted hover:text-[#2764FF] hover:bg-[#2764FF]/10"
+                    }`}
+                    title={event.display_on_events_page ? "Showing on Events page — click to hide" : "Hidden from Events page — click to show"}
+                  >
+                    {event.display_on_events_page ? <Eye size={16} /> : <EyeOff size={16} />}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
                       handleToggleFeature(event.id, event.is_featured);
                     }}
                     className={`p-2 rounded-lg transition-colors ${
@@ -500,6 +593,20 @@ export default function EventsAdminTab() {
                     title={event.is_featured ? "Remove from homepage" : "Feature on homepage"}
                   >
                     <Star size={16} fill={event.is_featured ? "currentColor" : "none"} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleUpNext(event.id, event.pinned_as_next);
+                    }}
+                    className={`p-2 rounded-lg transition-colors ${
+                      event.pinned_as_next
+                        ? "text-[#2764FF] bg-[#2764FF]/10"
+                        : "text-klo-muted hover:text-[#2764FF] hover:bg-[#2764FF]/10"
+                    }`}
+                    title={event.pinned_as_next ? "Remove Up Next pin" : "Pin as Up Next on events page"}
+                  >
+                    <ArrowUpCircle size={16} fill={event.pinned_as_next ? "currentColor" : "none"} />
                   </button>
                   <button
                     onClick={(e) => {
@@ -861,9 +968,13 @@ export default function EventsAdminTab() {
                         {event.event_files.map((file) => (
                           <div
                             key={file.id}
-                            className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/[0.02]"
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors ${
+                              file.is_visible
+                                ? "bg-emerald-500/5 border-emerald-500/20"
+                                : "bg-white/[0.02] border-white/5"
+                            }`}
                           >
-                            <FileText size={14} className="text-klo-muted shrink-0" />
+                            <FileText size={14} className={file.is_visible ? "text-emerald-400 shrink-0" : "text-klo-muted shrink-0"} />
                             <span className="text-sm text-klo-text truncate flex-1">
                               {file.file_name}
                             </span>
@@ -873,14 +984,42 @@ export default function EventsAdminTab() {
                             <span className="text-xs text-klo-muted">
                               {file.file_size ?? ""}
                             </span>
+                            {/* Open file */}
+                            <a
+                              href={file.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 rounded hover:bg-[#2764FF]/10 text-klo-muted hover:text-[#2764FF] transition-colors"
+                              title="Open file"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink size={14} />
+                            </a>
+                            {/* Share with attendees toggle */}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleToggleFileVisible(event.id, file.id, file.is_visible); }}
+                              className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors shrink-0 ${
+                                file.is_visible
+                                  ? "bg-emerald-500/15 text-emerald-400 hover:bg-red-500/10 hover:text-red-400"
+                                  : "bg-white/5 text-klo-muted hover:bg-emerald-500/10 hover:text-emerald-400"
+                              }`}
+                              title={file.is_visible ? "Click to hide from attendees" : "Click to share with attendees"}
+                            >
+                              {file.is_visible ? <Share2 size={11} /> : <MonitorOff size={11} />}
+                              {file.is_visible ? "Shared" : "Share with Attendees"}
+                            </button>
                             <button
                               onClick={() => handleDeleteFile(event.id, file.id)}
                               className="p-1 rounded hover:bg-red-500/10 text-klo-muted hover:text-red-400 transition-colors"
+                              title="Delete file"
                             >
                               <Trash2 size={14} />
                             </button>
                           </div>
                         ))}
+                        <p className="text-[10px] text-klo-muted pt-1">
+                          &ldquo;Share with Attendees&rdquo; = visible on conference page &amp; vault. Click again to hide.
+                        </p>
                       </div>
                     ) : (
                       <p className="text-xs text-klo-muted">No files uploaded</p>
@@ -910,8 +1049,40 @@ export default function EventsAdminTab() {
       variants={fadeUp}
       className="space-y-8"
     >
-      {/* Site Spotlight config */}
-      <SpotlightPanel events={events} />
+      {/* Global save feedback toast */}
+      {saveMsg && (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium ${
+          saveMsg.type === "success"
+            ? "bg-emerald-500/20 border border-emerald-500/30 text-emerald-300"
+            : "bg-red-500/20 border border-red-500/30 text-red-300"
+        }`}>
+          {saveMsg.type === "success" ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+          {saveMsg.text}
+        </div>
+      )}
+
+      {/* Spotlight & Countdown config — collapsible */}
+      <div className="glass rounded-2xl border border-white/5 overflow-hidden">
+        <button
+          onClick={() => setSpotlightOpen((o) => !o)}
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.02] transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Radio size={16} className="text-klo-gold" />
+            <span className="text-sm font-semibold text-klo-text">Spotlight &amp; Countdown</span>
+            <span className="text-xs text-klo-muted">Events page hero controls</span>
+          </div>
+          <ChevronDown
+            size={16}
+            className={`text-klo-muted transition-transform duration-200 ${spotlightOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+        {spotlightOpen && (
+          <div className="border-t border-white/5">
+            <SpotlightPanel events={events} />
+          </div>
+        )}
+      </div>
 
       {/* Header with add button */}
       <div className="flex items-center justify-between">
@@ -1267,9 +1438,76 @@ export default function EventsAdminTab() {
         </motion.div>
       )}
 
+      {/* Search */}
+      <div className="relative">
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-klo-muted pointer-events-none" />
+        <input
+          type="text"
+          placeholder="Search events by name, conference, or location..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-klo-dark border border-white/10 text-klo-text placeholder:text-klo-muted text-sm focus:outline-none focus:border-klo-gold/50"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-klo-muted hover:text-klo-text transition-colors"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
       {/* Event lists */}
-      {renderEventList(currentEvents, "Current Events")}
-      {renderEventList(previousEvents, "Previous Events")}
+      {/* Current Events — collapsible */}
+      <div className="glass rounded-2xl border border-white/5 overflow-hidden">
+        <button
+          onClick={() => setCurrentOpen((o) => !o)}
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.02] transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Radio size={16} className="text-emerald-400" />
+            <span className="text-sm font-semibold text-klo-text">Current Events</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">
+              {currentEvents.length}
+            </span>
+          </div>
+          <ChevronDown
+            size={16}
+            className={`text-klo-muted transition-transform duration-200 ${currentOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+        {currentOpen && (
+          <div className="border-t border-white/5 p-5">
+            {renderEventList(currentEvents, "")}
+          </div>
+        )}
+      </div>
+
+      {/* Previous Events — collapsible, collapsed by default */}
+      <div className="glass rounded-2xl border border-white/5 overflow-hidden">
+        <button
+          onClick={() => setPreviousOpen((o) => !o)}
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.02] transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Calendar size={16} className="text-klo-muted" />
+            <span className="text-sm font-semibold text-klo-text">Previous Events</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-white/5 text-klo-muted">
+              {previousEvents.length}
+            </span>
+          </div>
+          <ChevronDown
+            size={16}
+            className={`text-klo-muted transition-transform duration-200 ${previousOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+        {previousOpen && (
+          <div className="border-t border-white/5 p-5">
+            {renderEventList(previousEvents, "")}
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }
@@ -1379,7 +1617,7 @@ function SpotlightPanel({ events }: { events: Event[] }) {
   );
 
   return (
-    <div className="rounded-2xl p-6 border-2 border-[#2764FF]/40 bg-gradient-to-br from-[#2764FF]/10 via-[#2764FF]/5 to-transparent shadow-lg shadow-[#2764FF]/10 space-y-5">
+    <div className="p-6 space-y-5">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-lg bg-[#2764FF]/20 flex items-center justify-center flex-shrink-0">
           <Radio size={20} className="text-[#2764FF]" />

@@ -14,6 +14,7 @@ import {
   MapPin,
 } from "lucide-react";
 import PollManager from "./PollManager";
+import PresenterRemote from "./PresenterRemote";
 import QuestionModerator from "./QuestionModerator";
 import WordCloudManager from "./WordCloudManager";
 import SessionManager from "./SessionManager";
@@ -57,6 +58,60 @@ function formatEventDate(ev: EventOption): string {
     return `${s.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${e.toLocaleDateString("en-US", { day: "numeric", year: "numeric" })}`;
   }
   return `${fmt(start)} – ${fmt(end)}`;
+}
+
+type PollMode = "manage" | "present";
+
+function PollsTab({ eventId }: { eventId: string }) {
+  const [mode, setMode] = useState<PollMode>("manage");
+
+  return (
+    <div className="space-y-4">
+      {/* Manage / Present Live toggle */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1 p-1 rounded-xl bg-klo-dark/50 border border-white/5">
+          <button
+            onClick={() => setMode("manage")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              mode === "manage"
+                ? "bg-klo-slate text-klo-text shadow"
+                : "text-klo-muted hover:text-klo-text"
+            }`}
+          >
+            Manage
+          </button>
+          <button
+            onClick={() => setMode("present")}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              mode === "present"
+                ? "bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white shadow"
+                : "text-klo-muted hover:text-klo-text"
+            }`}
+          >
+            <span className="relative flex h-2 w-2">
+              {mode === "present" && (
+                <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-75 animate-ping" />
+              )}
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${mode === "present" ? "bg-white" : "bg-klo-muted/40"}`} />
+            </span>
+            Present Live
+          </button>
+        </div>
+        {mode === "manage" && (
+          <span className="text-xs text-klo-muted">Build your poll deck, then go live</span>
+        )}
+        {mode === "present" && (
+          <span className="text-xs text-emerald-400 font-medium">Running live — attendees see your polls</span>
+        )}
+      </div>
+
+      {mode === "manage" ? (
+        <PollManager eventId={eventId} />
+      ) : (
+        <PresenterRemote eventId={eventId} />
+      )}
+    </div>
+  );
 }
 
 export default function ConferenceAdminTab() {
@@ -203,13 +258,7 @@ export default function ConferenceAdminTab() {
           )}
 
           {subTab === "polls" && (
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-base font-semibold text-klo-text">Polls</h3>
-                <span className="text-xs text-klo-muted">— create polls, deploy them live, see results</span>
-              </div>
-              <PollManager eventId={selectedEventId} />
-            </div>
+            <PollsTab eventId={selectedEventId} />
           )}
 
           {subTab === "qa" && (

@@ -107,23 +107,6 @@ const DEFAULT_SECTIONS: HomeSection[] = [
       { key: "subheading", label: "Subheading", value: "Quick, targeted assessments to benchmark where you stand.", type: "text", maxLength: 120 },
     ],
   },
-  {
-    id: "strategy_room",
-    label: "Upcoming Strategy Room",
-    description: "Next strategy room session preview",
-    visible: true,
-    canHide: true,
-    lastEdited: "Mar 8, 2026",
-    fields: [
-      { key: "heading", label: "Section Heading", value: "Next Strategy Room", type: "text", maxLength: 60 },
-      { key: "title", label: "Session Title", value: "AI Governance for Faith Organizations", type: "text", maxLength: 80, required: true },
-      { key: "date", label: "Date", value: "April 15, 2026", type: "text", maxLength: 40 },
-      { key: "description", label: "Description", value: "Join a focused strategy session on developing AI governance frameworks tailored for faith-based organizations.", type: "textarea", maxLength: 300 },
-      { key: "seats", label: "Seats Info", value: "8 of 20", type: "text", maxLength: 20 },
-      { key: "cta", label: "Button Label", value: "Register", type: "text", maxLength: 30 },
-      { key: "link", label: "Link", value: "/strategy-rooms", type: "url", maxLength: 200 },
-    ],
-  },
 ];
 
 export default function HomeContentManager() {
@@ -141,7 +124,6 @@ export default function HomeContentManager() {
     insight:        "insight_config",
     tool:           "tool_config",
     assessment_cta: "assessment_config",
-    strategy_room:  "strategy_config",
   };
 
   useEffect(() => {
@@ -169,28 +151,12 @@ export default function HomeContentManager() {
 
   const editingSection = sections.find((s) => s.id === editingId);
 
-  const toggleVisibility = async (id: string) => {
+  const toggleVisibility = (id: string) => {
     const section = sections.find((s) => s.id === id);
     if (!section || !section.canHide) return;
-    const newVisible = !section.visible;
     setSections((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, visible: newVisible } : s))
+      prev.map((s) => (s.id === id ? { ...s, visible: !s.visible } : s))
     );
-    // Persist strategy_room visibility to the DB
-    if (id === "strategy_room") {
-      try {
-        await fetch("/api/admin/creative-studio/pages/home", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ strategy_config: { visible: newVisible } }),
-        });
-      } catch {
-        // Revert on failure
-        setSections((prev) =>
-          prev.map((s) => (s.id === id ? { ...s, visible: !newVisible } : s))
-        );
-      }
-    }
   };
 
   const handleDragStart = (index: number) => setDragIndex(index);
