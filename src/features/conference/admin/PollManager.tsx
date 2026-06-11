@@ -12,6 +12,7 @@ import {
   Rocket,
   FileText,
   Download,
+  Undo2,
 } from "lucide-react";
 // PollResults and CollectiveResultsChart available if needed for detailed views
 import { useConferenceRealtime } from "../hooks/useConferenceRealtime";
@@ -33,6 +34,7 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
   const [inputMode, setInputMode] = useState<InputMode>("single");
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [pullingBack, setPullingBack] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [filterSessionId, setFilterSessionId] = useState<string>("all");
@@ -197,9 +199,14 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
     }
     setDeployingId(id);
     try {
-      await fetch(`/api/conference/polls/${id}/deploy`, { method: "POST" });
+      const res = await fetch(`/api/conference/polls/${id}/deploy`, { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(body?.error || `Failed to deploy poll (${res.status})`);
+        return;
+      }
       setDeployedSet((prev) => new Set(prev).add(id));
-      showSuccess("Poll deployed!");
+      showSuccess("Poll deployed! Other active polls have been closed.");
       fetchPolls();
     } finally {
       setDeployingId(null);
@@ -209,22 +216,57 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
   const deployAllPolls = async () => {
     if (queuedPolls.length === 0) return;
     setDeployingAll(true);
+    const failed: string[] = [];
     try {
-      await Promise.all(
-        queuedPolls.map((p) =>
-          fetch(`/api/conference/polls/${p.id}/deploy`, { method: "POST" })
-        )
-      );
-      setDeployedSet((prev) => {
-        const next = new Set(prev);
-        queuedPolls.forEach((p) => next.add(p.id));
-        return next;
-      });
-      showSuccess(`${queuedPolls.length} poll${queuedPolls.length !== 1 ? "s" : ""} deployed!`);
+      // Sequential — each deploy closes siblings before the next one fires,
+      // so the single-active-poll guarantee is never broken by a race.
+      for (const p of queuedPolls) {
+        const res = await fetch(`/api/conference/polls/${p.id}/deploy`, { method: "POST" });
+        if (res.ok) {
+          setDeployedSet((prev) => new Set(prev).add(p.id));
+        } else {
+          failed.push(p.question);
+        }
+      }
+      if (failed.length === 0) {
+        showSuccess(`${queuedPolls.length} poll${queuedPolls.length !== 1 ? "s" : ""} deployed!`);
+      } else {
+        setError(`${failed.length} poll${failed.length !== 1 ? "s" : ""} failed to deploy: ${failed.join(", ")}`);
+      }
       fetchPolls();
     } finally {
       setDeployingAll(false);
     }
+  };
+
+  const pullBackAll = async () => {
+    if (!eventId) return;
+    setPullingBack(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/conference/polls/reset?event_id=${eventId}`, { method: "POST" });
+      if (res.ok) {
+        fetchPolls();
+        showSuccess("All polls pulled back — attendees see nothing. Use Present Live to push one at a time.");
+      } else {
+        const data = await res.json().catch(() => null);
+        setError(data?.error || "Failed to pull back polls");
+      }
+    } catch {
+      setError("Network error — try again");
+    } finally {
+      setPullingBack(false);
+    }
+  };
+
+  const undeployPoll = async (id: string) => {
+    await fetch(`/api/conference/polls/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_deployed: false }),
+    });
+    fetchPolls();
+    showSuccess("Poll moved back to queue.");
   };
 
   const togglePoll = async (id: string, field: "is_active" | "show_results", value: boolean) => {
@@ -289,8 +331,45 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
     : polls.filter((p) => p.session_id === filterSessionId);
   const deployedPolls = filteredPolls.filter((p) => p.is_deployed);
 
+  const activePollCount = filteredPolls.filter((p) => p.is_active).length;
+  const deployedNotActivePollCount = filteredPolls.filter((p) => p.is_deployed && !p.is_active).length;
+  const hasDeployedPolls = deployedPolls.length > 0;
+
   return (
     <div className="space-y-6">
+      {/* ── PULL BACK ALL — emergency banner when polls are live ── */}
+      {hasDeployedPolls && eventId && (
+        <div className="rounded-2xl p-4 border border-orange-500/40 bg-orange-500/10 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-orange-300">
+              {activePollCount > 0
+                ? `${activePollCount} poll${activePollCount !== 1 ? "s" : ""} currently LIVE on attendee screens`
+                : `${deployedNotActivePollCount} closed poll${deployedNotActivePollCount !== 1 ? "s" : ""} visible to attendees`}
+            </p>
+            <p className="text-xs text-orange-400/70 mt-0.5">
+              Pull back all to clear the screen, then use <strong>Present Live</strong> to push one at a time.
+            </p>
+          </div>
+          <button
+            onClick={pullBackAll}
+            disabled={pullingBack}
+            className="shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {pullingBack ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                Pulling back…
+              </>
+            ) : (
+              <>
+                <Undo2 size={16} />
+                Pull Back All
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Feedback messages */}
       {error && (
         <div className="rounded-xl p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
@@ -541,7 +620,7 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
                                 ? "text-emerald-400 hover:bg-emerald-500/10"
                                 : "text-klo-muted hover:bg-white/5"
                             }`}
-                            title={poll.is_active ? "Close poll" : "Reopen poll"}
+                            title={poll.is_active ? "End poll — removes from attendees' screens" : "Reopen poll"}
                           >
                             {poll.is_active ? <Power size={14} /> : <PowerOff size={14} />}
                           </button>
@@ -552,9 +631,17 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
                                 ? "text-[#2764FF] hover:bg-[#2764FF]/10"
                                 : "text-klo-muted hover:bg-white/5"
                             }`}
-                            title={poll.show_results ? "Visible to attendees" : "Hidden from attendees"}
+                            title={poll.show_results ? "Hide results from attendees" : "Show results to attendees"}
                           >
                             {poll.show_results ? <Eye size={14} /> : <EyeOff size={14} />}
+                          </button>
+                          <button
+                            onClick={() => undeployPoll(poll.id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-colors text-xs font-medium"
+                            title="Move back to queue — removes from attendees' screens"
+                          >
+                            <Undo2 size={12} />
+                            Pull Back
                           </button>
                           <button
                             onClick={() => deletePoll(poll.id)}

@@ -154,30 +154,6 @@ export interface AdvisorConversation {
 // Strategy Room
 // ------------------------------------------------------------
 
-export type StrategyRoomStatus = "draft" | "active" | "completed" | "archived";
-
-export interface StrategyRoom {
-  id: string;
-  title: string;
-  description: string;
-  ownerId: string;
-  status: StrategyRoomStatus;
-  participants: string[];
-  objectives: string[];
-  /** Key deliverables or action items. */
-  deliverables: StrategyDeliverable[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface StrategyDeliverable {
-  id: string;
-  title: string;
-  assignee?: string;
-  completed: boolean;
-  dueDate?: string;
-}
-
 // ------------------------------------------------------------
 // Community Feed
 // ------------------------------------------------------------
@@ -258,9 +234,6 @@ export interface AdminDashboardStats {
   assessments: {
     totalCompleted: number;
     byType: Record<string, number>;
-  };
-  strategyRooms: {
-    activeRooms: number;
   };
   vault: {
     totalContent: number;

@@ -6,10 +6,9 @@ import FeaturedInsight from "@/components/home/FeaturedInsight";
 import AIToolOfTheWeek from "@/components/home/AIToolOfTheWeek";
 import QuickAssessmentCTA from "@/components/home/QuickAssessmentCTA";
 import UpcomingKeynote from "@/components/home/UpcomingKeynote";
-import UpcomingStrategyRoom from "@/components/home/UpcomingStrategyRoom";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import FadeInOnScroll from "@/components/shared/FadeInOnScroll";
-import { getPageConfig, type StrategyConfig, type TrendingConfig } from "@/lib/page-config-server";
+import { getPageConfig, type TrendingConfig } from "@/lib/page-config-server";
 import { getServiceSupabase } from "@/lib/supabase";
 
 // Force dynamic so admin edits to page_configs reflect immediately
@@ -70,42 +69,6 @@ async function getTrendingTopicsFromFeaturedArticles(
   }
 }
 
-async function getNextStrategySession(): Promise<StrategyConfig | null> {
-  try {
-    const supabase = getServiceSupabase();
-
-    const { data: session } = await supabase
-      .from("strategy_sessions")
-      .select("id, slug, title, date, description, total_seats")
-      .eq("published", true)
-      .eq("is_past", false)
-      .order("session_date", { ascending: true, nullsFirst: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (!session) return null;
-
-    const { count: regCount } = await supabase
-      .from("strategy_registrations")
-      .select("*", { count: "exact", head: true })
-      .eq("session_id", session.id)
-      .eq("status", "registered");
-
-    const seatsRemaining = session.total_seats - (regCount ?? 0);
-
-    return {
-      heading: "Next Strategy Room",
-      title: session.title,
-      date: session.date ?? "",
-      description: session.description ?? "",
-      seats: `${seatsRemaining} of ${session.total_seats}`,
-      cta: "Register",
-      link: `/strategy-rooms/${session.slug}`,
-    };
-  } catch {
-    return null;
-  }
-}
 
 export default async function Home() {
   const pageConfig = await getPageConfig("home");
@@ -124,17 +87,11 @@ export default async function Home() {
   const insightConfig    = pageConfig?.insight_config    ?? null;
   const toolConfig       = pageConfig?.tool_config       ?? null;
   const assessmentConfig = pageConfig?.assessment_config ?? null;
-  const strategyConfig   = pageConfig?.strategy_config   ?? null;
 
   const featuredInsightImage =
     sectionImages?.featuredInsight?.backgroundType === "image"
       ? (sectionImages.featuredInsight.backgroundRef ?? null)
       : null;
-
-  // Auto-pull next upcoming published session for the home page card.
-  // Falls back to admin-authored strategy_config, then to component defaults.
-  const autoStrategyConfig = await getNextStrategySession();
-  const effectiveStrategyConfig = autoStrategyConfig ?? strategyConfig;
 
   return (
     <>
@@ -177,11 +134,6 @@ export default async function Home() {
           <FadeInOnScroll delay={0.05}>
             <QuickAssessmentCTA assessmentConfig={assessmentConfig} />
           </FadeInOnScroll>
-          {strategyConfig?.visible !== false && (
-            <FadeInOnScroll delay={0.05}>
-              <UpcomingStrategyRoom strategyConfig={effectiveStrategyConfig} />
-            </FadeInOnScroll>
-          )}
         </div>
       </div>
     </>

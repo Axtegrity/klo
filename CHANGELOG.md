@@ -4,12 +4,48 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [2026-06-10] — Conference Polish, Presenter Remote, Events Admin
+
+### Added
+- **Presenter Remote** — phone-friendly stage remote at `/conference/present?event_id=X` for Keith to drive polls on stage; shows live vote count, Show/Hide Results toggle, Next button to advance queue; accessible to admin/owner only (PR #124)
+- **Admin Events search box** — search input above the event list filters by event name, conference, or location as you type; includes clear (✕) button (PR #127)
+
+### Fixed
+- **Conference polls — server-side deploy gate** — `POST /api/conference/polls/[id]/deploy` now checks whether a poll is already active/deployed before setting it live; prevents double-deploy from concurrent requests (PR #123)
+- **Conference polls — sequential deploy** — `deployAllPolls` in PollManager now uses a sequential `for...of` loop instead of `Promise.all`; eliminates race condition where two polls could go active simultaneously (PR #123)
+- **Conference polls — session_id fallback** — deploy route now closes sibling polls by `session_id` when `event_id` is absent, so polls without an event assignment still correctly deactivate each other (PR #123)
+- **Conference polls — stale results on advance** — closing a poll now resets `show_results: false` so the audience never sees the previous poll's results when the next poll goes live (PR #123)
+- **Conference — owner role not recognized as admin** — `useConferenceRoles` only checked `appRole === "admin"`, so the owner account (Keith) was treated as an attendee; Presenter Remote button was hidden and poll controls were disabled; fixed by adding `appRole === "owner"` to the admin check (PR #125)
+- **Q&A single-release — questions visible immediately** — `released` column in `conference_questions` defaulted to `true`, meaning every submitted question was immediately visible to guests even in single-release sessions; DB migration 20260610000002 sets `DEFAULT false` and updates the `submit_conference_question` RPC to explicitly pass `released = false` (PR #126)
+- **Florida Cocoa polls reset** — all 12 Florida Cocoa Church of God 102nd State Convention polls were stuck in "all active" state from a pre-fix deploy; reset directly in DB: `is_deployed=false, is_active=false, show_results=false` on all 12 so the Presenter Remote queue works correctly for the live event
+- **Admin Events sort order** — events API was ordered `ascending: false` (furthest-away first); changed to `ascending: true` so the next closest event (Florida Cocoa, June 10) appears at the top of the list (PR #127)
+
+---
+
 ## [Unreleased]
 
 ### Security
 - bump Next.js to 16.2.6 (CVE-2026-44573/44574/44575/44578/45109 — middleware auth bypass + DoS)
+- **Conference: Monitor View gated to admins** — "Monitor View" button was shown to all users; now only admins see it.
+- **Conference: draft polls hidden from guests** — `GET /api/conference/polls` now filters to `is_deployed=true` for non-admin callers; draft questions were previously exposed.
+- **Conference: questions scoped per event** — `GET /api/conference/questions` returns `[]` when neither `event_id` nor `session_id` is provided and caller is not admin; previously returned questions across all conferences.
+
+### Fixed
+- **Conference: `likeQuestion` called wrong endpoint** — authenticated heart-likes now route to `/api/conference/questions/[id]/like`; anonymous ChevronUp upvotes use `/upvote`. Previously both paths hit `/upvote`, causing authenticated upvotes to silently record as likes.
 
 ### Added
+- **Events page search + filter** — search bar filters events by title/description/location in real time; filter tabs (Upcoming / All Events / Past) default to "Upcoming" so guests see future events first; all three sections (Live, Upcoming, Past) respect both the search query and active filter.
+- **Ask Keith RAG** — AI advisor now performs keyword-based retrieval against `vault_content` before each response; top 3 matching articles are injected as context into the system prompt so answers are grounded in Keith's published material rather than generic knowledge.
+- **Q&A release_mode fully wired** — all three modes now work: `all` shows every submitted question immediately; `single` requires per-question release via the Eye button; `hide_all` shows nothing to guests. Mode is set per session in the admin SessionManager. Fixed three bugs found in code review: (1) activation side-effect no longer mass-releases questions in `single`/`hide_all` mode; (2) `event_id` question fetch now scopes to the active session so mode and data are aligned; (3) `release_mode` Zod schemas now enforce the enum (rejects invalid values).
+
+### Added (earlier this session)
+- **Strategy Room join URL field** — admins can now paste a Zoom/Teams/Meet link onto any session; shown as a clickable green "Join Session" button only to registered members; non-registered users see a disabled button. DB migration `20260609000001` adds `join_url text` column to `strategy_sessions` (applied to both prod and dev Supabase 2026-06-09). Root-cause context: the "Join Session" button on the detail page (`StrategyRoomDetailClient.tsx:537`) existed as a dead stub — disabled when not registered, but never wired to a URL even when registered. Fix: added `join_url` to `strategy_sessions` table, `StrategySessionRow` type, Zod validation schema, admin form modal, and detail page button logic.
+- **Home page strategy room widget — live tier badge** — the "Next Strategy Room" card on the home page now renders the correct Pro or Executive tier badge pulled from the real session record. Root-cause context: `UpcomingStrategyRoom` hardcoded "Executive" regardless of actual session tier. Fix: added `tier` field to `StrategyConfig` interface, passed it from `getNextStrategySession()` in `page.tsx`, and updated the widget to branch on `session.tier`.
+- **Dev Supabase — strategy sessions tables** — applied `create_strategy_sessions`, `seed_strategy_sessions`, and `add_join_url_to_strategy_sessions` migrations to `klo-app-dev` (project `ykregzbladhwzyagkkdf`) so local dev no longer falls back to hardcoded defaults for strategy room features (2026-06-10).
+
+### Fixed
+- **Home page strategy room widget data source confirmed** — widget already pulled live data (title, date, description, seats) from `strategy_sessions` via `getNextStrategySession()` in `page.tsx`; fell back to `page_configs.strategy_config` only when no upcoming published session existed. The only gap was the hardcoded tier badge (fixed above).
+
 - **Vault feed quick-toggle button** — ⭐ Feed button on each vault article in the admin library allows Keith to instantly feature articles in the Executive Feed without opening an edit modal; toggle fires async API call with loading spinner, success/error toast feedback, and disabled state during flight.
 - **Training sync validation system** — CI workflow + pre-commit hook that enforces every admin tab has a corresponding training section; blocks merges when admin tabs and training docs are out of sync.
 - **Strategy Rooms training section** — admin training page now documents the Strategy Rooms tab: create/edit/publish/delete flows, tier selection, seat limits, replay URL, and notes URL.

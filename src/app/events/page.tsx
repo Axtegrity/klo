@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -19,6 +19,8 @@ import {
   BarChart3,
   X,
   ChevronDown,
+  Search,
+  BookOpen,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Badge from "@/components/shared/Badge";
@@ -45,6 +47,7 @@ interface EventFile {
   file_type: string;
   file_url: string;
   file_size: string | null;
+  is_visible: boolean;
 }
 
 interface EventItem {
@@ -69,6 +72,8 @@ interface EventItem {
   session_end_time: string | null;
   hosting_entity: string | null;
   display_on_events_page: boolean;
+  seminar_mode: boolean;
+  pinned_as_next: boolean;
   event_files: EventFile[];
 }
 
@@ -202,7 +207,9 @@ function eventEnd(event: Pick<EventItem, "event_date" | "event_time" | "end_date
   return isNaN(eod.getTime()) ? null : eod;
 }
 
-function isLiveNow(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time">): boolean {
+function isLiveNow(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode">): boolean {
+  // Explicit seminar_mode flag takes precedence over time-based detection
+  if (event.seminar_mode) return true;
   const start = eventStart(event);
   const end = eventEnd(event);
   if (!start || !end) return false;
@@ -210,13 +217,15 @@ function isLiveNow(event: Pick<EventItem, "event_date" | "event_time" | "end_dat
   return now >= start && now <= end;
 }
 
-function isPastEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time">): boolean {
+function isPastEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode">): boolean {
   if (event.event_date === "SAVE THE DATE") return false;
+  if (event.seminar_mode) return false;
   const end = eventEnd(event);
   return end ? end < new Date() : false;
 }
 
-function isUpcomingEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time">): boolean {
+function isUpcomingEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode">): boolean {
+  if (event.seminar_mode) return false;
   if (event.event_date === "SAVE THE DATE") return true;
   return !isLiveNow(event) && !isPastEvent(event);
 }
@@ -241,6 +250,8 @@ export default function EventsPage() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventPolls, setEventPolls] = useState<PollResult[]>([]);
   const [pollsLoading, setPollsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState<"all" | "upcoming" | "past">("upcoming");
   // Tick every second so event_start/end windows roll the UI through
   // countdown → live → past without needing a page refresh.
   const [, setNowTick] = useState(0);
@@ -296,22 +307,48 @@ export default function EventsPage() {
     };
   }, [selectedEventId, events]);
 
-  const sortDate = (d: string) => {
+  const sortDate = useCallback((d: string) => {
     if (d === "SAVE THE DATE") return Infinity;
     const ts = new Date(d).getTime();
     return isNaN(ts) ? Infinity : ts;
-  };
+  }, []);
 
-  // Three-way split by actual start/end time windows.
-  const liveEvents = events
-    .filter(isLiveNow)
-    .sort((a, b) => sortDate(a.event_date) - sortDate(b.event_date));
-  const upcomingEvents = events
-    .filter(isUpcomingEvent)
-    .sort((a, b) => sortDate(a.event_date) - sortDate(b.event_date));
-  const pastEvents = events
-    .filter(isPastEvent)
-    .sort((a, b) => sortDate(b.event_date) - sortDate(a.event_date));
+  // Three-way split — memoized so the 1s tick doesn't re-bucket on every render.
+  const liveEvents = useMemo(() =>
+    events.filter(isLiveNow).sort((a, b) => sortDate(a.event_date) - sortDate(b.event_date)),
+    [events, sortDate]);
+  const upcomingEvents = useMemo(() =>
+    events.filter(isUpcomingEvent).sort((a, b) => sortDate(a.event_date) - sortDate(b.event_date)),
+    [events, sortDate]);
+  const pastEvents = useMemo(() =>
+    events.filter(isPastEvent).sort((a, b) => sortDate(b.event_date) - sortDate(a.event_date)),
+    [events, sortDate]);
+
+
+  const matchesSearch = useCallback((ev: EventItem) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      ev.title.toLowerCase().includes(q) ||
+      ev.conference_name.toLowerCase().includes(q) ||
+      ev.conference_location.toLowerCase().includes(q) ||
+      (ev.description ?? "").toLowerCase().includes(q)
+    );
+  }, [searchQuery]);
+
+  const filteredLive     = useMemo(() => liveEvents.filter(matchesSearch),     [liveEvents,     matchesSearch]);
+  const filteredUpcoming = useMemo(() => upcomingEvents.filter(matchesSearch), [upcomingEvents, matchesSearch]);
+  const filteredPast     = useMemo(() => pastEvents.filter(matchesSearch),     [pastEvents,     matchesSearch]);
+
+  // Up Next: pinned event wins; otherwise auto-select first upcoming by date.
+  // Only shown when there's no live event (live takes visual precedence).
+  const upNextEvent = useMemo(() => {
+    if (liveEvents.length > 0) return null;
+    return (
+      upcomingEvents.find((e) => e.pinned_as_next) ||
+      (upcomingEvents.length > 0 ? upcomingEvents[0] : null)
+    );
+  }, [liveEvents, upcomingEvents]);
 
   // Countdown target: spotlighted event's first session start, falling back
   // to the event's own event_time. Only shown while the target is in the future.
@@ -323,9 +360,14 @@ export default function EventsPage() {
     return start && start > new Date() ? { dateStr: spotlight.event.event_date, timeStr: time, tz: spotlight.event.event_timezone } : null;
   })();
 
-  const showLive = spotlight?.show_live_section ?? true;
-  const showUpcoming = spotlight?.show_upcoming_section ?? true;
-  const showPast = spotlight?.show_past_section ?? true;
+  const adminShowLive     = spotlight?.show_live_section     ?? true;
+  const adminShowUpcoming = spotlight?.show_upcoming_section ?? true;
+  const adminShowPast     = spotlight?.show_past_section     ?? true;
+
+  // User filter narrows on top of admin visibility toggles.
+  const showLive     = adminShowLive     && activeFilter !== "past";
+  const showUpcoming = adminShowUpcoming && activeFilter !== "past";
+  const showPast     = adminShowPast     && activeFilter !== "upcoming";
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
 
@@ -387,8 +429,41 @@ export default function EventsPage() {
         </section>
       )}
 
+      {/* Search + Filter */}
+      <section className="px-6 pb-6">
+        <div className="max-w-4xl mx-auto space-y-4">
+          {/* Search bar */}
+          <div className="relative">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-klo-muted pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search events..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm text-klo-text placeholder:text-klo-muted/60 focus:outline-none focus:ring-1 focus:ring-[#2764FF]/50 focus:border-[#2764FF]/50 transition"
+            />
+          </div>
+          {/* Filter tabs */}
+          <div className="flex gap-2">
+            {(["upcoming", "all", "past"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => { setActiveFilter(f); setSelectedEventId(null); }}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition capitalize ${
+                  activeFilter === f
+                    ? "bg-[#2764FF] text-white"
+                    : "bg-white/5 text-klo-muted hover:bg-white/10"
+                }`}
+              >
+                {f === "upcoming" ? "Upcoming" : f === "all" ? "All Events" : "Past"}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Live Events — only visible when today matches an event date */}
-      {showLive && liveEvents.length > 0 && (
+      {showLive && filteredLive.length > 0 && (
         <section className="px-6 pt-0 pb-8">
           <motion.div
             initial="hidden"
@@ -411,7 +486,7 @@ export default function EventsPage() {
               </p>
             </motion.div>
             <div className="space-y-4">
-              {liveEvents.map((event, i) => (
+              {filteredLive.map((event, i) => (
                 <motion.div key={event.id} variants={fadeUp} custom={i + 1}>
                   <Card className="relative overflow-hidden border-emerald-500/40 shadow-lg shadow-emerald-500/5 bg-gradient-to-br from-emerald-500/5 to-transparent">
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-emerald-400 to-[#2764FF] rounded-l-xl" />
@@ -604,6 +679,45 @@ export default function EventsPage() {
         </div>
       )}
 
+      {/* Up Next banner — shown when no live event; auto or admin-pinned */}
+      {showUpcoming && upNextEvent && !searchQuery && (
+        <section className="px-6 pb-0">
+          <div className="max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Card className="relative overflow-hidden border-[#2764FF]/30 bg-gradient-to-br from-[#2764FF]/8 via-transparent to-[#21B8CD]/5">
+                <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD]" />
+                <div className="py-2 flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-[#2764FF] uppercase tracking-wider mb-1">Up Next</p>
+                    <h3 className="text-lg font-bold text-klo-text truncate">
+                      {upNextEvent.conference_name || upNextEvent.title}
+                    </h3>
+                    {upNextEvent.session_name && (
+                      <p className="text-sm text-klo-muted">{upNextEvent.session_name}</p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-klo-muted mt-1.5">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Calendar size={12} className="text-[#2764FF]/70" />
+                        {formatDateRange(upNextEvent.start_date, upNextEvent.end_date, upNextEvent.event_date)}
+                        {upNextEvent.event_time && ` at ${formatTime(upNextEvent.event_time)}`}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPin size={12} className="text-[#2764FF]/70" />
+                        {upNextEvent.conference_location}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          </div>
+        </section>
+      )}
+
       {/* Upcoming Events */}
       {showUpcoming && (
       <section className="px-6 py-16 md:py-24">
@@ -632,12 +746,18 @@ export default function EventsPage() {
             <div className="flex justify-center py-12">
               <div className="w-8 h-8 border-2 border-[#2764FF]/30 border-t-[#2764FF] rounded-full animate-spin" />
             </div>
-          ) : upcomingEvents.length === 0 ? (
+          ) : filteredUpcoming.length === 0 ? (
             <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={1}>
-              <Card>
-                <p className="text-klo-muted text-sm text-center py-6">
-                  No upcoming events at this time. Check back soon!
-                </p>
+              <Card className="border-white/5">
+                <div className="flex flex-col items-center gap-3 py-10 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-[#2764FF]/10 flex items-center justify-center">
+                    <CalendarDays size={24} className="text-[#2764FF]" />
+                  </div>
+                  <p className="text-lg font-semibold text-klo-text">Check Back Soon</p>
+                  <p className="text-sm text-klo-muted max-w-xs">
+                    New events are being planned. Stay tuned for upcoming opportunities to connect with Keith.
+                  </p>
+                </div>
               </Card>
             </motion.div>
           ) : (
@@ -647,7 +767,7 @@ export default function EventsPage() {
               variants={staggerContainer}
               className="space-y-4"
             >
-              {upcomingEvents.map((event, i) => (
+              {filteredUpcoming.map((event, i) => (
                 <motion.div key={event.id} variants={fadeUp} custom={i + 1}>
                   <EventCard event={event} isLive={isLiveNow(event)} onViewDetails={setSelectedEventId} />
                 </motion.div>
@@ -659,7 +779,7 @@ export default function EventsPage() {
       )}
 
       {/* Past Events */}
-      {showPast && pastEvents.length > 0 && (
+      {showPast && filteredPast.length > 0 && (
         <section className="px-6 py-16 md:py-24 bg-klo-dark/40">
           <motion.div
             initial="hidden"
@@ -688,7 +808,7 @@ export default function EventsPage() {
               variants={staggerContainer}
               className="space-y-4"
             >
-              {pastEvents.map((event, i) => (
+              {filteredPast.map((event, i) => (
                 <motion.div key={event.id} variants={fadeUp} custom={i + 1}>
                   <EventCard event={event} isPastEvent onViewDetails={setSelectedEventId} />
                 </motion.div>
@@ -956,7 +1076,7 @@ function EventCard({
   onViewDetails?: (id: string) => void;
 }) {
   const files = event.event_files ?? [];
-  const hasFiles = files.length > 0;
+  const visibleFiles = files.filter((f) => f.is_visible);
 
   return (
     <Card className="relative overflow-hidden">
@@ -1046,23 +1166,56 @@ function EventCard({
                 <ArrowRight size={14} />
               </span>
             )}
-            {/* Past event presentation CTA */}
-            {isPastEvent && (
+            {/* Past event — direct download if one visible file, multi-file modal otherwise */}
+            {isPastEvent && visibleFiles.length === 1 && (
+              <a
+                href={visibleFiles[0].file_url}
+                download
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors"
+              >
+                <Download size={14} />
+                Download Slides
+              </a>
+            )}
+            {isPastEvent && visibleFiles.length > 1 && (
               <button
-                onClick={() => hasFiles ? onViewDetails?.(event.id) : undefined}
-                disabled={!hasFiles}
-                className={`inline-flex items-center gap-2 px-5 py-2.5 font-semibold text-sm rounded-lg transition-colors ${
-                  hasFiles
-                    ? "bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white hover:brightness-110 cursor-pointer"
-                    : "bg-white/5 text-klo-muted/50 border border-white/5 cursor-not-allowed"
-                }`}
+                onClick={() => onViewDetails?.(event.id)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors"
               >
                 <FileText size={14} />
-                {hasFiles ? "View Presentation" : "No Presentation"}
+                {visibleFiles.length} Files
               </button>
+            )}
+            {isPastEvent && visibleFiles.length === 0 && (
+              <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-klo-muted/50 border border-white/5 font-semibold text-sm rounded-lg cursor-not-allowed">
+                <FileText size={14} />
+                No Slides Yet
+              </span>
             )}
           </div>
         </div>
+
+        {/* Visible files strip — shown on live/upcoming cards when Keith shares files */}
+        {!isPastEvent && visibleFiles.length > 0 && (
+          <div className="border-t border-white/5 pt-3 mt-1 flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1 text-xs text-klo-muted">
+              <BookOpen size={12} />
+              Session Resources:
+            </span>
+            {visibleFiles.map((file) => (
+              <a
+                key={file.id}
+                href={file.file_url}
+                download
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#2764FF]/10 border border-[#2764FF]/20 text-[#2764FF] text-xs font-medium hover:bg-[#2764FF]/20 transition-colors"
+              >
+                <Download size={11} />
+                {file.file_name}
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </Card>
   );

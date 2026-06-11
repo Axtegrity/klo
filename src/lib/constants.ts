@@ -45,7 +45,6 @@ export const NAV_ITEMS: NavigationItem[] = [
   { label: "Assessments", href: "/assessments", icon: "ClipboardCheck" },
   { label: "Vault", href: "/vault", icon: "Lock", requiresAuth: true },
   { label: "Advisor", href: "/advisor", icon: "BotMessageSquare", requiresAuth: true },
-  { label: "Strategy Rooms", href: "/strategy-rooms", icon: "LayoutDashboard", requiresAuth: true },
   { label: "Booking", href: "/booking", icon: "Mic" },
 ];
 
