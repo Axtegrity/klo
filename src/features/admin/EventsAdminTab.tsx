@@ -442,10 +442,12 @@ export default function EventsAdminTab() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ is_published: !currentlyPublished }),
     });
-    if (!res.ok) {
+    if (res.ok) {
+      setSaveMsg({ type: "success", text: currentlyPublished ? "Event unpublished." : "Event published — now live." });
+    } else {
       setSaveMsg({ type: "error", text: "Failed to update publish status." });
-      setTimeout(() => setSaveMsg(null), 4000);
     }
+    setTimeout(() => setSaveMsg(null), 4000);
     fetchEvents();
   };
 
@@ -455,10 +457,12 @@ export default function EventsAdminTab() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ display_on_events_page: !currentlyShowing }),
     });
-    if (!res.ok) {
+    if (res.ok) {
+      setSaveMsg({ type: "success", text: currentlyShowing ? "Hidden from Events page." : "Now showing on Events page." });
+    } else {
       setSaveMsg({ type: "error", text: "Failed to update events page visibility." });
-      setTimeout(() => setSaveMsg(null), 4000);
     }
+    setTimeout(() => setSaveMsg(null), 4000);
     fetchEvents();
   };
 
