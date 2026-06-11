@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { BookOpen, Search, X } from "lucide-react";
+import { BookOpen, Search, X, Download, FileText, CalendarDays } from "lucide-react";
 import CategoryTabs from "@/components/vault/CategoryTabs";
 import FilterBar from "@/components/vault/FilterBar";
 import ContentCard from "@/components/vault/ContentCard";
@@ -41,6 +41,15 @@ export default function VaultPage() {
   const [type, setType] = useState("");
   const [freeOnly, setFreeOnly] = useState(false);
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
+  const [eventPresentations, setEventPresentations] = useState<{
+    id: string;
+    title: string;
+    conference_name: string;
+    conference_location: string;
+    event_date: string;
+    slug: string;
+    event_files: { id: string; file_name: string; file_type: string; file_url: string; file_size: string | null }[];
+  }[]>([]);
 
   // Fetch published vault items from Supabase (via /api/content/vault).
   // vault_content is the sole source of truth — event presentations are
@@ -53,6 +62,10 @@ export default function VaultPage() {
       .then((res) => res.json())
       .then((json) => setVaultItems(json.data ?? []))
       .catch((err) => console.error("Failed to fetch vault:", err));
+    fetch("/api/vault/event-presentations")
+      .then((res) => res.json())
+      .then((json) => Array.isArray(json) && setEventPresentations(json))
+      .catch(() => {});
   }, []);
 
   const allItems = useMemo(() => vaultItems, [vaultItems]);
@@ -249,6 +262,60 @@ export default function VaultPage() {
             >
               Clear all filters
             </button>
+          </motion.div>
+        )}
+        {/* Past Event Presentations — free, separate from vault_content */}
+        {eventPresentations.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" as const }}
+            className="mt-16 pt-10 border-t border-white/5"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-[#2764FF]/10 flex items-center justify-center">
+                <FileText size={20} className="text-[#2764FF]" />
+              </div>
+              <div>
+                <h2 className="font-display text-2xl font-bold text-klo-text">Past Event Presentations</h2>
+                <p className="text-sm text-klo-muted">Slides and materials from previous sessions — free to download</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              {eventPresentations.map((ev) => (
+                <div key={ev.id} className="glass rounded-2xl border border-white/5 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-white/5">
+                    <p className="font-semibold text-klo-text">{ev.conference_name || ev.title}</p>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-klo-muted">
+                      <span className="inline-flex items-center gap-1">
+                        <CalendarDays size={11} />
+                        {new Date(ev.event_date + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                      </span>
+                      <span>{ev.conference_location}</span>
+                    </div>
+                  </div>
+                  <div className="divide-y divide-white/5">
+                    {ev.event_files.map((file) => (
+                      <div key={file.id} className="flex items-center gap-3 px-5 py-3">
+                        <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#2764FF]/10 text-[#2764FF] shrink-0">
+                          {file.file_type}
+                        </span>
+                        <span className="text-sm text-klo-text truncate flex-1">{file.file_name}</span>
+                        {file.file_size && <span className="text-xs text-klo-muted shrink-0">{file.file_size}</span>}
+                        <a
+                          href={file.file_url}
+                          download
+                          className="shrink-0 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#2764FF] hover:bg-[#2764FF]/80 text-white text-xs font-semibold transition-colors"
+                        >
+                          <Download size={12} />
+                          Download
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </motion.div>
         )}
       </div>

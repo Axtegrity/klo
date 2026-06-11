@@ -24,6 +24,9 @@ import {
   Radio,
   Search,
   ArrowUpCircle,
+  ExternalLink,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 interface EventFile {
@@ -32,6 +35,7 @@ interface EventFile {
   file_type: string;
   file_url: string;
   file_size: string | null;
+  is_visible: boolean;
 }
 
 interface Event {
@@ -396,6 +400,15 @@ export default function EventsAdminTab() {
     } else {
       await fetch(`/api/admin/events/${eventId}/feature`, { method: "POST" });
     }
+    fetchEvents();
+  };
+
+  const handleToggleFileVisible = async (eventId: string, fileId: string, currentlyVisible: boolean) => {
+    await fetch(`/api/admin/events/${eventId}/files?fileId=${fileId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_visible: !currentlyVisible }),
+    });
     fetchEvents();
   };
 
@@ -900,9 +913,13 @@ export default function EventsAdminTab() {
                         {event.event_files.map((file) => (
                           <div
                             key={file.id}
-                            className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/[0.02]"
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors ${
+                              file.is_visible
+                                ? "bg-emerald-500/5 border-emerald-500/20"
+                                : "bg-white/[0.02] border-white/5"
+                            }`}
                           >
-                            <FileText size={14} className="text-klo-muted shrink-0" />
+                            <FileText size={14} className={file.is_visible ? "text-emerald-400 shrink-0" : "text-klo-muted shrink-0"} />
                             <span className="text-sm text-klo-text truncate flex-1">
                               {file.file_name}
                             </span>
@@ -912,14 +929,42 @@ export default function EventsAdminTab() {
                             <span className="text-xs text-klo-muted">
                               {file.file_size ?? ""}
                             </span>
+                            {/* Open file */}
+                            <a
+                              href={file.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 rounded hover:bg-[#2764FF]/10 text-klo-muted hover:text-[#2764FF] transition-colors"
+                              title="Open file"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ExternalLink size={14} />
+                            </a>
+                            {/* Toggle visibility to attendees */}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleToggleFileVisible(event.id, file.id, file.is_visible); }}
+                              className={`p-1 rounded transition-colors ${
+                                file.is_visible
+                                  ? "text-emerald-400 hover:bg-red-500/10 hover:text-red-400"
+                                  : "text-klo-muted hover:bg-emerald-500/10 hover:text-emerald-400"
+                              }`}
+                              title={file.is_visible ? "Hide from attendees" : "Show to attendees"}
+                            >
+                              {file.is_visible ? <Eye size={14} /> : <EyeOff size={14} />}
+                            </button>
                             <button
                               onClick={() => handleDeleteFile(event.id, file.id)}
                               className="p-1 rounded hover:bg-red-500/10 text-klo-muted hover:text-red-400 transition-colors"
+                              title="Delete file"
                             >
                               <Trash2 size={14} />
                             </button>
                           </div>
                         ))}
+                        <p className="text-[10px] text-klo-muted pt-1">
+                          <Eye size={10} className="inline mr-1" />
+                          Eye icon = visible to attendees on conference page &amp; vault
+                        </p>
                       </div>
                     ) : (
                       <p className="text-xs text-klo-muted">No files uploaded</p>
