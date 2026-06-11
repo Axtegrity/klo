@@ -106,6 +106,11 @@ export default function EventsAdminTab() {
   const [uploading, setUploading] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
+  // Accordion section open/closed state
+  const [spotlightOpen, setSpotlightOpen] = useState(false);
+  const [currentOpen, setCurrentOpen] = useState(true);
+  const [previousOpen, setPreviousOpen] = useState(false);
+
   // Document parse state
   const [parsing, setParsing] = useState(false);
   const [parseStatus, setParseStatus] = useState<"idle" | "success" | "error">("idle");
@@ -488,7 +493,7 @@ export default function EventsAdminTab() {
 
   const renderEventList = (items: Event[], label: string) => (
     <div>
-      <h3 className="text-lg font-semibold text-klo-text mb-4">{label}</h3>
+      {label && <h3 className="text-lg font-semibold text-klo-text mb-4">{label}</h3>}
       {items.length === 0 ? (
         <p className="text-klo-muted text-sm">No events yet</p>
       ) : (
@@ -1056,8 +1061,28 @@ export default function EventsAdminTab() {
         </div>
       )}
 
-      {/* Site Spotlight config */}
-      <SpotlightPanel events={events} />
+      {/* Spotlight & Countdown config — collapsible */}
+      <div className="glass rounded-2xl border border-white/5 overflow-hidden">
+        <button
+          onClick={() => setSpotlightOpen((o) => !o)}
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.02] transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Radio size={16} className="text-klo-gold" />
+            <span className="text-sm font-semibold text-klo-text">Spotlight &amp; Countdown</span>
+            <span className="text-xs text-klo-muted">Events page hero controls</span>
+          </div>
+          <ChevronDown
+            size={16}
+            className={`text-klo-muted transition-transform duration-200 ${spotlightOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+        {spotlightOpen && (
+          <div className="border-t border-white/5">
+            <SpotlightPanel events={events} />
+          </div>
+        )}
+      </div>
 
       {/* Header with add button */}
       <div className="flex items-center justify-between">
@@ -1434,8 +1459,55 @@ export default function EventsAdminTab() {
       </div>
 
       {/* Event lists */}
-      {renderEventList(currentEvents, "Current Events")}
-      {renderEventList(previousEvents, "Previous Events")}
+      {/* Current Events — collapsible */}
+      <div className="glass rounded-2xl border border-white/5 overflow-hidden">
+        <button
+          onClick={() => setCurrentOpen((o) => !o)}
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.02] transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Radio size={16} className="text-emerald-400" />
+            <span className="text-sm font-semibold text-klo-text">Current Events</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">
+              {currentEvents.length}
+            </span>
+          </div>
+          <ChevronDown
+            size={16}
+            className={`text-klo-muted transition-transform duration-200 ${currentOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+        {currentOpen && (
+          <div className="border-t border-white/5 p-5">
+            {renderEventList(currentEvents, "")}
+          </div>
+        )}
+      </div>
+
+      {/* Previous Events — collapsible, collapsed by default */}
+      <div className="glass rounded-2xl border border-white/5 overflow-hidden">
+        <button
+          onClick={() => setPreviousOpen((o) => !o)}
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.02] transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Calendar size={16} className="text-klo-muted" />
+            <span className="text-sm font-semibold text-klo-text">Previous Events</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-white/5 text-klo-muted">
+              {previousEvents.length}
+            </span>
+          </div>
+          <ChevronDown
+            size={16}
+            className={`text-klo-muted transition-transform duration-200 ${previousOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+        {previousOpen && (
+          <div className="border-t border-white/5 p-5">
+            {renderEventList(previousEvents, "")}
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }
@@ -1545,7 +1617,7 @@ function SpotlightPanel({ events }: { events: Event[] }) {
   );
 
   return (
-    <div className="rounded-2xl p-6 border-2 border-[#2764FF]/40 bg-gradient-to-br from-[#2764FF]/10 via-[#2764FF]/5 to-transparent shadow-lg shadow-[#2764FF]/10 space-y-5">
+    <div className="p-6 space-y-5">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-lg bg-[#2764FF]/20 flex items-center justify-center flex-shrink-0">
           <Radio size={20} className="text-[#2764FF]" />
