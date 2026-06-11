@@ -1009,7 +1009,7 @@ export default function EventsAdminTab() {
                           </div>
                         ))}
                         <p className="text-[10px] text-klo-muted pt-1">
-                          "Share with Attendees" = visible on conference page &amp; vault. Click again to hide.
+                          &ldquo;Share with Attendees&rdquo; = visible on conference page &amp; vault. Click again to hide.
                         </p>
                       </div>
                     ) : (

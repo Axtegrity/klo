@@ -51,10 +51,6 @@ export default function PresenterRemote({ eventId }: PresenterRemoteProps) {
       }).then(() => {})
     );
 
-  const nextPoll = () => {
-    if (!queued[0]) return;
-    act(() => fetch(`/api/conference/polls/${queued[0].id}/deploy`, { method: "POST" }).then(() => {}));
-  };
 
   const closePoll = () => {
     if (!live) return;

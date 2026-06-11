@@ -77,7 +77,7 @@ export function useQuestions(options?: UseQuestionsOptions) {
         return false;
       }
     },
-    [fetchQuestions, sessionId]
+    [fetchQuestions, sessionId, eventId]
   );
 
   const upvote = useCallback(
