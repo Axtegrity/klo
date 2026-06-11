@@ -302,6 +302,7 @@ export const pollCreateSchema = z.object({
 
 export const pollUpdateSchema = z.object({
   is_active: z.boolean().optional(),
+  is_deployed: z.boolean().optional(),
   show_results: z.boolean().optional(),
 });
 

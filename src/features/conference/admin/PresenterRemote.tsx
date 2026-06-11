@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Play, BarChart2, StopCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Play, BarChart2, StopCircle, ChevronDown, ChevronUp, Undo2 } from "lucide-react";
 import { useConferenceRealtime } from "../hooks/useConferenceRealtime";
 import type { PollWithVotes } from "../types";
 
@@ -66,6 +66,15 @@ export default function PresenterRemote({ eventId }: PresenterRemoteProps) {
       }).then(() => {})
     );
   };
+
+  const undeployPoll = (id: string) =>
+    act(() =>
+      fetch(`/api/conference/polls/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_deployed: false }),
+      }).then(() => {})
+    );
 
   if (loading) {
     return (
@@ -220,9 +229,18 @@ export default function PresenterRemote({ eventId }: PresenterRemoteProps) {
           {showDone && (
             <div className="divide-y divide-white/5">
               {done.map((poll) => (
-                <div key={poll.id} className="flex items-center gap-3 px-4 py-3 opacity-50">
-                  <span className="text-emerald-400 text-xs">✓</span>
-                  <p className="text-sm text-klo-muted truncate">{poll.question}</p>
+                <div key={poll.id} className="flex items-center gap-3 px-4 py-3">
+                  <span className="text-emerald-400 text-xs shrink-0">✓</span>
+                  <p className="text-sm text-klo-muted truncate flex-1">{poll.question}</p>
+                  <button
+                    onClick={() => undeployPoll(poll.id)}
+                    disabled={busy}
+                    className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-klo-muted hover:text-yellow-400 hover:bg-yellow-500/10 transition-colors disabled:opacity-40"
+                    title="Put back in queue"
+                  >
+                    <Undo2 size={12} />
+                    Put back
+                  </button>
                 </div>
               ))}
             </div>

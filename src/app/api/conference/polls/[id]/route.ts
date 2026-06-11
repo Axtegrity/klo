@@ -33,6 +33,13 @@ export async function PUT(
   if (typeof parsed.data.is_active === "boolean") updates.is_active = parsed.data.is_active;
   if (typeof parsed.data.show_results === "boolean") updates.show_results = parsed.data.show_results;
   if (parsed.data.is_active === false) updates.closed_at = new Date().toISOString();
+  // Undeploy: send poll back to queue — force-close it too
+  if (parsed.data.is_deployed === false) {
+    updates.is_deployed = false;
+    updates.is_active = false;
+    updates.show_results = false;
+    updates.closed_at = null;
+  }
 
   const { data, error } = await supabase
     .from("conference_polls")
