@@ -12,6 +12,7 @@ import {
   Rocket,
   FileText,
   Download,
+  Undo2,
 } from "lucide-react";
 // PollResults and CollectiveResultsChart available if needed for detailed views
 import { useConferenceRealtime } from "../hooks/useConferenceRealtime";
@@ -235,6 +236,16 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
     } finally {
       setDeployingAll(false);
     }
+  };
+
+  const undeployPoll = async (id: string) => {
+    await fetch(`/api/conference/polls/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_deployed: false }),
+    });
+    fetchPolls();
+    showSuccess("Poll moved back to queue.");
   };
 
   const togglePoll = async (id: string, field: "is_active" | "show_results", value: boolean) => {
@@ -565,6 +576,13 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
                             title={poll.show_results ? "Hide results from attendees" : "Show results to attendees"}
                           >
                             {poll.show_results ? <Eye size={14} /> : <EyeOff size={14} />}
+                          </button>
+                          <button
+                            onClick={() => undeployPoll(poll.id)}
+                            className="p-1.5 rounded-lg text-klo-muted hover:text-yellow-400 hover:bg-yellow-500/10 transition-colors"
+                            title="Move back to queue — undeploy this poll"
+                          >
+                            <Undo2 size={14} />
                           </button>
                           <button
                             onClick={() => deletePoll(poll.id)}
