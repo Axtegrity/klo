@@ -70,6 +70,8 @@ interface EventItem {
   session_end_time: string | null;
   hosting_entity: string | null;
   display_on_events_page: boolean;
+  seminar_mode: boolean;
+  pinned_as_next: boolean;
   event_files: EventFile[];
 }
 
@@ -203,7 +205,9 @@ function eventEnd(event: Pick<EventItem, "event_date" | "event_time" | "end_date
   return isNaN(eod.getTime()) ? null : eod;
 }
 
-function isLiveNow(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time">): boolean {
+function isLiveNow(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode">): boolean {
+  // Explicit seminar_mode flag takes precedence over time-based detection
+  if (event.seminar_mode) return true;
   const start = eventStart(event);
   const end = eventEnd(event);
   if (!start || !end) return false;
@@ -211,13 +215,15 @@ function isLiveNow(event: Pick<EventItem, "event_date" | "event_time" | "end_dat
   return now >= start && now <= end;
 }
 
-function isPastEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time">): boolean {
+function isPastEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode">): boolean {
   if (event.event_date === "SAVE THE DATE") return false;
+  if (event.seminar_mode) return false;
   const end = eventEnd(event);
   return end ? end < new Date() : false;
 }
 
-function isUpcomingEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time">): boolean {
+function isUpcomingEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode">): boolean {
+  if (event.seminar_mode) return false;
   if (event.event_date === "SAVE THE DATE") return true;
   return !isLiveNow(event) && !isPastEvent(event);
 }
@@ -331,6 +337,16 @@ export default function EventsPage() {
   const filteredLive     = useMemo(() => liveEvents.filter(matchesSearch),     [liveEvents,     matchesSearch]);
   const filteredUpcoming = useMemo(() => upcomingEvents.filter(matchesSearch), [upcomingEvents, matchesSearch]);
   const filteredPast     = useMemo(() => pastEvents.filter(matchesSearch),     [pastEvents,     matchesSearch]);
+
+  // Up Next: pinned event wins; otherwise auto-select first upcoming by date.
+  // Only shown when there's no live event (live takes visual precedence).
+  const upNextEvent = useMemo(() => {
+    if (liveEvents.length > 0) return null;
+    return (
+      upcomingEvents.find((e) => e.pinned_as_next) ||
+      (upcomingEvents.length > 0 ? upcomingEvents[0] : null)
+    );
+  }, [liveEvents, upcomingEvents]);
 
   // Countdown target: spotlighted event's first session start, falling back
   // to the event's own event_time. Only shown while the target is in the future.
@@ -661,6 +677,45 @@ export default function EventsPage() {
         </div>
       )}
 
+      {/* Up Next banner — shown when no live event; auto or admin-pinned */}
+      {showUpcoming && upNextEvent && !searchQuery && (
+        <section className="px-6 pb-0">
+          <div className="max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Card className="relative overflow-hidden border-[#2764FF]/30 bg-gradient-to-br from-[#2764FF]/8 via-transparent to-[#21B8CD]/5">
+                <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD]" />
+                <div className="py-2 flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-[#2764FF] uppercase tracking-wider mb-1">Up Next</p>
+                    <h3 className="text-lg font-bold text-klo-text truncate">
+                      {upNextEvent.conference_name || upNextEvent.title}
+                    </h3>
+                    {upNextEvent.session_name && (
+                      <p className="text-sm text-klo-muted">{upNextEvent.session_name}</p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-klo-muted mt-1.5">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Calendar size={12} className="text-[#2764FF]/70" />
+                        {formatDateRange(upNextEvent.start_date, upNextEvent.end_date, upNextEvent.event_date)}
+                        {upNextEvent.event_time && ` at ${formatTime(upNextEvent.event_time)}`}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPin size={12} className="text-[#2764FF]/70" />
+                        {upNextEvent.conference_location}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          </div>
+        </section>
+      )}
+
       {/* Upcoming Events */}
       {showUpcoming && (
       <section className="px-6 py-16 md:py-24">
@@ -691,10 +746,16 @@ export default function EventsPage() {
             </div>
           ) : filteredUpcoming.length === 0 ? (
             <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={1}>
-              <Card>
-                <p className="text-klo-muted text-sm text-center py-6">
-                  No upcoming events at this time. Check back soon!
-                </p>
+              <Card className="border-white/5">
+                <div className="flex flex-col items-center gap-3 py-10 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-[#2764FF]/10 flex items-center justify-center">
+                    <CalendarDays size={24} className="text-[#2764FF]" />
+                  </div>
+                  <p className="text-lg font-semibold text-klo-text">Check Back Soon</p>
+                  <p className="text-sm text-klo-muted max-w-xs">
+                    New events are being planned. Stay tuned for upcoming opportunities to connect with Keith.
+                  </p>
+                </div>
               </Card>
             </motion.div>
           ) : (

@@ -23,6 +23,7 @@ import {
   Save,
   Radio,
   Search,
+  ArrowUpCircle,
 } from "lucide-react";
 
 interface EventFile {
@@ -61,6 +62,7 @@ interface Event {
   display_on_events_page: boolean;
   event_status: string;
   event_status_override: boolean;
+  pinned_as_next: boolean;
   event_files: EventFile[];
 }
 
@@ -397,6 +399,15 @@ export default function EventsAdminTab() {
     fetchEvents();
   };
 
+  const handleToggleUpNext = async (eventId: string, currentlyPinned: boolean) => {
+    await fetch(`/api/admin/events/${eventId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pinned_as_next: !currentlyPinned }),
+    });
+    fetchEvents();
+  };
+
   const handleTogglePublish = async (eventId: string, currentlyPublished: boolean) => {
     await fetch(`/api/admin/events/${eventId}`, {
       method: "PUT",
@@ -480,6 +491,11 @@ export default function EventsAdminTab() {
                           Seminar Live
                         </span>
                       )}
+                      {event.pinned_as_next && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#2764FF]/10 text-[#2764FF]">
+                          Up Next
+                        </span>
+                      )}
                     </div>
                   </div>
                   <button
@@ -509,6 +525,20 @@ export default function EventsAdminTab() {
                     title={event.is_featured ? "Remove from homepage" : "Feature on homepage"}
                   >
                     <Star size={16} fill={event.is_featured ? "currentColor" : "none"} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleUpNext(event.id, event.pinned_as_next);
+                    }}
+                    className={`p-2 rounded-lg transition-colors ${
+                      event.pinned_as_next
+                        ? "text-[#2764FF] bg-[#2764FF]/10"
+                        : "text-klo-muted hover:text-[#2764FF] hover:bg-[#2764FF]/10"
+                    }`}
+                    title={event.pinned_as_next ? "Remove Up Next pin" : "Pin as Up Next on events page"}
+                  >
+                    <ArrowUpCircle size={16} fill={event.pinned_as_next ? "currentColor" : "none"} />
                   </button>
                   <button
                     onClick={(e) => {
