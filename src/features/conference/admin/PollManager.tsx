@@ -551,7 +551,7 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
                                 ? "text-emerald-400 hover:bg-emerald-500/10"
                                 : "text-klo-muted hover:bg-white/5"
                             }`}
-                            title={poll.is_active ? "Close poll" : "Reopen poll"}
+                            title={poll.is_active ? "End poll — removes from attendees' screens" : "Reopen poll"}
                           >
                             {poll.is_active ? <Power size={14} /> : <PowerOff size={14} />}
                           </button>
@@ -562,7 +562,7 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
                                 ? "text-[#2764FF] hover:bg-[#2764FF]/10"
                                 : "text-klo-muted hover:bg-white/5"
                             }`}
-                            title={poll.show_results ? "Visible to attendees" : "Hidden from attendees"}
+                            title={poll.show_results ? "Hide results from attendees" : "Show results to attendees"}
                           >
                             {poll.show_results ? <Eye size={14} /> : <EyeOff size={14} />}
                           </button>
