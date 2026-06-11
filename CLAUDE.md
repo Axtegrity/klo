@@ -158,7 +158,7 @@ Sentry wrapped via `withSentryConfig`. Do not remove or weaken these.
 - **Platform**: Vercel (`tim-adams-projects-6c46d12d/klo-app`)
 - **URLs**: https://klo-app.vercel.app | https://app.keithlodom.io (awaiting DNS CNAME in GoDaddy)
 - **Branch**: `main` — never push directly; use `feature/`, `fix/`, `chore/` branches + PR
-- **GitHub**: github.com/timjeromeadams1109/klo
+- **GitHub**: github.com/Axtegrity/klo
 
 ## Testing
 - Playwright for E2E — test files must be `.mjs` (ESM-only project)

@@ -12,6 +12,10 @@ import type { VaultCategory, VaultType, VaultItem } from "@/lib/vault-data";
 //
 // Uses anon Supabase client; RLS policy "vault_content_public_read_published"
 // allows SELECT where visibility = 'published'.
+//
+// SECURITY: Premium content (tier_required != 'free') description field is gated
+// to a generic message, not the body excerpt. This prevents content leakage
+// before subscription check.
 
 const VALID_CATEGORIES: VaultCategory[] = [
   "AI & Ethics",
@@ -84,14 +88,19 @@ export async function GET() {
 
   if (error) {
     console.error("[GET /api/content/vault]", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   const dbItems: VaultItem[] = ((data ?? []) as DbRow[]).map((row, i) => {
     const meta = (row.metadata ?? {}) as Record<string, unknown>;
     const body = row.body ?? "";
+    const isPremium = row.tier_required !== "free";
     const wordCount = body ? body.trim().split(/\s+/).length : 0;
     const minutes = Math.max(1, Math.round(wordCount / 200));
+    // Premium content: excerpt capped at 120 chars. Never leak body text. Non-premium: excerpt or body slice
+    const description = isPremium
+      ? ((row.excerpt ?? "Executive content — subscribe to read").slice(0, 120))
+      : (row.excerpt ?? body.slice(0, 240));
     return {
       id: (meta.legacy_id as string) ?? `db-${row.id}`,
       title: row.title,
@@ -99,10 +108,10 @@ export async function GET() {
       category: normalizeCategory(row.category),
       level: ((meta.level as string) ?? "Executive") as VaultItem["level"],
       type: normalizeType(row.content_type),
-      isPremium: row.tier_required !== "free",
+      isPremium,
       thumbnailGradient:
         (meta.thumbnail_gradient as string) ?? dbGradients[i % dbGradients.length],
-      description: row.excerpt ?? body.slice(0, 240),
+      description,
       duration:
         (meta.duration as string) ??
         (wordCount > 0 ? `${minutes} min read` : "Quick read"),

@@ -1,25 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Rss, ChevronDown, ChevronUp, Clock, Calendar } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Badge from "@/components/shared/Badge";
 import Card from "@/components/shared/Card";
 import {
-  categoryColors,
-  type FeedCategory,
+  getCategoryColor,
   type FeedPost,
 } from "@/lib/feed-data";
-
-const allCategories: ("All" | FeedCategory)[] = [
-  "All",
-  "AI Breakthroughs",
-  "Regulatory Shifts",
-  "Tech Ethics",
-  "Church Implications",
-  "Leadership",
-];
+import { categoryToSlug } from "@/lib/category-slug";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -63,13 +55,6 @@ function getFirstParagraph(content: string): string {
   return paragraphs[0] || content;
 }
 
-function getCategoryBadgeVariant(
-  category: FeedCategory
-): "gold" | "blue" | "green" | "muted" {
-  const mapping = categoryColors[category];
-  return mapping as "gold" | "blue" | "green" | "muted";
-}
-
 function FeedCard({ post, index }: { post: FeedPost; index: number }) {
   const [expanded, setExpanded] = useState(false);
   const firstParagraph = getFirstParagraph(post.content);
@@ -79,9 +64,12 @@ function FeedCard({ post, index }: { post: FeedPost; index: number }) {
     <motion.div variants={cardVariant} custom={index} layout>
       <Card className="relative overflow-hidden">
         <div className="flex items-center gap-3 mb-4">
-          <Badge variant={getCategoryBadgeVariant(post.category)}>
+          <Badge variant={getCategoryColor(post.category)}>
             {post.category}
           </Badge>
+          {post.isPremium && (
+            <Badge variant="gold">Executive</Badge>
+          )}
         </div>
 
         <h2 className="font-display text-xl font-bold text-klo-text mb-3 leading-tight">
@@ -99,60 +87,101 @@ function FeedCard({ post, index }: { post: FeedPost; index: number }) {
           </span>
         </div>
 
-        <div className="text-klo-muted leading-relaxed prose-invert">
-          <ReactMarkdown
-            components={{
-              p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
-              strong: ({ children }) => (
-                <strong className="text-klo-text font-semibold">
-                  {children}
-                </strong>
-              ),
-            }}
-          >
-            {expanded ? post.content : firstParagraph}
-          </ReactMarkdown>
-
-          {hasMoreContent && (
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="mt-3 inline-flex items-center gap-1.5 text-[#2764FF] text-sm font-medium hover:brightness-110 transition-all cursor-pointer"
+        {post.isPremium ? (
+          <div className="rounded-lg bg-gradient-to-r from-[#2764FF]/10 to-[#21B8CD]/10 border border-[#2764FF]/20 p-4 space-y-3">
+            <p className="text-sm text-klo-muted leading-relaxed prose-invert">
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                  strong: ({ children }) => (
+                    <strong className="text-klo-text font-semibold">
+                      {children}
+                    </strong>
+                  ),
+                }}
+              >
+                {firstParagraph}
+              </ReactMarkdown>
+            </p>
+            <a
+              href="/pricing"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white text-sm font-medium hover:brightness-110 transition-all"
             >
-              {expanded ? (
-                <>
-                  Show Less <ChevronUp size={16} />
-                </>
-              ) : (
-                <>
-                  Read More <ChevronDown size={16} />
-                </>
-              )}
-            </button>
-          )}
-        </div>
+              Upgrade to Read Full Article
+            </a>
+          </div>
+        ) : (
+          <div className="text-klo-muted leading-relaxed prose-invert">
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                strong: ({ children }) => (
+                  <strong className="text-klo-text font-semibold">
+                    {children}
+                  </strong>
+                ),
+              }}
+            >
+              {expanded ? post.content : firstParagraph}
+            </ReactMarkdown>
+
+            {hasMoreContent && (
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="mt-3 inline-flex items-center gap-1.5 text-[#2764FF] text-sm font-medium hover:brightness-110 transition-all cursor-pointer"
+              >
+                {expanded ? (
+                  <>
+                    Show Less <ChevronUp size={16} />
+                  </>
+                ) : (
+                  <>
+                    Read More <ChevronDown size={16} />
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        )}
       </Card>
     </motion.div>
   );
 }
 
 export default function FeedPage() {
-  const [activeCategory, setActiveCategory] = useState<"All" | FeedCategory>(
-    "All"
-  );
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams.get("category") ?? "all";
+
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
+  const [allCategories, setAllCategories] = useState<string[]>([]);
 
   // Fetch published feed posts from Supabase
   useEffect(() => {
     fetch("/api/content/feed")
       .then((res) => res.json())
-      .then((json) => setFeedPosts(json.data ?? []))
+      .then((json) => {
+        const posts = json.data ?? [];
+        setFeedPosts(posts);
+        // Extract unique categories from posts, sorted, with "All" first
+        const categories = Array.from(
+          new Set(posts.map((p: FeedPost) => p.category))
+        ).sort() as string[];
+        setAllCategories(["All", ...categories]);
+      })
       .catch((err) => console.error("Failed to fetch feed:", err));
   }, []);
+
+  // Match by slug: trending topics use lowercase-dash format, categories are exact
+  const activeCategory = categoryParam.toLowerCase() === "all"
+    ? "All"
+    : categoryParam;
 
   const filteredPosts =
     activeCategory === "All"
       ? feedPosts
-      : feedPosts.filter((p) => p.category === activeCategory);
+      : feedPosts.filter(
+          (p) => categoryToSlug(p.category) === categoryToSlug(activeCategory)
+        );
 
   return (
     <div className="min-h-screen px-6 py-24">
@@ -188,19 +217,26 @@ export default function FeedPage() {
             custom={1}
             className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1"
           >
-            {allCategories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full border transition-all duration-200 cursor-pointer ${
-                  activeCategory === cat
-                    ? "bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white border-[#2764FF]"
-                    : "bg-[#161B22] text-[#8B949E] border-[#21262D] hover:border-[#2764FF]/30 hover:text-klo-text"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+            {allCategories.map((cat) => {
+              const catSlug = cat === "All" ? "all" : categoryToSlug(cat);
+              const isActive =
+                (categoryParam.toLowerCase() === "all" && cat === "All") ||
+                categoryToSlug(cat) === categoryToSlug(activeCategory);
+
+              return (
+                <a
+                  key={cat}
+                  href={cat === "All" ? "/feed" : `/feed?category=${catSlug}`}
+                  className={`whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full border transition-all duration-200 cursor-pointer ${
+                    isActive
+                      ? "bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white border-[#2764FF]"
+                      : "bg-[#161B22] text-[#8B949E] border-[#21262D] hover:border-[#2764FF]/30 hover:text-klo-text"
+                  }`}
+                >
+                  {cat}
+                </a>
+              );
+            })}
           </motion.div>
         </motion.div>
 

@@ -33,29 +33,71 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false })
     .limit(100);
 
-  // Filter by event or session
+  // Filter by event or session — require a scope for non-admin callers
   if (eventId) {
-    query = query.eq("event_id", eventId);
+    if (isPrivileged) {
+      // Admin view: include questions tagged with event_id AND legacy questions
+      // that only have session_id (submitted before event_id wiring was added).
+      const { data: eventSessions } = await supabase
+        .from("conference_sessions")
+        .select("id")
+        .eq("event_id", eventId);
+      const sessionIds = (eventSessions ?? []).map((s: { id: string }) => s.id);
+      if (sessionIds.length > 0) {
+        query = query.or(
+          `event_id.eq.${eventId},session_id.in.(${sessionIds.join(",")})`
+        );
+      } else {
+        query = query.eq("event_id", eventId);
+      }
+    } else {
+      query = query.eq("event_id", eventId);
+    }
   } else if (sessionId) {
     query = query.eq("session_id", sessionId);
+  } else if (!isPrivileged) {
+    return NextResponse.json([]);
   }
 
-  // Non-privileged users: hide hidden questions, hide archived, only show released
-  // Also verify parent session is active (if question belongs to a session)
+  // Non-privileged users: apply release_mode from the relevant session
   if (!isPrivileged) {
-    query = query.eq("is_hidden", false).is("archived_at", null).eq("released", true);
+    type ReleaseMode = "all" | "single" | "hide_all";
+    const toMode = (v: string | null | undefined): ReleaseMode =>
+      v === "all" || v === "hide_all" ? v : "single";
 
-    // Filter out questions from inactive sessions
+    let releaseMode: ReleaseMode = "single"; // safest default
+
     if (sessionId) {
       const { data: sess } = await supabase
         .from("conference_sessions")
-        .select("is_active")
+        .select("is_active, release_mode")
         .eq("id", sessionId)
         .single();
-      if (!sess?.is_active) {
-        return NextResponse.json([]);
+      if (!sess?.is_active) return NextResponse.json([]);
+      releaseMode = toMode(sess.release_mode);
+    } else if (eventId) {
+      const { data: sess } = await supabase
+        .from("conference_sessions")
+        .select("id, release_mode")
+        .eq("event_id", eventId)
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+      releaseMode = toMode(sess?.release_mode);
+      // Scope questions to the active session so mode and data are always aligned
+      if (sess?.id) {
+        query = query.eq("session_id", sess.id);
       }
     }
+
+    if (releaseMode === "hide_all") return NextResponse.json([]);
+
+    query = query.eq("is_hidden", false).is("archived_at", null);
+    if (releaseMode === "single") {
+      // Only show questions the moderator has explicitly released
+      query = query.eq("released", true);
+    }
+    // "all" mode: skip released filter — every submitted question is visible immediately
   } else if (showArchived) {
     // Admin requesting archived only
     query = query.not("archived_at", "is", null);
@@ -81,7 +123,7 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Question text required" }, { status: 400 });
   }
-  const { text, author_name, session_id } = parsed.data;
+  const { text, author_name, session_id, event_id: question_event_id } = parsed.data;
 
   const fingerprint = getFingerprint(request);
   const supabase = getServiceSupabase();
@@ -111,6 +153,7 @@ export async function POST(request: Request) {
     p_author_name: author_name?.trim() || "Anonymous",
     p_session_id: session_id || null,
     p_fingerprint: fingerprint,
+    p_event_id: question_event_id || null,
   });
 
   if (error) {

@@ -18,8 +18,12 @@ export async function GET(request: Request) {
   const sessionId = searchParams.get("session_id");
   const eventId = searchParams.get("event_id");
 
+  // Admins see all polls; guests only see deployed + active polls.
+  const adminSession = await verifyAdmin();
+  const isAdmin = !!adminSession;
+
   // If attendee is requesting by session, verify session is active
-  if (sessionId) {
+  if (!isAdmin && sessionId) {
     const { data: sess } = await supabase
       .from("conference_sessions")
       .select("is_active")
@@ -37,6 +41,12 @@ export async function GET(request: Request) {
     pollsQuery = pollsQuery.eq("event_id", eventId);
   } else if (sessionId) {
     pollsQuery = pollsQuery.or(`session_id.eq.${sessionId},session_id.is.null`);
+  }
+
+  // Server-side gate: non-admins only receive polls that are deployed and active.
+  // Client-side filtering is not a security boundary.
+  if (!isAdmin) {
+    pollsQuery = pollsQuery.eq("is_deployed", true).eq("is_active", true);
   }
 
   const [pollsRes, voteCountsRes] = await Promise.all([
@@ -76,7 +86,11 @@ export async function GET(request: Request) {
   });
 
   return NextResponse.json(enriched, {
-    headers: { "Cache-Control": "public, s-maxage=2, stale-while-revalidate=5" },
+    headers: {
+      "Cache-Control": isAdmin
+        ? "no-store"
+        : "public, s-maxage=2, stale-while-revalidate=5",
+    },
   });
 }
 

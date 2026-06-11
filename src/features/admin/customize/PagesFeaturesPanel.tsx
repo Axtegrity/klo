@@ -34,7 +34,6 @@ const DEFAULT_FEATURES: Feature[] = [
   { key: "booking", label: "Booking", enabled: true, description: "Invite Keith to speak" },
   { key: "events", label: "Events", enabled: true, description: "Upcoming events and conferences" },
   { key: "conference", label: "Conference", enabled: true, description: "Live conference engagement tools" },
-  { key: "strategy_rooms", label: "Strategy Rooms", enabled: true, description: "Collaborative strategy sessions" },
   { key: "feed", label: "Community Feed", enabled: true, description: "Content feed and updates" },
   { key: "marketplace", label: "Marketplace", enabled: false, description: "Resource marketplace" },
 ];

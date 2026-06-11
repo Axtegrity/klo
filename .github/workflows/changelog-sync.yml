@@ -72,7 +72,7 @@ jobs:
             "$SUPABASE_URL/rest/v1/changelog?select=version&order=created_at.desc&limit=1" \
           )
 
-          CURRENT_VERSION=$(echo "$LATEST" | grep -oE '"version":"[^"]+"' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          CURRENT_VERSION=$(echo "$LATEST" | grep -oE '"version":"[^"]+"' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
 
           if [ -z "$CURRENT_VERSION" ]; then
             CURRENT_VERSION="1.0.0"

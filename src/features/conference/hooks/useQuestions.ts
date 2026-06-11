@@ -57,6 +57,7 @@ export function useQuestions(options?: UseQuestionsOptions) {
             text,
             author_name: authorName,
             session_id: sessionId || undefined,
+            event_id: eventId || undefined,
           }),
         });
 
@@ -76,7 +77,7 @@ export function useQuestions(options?: UseQuestionsOptions) {
         return false;
       }
     },
-    [fetchQuestions, sessionId]
+    [fetchQuestions, sessionId, eventId]
   );
 
   const upvote = useCallback(
@@ -106,7 +107,7 @@ export function useQuestions(options?: UseQuestionsOptions) {
       if (likedQuestions.has(questionId)) return false;
 
       try {
-        const res = await fetch(`/api/conference/questions/${questionId}/upvote`, {
+        const res = await fetch(`/api/conference/questions/${questionId}/like`, {
           method: "POST",
         });
 
