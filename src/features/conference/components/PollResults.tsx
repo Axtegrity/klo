@@ -44,7 +44,12 @@ export default function PollResults({ poll: initialPoll, live }: PollResultsProp
 
   const refreshResults = useCallback(async () => {
     try {
-      const res = await fetch("/api/conference/polls");
+      const params = new URLSearchParams();
+      if (poll.session_id) params.set("session_id", poll.session_id);
+      const url = params.toString()
+        ? `/api/conference/polls?${params}`
+        : "/api/conference/polls";
+      const res = await fetch(url);
       if (!res.ok) throw new Error("fetch failed");
       const polls: PollWithVotes[] = await res.json();
       const updated = polls.find((p) => p.id === poll.id);
@@ -56,7 +61,7 @@ export default function PollResults({ poll: initialPoll, live }: PollResultsProp
     } catch {
       setFetchError(true);
     }
-  }, [poll.id]);
+  }, [poll.id, poll.session_id]);
 
   // Tick "X seconds ago" every 10s
   useEffect(() => {

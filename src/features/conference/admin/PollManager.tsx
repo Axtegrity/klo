@@ -206,7 +206,7 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
         return;
       }
       setDeployedSet((prev) => new Set(prev).add(id));
-      showSuccess("Poll deployed! Other active polls have been closed.");
+      showSuccess("Poll deployed!");
       fetchPolls();
     } finally {
       setDeployingId(null);
@@ -279,10 +279,6 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
     }
 
     const body: Record<string, unknown> = { [field]: value };
-    // Set closed_at timestamp when deactivating a poll
-    if (field === "is_active" && value === false) {
-      body.closed_at = new Date().toISOString();
-    }
 
     await fetch(`/api/conference/polls/${id}`, {
       method: "PUT",
