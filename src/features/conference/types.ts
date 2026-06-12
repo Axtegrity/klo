@@ -8,6 +8,7 @@ export interface Poll {
   created_at: string;
   closed_at: string | null;
   session_id: string | null;
+  event_id: string | null;
 }
 
 export interface PollVote {
