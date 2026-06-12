@@ -54,11 +54,11 @@ jobs:
         with:
           bun-version: "1"
 
-      # Use Node 20 for ESLint compatibility. Bun runs the install; Node runs the lint.
-      - name: Set up Node 20
+      # Use Node 24 for ESLint compatibility. Bun runs the install; Node runs the lint.
+      - name: Set up Node 24
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
 
       # Install all deps including devDependencies (eslint-plugin-security lives there).
       # --frozen-lockfile ensures CI never silently upgrades a dep.
