@@ -1,29 +1,66 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Play, BarChart2, StopCircle, ChevronDown, ChevronUp, Undo2 } from "lucide-react";
+import {
+  Play,
+  BarChart2,
+  StopCircle,
+  ChevronDown,
+  ChevronUp,
+  Undo2,
+  ArrowRight,
+  PowerOff,
+} from "lucide-react";
 import { useConferenceRealtime } from "../hooks/useConferenceRealtime";
 import type { PollWithVotes } from "../types";
 
 interface PresenterRemoteProps {
   eventId: string;
+  sessionId?: string;
 }
 
-export default function PresenterRemote({ eventId }: PresenterRemoteProps) {
+export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteProps) {
   const [polls, setPolls] = useState<PollWithVotes[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [showDone, setShowDone] = useState(false);
+  const [sessionMode, setSessionMode] = useState<"sequential" | "simultaneous">("sequential");
+  const [error, setError] = useState<string | null>(null);
+  const [sessionEnded, setSessionEnded] = useState(false);
 
   const fetchPolls = useCallback(async () => {
     try {
       const res = await fetch(`/api/conference/polls?event_id=${eventId}`);
-      if (!res.ok) return;
+      if (!res.ok) {
+        setError("Failed to load polls");
+        return;
+      }
       const data: PollWithVotes[] = await res.json();
       setPolls(data);
+    } catch {
+      setError("Failed to load polls");
     } finally {
       setLoading(false);
     }
+  }, [eventId]);
+
+  // Fetch the active session's session_mode at mount
+  useEffect(() => {
+    async function fetchSessionMode() {
+      try {
+        const res = await fetch(
+          `/api/conference/sessions?event_id=${eventId}&active_only=true`
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0 && data[0]?.session_mode) {
+          setSessionMode(data[0].session_mode as "sequential" | "simultaneous");
+        }
+      } catch {
+        // Non-fatal — default stays "sequential"
+      }
+    }
+    fetchSessionMode();
   }, [eventId]);
 
   useEffect(() => { fetchPolls(); }, [fetchPolls]);
@@ -33,49 +70,136 @@ export default function PresenterRemote({ eventId }: PresenterRemoteProps) {
   const queued = polls.filter((p) => !p.is_deployed && !p.is_active);
   const done = polls.filter((p) => p.is_deployed && !p.is_active);
   const totalVotes = live ? live.votes.reduce((s, v) => s + v, 0) : 0;
+  const nextInQueue = queued[0] ?? null;
 
   const act = async (fn: () => Promise<void>) => {
     setBusy(true);
-    try { await fn(); await fetchPolls(); } finally { setBusy(false); }
+    setError(null);
+    try {
+      await fn();
+      await fetchPolls();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const startPoll = (id: string) =>
-    act(() => fetch(`/api/conference/polls/${id}/deploy`, { method: "POST" }).then(() => {}));
+    act(async () => {
+      const res = await fetch(`/api/conference/polls/${id}/deploy`, { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to start poll");
+      }
+    });
 
   const toggleResults = (poll: PollWithVotes) =>
-    act(() =>
-      fetch(`/api/conference/polls/${poll.id}`, {
+    act(async () => {
+      const res = await fetch(`/api/conference/polls/${poll.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ show_results: !poll.show_results }),
-      }).then(() => {})
-    );
-
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to toggle results");
+      }
+    });
 
   const closePoll = () => {
     if (!live) return;
-    act(() =>
-      fetch(`/api/conference/polls/${live.id}`, {
+    act(async () => {
+      const res = await fetch(`/api/conference/polls/${live.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_active: false, show_results: false }),
-      }).then(() => {})
-    );
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to close poll");
+      }
+    });
+  };
+
+  const closeAndNext = () => {
+    if (!live || !nextInQueue) return;
+    act(async () => {
+      const closeRes = await fetch(`/api/conference/polls/${live.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_active: false, show_results: false }),
+      });
+      if (!closeRes.ok) {
+        const body = await closeRes.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to close current poll");
+      }
+      const deployRes = await fetch(
+        `/api/conference/polls/${nextInQueue.id}/deploy`,
+        { method: "POST" }
+      );
+      if (!deployRes.ok) {
+        const body = await deployRes.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to start next poll");
+      }
+    });
   };
 
   const undeployPoll = (id: string) =>
-    act(() =>
-      fetch(`/api/conference/polls/${id}`, {
+    act(async () => {
+      const res = await fetch(`/api/conference/polls/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_deployed: false }),
-      }).then(() => {})
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to put poll back");
+      }
+    });
+
+  const endSession = async () => {
+    if (!sessionId) return;
+    const confirmed = window.confirm(
+      "End this session? This will close all polls, archive the results, and mark the session complete."
     );
+    if (!confirmed) return;
+
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/conference/sessions/${sessionId}/end`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to end session");
+      }
+      setSessionEnded(true);
+      await fetchPolls();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to end session");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="w-8 h-8 border-2 border-[#2764FF]/30 border-t-[#2764FF] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (sessionEnded) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-6">
+        <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+          <PowerOff size={32} className="text-emerald-400" />
+        </div>
+        <p className="text-klo-text font-semibold text-lg">Session ended</p>
+        <p className="text-klo-muted text-sm">Results have been archived. View them in the History tab.</p>
       </div>
     );
   }
@@ -87,13 +211,39 @@ export default function PresenterRemote({ eventId }: PresenterRemoteProps) {
           <BarChart2 size={32} className="text-[#2764FF]" />
         </div>
         <p className="text-klo-text font-semibold text-lg">No polls yet</p>
-        <p className="text-klo-muted text-sm">Create polls in the admin panel first, then come back here to run them.</p>
+        <p className="text-klo-muted text-sm">
+          Create polls in the admin panel first, then come back here to run them.
+        </p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-4 px-4 pb-8 max-w-lg mx-auto">
+      {/* ── SESSION MODE BADGE ── */}
+      <div className="flex items-center justify-between">
+        <span
+          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${
+            sessionMode === "simultaneous"
+              ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+              : "bg-[#2764FF]/10 text-[#2764FF] border border-[#2764FF]/20"
+          }`}
+        >
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${
+              sessionMode === "simultaneous" ? "bg-purple-400" : "bg-[#2764FF]"
+            }`}
+          />
+          {sessionMode === "simultaneous" ? "SIMULTANEOUS MODE" : "SEQUENTIAL MODE"}
+        </span>
+      </div>
+
+      {/* ── ERROR DISPLAY ── */}
+      {error && (
+        <div className="rounded-xl px-4 py-3 bg-red-500/10 border border-red-500/20">
+          <p className="text-sm text-red-400">{error}</p>
+        </div>
+      )}
 
       {/* ── LIVE POLL ── */}
       {live ? (
@@ -129,7 +279,9 @@ export default function PresenterRemote({ eventId }: PresenterRemoteProps) {
                 <div key={idx}>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-klo-text truncate pr-2">{opt}</span>
-                    <span className="text-klo-muted shrink-0">{count} ({pct}%)</span>
+                    <span className="text-klo-muted shrink-0">
+                      {count} ({pct}%)
+                    </span>
                   </div>
                   <div className="h-2 rounded-full bg-white/5">
                     <div
@@ -157,14 +309,26 @@ export default function PresenterRemote({ eventId }: PresenterRemoteProps) {
               {live.show_results ? "Hide Results" : "Show Results"}
             </button>
 
-            <button
-              onClick={closePoll}
-              disabled={busy}
-              className="flex-1 flex items-center justify-center gap-2 py-4 bg-red-500/10 text-red-400 border border-red-500/20 rounded-2xl font-bold text-base hover:bg-red-500/20 transition-all disabled:opacity-50"
-            >
-              <StopCircle size={20} />
-              Close Poll
-            </button>
+            {/* Close & Next — only when a next poll is queued */}
+            {nextInQueue ? (
+              <button
+                onClick={closeAndNext}
+                disabled={busy}
+                className="flex-1 flex items-center justify-center gap-2 py-4 bg-[#2764FF]/10 text-[#2764FF] border border-[#2764FF]/30 rounded-2xl font-bold text-base hover:bg-[#2764FF]/20 transition-all disabled:opacity-50"
+              >
+                <ArrowRight size={20} />
+                Close &amp; Next
+              </button>
+            ) : (
+              <button
+                onClick={closePoll}
+                disabled={busy}
+                className="flex-1 flex items-center justify-center gap-2 py-4 bg-red-500/10 text-red-400 border border-red-500/20 rounded-2xl font-bold text-base hover:bg-red-500/20 transition-all disabled:opacity-50"
+              >
+                <StopCircle size={20} />
+                Close Poll
+              </button>
+            )}
           </div>
         </div>
       ) : queued.length > 0 ? (
@@ -173,7 +337,9 @@ export default function PresenterRemote({ eventId }: PresenterRemoteProps) {
           <p className="text-xs font-semibold text-klo-muted uppercase tracking-wider">
             {done.length === 0 ? "Up First" : "Next Question"}
           </p>
-          <p className="text-2xl font-bold text-klo-text leading-snug">{queued[0].question}</p>
+          <p className="text-2xl font-bold text-klo-text leading-snug">
+            {queued[0].question}
+          </p>
           <p className="text-xs text-klo-muted">
             {(queued[0].options as string[]).join(" · ")}
           </p>
@@ -189,9 +355,9 @@ export default function PresenterRemote({ eventId }: PresenterRemoteProps) {
       ) : (
         /* ── ALL DONE ── */
         <div className="glass rounded-3xl p-6 border border-emerald-500/20 text-center space-y-2">
-          <p className="text-2xl">🎉</p>
-          <p className="text-lg font-bold text-klo-text">All polls complete!</p>
-          <p className="text-sm text-klo-muted">Great session.</p>
+          <p className="text-2xl">All polls complete!</p>
+          <p className="text-lg font-bold text-klo-text">Well done.</p>
+          <p className="text-sm text-klo-muted">End the session to archive results.</p>
         </div>
       )}
 
@@ -224,25 +390,71 @@ export default function PresenterRemote({ eventId }: PresenterRemoteProps) {
           </button>
           {showDone && (
             <div className="divide-y divide-white/5">
-              {done.map((poll) => (
-                <div key={poll.id} className="flex items-center gap-3 px-4 py-3">
-                  <span className="text-emerald-400 text-xs shrink-0">✓</span>
-                  <p className="text-sm text-klo-muted truncate flex-1">{poll.question}</p>
-                  <button
-                    onClick={() => undeployPoll(poll.id)}
-                    disabled={busy}
-                    className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-klo-muted hover:text-yellow-400 hover:bg-yellow-500/10 transition-colors disabled:opacity-40"
-                    title="Put back in queue"
-                  >
-                    <Undo2 size={12} />
-                    Put back
-                  </button>
-                </div>
-              ))}
+              {done.map((poll) => {
+                const pollTotal = poll.votes.reduce((s, v) => s + v, 0);
+                return (
+                  <div key={poll.id} className="px-4 py-3 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-emerald-400 text-xs shrink-0">✓</span>
+                      <p className="text-sm text-klo-muted flex-1">{poll.question}</p>
+                      <button
+                        onClick={() => undeployPoll(poll.id)}
+                        disabled={busy}
+                        className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-klo-muted hover:text-yellow-400 hover:bg-yellow-500/10 transition-colors disabled:opacity-40"
+                        title="Put back in queue"
+                      >
+                        <Undo2 size={12} />
+                        Put back
+                      </button>
+                    </div>
+                    {/* Frozen vote results */}
+                    <div className="space-y-1 pl-4">
+                      {poll.options.map((opt, idx) => {
+                        const count = poll.votes[idx] || 0;
+                        const pct =
+                          pollTotal > 0 ? Math.round((count / pollTotal) * 100) : 0;
+                        return (
+                          <div key={idx}>
+                            <div className="flex justify-between text-xs mb-0.5">
+                              <span className="text-klo-muted/70 truncate pr-2">{opt}</span>
+                              <span className="text-klo-muted/50 shrink-0">
+                                {count} ({pct}%)
+                              </span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-white/5">
+                              <div
+                                className="h-full rounded-full bg-emerald-500/50 transition-all duration-500"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
       )}
+
+      {/* ── END SESSION ── */}
+      <div className="pt-2">
+        <button
+          onClick={endSession}
+          disabled={busy || !sessionId}
+          title={!sessionId ? "No session ID provided" : undefined}
+          className="w-full py-4 rounded-2xl font-bold text-base transition-all bg-red-900/40 border border-red-500/30 text-red-300 hover:bg-red-900/60 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          End Session
+        </button>
+        {!sessionId && (
+          <p className="text-xs text-center text-klo-muted mt-1">
+            Pass sessionId to enable this feature.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

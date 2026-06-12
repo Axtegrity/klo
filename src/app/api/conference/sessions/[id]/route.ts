@@ -33,6 +33,23 @@ export async function PUT(
   if (typeof validatedBody.time_label === "string") updates.time_label = validatedBody.time_label.trim() || null;
   if (typeof validatedBody.sort_order === "number") updates.sort_order = validatedBody.sort_order;
 
+  // Mode lock: session_mode cannot change once polls are deployed
+  if (typeof validatedBody.session_mode === "string") {
+    const { count: deployedCount } = await supabase
+      .from("conference_polls")
+      .select("*", { count: "exact", head: true })
+      .eq("session_id", id)
+      .eq("is_deployed", true);
+
+    if ((deployedCount ?? 0) > 0) {
+      return NextResponse.json(
+        { error: "Session mode cannot be changed after polls have been deployed." },
+        { status: 400 }
+      );
+    }
+    updates.session_mode = validatedBody.session_mode;
+  }
+
   // If activating this session, deactivate others in the same event only
   if (validatedBody.is_active === true) {
     const { data: thisSession } = await supabase

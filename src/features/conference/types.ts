@@ -65,6 +65,34 @@ export interface ConferenceSession {
   time_label: string | null;
   sort_order: number;
   created_at: string;
+  closed_at: string | null;
+  session_mode: "sequential" | "simultaneous";
+}
+
+export interface SessionSnapshot {
+  id: string;
+  session_id: string | null;
+  event_id: string | null;
+  created_at: string;
+  snapshot_data: {
+    session: { id: string; title: string; event_id: string | null; ended_at: string };
+    polls: Array<{
+      question: string;
+      options: string[];
+      votes: number[];
+      total_votes: number;
+      percentages: number[];
+      closed_at: string | null;
+    }>;
+    questions: Array<{
+      text: string;
+      upvotes: number;
+      released: boolean;
+      archived_at: string | null;
+      created_at: string;
+    }>;
+    attendee_count: number;
+  };
 }
 
 export interface ConferenceUserRole {
