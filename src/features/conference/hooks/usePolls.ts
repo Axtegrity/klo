@@ -9,7 +9,7 @@ function getVoterId(): string {
   if (typeof window === "undefined") return "";
   let id = sessionStorage.getItem(KEY);
   if (!id) {
-    id = crypto.randomUUID() + crypto.randomUUID();
+    id = crypto.randomUUID();
     sessionStorage.setItem(KEY, id);
   }
   return id;

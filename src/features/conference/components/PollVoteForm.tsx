@@ -12,13 +12,16 @@ interface PollVoteFormProps {
 export default function PollVoteForm({ poll, onVote }: PollVoteFormProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [voteError, setVoteError] = useState(false);
 
   const handleVote = async () => {
     if (selected === null) return;
     setSubmitting(true);
+    setVoteError(false);
     haptics.medium();
-    await onVote(poll.id, selected);
+    const ok = await onVote(poll.id, selected);
     setSubmitting(false);
+    if (!ok) setVoteError(true);
   };
 
   return (
@@ -47,6 +50,12 @@ export default function PollVoteForm({ poll, onVote }: PollVoteFormProps) {
           </span>
         </button>
       ))}
+
+      {voteError && (
+        <p className="text-sm text-red-400 text-center">
+          Your vote could not be submitted. Please try again.
+        </p>
+      )}
 
       <button
         onClick={handleVote}
