@@ -84,11 +84,9 @@ export const config = {
   matcher: [
     // CORS handling for Capacitor native app
     "/api/:path*",
-    // Auth protection (temporarily disabled for demo preview)
-    // "/profile/:path*",
-    // "/strategy-rooms/:path*",
-    // "/vault/:path*",
-    // "/advisor/:path*",
-    // "/admin/:path*",
+    // Auth protection — redirect to /auth/signin if no session
+    "/profile/:path*",
+    "/advisor/:path*",
+    "/pricing/manage",
   ],
 };

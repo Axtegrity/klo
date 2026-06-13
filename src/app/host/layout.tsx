@@ -9,17 +9,15 @@ export default async function HostLayout({
 }: {
   children: React.ReactNode;
 }) {
-  if (process.env.NODE_ENV !== "development") {
-    const session = await getServerSession(authOptions);
-    const role = (session?.user as { role?: string } | undefined)?.role;
+  const session = await getServerSession(authOptions);
+  const role = (session?.user as { role?: string } | undefined)?.role;
 
-    if (!session?.user) {
-      redirect("/auth/signin");
-    }
+  if (!session?.user) {
+    redirect("/auth/signin");
+  }
 
-    if (!["owner", "admin"].includes(role ?? "")) {
-      redirect("/");
-    }
+  if (!["owner", "admin"].includes(role ?? "")) {
+    redirect("/");
   }
 
   return <>{children}</>;
