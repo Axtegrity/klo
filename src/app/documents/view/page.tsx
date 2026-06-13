@@ -5,6 +5,22 @@ interface Props {
   searchParams: Promise<{ url?: string; name?: string }>;
 }
 
+const PERMITTED_DOCUMENT_HOSTS = [
+  "keithlodom.ai",
+  "supabase.co", // matches *.supabase.co — project storage buckets
+];
+
+function isUrlPermitted(raw: string): boolean {
+  try {
+    const { hostname } = new URL(raw);
+    return PERMITTED_DOCUMENT_HOSTS.some(
+      (allowed) => hostname === allowed || hostname.endsWith(`.${allowed}`)
+    );
+  } catch {
+    return false;
+  }
+}
+
 async function convertDocxToHtml(url: string): Promise<string | null> {
   try {
     const res = await fetch(url, { next: { revalidate: 3600 } });
@@ -41,6 +57,14 @@ function paginateHtml(html: string, targetChars = 1800): string[] {
 
 export default async function DocumentViewerPage({ searchParams }: Props) {
   const { url = "", name = "Document" } = await searchParams;
+
+  if (!isUrlPermitted(url)) {
+    return (
+      <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+        <h1>Document URL not permitted.</h1>
+      </div>
+    );
+  }
 
   const isDocx = url.toLowerCase().match(/\.docx?$/);
   const html = isDocx ? await convertDocxToHtml(url) : null;
