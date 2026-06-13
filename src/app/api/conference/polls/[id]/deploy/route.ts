@@ -28,11 +28,19 @@ export async function POST(
       .neq("id", id)
       .eq("is_active", true);
 
-    if (targetPoll.event_id) {
+    if (targetPoll.event_id && targetPoll.session_id) {
+      // Scope by both — only close polls in the same session within the same event
+      await closeQuery
+        .eq("event_id", targetPoll.event_id)
+        .eq("session_id", targetPoll.session_id);
+    } else if (targetPoll.event_id) {
+      // No session_id — scope by event only (event-level polls with no session)
       await closeQuery.eq("event_id", targetPoll.event_id);
     } else if (targetPoll.session_id) {
+      // No event_id — scope by session only
       await closeQuery.eq("session_id", targetPoll.session_id);
     }
+    // If both null — no siblings to close, no action
   }
 
   // Guard: require an active session before deploying. Polls are invisible to
