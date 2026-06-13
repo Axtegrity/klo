@@ -3,13 +3,16 @@ name: Lighthouse Audit
 on:
   deployment_status:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   lighthouse:
     if: github.event.deployment_status.state == 'success'
     name: Lighthouse
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       - name: Audit URLs
         uses: treosh/lighthouse-ci-action@v12
         with:
