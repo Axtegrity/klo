@@ -1,16 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { pollCreateSchema } from "@/lib/validation";
-
-async function verifyAdmin() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return null;
-  const role = (session.user as { role?: string }).role;
-  if (!["owner", "admin"].includes(role ?? "")) return null;
-  return session;
-}
+import { verifyConferenceRole } from "@/lib/conference-auth";
 
 export async function GET(request: Request) {
   const supabase = getServiceSupabase();
@@ -19,7 +10,7 @@ export async function GET(request: Request) {
   const eventId = searchParams.get("event_id");
 
   // Admins see all polls; guests only see deployed + active polls.
-  const adminSession = await verifyAdmin();
+  const adminSession = await verifyConferenceRole(["admin", "moderator"]);
   const isAdmin = !!adminSession;
 
   // If attendee is requesting by session, verify session is active
@@ -95,8 +86,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await verifyAdmin();
-  if (!session) {
+  const auth = await verifyConferenceRole(["admin", "moderator"]);
+  if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
