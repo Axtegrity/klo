@@ -206,6 +206,8 @@ export default function EventsAdminTab() {
         resetForm();
         setShowForm(false);
         fetchEvents();
+        setSaveMsg({ type: "success", text: "Event created successfully" });
+        setTimeout(() => setSaveMsg(null), 4000);
       }
     } finally {
       setSubmitting(false);

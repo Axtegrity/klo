@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import {
   CalendarDays,
   Radio,
@@ -655,7 +656,7 @@ export default function ConferenceAdminTab() {
         <div className="glass rounded-2xl p-8 border border-white/5 text-center">
           <CalendarDays size={32} className="text-klo-muted mx-auto mb-3" />
           <p className="text-sm text-klo-muted mb-1">No events yet.</p>
-          <p className="text-xs text-klo-muted">Go to the <span className="text-[#2764FF] font-medium">Events tab</span> to create one first.</p>
+          <p className="text-xs text-klo-muted">Go to the <Link href="/admin?tab=events" className="text-[#2764FF] font-medium underline-offset-2 hover:underline">Events tab</Link> to create one first.</p>
         </div>
       ) : (
         <div className="space-y-3">

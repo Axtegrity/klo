@@ -40,6 +40,24 @@ export async function POST(
     }
   }
 
+  // Guard: require an active session before deploying. Polls are invisible to
+  // attendees without one, so surface the gap here rather than silently deploying.
+  if (targetPoll?.session_id) {
+    const { data: activeSession } = await supabase
+      .from("conference_sessions")
+      .select("id")
+      .eq("id", targetPoll.session_id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (!activeSession) {
+      return NextResponse.json(
+        { error: "No active session found. Activate a session before deploying polls." },
+        { status: 400 }
+      );
+    }
+  }
+
   const { data, error } = await supabase
     .from("conference_polls")
     .update({ is_deployed: true, is_active: true })
