@@ -1,19 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
-
-async function verifyAdmin() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return null;
-  const role = (session.user as { role?: string }).role;
-  if (!["owner", "admin"].includes(role ?? "")) return null;
-  return session;
-}
+import { verifyConferenceRole } from "@/lib/conference-auth";
 
 export async function DELETE(request: Request) {
-  const session = await verifyAdmin();
-  if (!session) {
+  const auth = await verifyConferenceRole(["admin", "moderator"]);
+  if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

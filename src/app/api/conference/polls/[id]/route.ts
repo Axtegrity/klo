@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 import { pollUpdateSchema } from "@/lib/validation";
+import { verifyConferenceRole } from "@/lib/conference-auth";
 
 async function verifyAdmin() {
   const session = await getServerSession(authOptions);
@@ -16,8 +17,8 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await verifyAdmin();
-  if (!session) {
+  const auth = await verifyConferenceRole(["admin", "moderator"]);
+  if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

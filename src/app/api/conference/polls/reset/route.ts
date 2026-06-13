@@ -1,15 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
-
-async function verifyAdmin() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return null;
-  const role = (session.user as { role?: string }).role;
-  if (!["owner", "admin"].includes(role ?? "")) return null;
-  return session;
-}
+import { verifyConferenceRole } from "@/lib/conference-auth";
 
 // POST /api/conference/polls/reset?event_id=X
 // Pulls ALL polls for an event back to queue — sets is_deployed=false,
@@ -17,8 +8,8 @@ async function verifyAdmin() {
 // Also catches polls that only have session_id (no event_id) via a
 // session lookup so nothing is missed.
 export async function POST(request: Request) {
-  const session = await verifyAdmin();
-  if (!session) {
+  const auth = await verifyConferenceRole(["admin", "moderator"]);
+  if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
