@@ -4,6 +4,9 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { sessionCreateSchema } from "@/lib/validation";
 
 export async function GET(request: Request) {
+  const auth = await verifyConferenceRole(["admin"]);
+  const isAdmin = auth !== null;
+
   const supabase = getServiceSupabase();
   const { searchParams } = new URL(request.url);
   const eventId = searchParams.get("event_id");
@@ -35,8 +38,23 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data, {
-    headers: { "Cache-Control": "public, s-maxage=5, stale-while-revalidate=10" },
+  // Strip access_code for non-admin callers. Admins get the full record.
+  // Cache-Control is private for admin responses to prevent CDN from serving
+  // a full-field response to a non-admin caller.
+  const response = isAdmin
+    ? data
+    : data.map((session) => {
+        const result = { ...session } as Record<string, unknown>;
+        delete result.access_code;
+        return result;
+      });
+
+  return NextResponse.json(response, {
+    headers: {
+      "Cache-Control": isAdmin
+        ? "private, no-store"
+        : "public, s-maxage=5, stale-while-revalidate=10",
+    },
   });
 }
 
