@@ -26,6 +26,14 @@ export async function POST(request: Request) {
   }
   const { assessment_type, score, answers, recommendations } = parsed.data;
 
+  const PRO_ASSESSMENT_TYPES = ["governance", "cyber-risk"];
+  if (PRO_ASSESSMENT_TYPES.includes(assessment_type)) {
+    const tier = (session.user as { subscriptionTier?: string }).subscriptionTier;
+    if (!tier || !["pro", "executive"].includes(tier)) {
+      return NextResponse.json({ error: "Pro subscription required." }, { status: 403 });
+    }
+  }
+
   const supabase = getServiceSupabase();
   const { data, error } = await supabase
     .from("assessment_results")

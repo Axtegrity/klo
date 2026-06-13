@@ -87,6 +87,7 @@ export const config = {
     // Auth protection — redirect to /auth/signin if no session
     "/profile/:path*",
     "/advisor/:path*",
+    "/assessments/:path*",
     "/pricing/manage",
   ],
 };
