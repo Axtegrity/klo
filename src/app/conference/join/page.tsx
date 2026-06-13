@@ -57,7 +57,7 @@ export default function JoinConferencePage() {
           </div>
 
           <p className="text-[#484F58] font-mono text-sm md:text-base tracking-wider">
-            klo-app.vercel.app/conference
+            keithlodom.ai/conference
           </p>
         </div>
 
