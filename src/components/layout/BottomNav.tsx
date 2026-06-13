@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, MessageSquare, ClipboardCheck, BookOpen, Users, User } from "lucide-react";
+import { Home, MessageSquare, ClipboardCheck, BookOpen, Users, User, LayoutDashboard } from "lucide-react";
 import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
 import type { LucideIcon } from "lucide-react";
 
 interface NavItem {
@@ -12,7 +13,7 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-const navItems: NavItem[] = [
+const BASE_NAV_ITEMS: NavItem[] = [
   { label: "Home", href: "/", icon: Home },
   { label: "KLO Intel", href: "/advisor", icon: MessageSquare },
   { label: "Assess", href: "/assessments", icon: ClipboardCheck },
@@ -21,8 +22,14 @@ const navItems: NavItem[] = [
   { label: "Profile", href: "/profile", icon: User },
 ];
 
+const HOST_NAV_ITEM: NavItem = { label: "Host", href: "/host", icon: LayoutDashboard };
+
 export default function BottomNav() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const userRole = (session?.user as { role?: string } | undefined)?.role;
+  const isAdmin = ["owner", "admin"].includes(userRole ?? "");
+  const navItems = isAdmin ? [...BASE_NAV_ITEMS, HOST_NAV_ITEM] : BASE_NAV_ITEMS;
 
   const isActive = (href: string): boolean => {
     if (href === "/") return pathname === "/";

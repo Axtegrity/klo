@@ -45,7 +45,7 @@ export default function TopNav() {
       if (activeSurvey) {
         links = [...links, { label: "Survey", href: `/survey/${activeSurvey.slug}` }];
       }
-      if (isAdmin) links = [...links, { label: "Admin", href: "/admin" }];
+      if (isAdmin) links = [...links, { label: "Admin", href: "/admin" }, { label: "Host", href: "/host" }];
       return links;
     },
     [isAdmin, seminarMode.active, activeSurvey]
