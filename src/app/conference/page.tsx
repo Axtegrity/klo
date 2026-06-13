@@ -15,7 +15,9 @@ import {
 import Card from "@/components/shared/Card";
 import Badge from "@/components/shared/Badge";
 import ConferenceToolsTabs from "@/features/conference/components/ConferenceToolsTabs";
+import GuestSignInCard from "@/features/conference/components/GuestSignInCard";
 import { useSessions } from "@/features/conference/hooks/useSessions";
+import { useGuestSession } from "@/features/conference/hooks/useGuestSession";
 import { useSeminarMode } from "@/features/conference/hooks/useSeminarMode";
 import type { ConferenceSession } from "@/features/conference/types";
 
@@ -52,6 +54,7 @@ interface LiveEvent {
   event_timezone: string | null;
   description: string | null;
   display_name_mode: string | null;
+  has_access_code: boolean;
 }
 
 function formatDate(dateStr: string): string {
@@ -127,6 +130,8 @@ export default function ConferencePage() {
     }, 1000);
     return () => clearTimeout(timer);
   }, [notes]);
+
+  const guestSession = useGuestSession();
 
   /* ---------- Render: Loading ---------- */
   if (seminarLoading || eventsLoading) return null;
@@ -265,6 +270,27 @@ export default function ConferencePage() {
             )}
           </div>
         </motion.div>
+      </div>
+    );
+  }
+
+  /* ---------- Render: Guest sign-in gate ---------- */
+  // If the event requires an access code, block tools until the attendee signs in.
+  // We compare eventId so a guest token from a different event doesn't pass.
+  const requiresCode = selectedEvent?.has_access_code ?? false;
+  const guestCleared =
+    !requiresCode ||
+    (guestSession.isGuest && guestSession.eventId === selectedEventId);
+
+  if (requiresCode && guestSession.loading) return null;
+
+  if (requiresCode && !guestCleared) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 py-20">
+        <GuestSignInCard
+          onSignIn={guestSession.signIn}
+          eventTitle={selectedEvent?.conference_name}
+        />
       </div>
     );
   }
