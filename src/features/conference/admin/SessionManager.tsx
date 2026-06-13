@@ -14,6 +14,8 @@ import {
   Pencil,
   Check,
   X,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import type { ConferenceSession } from "../types";
 
@@ -34,6 +36,7 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
   const [endTime, setEndTime] = useState("");
   const [qaEnabled, setQaEnabled] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [autoFetch, setAutoFetch] = useState(false);
   const [autoFetchLoading, setAutoFetchLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -138,6 +141,8 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
         setQaEnabled(true);
         setShowCreateForm(false);
         fetchSessions();
+        setSaveMsg({ type: "success", text: "Session created. Activate it with the power button before deploying polls." });
+        setTimeout(() => setSaveMsg(null), 5000);
       }
     } finally {
       setCreating(false);
@@ -264,6 +269,17 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
 
   return (
     <div className="space-y-4">
+      {saveMsg && (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium ${
+          saveMsg.type === "success"
+            ? "bg-emerald-500/20 border border-emerald-500/30 text-emerald-300"
+            : "bg-red-500/20 border border-red-500/30 text-red-300"
+        }`}>
+          {saveMsg.type === "success" ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+          {saveMsg.text}
+        </div>
+      )}
+
       {/* Auto-fetch toggle */}
       {!autoFetchLoading && (
         <div className="glass rounded-2xl p-4 border border-white/5 flex items-center justify-between">
