@@ -36,7 +36,7 @@ export async function GET(request: Request) {
   // Enrich with session title via a separate fetch (avoids a join on a table
   // that may have ON DELETE SET NULL — session_id can be null after deletion).
   const sessionIds = [...new Set((data || []).map((s) => s.session_id).filter(Boolean))];
-  let sessionTitles: Record<string, string> = {};
+  const sessionTitles: Record<string, string> = {};
 
   if (sessionIds.length > 0) {
     const { data: sessions } = await supabase
