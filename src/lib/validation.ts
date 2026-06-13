@@ -385,7 +385,11 @@ export const sessionUpdateSchema = z.object({
   room: z.string().max(200).optional(),
   time_label: z.string().max(200).optional(),
   sort_order: z.number().int().optional(),
+  session_mode: z.enum(["sequential", "simultaneous"]).optional(),
 });
+
+// Conference: end session (no body — all data comes from DB)
+export const sessionEndSchema = z.object({});
 
 // ----------------------------------------------------------------
 // Conference: profanity POST

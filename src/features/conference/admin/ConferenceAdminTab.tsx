@@ -12,6 +12,7 @@ import {
   ChevronRight,
   ArrowLeft,
   MapPin,
+  Archive,
 } from "lucide-react";
 import PollManager from "./PollManager";
 import PresenterRemote from "./PresenterRemote";
@@ -21,6 +22,7 @@ import SessionManager from "./SessionManager";
 import RoleManager from "./RoleManager";
 import ProfanityManager from "./ProfanityManager";
 import AnnouncementManager from "./AnnouncementManager";
+import SessionHistory from "./SessionHistory";
 
 interface EventOption {
   id: string;
@@ -34,7 +36,7 @@ interface EventOption {
   access_code: string | null;
 }
 
-type SubTab = "sessions" | "polls" | "qa" | "wordcloud" | "announcements" | "settings";
+type SubTab = "sessions" | "polls" | "qa" | "wordcloud" | "announcements" | "settings" | "history";
 
 const EVENT_SUB_TABS: { id: SubTab; label: string; icon: React.ElementType }[] = [
   { id: "sessions", label: "Sessions", icon: Radio },
@@ -43,6 +45,7 @@ const EVENT_SUB_TABS: { id: SubTab; label: string; icon: React.ElementType }[] =
   { id: "wordcloud", label: "Word Cloud", icon: Cloud },
   { id: "announcements", label: "Announce", icon: Megaphone },
   { id: "settings", label: "Settings", icon: Shield },
+  { id: "history", label: "History", icon: Archive },
 ];
 
 function formatEventDate(ev: EventOption): string {
@@ -61,9 +64,174 @@ function formatEventDate(ev: EventOption): string {
 }
 
 type PollMode = "manage" | "present";
+type SessionMode = "sequential" | "simultaneous";
+
+interface ActiveSessionInfo {
+  id: string;
+  session_mode: SessionMode;
+}
+
+interface PollSummary {
+  id: string;
+  is_deployed: boolean;
+  is_active: boolean;
+  votes?: number[];
+}
 
 function PollsTab({ eventId }: { eventId: string }) {
   const [mode, setMode] = useState<PollMode>("manage");
+  const [activeSession, setActiveSession] = useState<ActiveSessionInfo | null>(null);
+  const [selectedMode, setSelectedMode] = useState<SessionMode>("sequential");
+  const [polls, setPolls] = useState<PollSummary[]>([]);
+  const [questionCount, setQuestionCount] = useState(0);
+  const [modeUpdating, setModeUpdating] = useState(false);
+  const [modeError, setModeError] = useState<string | null>(null);
+  const [deployAllBusy, setDeployAllBusy] = useState(false);
+  const [closeAllBusy, setCloseAllBusy] = useState(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkSuccess, setBulkSuccess] = useState<string | null>(null);
+
+  const fetchActiveSession = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/conference/sessions?event_id=${eventId}&active_only=true`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const s = data[0];
+        setActiveSession({ id: s.id, session_mode: s.session_mode ?? "sequential" });
+        setSelectedMode(s.session_mode ?? "sequential");
+      } else {
+        setActiveSession(null);
+      }
+    } catch {
+      // Non-fatal
+    }
+  }, [eventId]);
+
+  const fetchPolls = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/conference/polls?event_id=${eventId}`);
+      if (!res.ok) return;
+      const data: PollSummary[] = await res.json();
+      setPolls(data);
+    } catch {
+      // Non-fatal
+    }
+  }, [eventId]);
+
+  const fetchQuestionCount = useCallback(async () => {
+    if (!activeSession) return;
+    try {
+      const res = await fetch(
+        `/api/conference/questions?session_id=${activeSession.id}&admin=true`
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      setQuestionCount(Array.isArray(data) ? data.length : 0);
+    } catch {
+      // Non-fatal
+    }
+  }, [activeSession]);
+
+  useEffect(() => {
+    fetchActiveSession();
+    fetchPolls();
+  }, [fetchActiveSession, fetchPolls]);
+
+  useEffect(() => {
+    fetchQuestionCount();
+  }, [fetchQuestionCount]);
+
+  const anyDeployed = polls.some((p) => p.is_deployed);
+  const totalVotes = polls.reduce((sum, p) => {
+    if (!p.votes) return sum;
+    return sum + p.votes.reduce((s, v) => s + v, 0);
+  }, 0);
+  const donePolls = polls.filter((p) => p.is_deployed && !p.is_active).length;
+  const totalPolls = polls.length;
+
+  const handleModeSelect = async (newMode: SessionMode) => {
+    if (!activeSession) return;
+    if (anyDeployed) return; // locked — server enforces too
+    setSelectedMode(newMode);
+    setModeUpdating(true);
+    setModeError(null);
+    try {
+      const res = await fetch(`/api/conference/sessions/${activeSession.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_mode: newMode }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setModeError(body.error || "Failed to update mode");
+        setSelectedMode(activeSession.session_mode); // revert
+      } else {
+        setActiveSession((prev) => prev ? { ...prev, session_mode: newMode } : prev);
+      }
+    } catch {
+      setModeError("Failed to update mode");
+      setSelectedMode(activeSession.session_mode);
+    } finally {
+      setModeUpdating(false);
+    }
+  };
+
+  const handleDeployAll = async () => {
+    if (!activeSession) return;
+    const confirmed = window.confirm(
+      `This will release all ${totalPolls} polls to attendees. Continue?`
+    );
+    if (!confirmed) return;
+    setDeployAllBusy(true);
+    setBulkError(null);
+    setBulkSuccess(null);
+    try {
+      const res = await fetch(
+        `/api/conference/sessions/${activeSession.id}/polls/deploy-all`,
+        { method: "POST" }
+      );
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setBulkError(body.error || "Failed to deploy all polls");
+      } else {
+        setBulkSuccess(`Deployed ${body.deployed} polls`);
+        await fetchPolls();
+      }
+    } catch {
+      setBulkError("Failed to deploy all polls");
+    } finally {
+      setDeployAllBusy(false);
+    }
+  };
+
+  const handleCloseAll = async () => {
+    if (!activeSession) return;
+    const confirmed = window.confirm("Close all active polls now?");
+    if (!confirmed) return;
+    setCloseAllBusy(true);
+    setBulkError(null);
+    setBulkSuccess(null);
+    try {
+      const res = await fetch(
+        `/api/conference/sessions/${activeSession.id}/polls/close-all`,
+        { method: "POST" }
+      );
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setBulkError(body.error || "Failed to close all polls");
+      } else {
+        setBulkSuccess(`Closed ${body.closed} polls`);
+        await fetchPolls();
+      }
+    } catch {
+      setBulkError("Failed to close all polls");
+    } finally {
+      setCloseAllBusy(false);
+    }
+  };
+
+  const effectiveMode = activeSession?.session_mode ?? selectedMode;
 
   return (
     <div className="space-y-4">
@@ -92,7 +260,11 @@ function PollsTab({ eventId }: { eventId: string }) {
               {mode === "present" && (
                 <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-75 animate-ping" />
               )}
-              <span className={`relative inline-flex rounded-full h-2 w-2 ${mode === "present" ? "bg-white" : "bg-klo-muted/40"}`} />
+              <span
+                className={`relative inline-flex rounded-full h-2 w-2 ${
+                  mode === "present" ? "bg-white" : "bg-klo-muted/40"
+                }`}
+              />
             </span>
             Present Live
           </button>
@@ -101,14 +273,135 @@ function PollsTab({ eventId }: { eventId: string }) {
           <span className="text-xs text-klo-muted">Build your poll deck, then go live</span>
         )}
         {mode === "present" && (
-          <span className="text-xs text-emerald-400 font-medium">Running live — attendees see your polls</span>
+          <span className="text-xs text-emerald-400 font-medium">
+            Running live — attendees see your polls
+          </span>
         )}
       </div>
+
+      {/* ── MANAGE MODE: session mode selector ── */}
+      {mode === "manage" && activeSession && (
+        <div className="space-y-3">
+          {anyDeployed ? (
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${
+                  effectiveMode === "simultaneous"
+                    ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                    : "bg-[#2764FF]/10 text-[#2764FF] border border-[#2764FF]/20"
+                }`}
+              >
+                Mode locked:{" "}
+                {effectiveMode === "simultaneous" ? "Deploy All" : "One at a Time"}
+              </span>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-klo-muted font-medium uppercase tracking-wider">
+                Poll delivery mode
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => handleModeSelect("sequential")}
+                  disabled={modeUpdating}
+                  className={`p-4 rounded-2xl border text-left transition-all disabled:opacity-60 ${
+                    selectedMode === "sequential"
+                      ? "border-[#2764FF] bg-[#2764FF]/10"
+                      : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
+                  }`}
+                >
+                  <p className="text-sm font-semibold text-klo-text mb-1">One at a Time</p>
+                  <p className="text-xs text-klo-muted leading-snug">
+                    Deploy polls one by one. Full control over pacing.
+                  </p>
+                </button>
+                <button
+                  onClick={() => handleModeSelect("simultaneous")}
+                  disabled={modeUpdating}
+                  className={`p-4 rounded-2xl border text-left transition-all disabled:opacity-60 ${
+                    selectedMode === "simultaneous"
+                      ? "border-purple-500 bg-purple-500/10"
+                      : "border-white/10 bg-white/[0.02] hover:bg-white/[0.04]"
+                  }`}
+                >
+                  <p className="text-sm font-semibold text-klo-text mb-1">Deploy All</p>
+                  <p className="text-xs text-klo-muted leading-snug">
+                    Release all polls at once. Attendees answer at their own pace.
+                  </p>
+                </button>
+              </div>
+              {modeError && (
+                <p className="text-xs text-red-400">{modeError}</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── PRESENT MODE: host dashboard stats bar ── */}
+      {mode === "present" && activeSession && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-4 gap-2">
+            <div className="glass rounded-xl p-3 border border-white/5 text-center">
+              <p className="text-lg font-black text-[#2764FF]">{totalVotes}</p>
+              <p className="text-[10px] text-klo-muted">Total Votes</p>
+            </div>
+            <div className="glass rounded-xl p-3 border border-white/5 text-center">
+              <p className="text-lg font-black text-klo-text">
+                {donePolls}/{totalPolls}
+              </p>
+              <p className="text-[10px] text-klo-muted">Polls Done</p>
+            </div>
+            <div className="glass rounded-xl p-3 border border-white/5 text-center">
+              <p className="text-lg font-black text-klo-text">{questionCount}</p>
+              <p className="text-[10px] text-klo-muted">Questions</p>
+            </div>
+            <div className="glass rounded-xl p-3 border border-white/5 text-center">
+              <p
+                className={`text-[10px] font-bold mt-1 ${
+                  effectiveMode === "simultaneous" ? "text-purple-400" : "text-[#2764FF]"
+                }`}
+              >
+                {effectiveMode === "simultaneous" ? "SIMUL" : "SEQ"}
+              </p>
+              <p className="text-[10px] text-klo-muted">Mode</p>
+            </div>
+          </div>
+
+          {/* Simultaneous mode bulk controls */}
+          {effectiveMode === "simultaneous" && (
+            <div className="space-y-2">
+              {bulkError && (
+                <p className="text-xs text-red-400 px-1">{bulkError}</p>
+              )}
+              {bulkSuccess && (
+                <p className="text-xs text-emerald-400 px-1">{bulkSuccess}</p>
+              )}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleDeployAll}
+                  disabled={deployAllBusy || closeAllBusy}
+                  className="flex-1 py-3 rounded-xl font-semibold text-sm bg-purple-500/10 text-purple-300 border border-purple-500/20 hover:bg-purple-500/20 transition-all disabled:opacity-50"
+                >
+                  {deployAllBusy ? "Deploying..." : "Deploy All"}
+                </button>
+                <button
+                  onClick={handleCloseAll}
+                  disabled={deployAllBusy || closeAllBusy}
+                  className="flex-1 py-3 rounded-xl font-semibold text-sm bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all disabled:opacity-50"
+                >
+                  {closeAllBusy ? "Closing..." : "Close All"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {mode === "manage" ? (
         <PollManager eventId={eventId} />
       ) : (
-        <PresenterRemote eventId={eventId} />
+        <PresenterRemote eventId={eventId} sessionId={activeSession?.id} />
       )}
     </div>
   );
@@ -308,6 +601,10 @@ export default function ConferenceAdminTab() {
                 <RoleManager />
               </div>
             </div>
+          )}
+
+          {subTab === "history" && (
+            <SessionHistory eventId={selectedEventId} />
           )}
         </div>
       </div>
