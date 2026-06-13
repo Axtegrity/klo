@@ -10,6 +10,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const tier = (session.user as { subscriptionTier?: string }).subscriptionTier;
+  if (!tier || !["pro", "executive"].includes(tier)) {
+    return NextResponse.json({ error: "Pro subscription required." }, { status: 403 });
+  }
+
   const body = await request.json();
   const parsed = assessmentDownloadSchema.safeParse(body);
   if (!parsed.success) {
