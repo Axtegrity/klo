@@ -20,6 +20,7 @@ interface AssessmentCardProps {
   estimatedMinutes: number;
   category: string;
   completed?: boolean;
+  requiredTier?: "pro" | "executive";
 }
 
 // ------------------------------------------------------------
@@ -35,6 +36,7 @@ export default function AssessmentCard({
   estimatedMinutes,
   category,
   completed = false,
+  requiredTier,
 }: AssessmentCardProps) {
   return (
     <motion.div
@@ -53,6 +55,9 @@ export default function AssessmentCard({
               <Icon size={22} className="text-[#68E9FA]" />
             </div>
             <div className="flex items-center gap-2">
+              {requiredTier === "pro" && (
+                <Badge variant="gold">Pro</Badge>
+              )}
               {completed && (
                 <Badge variant="green">Completed</Badge>
               )}

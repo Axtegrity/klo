@@ -100,6 +100,7 @@ export default function AssessmentsPage() {
                   estimatedMinutes={assessment.estimatedMinutes ?? 5}
                   category={assessment.category ?? "Assessment"}
                   completed={completedIds.has(assessment.id)}
+                  requiredTier={assessment.requiredTier}
                 />
               </motion.div>
             );

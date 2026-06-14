@@ -231,6 +231,7 @@ export const ASSESSMENTS: Assessment[] = [
     questionCount: 10,
     estimatedMinutes: 5,
     category: "Governance",
+    requiredTier: "pro" as const,
   },
   {
     id: "cyber-risk",
@@ -242,6 +243,7 @@ export const ASSESSMENTS: Assessment[] = [
     questionCount: 10,
     estimatedMinutes: 5,
     category: "Security",
+    requiredTier: "pro" as const,
   },
 ];
 

@@ -325,9 +325,17 @@ export default function EventConferencePage() {
           </motion.div>
 
           <motion.div variants={fadeUp} custom={1}>
-            <SeminarModeGate eventId={event.id}>
-              <ConferenceToolsTabs eventId={event.id} sessionId={selectedSession?.id} />
-            </SeminarModeGate>
+            {event.seminar_mode ? (
+              <SeminarModeGate eventId={event.id}>
+                <ConferenceToolsTabs eventId={event.id} sessionId={selectedSession?.id} />
+              </SeminarModeGate>
+            ) : (
+              <div className="flex items-center justify-center py-16 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+                <p className="text-klo-muted text-center text-base">
+                  Session not currently active
+                </p>
+              </div>
+            )}
           </motion.div>
 
           {/* ── Resources — visible files Keith has shared ── */}
