@@ -82,6 +82,8 @@ export interface Assessment {
   /** Estimated minutes to complete. */
   estimatedMinutes?: number;
   category?: string;
+  /** Minimum subscription tier required to take this assessment. */
+  requiredTier?: "pro" | "executive";
 }
 
 export interface AssessmentAnswer {

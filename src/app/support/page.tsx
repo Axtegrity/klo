@@ -7,7 +7,13 @@ export const metadata: Metadata = {
     "Get help with the KLO app. Find answers to frequently asked questions or contact our support team.",
 };
 
-const faqs = [
+interface FaqItem {
+  question: string;
+  answer: string;
+  links?: Array<{ text: string; href: string }>;
+}
+
+const faqs: FaqItem[] = [
   {
     question: "How do I join an event?",
     answer:
@@ -35,7 +41,9 @@ const faqs = [
   },
   {
     question: "Is my data private?",
-    answer: "privacy",
+    answer:
+      "Yes. We take your privacy seriously and only collect data necessary to provide the service.",
+    links: [{ text: "Privacy Policy", href: "/privacy" }],
   },
 ];
 
@@ -110,23 +118,20 @@ export default function SupportPage() {
             className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5"
           >
             <h3 className="font-medium text-klo-text mb-2">{faq.question}</h3>
-            {faq.answer === "privacy" ? (
-              <p className="text-klo-muted text-sm leading-relaxed">
-                Yes. We take your privacy seriously and only collect data
-                necessary to provide the service. Read our full{" "}
-                <Link
-                  href="/privacy"
-                  className="text-[#D4A853] hover:underline"
-                >
-                  Privacy Policy
-                </Link>{" "}
-                for details.
-              </p>
-            ) : (
-              <p className="text-klo-muted text-sm leading-relaxed">
-                {faq.answer}
-              </p>
-            )}
+            <p className="text-klo-muted text-sm leading-relaxed">
+              {faq.answer}
+              {faq.links?.map((link) => (
+                <span key={link.href}>
+                  {" "}
+                  <Link
+                    href={link.href}
+                    className="text-[#D4A853] hover:underline"
+                  >
+                    {link.text}
+                  </Link>
+                </span>
+              ))}
+            </p>
           </div>
         ))}
       </div>
