@@ -38,18 +38,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Strip access_code for non-admin callers. Admins get the full record.
-  // Cache-Control is private for admin responses to prevent CDN from serving
-  // a full-field response to a non-admin caller.
-  const response = isAdmin
-    ? data
-    : data.map((session) => {
-        const result = { ...session } as Record<string, unknown>;
-        delete result.access_code;
-        return result;
-      });
-
-  return NextResponse.json(response, {
+  return NextResponse.json(data, {
     headers: {
       "Cache-Control": isAdmin
         ? "private, no-store"
