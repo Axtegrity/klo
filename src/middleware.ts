@@ -82,8 +82,9 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    // CORS handling for Capacitor native app
-    "/api/:path*",
+    // CORS handling for Capacitor native app — exclude /api/auth/* so
+    // withAuth never intercepts NextAuth's own credential callback routes
+    "/api/((?!auth/).*)",
     // Auth protection — redirect to /auth/signin if no session
     "/profile/:path*",
     "/advisor/:path*",
