@@ -59,18 +59,16 @@ export default function LeadCaptureForm({
   // Pre-fill from session once available — session may arrive after mount.
   // Intentionally omits name/email from deps: re-running on every keystroke
   // would fight user edits. We only want to fill empty fields on session arrival.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (session?.user) {
       if (!name && session.user.name) setName(session.user.name);
       if (!email && session.user.email) setEmail(session.user.email);
     }
-  }, [session]);
+  }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Pre-fill organization from profile API if signed in and org not already set.
   // Intentionally omits organization from deps: adding it would re-trigger the
   // fetch on every keystroke in the org field, which is wrong.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!session?.user || organization) return;
     fetch("/api/profile")
@@ -81,7 +79,7 @@ export default function LeadCaptureForm({
         }
       })
       .catch(() => {});
-  }, [session]);
+  }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function validate(): boolean {
     const next: FieldErrors = {};
