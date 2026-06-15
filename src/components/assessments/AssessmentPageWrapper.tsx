@@ -8,6 +8,7 @@ import Badge from "@/components/shared/Badge";
 import Button from "@/components/shared/Button";
 import Questionnaire from "./Questionnaire";
 import ScoreReport from "./ScoreReport";
+import LeadCaptureForm, { type LeadData } from "@/components/shared/LeadCaptureForm";
 import type { AssessmentQuestion } from "@/lib/assessment-questions";
 import type { AssessmentSavedResult } from "@/hooks/useAssessment";
 import { haptics } from "@/lib/haptics";
@@ -41,18 +42,62 @@ export default function AssessmentPageWrapper({
 }: AssessmentPageWrapperProps) {
   const [result, setResult] = useState<AssessmentSavedResult | null>(null);
   const [started, setStarted] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const [leadLoading, setLeadLoading] = useState(false);
 
   const handleComplete = useCallback((res: AssessmentSavedResult) => {
     setResult(res);
+    setCapturing(true);
     haptics.success();
   }, []);
 
   const handleRetake = useCallback(() => {
     setResult(null);
     setStarted(false);
+    setCapturing(false);
   }, []);
 
-  // Show score report if completed
+  const handleLeadSubmit = useCallback(async (data: LeadData) => {
+    if (!result) return;
+    setLeadLoading(true);
+    const percentage = Math.round((result.score / result.maxScore) * 100);
+    try {
+      await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...data,
+          source: "assessment",
+          source_id: assessmentId,
+          metadata: { score: result.score, maxScore: result.maxScore, percentage },
+        }),
+      });
+    } catch {
+      // Do not block results on API failure
+    } finally {
+      setLeadLoading(false);
+      setCapturing(false);
+    }
+  }, [result, assessmentId]);
+
+  // Show lead capture form after questionnaire submit
+  if (capturing && result) {
+    return (
+      <div className="min-h-screen px-6 py-24 md:py-32">
+        <div className="max-w-4xl mx-auto">
+          <LeadCaptureForm
+            title="Get Your Results"
+            subtitle="Enter your details to see your personalized score and recommendations."
+            submitLabel="See My Results"
+            onSubmit={handleLeadSubmit}
+            isLoading={leadLoading}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Show score report once lead capture is complete
   if (result) {
     return (
       <div className="min-h-screen px-6 py-24 md:py-32">
