@@ -541,6 +541,25 @@ const TRAINING_SECTIONS: TrainingSection[] = [
     ],
   },
   {
+    id: "leads",
+    title: "Leads",
+    icon: UserPlus,
+    description: "View and search lead capture submissions from assessment and survey completions.",
+    adminTab: "leads",
+    steps: [
+      { icon: Eye, label: "Summary Row", detail: "Four stat cards at the top: Total Leads, Assessment Leads, Survey Leads, and Last 7 Days — refreshed each time you open the tab." },
+      { icon: Search, label: "Search", detail: "Type any name or email to filter the table in real time. Results narrow as you type." },
+      { icon: Filter, label: "Filter by Source", detail: "Use the dropdown to show only assessment leads, only survey leads, or all leads." },
+      { icon: Users, label: "Leads Table", detail: "Columns: Name, Email, Phone (— if empty), Organization (— if empty), Source (gold badge = assessment, blue = survey), Source ID (which assessment or survey), Submitted (relative time)." },
+      { icon: Download, label: "Copy Email", detail: "Click the Copy Email button on any row to copy that lead's email address to your clipboard. The button briefly shows a green checkmark to confirm." },
+    ],
+    tips: [
+      "Leads are sorted newest-first. Use the source filter to quickly see how many leads came from each channel.",
+      "The Source ID column shows which specific assessment or survey the lead came from — useful for tracking which content converts best.",
+      "20 leads per page with pagination controls at the bottom of the table.",
+    ],
+  },
+  {
     id: "users",
     title: "User Management",
     icon: Users,
@@ -805,6 +824,7 @@ const TAB_MAP: { id: string; label: string; icon: React.ElementType; color: stri
   { id: "inquiries", label: "Inquiries", icon: Inbox, color: "#2764FF", category: "Communication" },
   { id: "notifications", label: "Notifications", icon: Bell, color: "#F77A81", category: "Communication" },
   { id: "presentations", label: "Presentations", icon: ClipboardCheck, color: "#C8A84E", category: "Content" },
+  { id: "leads", label: "Leads", icon: UserPlus, color: "#C8A84E", category: "Management" },
   { id: "users", label: "Users", icon: Users, color: "#21B8CD", category: "Management" },
   { id: "content", label: "Analytics", icon: BotMessageSquare, color: "#8840FF", category: "Analytics" },
   { id: "revenue", label: "Revenue", icon: DollarSign, color: "#6ECF55", category: "Analytics" },
