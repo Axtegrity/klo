@@ -86,5 +86,6 @@ export const config = {
     // withAuth never intercepts NextAuth's own credential callback routes
     "/api/((?!auth/).*)",
     "/profile/:path*",
+    "/advisor/:path*",
   ],
 };

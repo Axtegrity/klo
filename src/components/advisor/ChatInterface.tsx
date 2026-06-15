@@ -224,20 +224,42 @@ export default function ChatInterface({
         <div ref={scrollAnchorRef} aria-hidden="true" />
       </div>
 
-      {/* Error banner */}
+      {/* Error banner / auth gate */}
       <AnimatePresence>
         {error && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="px-4"
-          >
-            <div className="flex items-center gap-2 px-4 py-2 mb-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
-              <AlertCircle size={14} className="shrink-0" />
-              {error}
-            </div>
-          </motion.div>
+          error === "Authentication required." ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center flex-1 px-6 py-16 text-center"
+            >
+              <h2 className="font-display text-2xl text-klo-text mb-3">
+                Sign in to continue
+              </h2>
+              <p className="text-klo-muted text-sm mb-6">
+                Ask Keith is available to registered members.
+              </p>
+              <a
+                href="/auth/signin"
+                className="px-6 py-2 bg-klo-gold text-klo-navy font-semibold rounded-lg hover:bg-klo-gold/90 transition-colors"
+              >
+                Sign In
+              </a>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="px-4"
+            >
+              <div className="flex items-center gap-2 px-4 py-2 mb-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                <AlertCircle size={14} className="shrink-0" />
+                {error}
+              </div>
+            </motion.div>
+          )
         )}
       </AnimatePresence>
 
