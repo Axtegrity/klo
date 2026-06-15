@@ -11,6 +11,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import Button from "@/components/shared/Button";
+import LeadCaptureForm, { type LeadData } from "@/components/shared/LeadCaptureForm";
 
 // ------------------------------------------------------------
 // Types
@@ -73,6 +74,8 @@ export default function SurveyClient({ slug }: { slug: string }) {
   const [answers, setAnswers] = useState<Answers>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const [fingerprint, setFingerprint] = useState<string>("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [direction, setDirection] = useState(1);
 
@@ -201,12 +204,40 @@ export default function SurveyClient({ slug }: { slug: string }) {
         return;
       }
 
-      setSubmitted(true);
+      const fp = getFingerprint();
+      setFingerprint(fp);
+      setCapturing(true);
     } catch {
       setSubmitError("Network error. Please check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleLeadSubmit = async (data: LeadData) => {
+    if (!survey) return;
+    try {
+      await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...data,
+          source: "survey",
+          source_id: slug,
+          metadata: { fingerprint },
+        }),
+      });
+    } catch {
+      // Do not block Thank You on API failure
+    } finally {
+      setCapturing(false);
+      setSubmitted(true);
+    }
+  };
+
+  const handleLeadSkip = () => {
+    setCapturing(false);
+    setSubmitted(true);
   };
 
   // -- Loading / Not Found --
@@ -232,6 +263,31 @@ export default function SurveyClient({ slug }: { slug: string }) {
           <Button variant="primary" href="/">
             Back to Home
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // -- Lead Capture --
+  if (capturing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0D1117] px-6 py-24">
+        <div className="w-full max-w-md">
+          <LeadCaptureForm
+            title="Thank You for Completing the Survey"
+            subtitle="Would you like Keith to follow up with you personally about your responses?"
+            submitLabel="Yes, Follow Up With Me"
+            onSubmit={handleLeadSubmit}
+          />
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={handleLeadSkip}
+              className="text-sm text-klo-muted hover:text-klo-text transition-colors"
+            >
+              No thanks, skip
+            </button>
+          </div>
         </div>
       </div>
     );

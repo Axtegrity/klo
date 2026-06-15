@@ -308,6 +308,20 @@ export const pollUpdateSchema = z.object({
 });
 
 // ----------------------------------------------------------------
+// Leads: POST /api/leads
+// ----------------------------------------------------------------
+
+export const leadsCreateSchema = z.object({
+  name: z.string().min(1).max(500),
+  email: emailSchema,
+  phone: z.string().max(50).optional(),
+  organization: z.string().max(500).optional(),
+  source: z.enum(["assessment", "survey"]),
+  source_id: z.string().min(1).max(200),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+// ----------------------------------------------------------------
 // Conference: polls [id] vote
 // ----------------------------------------------------------------
 
