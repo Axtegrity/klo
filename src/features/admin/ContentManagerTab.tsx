@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Home, BookOpen, Rss, Archive } from "lucide-react";
+import { Home, BookOpen, Rss, Archive, User } from "lucide-react";
 import HomeContentManager from "./content-manager/HomeContentManager";
 import VaultContentManager from "./content-manager/VaultContentManager";
 import FeedContentManager from "./content-manager/FeedContentManager";
 import ContentRepository from "./content-manager/ContentRepository";
+import AboutContentManager from "./AboutContentManager";
 
-type Section = "home" | "vault" | "feed" | "repository";
+type Section = "home" | "about" | "vault" | "feed" | "repository";
 
 const sections: { id: Section; label: string; icon: React.ElementType }[] = [
   { id: "home", label: "Home Page", icon: Home },
+  { id: "about", label: "About Page", icon: User },
   { id: "vault", label: "Vault Library", icon: BookOpen },
   { id: "feed", label: "Feed Posts", icon: Rss },
   { id: "repository", label: "Repository", icon: Archive },
@@ -32,7 +34,7 @@ export default function ContentManagerTab() {
       </div>
 
       {/* Section Selector */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {sections.map((section) => {
           const Icon = section.icon;
           return (
@@ -54,6 +56,7 @@ export default function ContentManagerTab() {
 
       {/* Content */}
       {activeSection === "home" && <HomeContentManager />}
+      {activeSection === "about" && <AboutContentManager />}
       {activeSection === "vault" && <VaultContentManager />}
       {activeSection === "feed" && <FeedContentManager />}
       {activeSection === "repository" && <ContentRepository />}
