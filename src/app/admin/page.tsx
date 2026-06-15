@@ -28,9 +28,12 @@ import {
   ScrollText,
   UserX,
   UserCheck,
+  UserPlus,
   Shield,
   Menu,
   X,
+  Copy,
+  Check,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import {
@@ -136,7 +139,7 @@ function StatCard({
 // Tab definitions
 // ------------------------------------------------------------
 
-type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "presentations" | "events" | "inquiries" | "notifications" | "tools" | "customize" | "content-manager" | "surveys" | "creative-studio" | "testimonials";
+type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "presentations" | "events" | "inquiries" | "notifications" | "tools" | "customize" | "content-manager" | "surveys" | "creative-studio" | "testimonials" | "leads";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -151,6 +154,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "presentations", label: "Presentations", icon: ClipboardCheck },
   { id: "users", label: "Users", icon: Users },
+  { id: "leads", label: "Leads", icon: UserPlus },
   { id: "content", label: "Analytics", icon: BotMessageSquare },
   { id: "revenue", label: "Revenue", icon: DollarSign },
   { id: "tools", label: "Tools", icon: Lock },
@@ -161,7 +165,7 @@ const TAB_GROUPS: { label: string; ids: TabId[] }[] = [
   { label: "Content", ids: ["creative-studio", "customize", "content-manager", "testimonials", "surveys"] },
   { label: "Events", ids: ["events", "conference"] },
   { label: "Engagement", ids: ["inquiries", "notifications", "presentations"] },
-  { label: "Platform", ids: ["users", "content", "revenue", "tools"] },
+  { label: "Platform", ids: ["users", "leads", "content", "revenue", "tools"] },
 ];
 
 // ------------------------------------------------------------
@@ -184,6 +188,37 @@ function ChartTooltip({
       <p className="text-klo-text font-semibold">{payload[0].value}</p>
     </div>
   );
+}
+
+// ------------------------------------------------------------
+// Leads tab helpers
+// ------------------------------------------------------------
+
+interface AdminLead {
+  id: string;
+  created_at: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  organization: string | null;
+  source: string;
+  source_id: string;
+}
+
+interface LeadsSummary {
+  total: number;
+  assessments: number;
+  surveys: number;
+  last7Days: number;
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${Math.max(0, mins)}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
 // ------------------------------------------------------------
@@ -239,6 +274,15 @@ export default function AdminPage() {
   } | null>(null);
   const [userActionLoading, setUserActionLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
+
+  const [leads, setLeads] = useState<AdminLead[]>([]);
+  const [leadsTotal, setLeadsTotal] = useState(0);
+  const [leadsPage, setLeadsPage] = useState(1);
+  const [leadsTotalPages, setLeadsTotalPages] = useState(1);
+  const [leadsSource, setLeadsSource] = useState("all");
+  const [leadsSearch, setLeadsSearch] = useState("");
+  const [leadsSummary, setLeadsSummary] = useState<LeadsSummary>({ total: 0, assessments: 0, surveys: 0, last7Days: 0 });
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
 
   const userRole = (session?.user as { role?: string } | undefined)?.role;
   // Dev bypass: true if running on localhost OR NODE_ENV=development.
@@ -348,6 +392,30 @@ export default function AdminPage() {
   useEffect(() => {
     if (isAdmin && (activeTab === "content" || activeTab === "tools")) fetchAssessmentResults();
   }, [isAdmin, activeTab, fetchAssessmentResults]);
+
+  const fetchLeads = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({
+        page: String(leadsPage),
+        limit: "20",
+        source: leadsSource,
+        search: leadsSearch,
+      });
+      const res = await fetch(`/api/admin/leads?${params}`);
+      if (!res.ok) throw new Error("Failed to load leads");
+      const data = await res.json();
+      setLeads(data.leads);
+      setLeadsTotal(data.total);
+      setLeadsTotalPages(data.totalPages);
+      setLeadsSummary(data.summary);
+    } catch {
+      // silently handle — main error state handles critical failures
+    }
+  }, [leadsPage, leadsSource, leadsSearch]);
+
+  useEffect(() => {
+    if (isAdmin && activeTab === "leads") fetchLeads();
+  }, [isAdmin, activeTab, fetchLeads]);
 
   // Delete assessment result(s)
   const deleteAssessments = useCallback(
@@ -583,7 +651,7 @@ export default function AdminPage() {
         )}
 
         {/* Loading state (only for data-dependent tabs) */}
-        {loading && activeTab !== "conference" && activeTab !== "events" && activeTab !== "inquiries" && activeTab !== "tools" && activeTab !== "surveys" && (
+        {loading && activeTab !== "conference" && activeTab !== "events" && activeTab !== "inquiries" && activeTab !== "tools" && activeTab !== "surveys" && activeTab !== "leads" && (
           <div className="flex items-center justify-center py-20">
             <RefreshCw className="w-8 h-8 text-klo-gold animate-spin" />
           </div>
@@ -1509,6 +1577,158 @@ export default function AdminPage() {
                     </button>
                   </div>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* LEADS TAB */}
+        {activeTab === "leads" && (
+          <div className="space-y-6">
+            {/* Summary row */}
+            <motion.div
+              variants={fadeUp}
+              custom={1}
+              className="grid grid-cols-2 sm:grid-cols-4 gap-4"
+            >
+              <StatCard label="Total Leads" value={leadsSummary.total} icon={UserPlus} />
+              <StatCard label="Assessment Leads" value={leadsSummary.assessments} icon={ClipboardCheck} />
+              <StatCard label="Survey Leads" value={leadsSummary.surveys} icon={BarChart3} />
+              <StatCard label="Last 7 Days" value={leadsSummary.last7Days} icon={TrendingUp} />
+            </motion.div>
+
+            {/* Filter bar */}
+            <motion.div
+              variants={fadeUp}
+              custom={2}
+              className="flex flex-col sm:flex-row gap-3"
+            >
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-klo-muted" />
+                <input
+                  type="text"
+                  placeholder="Search by name or email..."
+                  value={leadsSearch}
+                  onChange={(e) => {
+                    setLeadsSearch(e.target.value);
+                    setLeadsPage(1);
+                  }}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-klo-dark border border-white/10 text-klo-text placeholder:text-klo-muted text-sm focus:outline-none focus:border-klo-gold/50"
+                />
+              </div>
+              <select
+                value={leadsSource}
+                onChange={(e) => {
+                  setLeadsSource(e.target.value);
+                  setLeadsPage(1);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-klo-dark border border-white/10 text-klo-text text-sm focus:outline-none focus:border-klo-gold/50"
+              >
+                <option value="all">All Sources</option>
+                <option value="assessment">Assessments</option>
+                <option value="survey">Surveys</option>
+              </select>
+            </motion.div>
+
+            <p className="text-sm text-klo-muted">{leadsTotal} leads total</p>
+
+            {/* Table */}
+            <motion.div variants={fadeUp} custom={3}>
+              <div className="glass rounded-2xl border border-white/5 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-white/5">
+                        <th className="text-left px-6 py-4 text-klo-muted font-medium">Name</th>
+                        <th className="text-left px-6 py-4 text-klo-muted font-medium">Email</th>
+                        <th className="text-left px-6 py-4 text-klo-muted font-medium hidden md:table-cell">Phone</th>
+                        <th className="text-left px-6 py-4 text-klo-muted font-medium hidden lg:table-cell">Organization</th>
+                        <th className="text-left px-6 py-4 text-klo-muted font-medium">Source</th>
+                        <th className="text-left px-6 py-4 text-klo-muted font-medium hidden sm:table-cell">Source ID</th>
+                        <th className="text-left px-6 py-4 text-klo-muted font-medium hidden sm:table-cell">Submitted</th>
+                        <th className="px-6 py-4 w-28"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {leads.map((lead) => (
+                        <tr
+                          key={lead.id}
+                          className="border-b border-white/5 hover:bg-white/[0.02] transition-colors"
+                        >
+                          <td className="px-6 py-4 text-klo-text font-medium">{lead.name}</td>
+                          <td className="px-6 py-4 text-klo-muted text-xs">{lead.email}</td>
+                          <td className="px-6 py-4 text-klo-muted hidden md:table-cell">{lead.phone ?? "—"}</td>
+                          <td className="px-6 py-4 text-klo-muted hidden lg:table-cell">{lead.organization ?? "—"}</td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              lead.source === "assessment"
+                                ? "bg-klo-gold/20 text-klo-gold"
+                                : "bg-blue-500/20 text-blue-400"
+                            }`}>
+                              {lead.source}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-klo-muted text-xs hidden sm:table-cell max-w-[160px] truncate">{lead.source_id}</td>
+                          <td className="px-6 py-4 text-klo-muted text-xs hidden sm:table-cell">{timeAgo(lead.created_at)}</td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(lead.email);
+                                setCopiedEmail(lead.id);
+                                setTimeout(() => setCopiedEmail(null), 1500);
+                              }}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 text-klo-muted border border-white/10 hover:bg-white/10 hover:text-klo-text transition-colors"
+                            >
+                              {copiedEmail === lead.id ? (
+                                <>
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                  <span className="text-emerald-400">Copied</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3 h-3" />
+                                  Copy Email
+                                </>
+                              )}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {leads.length === 0 && (
+                        <tr>
+                          <td colSpan={8} className="px-6 py-16 text-center text-klo-muted">
+                            No leads yet. Leads appear here when someone completes an assessment or survey.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {leadsTotalPages > 1 && (
+                  <div className="flex items-center justify-between px-6 py-4 border-t border-white/5">
+                    <p className="text-sm text-klo-muted">{leadsTotal} total</p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setLeadsPage((p) => Math.max(1, p - 1))}
+                        disabled={leadsPage <= 1}
+                        className="p-2 rounded-lg hover:bg-white/5 text-klo-muted disabled:opacity-30"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <span className="text-sm text-klo-text">
+                        {leadsPage} / {leadsTotalPages}
+                      </span>
+                      <button
+                        onClick={() => setLeadsPage((p) => Math.min(leadsTotalPages, p + 1))}
+                        disabled={leadsPage >= leadsTotalPages}
+                        className="p-2 rounded-lg hover:bg-white/5 text-klo-muted disabled:opacity-30"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
