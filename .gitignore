@@ -61,3 +61,12 @@ package-lock.json
 # Local dev helper scripts (auto-signin, QA runner)
 .klo-*.mjs
 .env.local.backup*
+
+# Local screenshot and debug script artifacts
+screenshots/
+.guide-screenshots/
+scripts/screenshot-*.mjs
+scripts/verify-*.mjs
+
+# Supabase CLI temp files (local version checks, not project state)
+supabase/.temp/
