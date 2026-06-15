@@ -15,6 +15,7 @@ const quickLinks = [
   { label: "Invite Keith To Speak", href: "/booking" },
   { label: "Book A Consultation", href: "/consult" },
   { label: "Events", href: "/events" },
+  { label: "Support", href: "/support" },
 ];
 
 export default function Footer() {
