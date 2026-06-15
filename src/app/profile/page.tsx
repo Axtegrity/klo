@@ -9,8 +9,6 @@ import {
   Crown,
   Activity,
   Brain,
-  MessageSquare,
-  Archive,
   CalendarDays,
   ChevronRight,
   LogOut,
@@ -57,7 +55,8 @@ type ProfileTab = "overview" | "assessments" | "saved" | "settings";
 const tabs: { id: ProfileTab; label: string; icon: React.ReactNode }[] = [
   { id: "overview", label: "Overview", icon: <Activity size={16} /> },
   { id: "assessments", label: "Assessment Results", icon: <BarChart3 size={16} /> },
-  { id: "saved", label: "Saved Content", icon: <Bookmark size={16} /> },
+  // TODO: Saved Content — restore when bookmarking system is built
+  // { id: "saved", label: "Saved Content", icon: <Bookmark size={16} /> },
   { id: "settings", label: "Settings", icon: <Settings size={16} /> },
 ];
 
@@ -104,32 +103,6 @@ const mockSavedItems: SavedItem[] = [
   },
 ];
 
-const mockActivity = [
-  {
-    id: "act-1",
-    text: "Completed Church Readiness Assessment — Score: 72%",
-    icon: <Brain size={16} className="text-[#C8A84E]" />,
-    date: "2 days ago",
-  },
-  {
-    id: "act-2",
-    text: 'Asked AI Advisor about data governance frameworks',
-    icon: <MessageSquare size={16} className="text-blue-400" />,
-    date: "4 days ago",
-  },
-  {
-    id: "act-3",
-    text: "Saved 'AI Ethics Framework' to Vault",
-    icon: <Bookmark size={16} className="text-emerald-400" />,
-    date: "1 week ago",
-  },
-  {
-    id: "act-4",
-    text: "Completed Executive AI Readiness Assessment — Score: 85%",
-    icon: <Brain size={16} className="text-[#C8A84E]" />,
-    date: "2 weeks ago",
-  },
-];
 
 function getMaturityBadgeVariant(level: string): "gold" | "blue" | "green" | "muted" {
   if (level.toLowerCase().includes("advanced") || level.toLowerCase().includes("leading"))
@@ -142,11 +115,43 @@ function getMaturityBadgeVariant(level: string): "gold" | "blue" | "green" | "mu
 }
 
 function OverviewTab() {
+  const [assessmentCount, setAssessmentCount] = useState<number | null>(null);
+  const [memberSince, setMemberSince] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/assessments")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((results: unknown[]) =>
+        setAssessmentCount(Array.isArray(results) ? results.length : 0)
+      )
+      .catch(() => setAssessmentCount(0));
+
+    fetch("/api/profile")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { created_at?: string } | null) => {
+        if (data?.created_at) {
+          const d = new Date(data.created_at);
+          setMemberSince(
+            d.toLocaleDateString("en-US", { month: "short", year: "numeric" })
+          );
+        } else {
+          setMemberSince("—");
+        }
+      })
+      .catch(() => setMemberSince("—"));
+  }, []);
+
   const stats = [
-    { label: "Assessments Completed", value: "2", icon: <Brain size={20} className="text-[#C8A84E]" /> },
-    { label: "Advisor Queries Used", value: "3/5", icon: <MessageSquare size={20} className="text-blue-400" /> },
-    { label: "Vault Items Saved", value: "4", icon: <Archive size={20} className="text-emerald-400" /> },
-    { label: "Member Since", value: "Feb 2026", icon: <CalendarDays size={20} className="text-klo-muted" /> },
+    {
+      label: "Assessments Completed",
+      value: assessmentCount === null ? "…" : String(assessmentCount),
+      icon: <Brain size={20} className="text-[#C8A84E]" />,
+    },
+    {
+      label: "Member Since",
+      value: memberSince ?? "…",
+      icon: <CalendarDays size={20} className="text-klo-muted" />,
+    },
   ];
 
   return (
@@ -156,8 +161,7 @@ function OverviewTab() {
       variants={staggerContainer}
       className="space-y-8"
     >
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         {stats.map((stat, i) => (
           <motion.div key={stat.label} variants={fadeUp} custom={i}>
             <Card className="text-center">
@@ -170,29 +174,6 @@ function OverviewTab() {
           </motion.div>
         ))}
       </div>
-
-      {/* Recent Activity */}
-      <motion.div variants={fadeUp} custom={4}>
-        <h3 className="font-display text-lg font-semibold text-klo-text mb-4">
-          Recent Activity
-        </h3>
-        <Card>
-          <div className="divide-y divide-klo-slate">
-            {mockActivity.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
-              >
-                <div className="mt-0.5">{item.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-klo-text">{item.text}</p>
-                  <p className="text-xs text-klo-muted mt-0.5">{item.date}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </motion.div>
     </motion.div>
   );
 }
@@ -306,6 +287,7 @@ function AssessmentsTab() {
   );
 }
 
+// TODO: Saved Content — restore when bookmarking system is built
 function SavedContentTab() {
   const [items, setItems] = useState<SavedItem[]>(mockSavedItems);
 
@@ -486,6 +468,7 @@ function SettingsTab() {
     assessmentReminders: true,
     newVaultContent: false,
   });
+  const [notifFlash, setNotifFlash] = useState<"saved" | "error" | null>(null);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -525,6 +508,9 @@ function SettingsTab() {
             industry: data.industry || "",
             teamSize: data.team_size || "11-50",
           }));
+          if (data.notification_preferences) {
+            setNotifications((prev) => ({ ...prev, ...data.notification_preferences }));
+          }
         }
       })
       .catch(() => {});
@@ -666,6 +652,28 @@ function SettingsTab() {
     }
   };
 
+  const handleNotifToggle = async (key: keyof typeof notifications) => {
+    const updated = { ...notifications, [key]: !notifications[key] };
+    setNotifications(updated); // optimistic update
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: formData.fullName || session?.user?.name || "",
+          notification_preferences: updated,
+        }),
+      });
+      if (!res.ok) throw new Error("save failed");
+      setNotifFlash("saved");
+      haptics.success();
+    } catch {
+      setNotifications(notifications); // revert on error
+      setNotifFlash("error");
+    }
+    setTimeout(() => setNotifFlash(null), 1500);
+  };
+
   const inputClasses =
     "w-full bg-[#161B22] border border-[#21262D] rounded-lg px-4 py-3 text-sm text-klo-text placeholder:text-[#8B949E]/50 focus:outline-none focus:ring-2 focus:ring-[#2764FF]/50 focus:border-[#2764FF]/50 transition-all";
 
@@ -766,9 +774,17 @@ function SettingsTab() {
 
       {/* Notification Preferences */}
       <motion.div variants={fadeUp} custom={1}>
-        <h3 className="font-display text-lg font-semibold text-klo-text mb-4">
-          Notification Preferences
-        </h3>
+        <div className="flex items-center gap-3 mb-4">
+          <h3 className="font-display text-lg font-semibold text-klo-text">
+            Notification Preferences
+          </h3>
+          {notifFlash === "saved" && (
+            <span className="text-xs text-emerald-400 font-medium">Saved</span>
+          )}
+          {notifFlash === "error" && (
+            <span className="text-xs text-red-400 font-medium">Error</span>
+          )}
+        </div>
         <Card>
           <div className="space-y-4">
             <PushNotificationRow />
@@ -810,15 +826,13 @@ function SettingsTab() {
                   role="switch"
                   aria-checked={notifications[pref.key]}
                   aria-label={pref.label}
-                  onClick={() =>
-                    setNotifications({
-                      ...notifications,
-                      [pref.key]: !notifications[pref.key],
-                    })
-                  }
-                  className={`relative w-11 h-6 rounded-full transition-colors duration-200 cursor-pointer ${
-                    notifications[pref.key] ? "bg-[#2764FF]" : "bg-klo-slate"
-                  }`}
+                  disabled={!formData.fullName}
+                  onClick={() => handleNotifToggle(pref.key)}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                    !formData.fullName
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer"
+                  } ${notifications[pref.key] ? "bg-[#2764FF]" : "bg-klo-slate"}`}
                 >
                   <span
                     className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform duration-200 ${
@@ -1242,7 +1256,8 @@ export default function ProfilePage() {
         <div>
           {activeTab === "overview" && <OverviewTab />}
           {activeTab === "assessments" && <AssessmentsTab />}
-          {activeTab === "saved" && <SavedContentTab />}
+          {/* TODO: Saved Content — restore when bookmarking system is built */}
+          {/* {activeTab === "saved" && <SavedContentTab />} */}
           {activeTab === "settings" && <SettingsTab />}
         </div>
       </div>

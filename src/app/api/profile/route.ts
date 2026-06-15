@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   const supabase = getServiceSupabase();
   const { data, error } = await supabase
     .from("profiles")
-    .select("full_name, organization_name, organization_type, industry, team_size")
+    .select("full_name, organization_name, organization_type, industry, team_size, created_at, notification_preferences")
     .eq("id", userId)
     .maybeSingle();
 
@@ -44,14 +44,14 @@ export async function PUT(req: Request) {
   }
 
   const body = await req.json();
-  const { full_name, organization, org_type, industry, team_size } = body;
+  const { full_name, organization, org_type, industry, team_size, notification_preferences } = body;
 
   if (!full_name || typeof full_name !== "string" || full_name.trim().length === 0) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
 
   const supabase = getServiceSupabase();
-  const profileData = {
+  const profileData: Record<string, unknown> = {
     full_name: full_name.trim(),
     organization_name: organization?.trim() || null,
     organization_type: org_type || null,
@@ -59,6 +59,10 @@ export async function PUT(req: Request) {
     team_size: team_size || null,
     updated_at: new Date().toISOString(),
   };
+
+  if (notification_preferences !== undefined) {
+    profileData.notification_preferences = notification_preferences;
+  }
 
   // Check if profile exists
   const { data: existing } = await supabase
