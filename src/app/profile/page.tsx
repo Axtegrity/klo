@@ -288,6 +288,7 @@ function AssessmentsTab() {
 }
 
 // TODO: Saved Content — restore when bookmarking system is built
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function SavedContentTab() {
   const [items, setItems] = useState<SavedItem[]>(mockSavedItems);
 
