@@ -49,7 +49,7 @@
     "docx": "^9.6.1",
     "exceljs": "^4.4.0",
     "framer-motion": "^12.38.0",
-    "lucide-react": "^0.575.0",
+    "lucide-react": "^1.18.0",
     "mammoth": "^1.12.0",
     "next": "16.2.7",
     "next-auth": "^4.24.13",
