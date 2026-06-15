@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Bot, Trash2, FileText, Send } from "lucide-react";
+import { Bot, Trash2, FileText, Send, History, X } from "lucide-react";
 import { useChat } from "@/hooks/useChat";
 import ChatInterface from "@/components/advisor/ChatInterface";
 import SuggestedPrompts from "@/components/advisor/SuggestedPrompts";
+import ConversationSidebar from "@/components/advisor/ConversationSidebar";
 import { haptics } from "@/lib/haptics";
 
 // ------------------------------------------------------------
@@ -31,12 +32,15 @@ export default function AdvisorPage() {
     messages,
     isLoading,
     error,
+    conversationId,
     sendMessage,
     clearChat,
+    loadConversation,
   } = useChat();
 
   const hasMessages = messages.length > 0;
   const initialInputRef = useRef<HTMLTextAreaElement>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleInitialSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,9 +59,25 @@ export default function AdvisorPage() {
     }
   };
 
+  const handleSidebarSelect = (id: string) => {
+    loadConversation(id);
+    setSidebarOpen(false);
+  };
+
+  const handleNewChat = () => {
+    clearChat();
+    setSidebarOpen(false);
+  };
+
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: "calc(100dvh - calc(72px + env(safe-area-inset-top, 0px)) - calc(72px + env(safe-area-inset-bottom, 0px)))" }}>
-      {/* Header */}
+    <div
+      className="flex flex-col overflow-hidden"
+      style={{
+        height:
+          "calc(100dvh - calc(72px + env(safe-area-inset-top, 0px)) - calc(72px + env(safe-area-inset-bottom, 0px)))",
+      }}
+    >
+      {/* Header — full width */}
       <motion.header
         initial="hidden"
         animate="visible"
@@ -91,6 +111,18 @@ export default function AdvisorPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Mobile history button */}
+            <motion.button
+              variants={fadeUp}
+              custom={3}
+              onClick={() => setSidebarOpen(true)}
+              title="Conversation history"
+              aria-label="Open conversation history"
+              className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg text-klo-muted hover:text-klo-text hover:bg-white/5 transition-colors cursor-pointer"
+            >
+              <History size={16} />
+            </motion.button>
+
             <motion.div variants={fadeUp} custom={3}>
               <Link
                 href="/advisor/policy-builder"
@@ -126,55 +158,96 @@ export default function AdvisorPage() {
         </motion.p>
       </motion.header>
 
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full min-h-0">
-        {!hasMessages ? (
-          <div className="flex-1 flex flex-col">
-            <div className="flex-1 flex items-center justify-center">
-              <SuggestedPrompts onSelect={sendMessage} />
-            </div>
+      {/* Below header: sidebar + chat */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        {/* Desktop sidebar */}
+        <ConversationSidebar
+          onSelect={handleSidebarSelect}
+          onNewChat={handleNewChat}
+          activeConversationId={conversationId}
+          className="hidden md:flex w-[260px] shrink-0 border-r border-klo-slate"
+        />
 
-            {/* Direct text input */}
-            <form
-              onSubmit={handleInitialSubmit}
-              className="px-4 pb-4 pt-2 border-t border-klo-slate"
-            >
-              <div className="flex items-end gap-2 bg-[#161B22] border border-[#21262D] rounded-xl px-3 py-2 focus-within:border-[#2764FF]/40 transition-colors">
-                <textarea
-                  ref={initialInputRef}
-                  rows={1}
-                  placeholder="Type your own question..."
-                  disabled={isLoading}
-                  onKeyDown={handleInitialKeyDown}
-                  onChange={(e) => {
-                    e.target.style.height = "auto";
-                    e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
-                  }}
-                  className="flex-1 bg-transparent text-sm text-klo-text placeholder:text-klo-muted resize-none outline-none max-h-40 py-1.5 disabled:opacity-50"
-                />
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  aria-label="Send message"
-                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white hover:brightness-110 active:brightness-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-                >
-                  <Send size={16} />
-                </button>
+        {/* Chat content */}
+        <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full min-h-0">
+          {!hasMessages ? (
+            <div className="flex-1 flex flex-col">
+              <div className="flex-1 flex items-center justify-center">
+                <SuggestedPrompts onSelect={sendMessage} />
               </div>
-            </form>
-          </div>
-        ) : (
-          <div className="flex-1 min-h-0" aria-live="polite">
-            <ChatInterface
-              messages={messages}
-              isLoading={isLoading}
-              error={error}
-              onSend={sendMessage}
+
+              {/* Direct text input */}
+              <form
+                onSubmit={handleInitialSubmit}
+                className="px-4 pb-4 pt-2 border-t border-klo-slate"
+              >
+                <div className="flex items-end gap-2 bg-[#161B22] border border-[#21262D] rounded-xl px-3 py-2 focus-within:border-[#2764FF]/40 transition-colors">
+                  <textarea
+                    ref={initialInputRef}
+                    rows={1}
+                    placeholder="Type your own question..."
+                    disabled={isLoading}
+                    onKeyDown={handleInitialKeyDown}
+                    onChange={(e) => {
+                      e.target.style.height = "auto";
+                      e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
+                    }}
+                    className="flex-1 bg-transparent text-sm text-klo-text placeholder:text-klo-muted resize-none outline-none max-h-40 py-1.5 disabled:opacity-50"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    aria-label="Send message"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white hover:brightness-110 active:brightness-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                  >
+                    <Send size={16} />
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <div className="flex-1 min-h-0" aria-live="polite">
+              <ChatInterface
+                messages={messages}
+                isLoading={isLoading}
+                error={error}
+                onSend={sendMessage}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile drawer overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+          {/* Drawer panel */}
+          <div className="absolute left-0 top-0 bottom-0 w-[260px] bg-[#0D1117] border-r border-klo-slate flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-klo-slate shrink-0">
+              <span className="text-sm font-medium text-klo-text">History</span>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                aria-label="Close history"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-klo-muted hover:text-klo-text hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <ConversationSidebar
+              onSelect={handleSidebarSelect}
+              onNewChat={handleNewChat}
+              activeConversationId={conversationId}
+              className="flex-1"
             />
           </div>
-        )}
-
-      </div>
+        </div>
+      )}
     </div>
   );
 }
