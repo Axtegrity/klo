@@ -12,6 +12,9 @@ export interface AssessmentQuestion {
   text: string;
   options: AssessmentQuestionOption[];
   category: string;
+  // Omit for single-choice (default). Set to "multi" for questions that
+  // allow multiple selections — those keep the Next button and do not auto-advance.
+  type?: "single" | "multi";
 }
 
 export interface AssessmentQuestionSet {
