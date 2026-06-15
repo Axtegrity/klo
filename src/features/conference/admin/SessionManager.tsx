@@ -267,6 +267,8 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
     );
   }
 
+  const anyActive = sessions.some((s) => s.is_active);
+
   return (
     <div className="space-y-4">
       {saveMsg && (
@@ -609,6 +611,11 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
                   >
                     <Power size={16} />
                   </button>
+                  {!s.is_active && !anyActive && (
+                    <span className="text-xs font-medium text-[#C8A84E] whitespace-nowrap">
+                      Activate to go live →
+                    </span>
+                  )}
                   <button
                     onClick={() => toggleQA(s.id, s.qa_enabled)}
                     className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${

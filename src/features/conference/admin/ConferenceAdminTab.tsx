@@ -11,9 +11,12 @@ import {
   Megaphone,
   Shield,
   ChevronRight,
+  ChevronDown,
   ArrowLeft,
   MapPin,
   Archive,
+  AlertCircle,
+  CheckCircle,
 } from "lucide-react";
 import PollManager from "./PollManager";
 import PresenterRemote from "./PresenterRemote";
@@ -79,7 +82,7 @@ interface PollSummary {
   votes?: number[];
 }
 
-function PollsTab({ eventId }: { eventId: string }) {
+function PollsTab({ eventId, sessionCount = 0, onGoToSessions }: { eventId: string; sessionCount?: number; onGoToSessions: () => void }) {
   const [mode, setMode] = useState<PollMode>("manage");
   const [activeSession, setActiveSession] = useState<ActiveSessionInfo | null>(null);
   const [selectedMode, setSelectedMode] = useState<SessionMode>("sequential");
@@ -236,6 +239,38 @@ function PollsTab({ eventId }: { eventId: string }) {
 
   return (
     <div className="space-y-4">
+      {/* Session status banner — shown when no active session */}
+      {activeSession === null && (
+        sessionCount > 0 ? (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-amber-500/5 border-amber-500/20">
+            <AlertCircle size={16} className="text-amber-400 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-amber-300">No active session</p>
+              <p className="text-xs text-amber-400/70">Activate a session in the Sessions tab before deploying polls.</p>
+            </div>
+            <button
+              onClick={onGoToSessions}
+              className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
+            >
+              Go to Sessions
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-[#2764FF]/5 border-[#2764FF]/20">
+            <Radio size={16} className="text-[#2764FF] shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-klo-text">No sessions yet</p>
+              <p className="text-xs text-klo-muted">Create a session in the Sessions tab first, then come back to set up polls.</p>
+            </div>
+            <button
+              onClick={onGoToSessions}
+              className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#2764FF]/10 text-[#2764FF] border border-[#2764FF]/20 hover:bg-[#2764FF]/20 transition-colors"
+            >
+              Go to Sessions
+            </button>
+          </div>
+        )
+      )}
       {/* Manage / Present Live toggle */}
       <div className="flex items-center justify-between">
         <div className="flex gap-1 p-1 rounded-xl bg-klo-dark/50 border border-white/5">
@@ -414,6 +449,9 @@ export default function ConferenceAdminTab() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [subTab, setSubTab] = useState<SubTab>("sessions");
   const [sessionCounts, setSessionCounts] = useState<Record<string, number>>({});
+  const [hasActiveSession, setHasActiveSession] = useState(false);
+  const [hasPollsCreated, setHasPollsCreated] = useState(false);
+  const [checklistOpen, setChecklistOpen] = useState(true);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -449,6 +487,25 @@ export default function ConferenceAdminTab() {
     fetchEvents();
     fetchSessionCounts();
   }, [fetchEvents, fetchSessionCounts]);
+
+  // Fix 4: fetch active session + polls status for checklist when event changes
+  useEffect(() => {
+    if (!selectedEventId) {
+      setHasActiveSession(false);
+      setHasPollsCreated(false);
+      return;
+    }
+    const stored = typeof window !== "undefined" && localStorage.getItem(`klo-checklist-${selectedEventId}`);
+    setChecklistOpen(stored !== "collapsed");
+    fetch(`/api/conference/sessions?event_id=${selectedEventId}&active_only=true`)
+      .then((r) => r.json())
+      .then((data) => setHasActiveSession(Array.isArray(data) && data.length > 0))
+      .catch(() => {});
+    fetch(`/api/conference/polls?event_id=${selectedEventId}`)
+      .then((r) => r.json())
+      .then((data) => setHasPollsCreated(Array.isArray(data) && data.length > 0))
+      .catch(() => {});
+  }, [selectedEventId]);
 
   const toggleEventLive = async (ev: EventOption) => {
     const newMode = !ev.seminar_mode;
@@ -515,6 +572,75 @@ export default function ConferenceAdminTab() {
           </div>
         </div>
 
+        {/* Fix 4: Setup checklist */}
+        {(() => {
+          const sessionCount = sessionCounts[selectedEventId] ?? 0;
+          const steps = [
+            { label: "Event created", done: true, tab: null as SubTab | null },
+            { label: "Session created", done: sessionCount > 0, tab: "sessions" as SubTab },
+            { label: "Session activated", done: hasActiveSession, tab: "sessions" as SubTab },
+            { label: "Polls created", done: hasPollsCreated, tab: "polls" as SubTab },
+            { label: "Ready to go live", done: hasActiveSession && hasPollsCreated, tab: null as SubTab | null },
+          ];
+          const completedCount = steps.filter((s) => s.done).length;
+          const allDone = completedCount === steps.length;
+          const isOpen = checklistOpen || !allDone;
+          const toggle = () => {
+            const next = !isOpen;
+            setChecklistOpen(next);
+            if (typeof window !== "undefined") {
+              localStorage.setItem(`klo-checklist-${selectedEventId}`, next ? "open" : "collapsed");
+            }
+          };
+          return (
+            <div className="glass rounded-xl border border-white/5 overflow-hidden">
+              <button
+                onClick={toggle}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors"
+              >
+                <div className="flex-1 flex items-center gap-3 min-w-0">
+                  <span className="text-xs font-semibold text-klo-text">Event Setup</span>
+                  <div className="flex-1 max-w-[120px] h-1.5 rounded-full bg-white/5 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-[#C8A84E] transition-all duration-300"
+                      style={{ width: `${(completedCount / steps.length) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-klo-muted shrink-0">{completedCount}/{steps.length}</span>
+                  {allDone && <span className="text-xs font-medium text-emerald-400 shrink-0">Ready to go live</span>}
+                </div>
+                <ChevronDown
+                  size={14}
+                  className={`text-klo-muted shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+              {isOpen && (
+                <div className="border-t border-white/5 px-4 py-3 flex flex-wrap gap-x-6 gap-y-2">
+                  {steps.map((step, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      {step.done ? (
+                        <CheckCircle size={13} className="text-emerald-400 shrink-0" />
+                      ) : (
+                        <div className="w-[13px] h-[13px] rounded-full border border-white/20 shrink-0" />
+                      )}
+                      {!step.done && step.tab ? (
+                        <button
+                          onClick={() => setSubTab(step.tab!)}
+                          className="text-xs text-[#2764FF] hover:underline underline-offset-2"
+                        >
+                          {step.label}
+                        </button>
+                      ) : (
+                        <span className={`text-xs ${step.done ? "text-klo-muted" : "text-klo-text"}`}>{step.label}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* Sub-tab navigation */}
         <div className="flex gap-1 p-1 rounded-xl bg-klo-dark/50 border border-white/5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {EVENT_SUB_TABS.map((tab) => {
@@ -552,7 +678,11 @@ export default function ConferenceAdminTab() {
           )}
 
           {subTab === "polls" && (
-            <PollsTab eventId={selectedEventId} />
+            <PollsTab
+              eventId={selectedEventId}
+              sessionCount={sessionCounts[selectedEventId] ?? 0}
+              onGoToSessions={() => setSubTab("sessions")}
+            />
           )}
 
           {subTab === "qa" && (
@@ -658,83 +788,105 @@ export default function ConferenceAdminTab() {
           <p className="text-sm text-klo-muted mb-1">No events yet.</p>
           <p className="text-xs text-klo-muted">Go to the <Link href="/admin?tab=events" className="text-[#2764FF] font-medium underline-offset-2 hover:underline">Events tab</Link> to create one first.</p>
         </div>
-      ) : (
-        <div className="space-y-3">
-          {events.map((ev) => {
-            const count = sessionCounts[ev.id] || 0;
-            return (
-              <div
-                key={ev.id}
-                className={`glass rounded-2xl border transition-all ${
-                  ev.seminar_mode ? "border-emerald-500/30" : "border-white/5"
-                }`}
-              >
-                <div className="flex items-center gap-3 p-4">
-                  {/* Event ON/OFF toggle */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleEventLive(ev); }}
-                    className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ${
-                      ev.seminar_mode ? "bg-emerald-500" : "bg-klo-slate"
+      ) : (() => {
+        // Fix 3: group events by upcoming/active vs past
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const isEvPast = (ev: EventOption) => {
+          if (ev.seminar_mode) return false;
+          if (!ev.event_date || ev.event_date === "SAVE THE DATE") return false;
+          const endStr = ev.end_date || ev.event_date;
+          return new Date(endStr + "T23:59:59") < now;
+        };
+        const upcomingEvs = events.filter((ev) => !isEvPast(ev));
+        const pastEvs = events.filter((ev) => isEvPast(ev));
+
+        const renderCard = (ev: EventOption) => {
+          const count = sessionCounts[ev.id] || 0;
+          return (
+            <div
+              key={ev.id}
+              className={`glass rounded-2xl border transition-all ${
+                ev.seminar_mode ? "border-emerald-500/30" : "border-white/5"
+              }`}
+            >
+              <div className="flex items-center gap-3 p-4">
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleEventLive(ev); }}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ${
+                    ev.seminar_mode ? "bg-emerald-500" : "bg-klo-slate"
+                  }`}
+                  title={ev.seminar_mode ? "Turn OFF — hide from attendees" : "Turn ON — make visible to attendees"}
+                  role="switch"
+                  aria-checked={ev.seminar_mode}
+                  aria-label={`${ev.conference_name || ev.title} live toggle`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
+                      ev.seminar_mode ? "translate-x-5" : ""
                     }`}
-                    title={ev.seminar_mode ? "Turn OFF — hide from attendees" : "Turn ON — make visible to attendees"}
-                    role="switch"
-                    aria-checked={ev.seminar_mode}
-                    aria-label={`${ev.conference_name || ev.title} live toggle`}
-                  >
-                    <span
-                      className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
-                        ev.seminar_mode ? "translate-x-5" : ""
-                      }`}
-                    />
-                  </button>
-
-                  {/* Event info — clickable to drill in */}
-                  <button
-                    onClick={() => setSelectedEventId(ev.id)}
-                    className="flex-1 min-w-0 text-left"
-                  >
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-klo-text truncate">
-                        {ev.conference_name || ev.title}
-                      </p>
-                      {ev.seminar_mode && (
-                        <span className="shrink-0 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                          LIVE
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-klo-muted">
-                      <span className="flex items-center gap-1">
-                        <CalendarDays size={11} />
-                        {formatEventDate(ev)}
-                      </span>
-                      {ev.conference_location && (
-                        <span className="flex items-center gap-1 truncate">
-                          <MapPin size={11} />
-                          {ev.conference_location}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-
-                  {/* Session count + arrow */}
-                  <button
-                    onClick={() => setSelectedEventId(ev.id)}
-                    className="flex items-center gap-2 shrink-0 text-klo-muted hover:text-klo-text transition-colors"
-                  >
-                    {count > 0 && (
-                      <span className="text-xs font-medium bg-[#2764FF]/10 text-[#2764FF] px-2 py-0.5 rounded-full">
-                        {count} session{count !== 1 ? "s" : ""}
+                  />
+                </button>
+                <button
+                  onClick={() => setSelectedEventId(ev.id)}
+                  className="flex-1 min-w-0 text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-klo-text truncate">
+                      {ev.conference_name || ev.title}
+                    </p>
+                    {ev.seminar_mode && (
+                      <span className="shrink-0 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                        LIVE
                       </span>
                     )}
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-klo-muted">
+                    <span className="flex items-center gap-1">
+                      <CalendarDays size={11} />
+                      {formatEventDate(ev)}
+                    </span>
+                    {ev.conference_location && (
+                      <span className="flex items-center gap-1 truncate">
+                        <MapPin size={11} />
+                        {ev.conference_location}
+                      </span>
+                    )}
+                  </div>
+                </button>
+                <button
+                  onClick={() => setSelectedEventId(ev.id)}
+                  className="flex items-center gap-2 shrink-0 text-klo-muted hover:text-klo-text transition-colors"
+                >
+                  {count > 0 && (
+                    <span className="text-xs font-medium bg-[#2764FF]/10 text-[#2764FF] px-2 py-0.5 rounded-full">
+                      {count} session{count !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                  <ChevronRight size={16} />
+                </button>
               </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+          );
+        };
+
+        return (
+          <div className="space-y-6">
+            {upcomingEvs.length > 0 && (
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-klo-muted mb-3">Upcoming &amp; Active</p>
+                <div className="space-y-3">{upcomingEvs.map(renderCard)}</div>
+              </div>
+            )}
+            {pastEvs.length > 0 && (
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-klo-muted mb-3">Past</p>
+                <div className="space-y-3">{pastEvs.map(renderCard)}</div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Standalone Sessions section */}
       <div className="pt-4 border-t border-white/5">
