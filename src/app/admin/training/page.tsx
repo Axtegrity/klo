@@ -90,6 +90,13 @@ interface TrainingSubSection {
   tips?: string[];
 }
 
+interface Workflow {
+  title: string;
+  emoji: string;
+  steps: string[];
+  tip?: string;
+}
+
 // ------------------------------------------------------------
 // Training content — update this when features change
 // ------------------------------------------------------------
@@ -613,7 +620,7 @@ const TRAINING_SECTIONS: TrainingSection[] = [
 // Workflow cards
 // ------------------------------------------------------------
 
-const WORKFLOWS = [
+const WORKFLOWS: Workflow[] = [
   {
     title: "Before a Conference",
     emoji: "🎯",
@@ -686,6 +693,18 @@ const WORKFLOWS = [
       "Enter email → Assign \"moderator\" role",
       "They can now approve Q&A questions and create and deploy polls",
     ],
+  },
+  {
+    title: "Granting Host Access",
+    emoji: "🎤",
+    steps: [
+      "Go to /admin → Users tab",
+      "Search for the person by email",
+      "Click Change Role on their row",
+      "Select moderator or admin from the dropdown",
+      "Confirm — they can now access the Host Dashboard at /host",
+    ],
+    tip: "Moderators can run polls and Q&A during live sessions. Admins have full access including user management.",
   },
   {
     title: "Updating Homepage Text",
@@ -1118,6 +1137,12 @@ export default function TrainingPage() {
                         </li>
                       ))}
                     </ol>
+                    {wf.tip && (
+                      <div className="rounded-xl bg-[#2764FF]/5 border border-[#2764FF]/10 p-3 flex items-start gap-2">
+                        <Lightbulb size={13} className="text-[#2764FF] shrink-0 mt-0.5" />
+                        <p className="text-xs text-[#7eb0ff] leading-relaxed">{wf.tip}</p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
