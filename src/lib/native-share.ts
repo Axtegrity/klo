@@ -1,13 +1,13 @@
 import { Capacitor } from "@capacitor/core";
 
-export async function nativeShare(opts: { title: string; text?: string; url: string }) {
+export async function nativeShare(opts: { title: string; text?: string; url: string }): Promise<{ copied: boolean }> {
   if (!Capacitor.isNativePlatform()) {
-    // Fallback: use Web Share API or copy to clipboard
     if (navigator.share) {
-      return navigator.share(opts);
+      await navigator.share(opts);
+      return { copied: false };
     }
     await navigator.clipboard.writeText(opts.url);
-    return;
+    return { copied: true };
   }
   try {
     const { Share } = await import("@capacitor/share");
@@ -18,4 +18,5 @@ export async function nativeShare(opts: { title: string; text?: string; url: str
       dialogTitle: opts.title,
     });
   } catch {}
+  return { copied: false };
 }
