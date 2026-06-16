@@ -53,6 +53,7 @@ export default function HostContent() {
   // Live tab — activation flow
   const [showSessionList, setShowSessionList] = useState(false);
   const [activating, setActivating] = useState<string | null>(null);
+  const [liveEventError, setLiveEventError] = useState<string | null>(null);
 
   // Live tab — elapsed timer
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -81,15 +82,38 @@ export default function HostContent() {
     }
   }, []);
 
-  // ── FETCH ALL SESSIONS (for Live tab session list) ──
-  const fetchAllSessions = useCallback(async () => {
+  // ── FETCH SESSIONS FOR LIVE EVENT (activation picker) ──
+  const fetchLiveEventSessions = useCallback(async () => {
+    setLiveEventError(null);
     try {
-      const res = await fetch("/api/conference/sessions");
-      if (!res.ok) return;
-      const data: ConferenceSession[] = await res.json();
+      const eventsRes = await fetch("/api/admin/events");
+      if (eventsRes.status === 401) {
+        setAllSessions([]);
+        setLiveEventError(
+          "You don't have permission to look up the live event. Ask your admin to confirm the event is active."
+        );
+        return;
+      }
+      if (!eventsRes.ok) {
+        setLiveEventError("Could not load sessions. Try again.");
+        return;
+      }
+      const events: { id: string; seminar_mode: boolean }[] = await eventsRes.json();
+      const liveEvent = events.find((e) => e.seminar_mode === true);
+      if (!liveEvent) {
+        setAllSessions([]);
+        setLiveEventError("No live event found. Toggle an event LIVE in the Admin panel first.");
+        return;
+      }
+      const sessionsRes = await fetch(`/api/conference/sessions?event_id=${liveEvent.id}`);
+      if (!sessionsRes.ok) {
+        setLiveEventError("Could not load sessions. Try again.");
+        return;
+      }
+      const data: ConferenceSession[] = await sessionsRes.json();
       setAllSessions(data);
     } catch {
-      // ignore
+      setLiveEventError("Could not load sessions. Try again.");
     }
   }, []);
 
@@ -158,8 +182,8 @@ export default function HostContent() {
 
   // Session list when showing picker
   useEffect(() => {
-    if (showSessionList) fetchAllSessions();
-  }, [showSessionList, fetchAllSessions]);
+    if (showSessionList) fetchLiveEventSessions();
+  }, [showSessionList, fetchLiveEventSessions]);
 
   useConferenceRealtime({
     onSessionsChange: fetchActiveSession,
@@ -315,7 +339,9 @@ export default function HostContent() {
           <p className="text-xs text-[#8B949E] font-semibold tracking-widest text-left">
             SELECT A SESSION
           </p>
-          {allSessions.length === 0 ? (
+          {liveEventError ? (
+            <p className="text-sm text-[#8B949E] py-6">{liveEventError}</p>
+          ) : allSessions.length === 0 ? (
             <p className="text-sm text-[#8B949E] py-6">
               No sessions found. Create one in the{" "}
               <Link href="/admin" className="underline" style={{ color: GOLD }}>
@@ -357,7 +383,7 @@ export default function HostContent() {
             ))
           )}
           <button
-            onClick={() => setShowSessionList(false)}
+            onClick={() => { setShowSessionList(false); setLiveEventError(null); }}
             className="text-xs text-[#8B949E] underline"
           >
             Cancel
@@ -648,7 +674,15 @@ export default function HostContent() {
 
         {tab === "announce" && (
           <div className="px-4 pt-4">
-            <AnnouncementManager eventId={eventId || undefined} />
+            {activeSession && eventId ? (
+              <AnnouncementManager eventId={eventId} />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center gap-3">
+                <p className="text-sm text-[#8B949E]">
+                  Activate a session from the Live tab to send announcements.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
