@@ -239,6 +239,11 @@ export default function AdminPage() {
     const tab = (searchParams.get("tab") as TabId) || "overview";
     setActiveTab(tab);
   }, [searchParams]);
+
+  const handleTabChange = (tab: TabId) => {
+    setActiveTab(tab);
+    router.replace(`/admin?tab=${tab}`, { scroll: false });
+  };
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [activity, setActivity] = useState<AdminActivityData | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -556,7 +561,7 @@ export default function AdminPage() {
                   return (
                     <button
                       key={id}
-                      onClick={() => { setActiveTab(id); setSidebarOpen(false); }}
+                      onClick={() => { handleTabChange(id); setSidebarOpen(false); }}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all text-left ${
                         isActive
                           ? "bg-klo-slate text-klo-text"
@@ -1510,7 +1515,7 @@ export default function AdminPage() {
           <EventsAdminTab
               onNavigateToConference={(eventId: string) => {
                 setPendingConferenceEventId(eventId);
-                setActiveTab("conference");
+                handleTabChange("conference");
               }}
             />
         )}

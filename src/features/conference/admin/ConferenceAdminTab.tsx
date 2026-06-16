@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   CalendarDays,
@@ -450,9 +451,11 @@ export default function ConferenceAdminTab({
   initialEventId?: string | null;
   onEventIdConsumed?: () => void;
 } = {}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [events, setEvents] = useState<EventOption[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(searchParams.get("event") ?? null);
   const [subTab, setSubTab] = useState<SubTab>("sessions");
   const [sessionCounts, setSessionCounts] = useState<Record<string, number>>({});
   const [hasActiveSession, setHasActiveSession] = useState(false);
@@ -519,6 +522,15 @@ export default function ConferenceAdminTab({
       onEventIdConsumed?.();
     }
   }, [initialEventId, onEventIdConsumed]);
+
+  // Keep URL in sync when selectedEventId changes
+  useEffect(() => {
+    if (selectedEventId) {
+      router.replace(`/admin?tab=conference&event=${selectedEventId}`, { scroll: false });
+    } else {
+      router.replace(`/admin?tab=conference`, { scroll: false });
+    }
+  }, [selectedEventId, router]);
 
   const toggleEventLive = async (ev: EventOption) => {
     const newMode = !ev.seminar_mode;
