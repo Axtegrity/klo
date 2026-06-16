@@ -690,7 +690,7 @@ const WORKFLOWS: Workflow[] = [
     steps: [
       "Confirm your access code — find it in Admin → Events → your event → Access Code field",
       "Conference tab → find your event → click into it",
-      "Sessions sub-tab → verify your sessions are listed (title, speaker, room, time)",
+      "Sessions sub-tab → verify your session entries are listed (title, speaker, room, time)",
       "Live Sessions sub-tab → create a Live Session (title required, links to your event)",
       "Toggle the LIVE switch on the event card to ON",
       "Navigate to keithlodom.ai/host — this is your war room for the entire event",
