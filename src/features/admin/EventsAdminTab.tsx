@@ -1519,7 +1519,7 @@ export default function EventsAdminTab({
               </button>
               <button
                 type="button"
-                onClick={() => { resetForm(); setShowForm(false); }}
+                onClick={() => { resetForm(); setShowForm(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                 className="px-6 py-2.5 rounded-xl border border-white/10 text-klo-muted text-sm hover:text-klo-text transition-colors"
               >
                 Cancel
