@@ -12,12 +12,10 @@ import {
   Megaphone,
   Shield,
   ChevronRight,
-  ChevronDown,
   ArrowLeft,
   MapPin,
   Archive,
   AlertCircle,
-  CheckCircle,
 } from "lucide-react";
 import PollManager from "./PollManager";
 import PresenterRemote from "./PresenterRemote";
@@ -444,6 +442,110 @@ function PollsTab({ eventId, sessionCount = 0, onGoToSessions }: { eventId: stri
   );
 }
 
+type SetupStripProps = {
+  sessionCount: number;
+  pollCount: number;
+  isLive: boolean;
+  onGoToSessions: () => void;
+  onGoToPolls: () => void;
+  onGoLive: () => void;
+  onGoToHost: () => void;
+  onDismiss: () => void;
+};
+
+function SetupStrip({
+  sessionCount,
+  pollCount,
+  isLive,
+  onGoToSessions,
+  onGoToPolls,
+  onGoLive,
+  onGoToHost,
+  onDismiss,
+}: SetupStripProps) {
+  if (isLive) {
+    return (
+      <div className="flex items-center justify-between px-4 py-3 rounded-xl mb-4 border"
+        style={{ background: "rgba(16,185,129,0.08)", borderColor: "rgba(16,185,129,0.2)" }}>
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#10B981" }} />
+          <span className="text-sm font-semibold" style={{ color: "#10B981" }}>Event is live</span>
+        </div>
+        <button
+          onClick={onGoToHost}
+          className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:brightness-110"
+          style={{ background: "#10B981", color: "#fff" }}
+        >
+          Open war room →
+        </button>
+      </div>
+    );
+  }
+
+  if (sessionCount === 0) {
+    return (
+      <div className="flex items-center justify-between px-4 py-3 rounded-xl mb-4 border"
+        style={{ background: "rgba(200,168,78,0.08)", borderColor: "rgba(200,168,78,0.2)" }}>
+        <div>
+          <p className="text-sm font-semibold text-white">Step 1 — Add sessions</p>
+          <p className="text-xs text-klo-muted mt-0.5">Add at least one session to your schedule</p>
+        </div>
+        <button
+          onClick={onGoToSessions}
+          className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:brightness-110 shrink-0"
+          style={{ background: "#C8A84E", color: "#0D1117" }}
+        >
+          Add sessions →
+        </button>
+      </div>
+    );
+  }
+
+  if (pollCount === 0) {
+    return (
+      <div className="flex items-center justify-between px-4 py-3 rounded-xl mb-4 border"
+        style={{ background: "rgba(200,168,78,0.08)", borderColor: "rgba(200,168,78,0.2)" }}>
+        <div>
+          <p className="text-sm font-semibold text-white">Step 2 — Create polls</p>
+          <p className="text-xs text-klo-muted mt-0.5">Create at least one poll for your audience</p>
+        </div>
+        <button
+          onClick={onGoToPolls}
+          className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:brightness-110 shrink-0"
+          style={{ background: "#C8A84E", color: "#0D1117" }}
+        >
+          Create polls →
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-between px-4 py-3 rounded-xl mb-4 border"
+      style={{ background: "rgba(200,168,78,0.08)", borderColor: "rgba(200,168,78,0.2)" }}>
+      <div>
+        <p className="text-sm font-semibold text-white">Step 3 — Go live</p>
+        <p className="text-xs text-klo-muted mt-0.5">Sessions and polls are ready. Toggle the event live.</p>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onDismiss}
+          className="text-xs text-klo-muted hover:text-white transition-colors"
+        >
+          Dismiss
+        </button>
+        <button
+          onClick={onGoLive}
+          className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:brightness-110 shrink-0"
+          style={{ background: "#C8A84E", color: "#0D1117" }}
+        >
+          Go live →
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ConferenceAdminTab({
   initialEventId,
   onEventIdConsumed,
@@ -458,9 +560,9 @@ export default function ConferenceAdminTab({
   const [selectedEventId, setSelectedEventId] = useState<string | null>(searchParams.get("event") ?? null);
   const [subTab, setSubTab] = useState<SubTab>("sessions");
   const [sessionCounts, setSessionCounts] = useState<Record<string, number>>({});
-  const [hasActiveSession, setHasActiveSession] = useState(false);
-  const [hasPollsCreated, setHasPollsCreated] = useState(false);
-  const [checklistOpen, setChecklistOpen] = useState(true);
+  const [isLive, setIsLive] = useState(false);
+  const [stripDismissed, setStripDismissed] = useState(false);
+  const [pollCount, setPollCount] = useState(0);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -497,23 +599,17 @@ export default function ConferenceAdminTab({
     fetchSessionCounts();
   }, [fetchEvents, fetchSessionCounts]);
 
-  // Fix 4: fetch active session + polls status for checklist when event changes
   useEffect(() => {
-    if (!selectedEventId) {
-      setHasActiveSession(false);
-      setHasPollsCreated(false);
-      return;
-    }
-    const stored = typeof window !== "undefined" && localStorage.getItem(`klo-checklist-${selectedEventId}`);
-    setChecklistOpen(stored !== "collapsed");
+    if (!selectedEventId) return;
     fetch(`/api/conference/sessions?event_id=${selectedEventId}&active_only=true`)
-      .then((r) => r.json())
-      .then((data) => setHasActiveSession(Array.isArray(data) && data.length > 0))
+      .then(r => r.json())
+      .then(data => setIsLive(Array.isArray(data) && data.length > 0))
       .catch(() => {});
     fetch(`/api/conference/polls?event_id=${selectedEventId}`)
-      .then((r) => r.json())
-      .then((data) => setHasPollsCreated(Array.isArray(data) && data.length > 0))
+      .then(r => r.json())
+      .then(data => setPollCount(Array.isArray(data) ? data.length : 0))
       .catch(() => {});
+    setStripDismissed(false);
   }, [selectedEventId]);
 
   useEffect(() => {
@@ -536,11 +632,12 @@ export default function ConferenceAdminTab({
     const newMode = !ev.seminar_mode;
     // Optimistic update
     setEvents((prev) => prev.map((e) => (e.id === ev.id ? { ...e, seminar_mode: newMode } : e)));
-    await fetch(`/api/admin/events/${ev.id}`, {
+    const res = await fetch(`/api/admin/events/${ev.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ seminar_mode: newMode }),
     });
+    if (res.ok) setIsLive(newMode);
   };
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
@@ -597,74 +694,18 @@ export default function ConferenceAdminTab({
           </div>
         </div>
 
-        {/* Fix 4: Setup checklist */}
-        {(() => {
-          const sessionCount = sessionCounts[selectedEventId] ?? 0;
-          const steps = [
-            { label: "Event created", done: true, tab: null as SubTab | null },
-            { label: "Session created", done: sessionCount > 0, tab: "sessions" as SubTab },
-            { label: "Session activated", done: hasActiveSession, tab: "sessions" as SubTab },
-            { label: "Polls created", done: hasPollsCreated, tab: "polls" as SubTab },
-            { label: "Ready to go live", done: hasActiveSession && hasPollsCreated, tab: null as SubTab | null },
-          ];
-          const completedCount = steps.filter((s) => s.done).length;
-          const allDone = completedCount === steps.length;
-          const isOpen = checklistOpen || !allDone;
-          const toggle = () => {
-            const next = !isOpen;
-            setChecklistOpen(next);
-            if (typeof window !== "undefined") {
-              localStorage.setItem(`klo-checklist-${selectedEventId}`, next ? "open" : "collapsed");
-            }
-          };
-          return (
-            <div className="glass rounded-xl border border-white/5 overflow-hidden">
-              <button
-                onClick={toggle}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors"
-              >
-                <div className="flex-1 flex items-center gap-3 min-w-0">
-                  <span className="text-xs font-semibold text-klo-text">Event Setup</span>
-                  <div className="flex-1 max-w-[120px] h-1.5 rounded-full bg-white/5 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-[#C8A84E] transition-all duration-300"
-                      style={{ width: `${(completedCount / steps.length) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-klo-muted shrink-0">{completedCount}/{steps.length}</span>
-                  {allDone && <span className="text-xs font-medium text-emerald-400 shrink-0">Ready to go live</span>}
-                </div>
-                <ChevronDown
-                  size={14}
-                  className={`text-klo-muted shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-              {isOpen && (
-                <div className="border-t border-white/5 px-4 py-3 flex flex-wrap gap-x-6 gap-y-2">
-                  {steps.map((step, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      {step.done ? (
-                        <CheckCircle size={13} className="text-emerald-400 shrink-0" />
-                      ) : (
-                        <div className="w-[13px] h-[13px] rounded-full border border-white/20 shrink-0" />
-                      )}
-                      {!step.done && step.tab ? (
-                        <button
-                          onClick={() => setSubTab(step.tab!)}
-                          className="text-xs text-[#2764FF] hover:underline underline-offset-2"
-                        >
-                          {step.label}
-                        </button>
-                      ) : (
-                        <span className={`text-xs ${step.done ? "text-klo-muted" : "text-klo-text"}`}>{step.label}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })()}
+        {!stripDismissed && (
+          <SetupStrip
+            sessionCount={sessionCounts[selectedEventId] ?? 0}
+            pollCount={pollCount}
+            isLive={isLive}
+            onGoToSessions={() => setSubTab("sessions")}
+            onGoToPolls={() => setSubTab("polls")}
+            onGoLive={() => toggleEventLive(selectedEvent)}
+            onGoToHost={() => window.open("/host", "_blank")}
+            onDismiss={() => setStripDismissed(true)}
+          />
+        )}
 
         {/* Sub-tab navigation */}
         <div className="flex gap-1 p-1 rounded-xl bg-klo-dark/50 border border-white/5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
