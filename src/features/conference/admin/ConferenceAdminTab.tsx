@@ -443,7 +443,13 @@ function PollsTab({ eventId, sessionCount = 0, onGoToSessions }: { eventId: stri
   );
 }
 
-export default function ConferenceAdminTab() {
+export default function ConferenceAdminTab({
+  initialEventId,
+  onEventIdConsumed,
+}: {
+  initialEventId?: string | null;
+  onEventIdConsumed?: () => void;
+} = {}) {
   const [events, setEvents] = useState<EventOption[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -508,13 +514,11 @@ export default function ConferenceAdminTab() {
   }, [selectedEventId]);
 
   useEffect(() => {
-    const handler = (e: Event) => {
-      const { eventId } = (e as CustomEvent<{ eventId: string }>).detail;
-      if (eventId) setSelectedEventId(eventId);
-    };
-    window.addEventListener("klo:select-event", handler);
-    return () => window.removeEventListener("klo:select-event", handler);
-  }, []);
+    if (initialEventId) {
+      setSelectedEventId(initialEventId);
+      onEventIdConsumed?.();
+    }
+  }, [initialEventId, onEventIdConsumed]);
 
   const toggleEventLive = async (ev: EventOption) => {
     const newMode = !ev.seminar_mode;

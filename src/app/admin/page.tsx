@@ -257,6 +257,7 @@ export default function AdminPage() {
   const [inquiriesNewCount, setInquiriesNewCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingConferenceEventId, setPendingConferenceEventId] = useState<string | null>(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -1493,7 +1494,10 @@ export default function AdminPage() {
         )}
         {/* CONFERENCE TAB */}
         {activeTab === "conference" && (
-          <ConferenceAdminTab />
+          <ConferenceAdminTab
+            initialEventId={pendingConferenceEventId}
+            onEventIdConsumed={() => setPendingConferenceEventId(null)}
+          />
         )}
 
         {/* PRESENTATIONS TAB */}
@@ -1505,12 +1509,8 @@ export default function AdminPage() {
         {activeTab === "events" && (
           <EventsAdminTab
               onNavigateToConference={(eventId: string) => {
+                setPendingConferenceEventId(eventId);
                 setActiveTab("conference");
-                setTimeout(() => {
-                  window.dispatchEvent(
-                    new CustomEvent("klo:select-event", { detail: { eventId } })
-                  );
-                }, 100);
               }}
             />
         )}

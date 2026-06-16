@@ -217,11 +217,12 @@ export default function EventsAdminTab({
         const created = await res.json();
         resetForm();
         setShowForm(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
         fetchEvents();
         setSaveMsg({ type: "success", text: "Event created successfully" });
         setTimeout(() => setSaveMsg(null), 4000);
         if (onNavigateToConference && created?.id) {
-          setTimeout(() => onNavigateToConference(created.id), 500);
+          onNavigateToConference(created.id);
         }
       }
     } finally {
