@@ -507,6 +507,15 @@ export default function ConferenceAdminTab() {
       .catch(() => {});
   }, [selectedEventId]);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { eventId } = (e as CustomEvent<{ eventId: string }>).detail;
+      if (eventId) setSelectedEventId(eventId);
+    };
+    window.addEventListener("klo:select-event", handler);
+    return () => window.removeEventListener("klo:select-event", handler);
+  }, []);
+
   const toggleEventLive = async (ev: EventOption) => {
     const newMode = !ev.seminar_mode;
     // Optimistic update

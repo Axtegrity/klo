@@ -1503,7 +1503,16 @@ export default function AdminPage() {
 
         {/* EVENTS TAB */}
         {activeTab === "events" && (
-          <EventsAdminTab />
+          <EventsAdminTab
+              onNavigateToConference={(eventId: string) => {
+                setActiveTab("conference");
+                setTimeout(() => {
+                  window.dispatchEvent(
+                    new CustomEvent("klo:select-event", { detail: { eventId } })
+                  );
+                }, 100);
+              }}
+            />
         )}
 
         {/* INQUIRIES TAB */}

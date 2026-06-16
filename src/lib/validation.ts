@@ -154,6 +154,7 @@ export const adminEventCreateSchema = z.object({
   room_location: z.string().max(500).optional(),
   is_guest_presenter: z.boolean().optional(),
   session_end_time: z.string().max(50).optional(),
+  access_code: z.string().max(50).optional(),
 });
 
 // ----------------------------------------------------------------

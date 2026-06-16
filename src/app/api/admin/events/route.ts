@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
     room_location,
     is_guest_presenter,
     session_end_time,
+    access_code,
   } = parsed.data;
 
   const slug = title
@@ -85,6 +86,7 @@ export async function POST(req: NextRequest) {
       room_location: room_location || null,
       is_guest_presenter: is_guest_presenter || false,
       session_end_time: session_end_time || null,
+      access_code: access_code || null,
       is_published: true,
     })
     .select()

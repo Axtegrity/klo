@@ -98,7 +98,11 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
 };
 
-export default function EventsAdminTab() {
+export default function EventsAdminTab({
+  onNavigateToConference,
+}: {
+  onNavigateToConference?: (eventId: string) => void;
+}) {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -133,6 +137,8 @@ export default function EventsAdminTab() {
   const [formIsGuestPresenter, setFormIsGuestPresenter] = useState(false);
   const [formSessionName, setFormSessionName] = useState("");
   const [formRoomLocation, setFormRoomLocation] = useState("");
+  const [formRequireAccessCode, setFormRequireAccessCode] = useState(false);
+  const [formAccessCode, setFormAccessCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // Edit state
@@ -172,6 +178,8 @@ export default function EventsAdminTab() {
     setFormIsGuestPresenter(false);
     setFormSessionName("");
     setFormRoomLocation("");
+    setFormRequireAccessCode(false);
+    setFormAccessCode("");
     setParseStatus("idle");
     setParseError(null);
     setParsedEvents([]);
@@ -200,14 +208,21 @@ export default function EventsAdminTab() {
           is_guest_presenter: formIsGuestPresenter,
           session_name: formSessionName || undefined,
           room_location: formRoomLocation || undefined,
+          ...(formRequireAccessCode && formAccessCode
+            ? { access_code: formAccessCode }
+            : {}),
         }),
       });
       if (res.ok) {
+        const created = await res.json();
         resetForm();
         setShowForm(false);
         fetchEvents();
         setSaveMsg({ type: "success", text: "Event created successfully" });
         setTimeout(() => setSaveMsg(null), 4000);
+        if (onNavigateToConference && created?.id) {
+          setTimeout(() => onNavigateToConference(created.id), 500);
+        }
       }
     } finally {
       setSubmitting(false);
@@ -738,21 +753,42 @@ export default function EventsAdminTab() {
                         <option value="Current Events">Current Events</option>
                         <option value="Previous Events">Previous Events</option>
                       </select>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Access Code (e.g. NEWLIFE26)"
-                          value={(editFields as Record<string, unknown>).access_code as string ?? ""}
-                          onChange={(e) => setEditFields({ ...editFields, access_code: e.target.value.toUpperCase() })}
-                          className={`${inputClass} flex-1 font-mono tracking-widest uppercase`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setEditFields({ ...editFields, access_code: generateAccessCode() })}
-                          className="px-3 rounded-xl text-[10px] font-medium whitespace-nowrap border border-white/10 text-klo-muted hover:text-klo-gold hover:border-klo-gold/30 transition-colors"
-                        >
-                          Generate
-                        </button>
+                      <div className="col-span-2 space-y-2">
+                        <div className="flex items-center justify-between py-1">
+                          <div>
+                            <p className="text-sm font-medium text-white">Require access code</p>
+                            <p className="text-xs text-klo-muted">Attendees must enter this code to join</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setEditFields({ ...editFields, access_code: !!(editFields as Record<string, unknown>).access_code ? "" : generateAccessCode() })}
+                            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                            style={{ background: !!(editFields as Record<string, unknown>).access_code ? "#C8A84E" : "#21262D" }}
+                          >
+                            <span
+                              className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                              style={{ transform: !!(editFields as Record<string, unknown>).access_code ? "translateX(22px)" : "translateX(2px)" }}
+                            />
+                          </button>
+                        </div>
+                        {!!(editFields as Record<string, unknown>).access_code && (
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="Access Code (e.g. NEWLIFE26)"
+                              value={(editFields as Record<string, unknown>).access_code as string ?? ""}
+                              onChange={(e) => setEditFields({ ...editFields, access_code: e.target.value.toUpperCase() })}
+                              className={`${inputClass} flex-1 font-mono tracking-widest uppercase`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setEditFields({ ...editFields, access_code: generateAccessCode() })}
+                              className="px-3 rounded-xl text-[10px] font-medium whitespace-nowrap border border-white/10 text-klo-muted hover:text-klo-gold hover:border-klo-gold/30 transition-colors"
+                            >
+                              Generate
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <input
@@ -1425,6 +1461,53 @@ export default function EventsAdminTab() {
                 </div>
               )}
             </div>
+
+            {/* Access code */}
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-sm font-medium text-white">Require access code</p>
+                <p className="text-xs text-klo-muted">
+                  Attendees must enter this code to join the event
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormRequireAccessCode(!formRequireAccessCode);
+                  if (formRequireAccessCode) setFormAccessCode("");
+                }}
+                className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                style={{ background: formRequireAccessCode ? "#C8A84E" : "#21262D" }}
+              >
+                <span
+                  className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                  style={{ transform: formRequireAccessCode ? "translateX(22px)" : "translateX(2px)" }}
+                />
+              </button>
+            </div>
+            {formRequireAccessCode && (
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="text"
+                  placeholder="Access code (e.g. NEWLIFE26)"
+                  value={formAccessCode}
+                  onChange={(e) =>
+                    setFormAccessCode(e.target.value.toUpperCase().replace(/\s/g, ""))
+                  }
+                  className={`${inputClass} flex-1 font-mono tracking-widest uppercase`}
+                  maxLength={20}
+                />
+                <button
+                  type="button"
+                  onClick={() => setFormAccessCode(generateAccessCode())}
+                  className="px-3 py-2 text-xs font-semibold rounded-lg"
+                  style={{ background: "#21262D", color: "#C8A84E" }}
+                >
+                  Generate
+                </button>
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button
                 type="submit"
