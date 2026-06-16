@@ -4,6 +4,25 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [2026-06-16] — Host War Room, Event Setup Flow, Conference URL State
+
+### Added
+- **Host war room** — rebuilt `/host` as a 6-tab unified view: Sessions, Polls, Q&A, Word Cloud, Announcements, and Moderator access; sessions can be activated directly from the war room; live poll results visible in real time (PR #183)
+- **Events: access code toggle** — create and edit event forms now include an access code field; toggle reveals the code input; code is stored per event and enforced on the attendee conference join flow (PR #184)
+- **Conference: active setup strip** — replaced the passive progress checklist with a sequential setup strip guiding Keith through Step 1 (Add sessions), Step 2 (Create polls), and Step 3 (Go live); strip transitions to a live indicator with "Open war room →" once the event is active; dismissible (PR #184)
+- **UI testing and deployment verification protocol** — SHA-match gate documented in KLO CLAUDE.md; Toya must confirm deployed SHA matches expected commit before running any test checklist; stale-build and force-push caveats documented (PR #184)
+
+### Fixed
+- **Events: auto-navigate to Conference tab after creation** — creating an event now reliably navigates to the Conference tab with the new event pre-selected; previous implementation used a `window.dispatchEvent` CustomEvent with a 100ms race condition that fired before the tab component mounted; fix lifts `selectedEventId` to page-level state (PR #184)
+- **Admin: tab and event state lost on refresh** — switching tabs now updates the URL (`/admin?tab=conference`); selecting a conference event updates the URL (`/admin?tab=conference&event=ID`); refresh and direct links reload the exact view the admin was on (PR #184, closes #185)
+- **Events: page scroll to bottom on form close** — both submit and cancel paths now call `window.scrollTo({ top: 0, behavior: "smooth" })` after closing the create form (PR #184)
+
+### Changed
+- **Training: Going Live workflow rewritten** — step-by-step guide rebuilt; adds Host Duties section, corrects End Session location, fixes terminology throughout; PDF export updated (PR #181)
+- **Training: schedule item terminology** — "session entries" replaces the previous ambiguous label for schedule display items in the Going Live workflow (PR #182)
+
+---
+
 ## [2026-06-10] — Conference Polish, Presenter Remote, Events Admin
 
 ### Added

@@ -179,6 +179,51 @@ Before merging ANY PR that touches attendee-facing features (polls, Q&A, confere
 - Write tests for: auth flows, API route validation, subscription gating logic
 - Skip tests for: pure Tailwind styling, static pages
 
+## UI Testing & Deployment Verification
+
+### Before any test prompt is sent to Toya or any QA agent:
+
+1. **Always include the HEAD SHA** in the test prompt.
+   Get it with: git rev-parse --short HEAD
+   Add to the prompt: "Confirm deployed SHA matches: {SHA} before testing."
+
+2. **Toya must verify SHA before running any checklist.**
+   If the Vercel deployment SHA does not match, she reports "build stale"
+   and waits. She does not test against a stale build under any circumstance.
+
+3. **Never declare a feature verified without a SHA match.**
+   Type-check and lint passing prove the code compiles. They do not prove
+   the feature works. A verified feature requires:
+   - SHA match on Vercel preview
+   - Functional checklist completed by Toya or equivalent QA agent
+   - Pass/fail reported for every checklist item
+
+4. **Force-push updates the branch but not instantly the preview.**
+   After any force-push, wait for Vercel to finish building before
+   sending a test prompt. Check Vercel dashboard for build status.
+   Typical build time: 2–4 minutes.
+
+5. **PR #s are not enough — always reference the branch name and SHA.**
+   Vercel previews are keyed to branch names. The same URL serves
+   different code at different times. SHA is the only reliable identifier.
+
+### Test prompt template (use this every time):
+
+```
+BEFORE TESTING — verify build:
+Branch: {branch-name}
+Expected SHA: {git rev-parse --short HEAD}
+Vercel preview URL: {url}
+
+Go to Vercel dashboard → confirm deployed SHA matches expected SHA.
+If mismatch: report "build stale, waiting" — do not proceed.
+
+CHECKLIST:
+[items here]
+
+For each item report: PASS, FAIL, or BLOCKED (with reason).
+```
+
 ## Key Conventions
 - Path alias: `@/` maps to `src/`
 - Import order: external packages → `@/lib` → `@/components` → `@/types`

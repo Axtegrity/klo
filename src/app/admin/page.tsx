@@ -239,6 +239,11 @@ export default function AdminPage() {
     const tab = (searchParams.get("tab") as TabId) || "overview";
     setActiveTab(tab);
   }, [searchParams]);
+
+  const handleTabChange = (tab: TabId) => {
+    setActiveTab(tab);
+    router.replace(`/admin?tab=${tab}`, { scroll: false });
+  };
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [activity, setActivity] = useState<AdminActivityData | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -257,6 +262,7 @@ export default function AdminPage() {
   const [inquiriesNewCount, setInquiriesNewCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingConferenceEventId, setPendingConferenceEventId] = useState<string | null>(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -555,7 +561,7 @@ export default function AdminPage() {
                   return (
                     <button
                       key={id}
-                      onClick={() => { setActiveTab(id); setSidebarOpen(false); }}
+                      onClick={() => { handleTabChange(id); setSidebarOpen(false); }}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all text-left ${
                         isActive
                           ? "bg-klo-slate text-klo-text"
@@ -1493,7 +1499,10 @@ export default function AdminPage() {
         )}
         {/* CONFERENCE TAB */}
         {activeTab === "conference" && (
-          <ConferenceAdminTab />
+          <ConferenceAdminTab
+            initialEventId={pendingConferenceEventId}
+            onEventIdConsumed={() => setPendingConferenceEventId(null)}
+          />
         )}
 
         {/* PRESENTATIONS TAB */}
@@ -1503,7 +1512,12 @@ export default function AdminPage() {
 
         {/* EVENTS TAB */}
         {activeTab === "events" && (
-          <EventsAdminTab />
+          <EventsAdminTab
+              onNavigateToConference={(eventId: string) => {
+                setPendingConferenceEventId(eventId);
+                handleTabChange("conference");
+              }}
+            />
         )}
 
         {/* INQUIRIES TAB */}
