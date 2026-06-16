@@ -224,6 +224,21 @@ CHECKLIST:
 For each item report: PASS, FAIL, or BLOCKED (with reason).
 ```
 
+## Change Protocol
+
+### Training must be updated with every UI change.
+
+Any commit that changes a user-facing workflow, adds a new UI element, renames a feature, or changes where a button or action lives MUST include a corresponding update to the training page at `src/app/admin/training/page.tsx`.
+
+This is not optional. If the code changes how Keith uses the app, the training changes too — in the same PR, same commit if possible.
+
+Examples of changes that require training updates:
+- New feature added (setup strip, war room tabs, access code toggle)
+- Workflow step added, removed, or reordered
+- Button or action moved to a different location
+- Feature renamed (e.g. CSV → PDF, Sessions → Live Sessions)
+- New
+
 ## Key Conventions
 - Path alias: `@/` maps to `src/`
 - Import order: external packages → `@/lib` → `@/components` → `@/types`
