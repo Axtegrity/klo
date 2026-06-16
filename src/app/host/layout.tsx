@@ -16,7 +16,7 @@ export default async function HostLayout({
     redirect("/auth/signin");
   }
 
-  if (!["owner", "admin"].includes(role ?? "")) {
+  if (!["owner", "admin", "moderator"].includes(role ?? "")) {
     redirect("/");
   }
 
