@@ -20,11 +20,11 @@ import { CONFERENCE_COLORS } from "@/features/conference/constants";
 const GOLD = CONFERENCE_COLORS.gold;
 
 export default function PresenterContent() {
-  const { data: authSession, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   const [eventId, setEventId] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [, setSessionId] = useState<string | null>(null);
   const [polls, setPolls] = useState<PollWithVotes[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
