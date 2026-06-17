@@ -232,6 +232,8 @@ Any commit that changes a user-facing workflow, adds a new UI element, renames a
 
 This is not optional. If the code changes how Keith uses the app, the training changes too — in the same PR, same commit if possible.
 
+After any change to src/app/admin/training/page.tsx, always run both bun run lint AND bun run type-check before committing. The training file has strict TypeScript types — lint alone will not catch type errors.
+
 Examples of changes that require training updates:
 - New feature added (setup strip, war room tabs, access code toggle)
 - Workflow step added, removed, or reordered

@@ -463,17 +463,34 @@ function SetupStrip({
   onGoToHost,
   onDismiss,
 }: SetupStripProps) {
+  const [showWarning, setShowWarning] = useState(false);
+
   if (isLive) {
     return (
-      <div className="flex items-center justify-between px-4 py-3 rounded-xl mb-4 border"
-        style={{ background: "rgba(16,185,129,0.08)", borderColor: "rgba(16,185,129,0.2)" }}>
+      <div
+        className="flex items-center justify-between px-4 py-3
+          rounded-xl mb-4 border"
+        style={{
+          background: "rgba(16,185,129,0.08)",
+          borderColor: "rgba(16,185,129,0.2)",
+        }}
+      >
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#10B981" }} />
-          <span className="text-sm font-semibold" style={{ color: "#10B981" }}>Event is live</span>
+          <span
+            className="w-2 h-2 rounded-full animate-pulse"
+            style={{ background: "#10B981" }}
+          />
+          <span
+            className="text-sm font-semibold"
+            style={{ color: "#10B981" }}
+          >
+            Event is live
+          </span>
         </div>
         <button
           onClick={onGoToHost}
-          className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:brightness-110"
+          className="text-xs font-bold px-3 py-1.5 rounded-lg
+            transition-all hover:brightness-110"
           style={{ background: "#10B981", color: "#fff" }}
         >
           Open war room →
@@ -482,66 +499,152 @@ function SetupStrip({
     );
   }
 
-  if (sessionCount === 0) {
-    return (
-      <div className="flex items-center justify-between px-4 py-3 rounded-xl mb-4 border"
-        style={{ background: "rgba(200,168,78,0.08)", borderColor: "rgba(200,168,78,0.2)" }}>
-        <div>
-          <p className="text-sm font-semibold text-white">Step 1 — Add sessions</p>
-          <p className="text-xs text-klo-muted mt-0.5">Add at least one session to your schedule</p>
-        </div>
-        <button
-          onClick={onGoToSessions}
-          className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:brightness-110 shrink-0"
-          style={{ background: "#C8A84E", color: "#0D1117" }}
-        >
-          Add sessions →
-        </button>
-      </div>
-    );
-  }
+  const handleGoLive = () => {
+    if (sessionCount === 0 || pollCount === 0) {
+      setShowWarning(true);
+    } else {
+      onGoLive();
+    }
+  };
 
-  if (pollCount === 0) {
-    return (
-      <div className="flex items-center justify-between px-4 py-3 rounded-xl mb-4 border"
-        style={{ background: "rgba(200,168,78,0.08)", borderColor: "rgba(200,168,78,0.2)" }}>
-        <div>
-          <p className="text-sm font-semibold text-white">Step 2 — Create polls</p>
-          <p className="text-xs text-klo-muted mt-0.5">Create at least one poll for your audience</p>
-        </div>
-        <button
-          onClick={onGoToPolls}
-          className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:brightness-110 shrink-0"
-          style={{ background: "#C8A84E", color: "#0D1117" }}
-        >
-          Create polls →
-        </button>
-      </div>
-    );
-  }
+  const missing = [
+    sessionCount === 0 && "sessions",
+    pollCount === 0 && "polls",
+  ]
+    .filter(Boolean)
+    .join(" or ");
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 rounded-xl mb-4 border"
-      style={{ background: "rgba(200,168,78,0.08)", borderColor: "rgba(200,168,78,0.2)" }}>
-      <div>
-        <p className="text-sm font-semibold text-white">Step 3 — Go live</p>
-        <p className="text-xs text-klo-muted mt-0.5">Sessions and polls are ready. Toggle the event live.</p>
+    <div className="rounded-xl mb-4 border overflow-hidden"
+      style={{ borderColor: "rgba(200,168,78,0.2)" }}>
+
+      {/* Three-column status row */}
+      <div className="grid grid-cols-3 divide-x"
+        style={{
+          background: "rgba(200,168,78,0.06)",
+          borderColor: "rgba(200,168,78,0.15)",
+        }}>
+
+        {/* Sessions */}
+        <div className="flex flex-col items-center gap-1.5 px-3 py-3">
+          <div className="flex items-center gap-1.5">
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{
+                background: sessionCount > 0 ? "#10B981" : "#8B949E",
+              }}
+            />
+            <span className="text-xs font-semibold text-white">
+              Sessions
+            </span>
+          </div>
+          <span className="text-xs text-klo-muted">
+            {sessionCount > 0
+              ? `${sessionCount} added`
+              : "None yet"}
+          </span>
+          <button
+            onClick={onGoToSessions}
+            className="text-[10px] font-bold px-2 py-1 rounded-md
+              transition-all hover:brightness-110"
+            style={{
+              background: sessionCount > 0
+                ? "rgba(16,185,129,0.15)"
+                : "rgba(200,168,78,0.2)",
+              color: sessionCount > 0 ? "#10B981" : "#C8A84E",
+            }}
+          >
+            {sessionCount > 0 ? "Manage →" : "Add now →"}
+          </button>
+        </div>
+
+        {/* Polls */}
+        <div className="flex flex-col items-center gap-1.5 px-3 py-3">
+          <div className="flex items-center gap-1.5">
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{
+                background: pollCount > 0 ? "#10B981" : "#8B949E",
+              }}
+            />
+            <span className="text-xs font-semibold text-white">
+              Polls
+            </span>
+          </div>
+          <span className="text-xs text-klo-muted">
+            {pollCount > 0
+              ? `${pollCount} created`
+              : "None yet"}
+          </span>
+          <button
+            onClick={onGoToPolls}
+            className="text-[10px] font-bold px-2 py-1 rounded-md
+              transition-all hover:brightness-110"
+            style={{
+              background: pollCount > 0
+                ? "rgba(16,185,129,0.15)"
+                : "rgba(200,168,78,0.2)",
+              color: pollCount > 0 ? "#10B981" : "#C8A84E",
+            }}
+          >
+            {pollCount > 0 ? "Manage →" : "Add now →"}
+          </button>
+        </div>
+
+        {/* Go Live */}
+        <div className="flex flex-col items-center justify-center
+          gap-1.5 px-3 py-3">
+          <button
+            onClick={handleGoLive}
+            className="text-xs font-bold px-3 py-2 rounded-lg
+              transition-all hover:brightness-110 w-full text-center"
+            style={{ background: "#C8A84E", color: "#0D1117" }}
+          >
+            Go live →
+          </button>
+          <button
+            onClick={onDismiss}
+            className="text-[10px] text-klo-muted hover:text-white
+              transition-colors"
+          >
+            Dismiss
+          </button>
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={onDismiss}
-          className="text-xs text-klo-muted hover:text-white transition-colors"
+
+      {/* Warning bar — only when triggered */}
+      {showWarning && (
+        <div
+          className="flex items-center justify-between px-4 py-3
+            border-t gap-3"
+          style={{
+            background: "rgba(239,68,68,0.08)",
+            borderColor: "rgba(239,68,68,0.2)",
+          }}
         >
-          Dismiss
-        </button>
-        <button
-          onClick={onGoLive}
-          className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:brightness-110 shrink-0"
-          style={{ background: "#C8A84E", color: "#0D1117" }}
-        >
-          Go live →
-        </button>
-      </div>
+          <p className="text-xs text-white leading-snug">
+            You have no {missing} yet. Your audience won{"'"}t have
+            anything to {sessionCount === 0 ? "follow" : "vote on"}.
+          </p>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setShowWarning(false)}
+              className="text-[10px] text-klo-muted hover:text-white
+                transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => { setShowWarning(false); onGoLive(); }}
+              className="text-[10px] font-bold px-2.5 py-1.5
+                rounded-md transition-all hover:brightness-110"
+              style={{ background: "#EF4444", color: "#fff" }}
+            >
+              Go live anyway
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
