@@ -52,9 +52,21 @@ export async function GET(request: Request) {
     .eq("is_active", true)
     .maybeSingle();
 
+  // Fetch slug of the live event when seminar mode is active
+  let eventSlug: string | null = null;
+  if (data.value?.active) {
+    const { data: liveEvent } = await supabase
+      .from("event_presentations")
+      .select("slug")
+      .eq("seminar_mode", true)
+      .maybeSingle();
+    eventSlug = liveEvent?.slug ?? null;
+  }
+
   return NextResponse.json({
     ...data.value,
     activeSession: activeSession || null,
+    eventSlug,
   });
 }
 

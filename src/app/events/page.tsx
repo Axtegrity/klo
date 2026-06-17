@@ -72,6 +72,7 @@ interface EventItem {
   session_end_time: string | null;
   hosting_entity: string | null;
   display_on_events_page: boolean;
+  event_status: string;
   seminar_mode: boolean;
   pinned_as_next: boolean;
   event_files: EventFile[];
@@ -217,14 +218,16 @@ function isLiveNow(event: Pick<EventItem, "event_date" | "event_time" | "end_dat
   return now >= start && now <= end;
 }
 
-function isPastEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode">): boolean {
+function isPastEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode" | "event_status">): boolean {
   if (event.event_date === "SAVE THE DATE") return false;
   if (event.seminar_mode) return false;
+  if (event.event_status === "past") return true;
+  if (event.event_status === "upcoming" || event.event_status === "live") return false;
   const end = eventEnd(event);
   return end ? end < new Date() : false;
 }
 
-function isUpcomingEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode">): boolean {
+function isUpcomingEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode" | "event_status">): boolean {
   if (event.seminar_mode) return false;
   if (event.event_date === "SAVE THE DATE") return true;
   return !isLiveNow(event) && !isPastEvent(event);

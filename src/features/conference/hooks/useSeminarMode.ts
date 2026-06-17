@@ -6,6 +6,7 @@ import type { SeminarMode } from "../types";
 
 export function useSeminarMode(eventId?: string) {
   const [seminarMode, setSeminarMode] = useState<SeminarMode>({ active: false });
+  const [eventSlug, setEventSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchSettings = useCallback(async () => {
@@ -17,6 +18,7 @@ export function useSeminarMode(eventId?: string) {
       if (res.ok) {
         const data = await res.json();
         setSeminarMode(data);
+        if (data.eventSlug) setEventSlug(data.eventSlug);
       }
     } catch {
       // Keep current state on error
@@ -33,5 +35,5 @@ export function useSeminarMode(eventId?: string) {
     onSettingsChange: fetchSettings,
   });
 
-  return { seminarMode, loading };
+  return { seminarMode, eventSlug, loading };
 }
