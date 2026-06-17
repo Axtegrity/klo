@@ -52,7 +52,7 @@ export default function TopNav() {
       if (isAdmin) links = [...links, { label: "Admin", href: "/admin" }, { label: "Host", href: "/host" }];
       return links;
     },
-    [isAdmin, seminarMode.active, activeSurvey]
+    [isAdmin, seminarMode.active, activeSurvey, eventSlug]
   );
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
