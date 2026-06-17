@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
 
-export type ConferenceRole = "admin" | "moderator" | "presenter" | "attendee";
+export type ConferenceRole = "admin" | "moderator" | "presenter" | "attendee" | "host";
 
 export async function verifyConferenceRole(
   requiredRoles: ConferenceRole[],

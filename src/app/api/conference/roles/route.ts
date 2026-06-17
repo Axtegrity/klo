@@ -11,12 +11,12 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get("session_id");
+  const eventId = searchParams.get("event_id");
   const supabase = getServiceSupabase();
 
   let query = supabase.from("conference_user_roles").select("*");
-  if (sessionId) {
-    query = query.eq("session_id", sessionId);
-  }
+  if (sessionId) query = query.eq("session_id", sessionId);
+  if (eventId) query = query.eq("event_id", eventId);
 
   const { data, error } = await query.order("created_at", { ascending: false });
 
@@ -36,17 +36,45 @@ export async function POST(request: Request) {
   const body = await request.json();
   const parsed = roleAssignSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "user_id and role are required" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
-  const { user_id, session_id, role } = parsed.data;
+
+  const { user_id, email, session_id, event_id, role } = parsed.data;
 
   const supabase = getServiceSupabase();
+
+  // Resolve user_id from email if email provided
+  let resolvedUserId = user_id;
+  if (!resolvedUserId && email) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email.toLowerCase())
+      .maybeSingle();
+
+    if (!profile) {
+      return NextResponse.json(
+        { error: "No account found with that email address" },
+        { status: 404 }
+      );
+    }
+    resolvedUserId = profile.id;
+  }
+
+  if (!resolvedUserId) {
+    return NextResponse.json(
+      { error: "Either user_id or email is required" },
+      { status: 400 }
+    );
+  }
+
   const { data, error } = await supabase
     .from("conference_user_roles")
     .upsert(
       {
-        user_id,
+        user_id: resolvedUserId,
         session_id: session_id || null,
+        event_id: event_id || null,
         role,
         assigned_by: auth.userId,
       },
