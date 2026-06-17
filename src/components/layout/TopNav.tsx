@@ -34,13 +34,17 @@ export default function TopNav() {
   const { data: session } = useSession();
   const userRole = (session?.user as { role?: string } | undefined)?.role;
   const isAdmin = ["owner", "admin"].includes(userRole ?? "");
-  const { seminarMode } = useSeminarMode();
+  const { seminarMode, eventSlug } = useSeminarMode();
   const { survey: activeSurvey } = useActiveSurvey();
 
   const activeNavLinks = useMemo(
     () => {
       let links = seminarMode.active
-        ? navLinks
+        ? navLinks.map((l) =>
+            l.href === "/conference" && eventSlug
+              ? { ...l, href: `/conference/${eventSlug}` }
+              : l
+          )
         : navLinks.filter((l) => l.href !== "/conference");
       if (activeSurvey) {
         links = [...links, { label: "Survey", href: `/survey/${activeSurvey.slug}` }];
@@ -48,7 +52,7 @@ export default function TopNav() {
       if (isAdmin) links = [...links, { label: "Admin", href: "/admin" }, { label: "Host", href: "/host" }];
       return links;
     },
-    [isAdmin, seminarMode.active, activeSurvey]
+    [isAdmin, seminarMode.active, activeSurvey, eventSlug]
   );
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
