@@ -290,6 +290,49 @@ export default function AdminPage() {
   const [leadsSummary, setLeadsSummary] = useState<LeadsSummary>({ total: 0, assessments: 0, surveys: 0, last7Days: 0 });
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
 
+  // Create user modal
+  const [createUserOpen, setCreateUserOpen] = useState(false);
+  const [createUserName, setCreateUserName] = useState("");
+  const [createUserEmail, setCreateUserEmail] = useState("");
+  const [createUserPassword, setCreateUserPassword] = useState("");
+  const [createUserError, setCreateUserError] = useState<string | null>(null);
+  const [createUserLoading, setCreateUserLoading] = useState(false);
+
+  const handleCreateUser = async () => {
+    setCreateUserError(null);
+    if (!createUserName.trim() || !createUserEmail.trim() || !createUserPassword.trim()) {
+      setCreateUserError("All fields are required");
+      return;
+    }
+    setCreateUserLoading(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: createUserName.trim(),
+          email: createUserEmail.trim(),
+          password: createUserPassword,
+          role: "user",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCreateUserError(data.error || "Failed to create user");
+        return;
+      }
+      setCreateUserOpen(false);
+      setCreateUserName("");
+      setCreateUserEmail("");
+      setCreateUserPassword("");
+      fetchUsers();
+    } catch {
+      setCreateUserError("Failed to create user");
+    } finally {
+      setCreateUserLoading(false);
+    }
+  };
+
   const userRole = (session?.user as { role?: string } | undefined)?.role;
   // Dev bypass: true if running on localhost OR NODE_ENV=development.
   // Allows local testing without real auth. Production (non-localhost) requires real role.
@@ -831,6 +874,67 @@ export default function AdminPage() {
         {/* USERS TAB */}
         {!loading && activeTab === "users" && (
           <div className="space-y-6">
+            {/* Header row with Create User button */}
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-klo-muted">{usersTotal} users total</p>
+              <button
+                onClick={() => setCreateUserOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-[#2764FF] text-white hover:brightness-110 transition-all"
+              >
+                <UserPlus size={15} />
+                Create User
+              </button>
+            </div>
+
+            {/* Create User Modal */}
+            <Modal isOpen={createUserOpen} onClose={() => { setCreateUserOpen(false); setCreateUserError(null); }} title="Create User Account">
+              <div className="space-y-4">
+                {createUserError && (
+                  <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                    <p className="text-sm text-red-400">{createUserError}</p>
+                  </div>
+                )}
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Full name"
+                    value={createUserName}
+                    onChange={(e) => setCreateUserName(e.target.value)}
+                    className="w-full bg-klo-dark border border-white/10 rounded-xl px-4 py-3 text-sm text-klo-text placeholder:text-klo-muted focus:outline-none focus:border-[#2764FF]/50"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email address"
+                    value={createUserEmail}
+                    onChange={(e) => setCreateUserEmail(e.target.value)}
+                    className="w-full bg-klo-dark border border-white/10 rounded-xl px-4 py-3 text-sm text-klo-text placeholder:text-klo-muted focus:outline-none focus:border-[#2764FF]/50"
+                  />
+                  <input
+                    type="password"
+                    placeholder="Password (min 8 characters)"
+                    value={createUserPassword}
+                    onChange={(e) => setCreateUserPassword(e.target.value)}
+                    className="w-full bg-klo-dark border border-white/10 rounded-xl px-4 py-3 text-sm text-klo-text placeholder:text-klo-muted focus:outline-none focus:border-[#2764FF]/50"
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => { setCreateUserOpen(false); setCreateUserError(null); }}
+                    className="flex-1 py-3 rounded-xl text-sm font-semibold border border-white/10 text-klo-muted hover:text-klo-text transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateUser}
+                    disabled={createUserLoading}
+                    className="flex-1 py-3 rounded-xl text-sm font-semibold bg-[#2764FF] text-white hover:brightness-110 transition-all disabled:opacity-50"
+                  >
+                    {createUserLoading ? "Creating..." : "Create Account"}
+                  </button>
+                </div>
+              </div>
+            </Modal>
+
             {/* Search & filter bar */}
             <motion.div
               variants={fadeUp}
@@ -864,9 +968,6 @@ export default function AdminPage() {
                 <option value="executive">Executive</option>
               </select>
             </motion.div>
-
-            {/* User count */}
-            <p className="text-sm text-klo-muted">{usersTotal} users total</p>
 
             {/* User cards */}
             <div className="space-y-3">

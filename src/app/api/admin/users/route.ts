@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getServiceSupabase } from "@/lib/supabase";
+import bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
 
@@ -30,14 +31,10 @@ export async function GET(request: NextRequest) {
 
   const supabase = getServiceSupabase();
 
-  let query = supabase
-    .from("profiles")
-    .select("*", { count: "exact" });
+  let query = supabase.from("profiles").select("*", { count: "exact" });
 
   if (search) {
-    query = query.or(
-      `full_name.ilike.%${search}%,organization_name.ilike.%${search}%`
-    );
+    query = query.or(`full_name.ilike.%${search}%,organization_name.ilike.%${search}%`);
   }
 
   if (tier && tier !== "all") {
@@ -45,9 +42,7 @@ export async function GET(request: NextRequest) {
   }
 
   const ascending = sortOrder === "asc";
-  query = query
-    .order(sortBy, { ascending })
-    .range(offset, offset + limit - 1);
+  query = query.order(sortBy, { ascending }).range(offset, offset + limit - 1);
 
   const { data, count, error } = await query;
 
@@ -62,4 +57,63 @@ export async function GET(request: NextRequest) {
     limit,
     totalPages: Math.ceil((count ?? 0) / limit),
   });
+}
+
+export async function POST(request: NextRequest) {
+  const session = await verifyAdmin();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const { full_name, email, password, role } = body;
+
+  if (!full_name || !email || !password) {
+    return NextResponse.json(
+      { error: "Name, email, and password are required" },
+      { status: 400 }
+    );
+  }
+
+  if (password.length < 8) {
+    return NextResponse.json(
+      { error: "Password must be at least 8 characters" },
+      { status: 400 }
+    );
+  }
+
+  const supabase = getServiceSupabase();
+
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("email", email.toLowerCase())
+    .maybeSingle();
+
+  if (existing) {
+    return NextResponse.json(
+      { error: "An account with this email already exists" },
+      { status: 409 }
+    );
+  }
+
+  const password_hash = await bcrypt.hash(password, 12);
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .insert({
+      full_name,
+      email: email.toLowerCase(),
+      password_hash,
+      role: role || "user",
+      subscription_tier: "free",
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data, { status: 201 });
 }
