@@ -714,7 +714,7 @@ const WORKFLOWS: Workflow[] = [
       "Monitor Q&A — approve questions before they go live",
       "Send announcements as needed",
     ],
-    tips: ["You do not have to complete sessions and polls in order. Add polls first if your questions are ready, then come back to sessions."],
+    tip: "You do not have to complete sessions and polls in order. Add polls first if your questions are ready, then come back to sessions.",
   },
   {
     title: "After the Event",
