@@ -12,7 +12,7 @@ import Modal from "@/components/shared/Modal";
 import PollManager from "@/features/conference/admin/PollManager";
 import QuestionModerator from "@/features/conference/admin/QuestionModerator";
 import WordCloudManager from "@/features/conference/admin/WordCloudManager";
-import SessionManager from "@/features/conference/admin/SessionManager";
+import SessionManagerWithPolls from "@/features/conference/admin/SessionManagerWithPolls";
 import RoleManager from "@/features/conference/admin/RoleManager";
 import ProfanityManager from "@/features/conference/admin/ProfanityManager";
 import AnnouncementManager from "@/features/conference/admin/AnnouncementManager";
@@ -448,16 +448,11 @@ function EventDetail({ event, onBack, onRefresh }: {
       {/* ── 2. SESSIONS ── */}
       <Section title="Sessions" icon={Radio} badge={sessionCount}>
         <div className="pt-4">
-          <SessionManager eventId={ev.id} />
+          <SessionManagerWithPolls eventId={ev.id} />
         </div>
       </Section>
 
-      {/* ── 3. POLLS ── */}
-      <Section title="Polls" icon={BarChart3} badge={pollCount}>
-        <div className="pt-4">
-          <PollManager eventId={ev.id} />
-        </div>
-      </Section>
+      {/* Polls live inside sessions — see Sessions section above */}
 
       {/* ── 4. Q&A ── */}
       <Section title="Q&A" icon={MessageSquare}>

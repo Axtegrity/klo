@@ -23,9 +23,10 @@ type InputMode = "single" | "batch";
 
 interface PollManagerProps {
   eventId?: string;
+  sessionId?: string;
 }
 
-export default function PollManager({ eventId }: PollManagerProps = {}) {
+export default function PollManager({ eventId, sessionId }: PollManagerProps = {}) {
   const [polls, setPolls] = useState<PollWithVotes[]>([]);
   const [loading, setLoading] = useState(true);
   const [question, setQuestion] = useState("");
@@ -37,7 +38,7 @@ export default function PollManager({ eventId }: PollManagerProps = {}) {
   const [pullingBack, setPullingBack] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [filterSessionId, setFilterSessionId] = useState<string>("all");
+  const [filterSessionId, setFilterSessionId] = useState<string>(sessionId ?? "all");
   const [exporting, setExporting] = useState(false);
   const { sessions } = useSessions({ eventId });
 

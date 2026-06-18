@@ -20,9 +20,10 @@ import type { ConferenceSession } from "../types";
 
 interface SessionManagerProps {
   eventId?: string;
+  renderSessionExtra?: (session: ConferenceSession) => React.ReactNode;
 }
 
-export default function SessionManager({ eventId }: SessionManagerProps = {}) {
+export default function SessionManager({ eventId, renderSessionExtra }: SessionManagerProps = {}) {
   const [sessions, setSessions] = useState<ConferenceSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
@@ -617,6 +618,7 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
                   </button>
                 ))}
               </div>
+              {renderSessionExtra?.(s)}
             </>
           )}
         </div>
