@@ -177,7 +177,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.subscriptionTier = "free";
-        token.role = "user";
+        token.role = (user as { role?: string }).role ?? "user";
         token.mfaPending = false;
         // Stamp token issuance time on fresh sign-in
         token.iat = Math.floor(Date.now() / 1000);

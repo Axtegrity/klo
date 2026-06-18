@@ -10,8 +10,6 @@ import {
   Archive,
   Users,
   Megaphone,
-  TrendingUp,
-  CheckCircle2,
   Clock,
 } from "lucide-react";
 import PresenterRemote from "@/features/conference/admin/PresenterRemote";
@@ -20,18 +18,17 @@ import SessionHistory from "@/features/conference/admin/SessionHistory";
 import AnnouncementManager from "@/features/conference/admin/AnnouncementManager";
 import { useConferenceRealtime } from "@/features/conference/hooks/useConferenceRealtime";
 import { CONFERENCE_COLORS } from "@/features/conference/constants";
-import type { ConferenceSession, PollWithVotes } from "@/features/conference/types";
+import type { ConferenceSession } from "@/features/conference/types";
 
 const GOLD = CONFERENCE_COLORS.gold;
 
-type HostTab = "live" | "polls" | "qa" | "announce" | "results" | "history";
+type HostTab = "live" | "polls" | "qa" | "announce" | "history";
 
 const TABS: { id: HostTab; label: string; Icon: React.ElementType }[] = [
   { id: "live", label: "Live", Icon: Radio },
   { id: "polls", label: "Polls", Icon: BarChart3 },
   { id: "qa", label: "Q&A", Icon: MessageSquare },
   { id: "announce", label: "Announce", Icon: Megaphone },
-  { id: "results", label: "Results", Icon: TrendingUp },
   { id: "history", label: "History", Icon: Archive },
 ];
 
@@ -51,17 +48,12 @@ export default function HostContent() {
   const [sessionEnded, setSessionEnded] = useState(false);
 
   // Live tab — activation flow
-  const [showSessionList, setShowSessionList] = useState(false);
   const [activating, setActivating] = useState<string | null>(null);
   const [liveEventError, setLiveEventError] = useState<string | null>(null);
 
   // Live tab — elapsed timer
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Results tab
-  const [polls, setPolls] = useState<PollWithVotes[]>([]);
-  const resultsTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── FETCH ACTIVE SESSION ──
   const fetchActiveSession = useCallback(async () => {
@@ -86,26 +78,18 @@ export default function HostContent() {
   const fetchLiveEventSessions = useCallback(async () => {
     setLiveEventError(null);
     try {
-      const eventsRes = await fetch("/api/admin/events");
-      if (eventsRes.status === 401) {
+      const eventRes = await fetch("/api/conference/host-event");
+      if (!eventRes.ok) {
+        setLiveEventError("Could not load event. Try again.");
+        return;
+      }
+      const { event } = await eventRes.json();
+      if (!event) {
         setAllSessions([]);
-        setLiveEventError(
-          "You don't have permission to look up the live event. Ask your admin to confirm the event is active."
-        );
+        setLiveEventError("No live event found. Ask your admin to toggle the event LIVE first.");
         return;
       }
-      if (!eventsRes.ok) {
-        setLiveEventError("Could not load sessions. Try again.");
-        return;
-      }
-      const events: { id: string; seminar_mode: boolean }[] = await eventsRes.json();
-      const liveEvent = events.find((e) => e.seminar_mode === true);
-      if (!liveEvent) {
-        setAllSessions([]);
-        setLiveEventError("No live event found. Toggle an event LIVE in the Admin panel first.");
-        return;
-      }
-      const sessionsRes = await fetch(`/api/conference/sessions?event_id=${liveEvent.id}`);
+      const sessionsRes = await fetch(`/api/conference/sessions?event_id=${event.id}`);
       if (!sessionsRes.ok) {
         setLiveEventError("Could not load sessions. Try again.");
         return;
@@ -122,20 +106,8 @@ export default function HostContent() {
     try {
       const res = await fetch(`/api/conference/polls?event_id=${eventId}`);
       if (!res.ok) return;
-      const data: PollWithVotes[] = await res.json();
+      const data: { is_deployed: boolean }[] = await res.json();
       setAnyPollDeployed(data.some((p) => p.is_deployed));
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  // ── FETCH POLL RESULTS ──
-  const fetchPollResults = useCallback(async (eventId: string) => {
-    try {
-      const res = await fetch(`/api/conference/polls?event_id=${eventId}`);
-      if (!res.ok) return;
-      const data: PollWithVotes[] = await res.json();
-      setPolls(data);
     } catch {
       // ignore
     }
@@ -144,7 +116,8 @@ export default function HostContent() {
   // Boot load
   useEffect(() => {
     fetchActiveSession();
-  }, [fetchActiveSession]);
+    fetchLiveEventSessions();
+  }, [fetchActiveSession, fetchLiveEventSessions]);
 
   // Poll deployed state when activeSession changes
   useEffect(() => {
@@ -167,30 +140,11 @@ export default function HostContent() {
     };
   }, [activeSession?.id]);
 
-  // Results polling — 10s interval when on results tab with an active event
-  useEffect(() => {
-    if (resultsTimerRef.current) clearInterval(resultsTimerRef.current);
-    const eventId = activeSession?.event_id;
-    if (tab === "results" && eventId) {
-      fetchPollResults(eventId);
-      resultsTimerRef.current = setInterval(() => fetchPollResults(eventId), 10_000);
-    }
-    return () => {
-      if (resultsTimerRef.current) clearInterval(resultsTimerRef.current);
-    };
-  }, [tab, activeSession?.event_id, fetchPollResults]);
-
-  // Session list when showing picker
-  useEffect(() => {
-    if (showSessionList) fetchLiveEventSessions();
-  }, [showSessionList, fetchLiveEventSessions]);
-
   useConferenceRealtime({
     onSessionsChange: fetchActiveSession,
     onPollsChange: () => {
       if (activeSession?.event_id) {
         fetchPollsDeployed(activeSession.event_id);
-        if (tab === "results") fetchPollResults(activeSession.event_id);
       }
     },
   });
@@ -224,8 +178,8 @@ export default function HostContent() {
         body: JSON.stringify({ is_active: true }),
       });
       if (res.ok) {
-        setShowSessionList(false);
         await fetchActiveSession();
+        setTab("polls");
       }
     } finally {
       setActivating(null);
@@ -317,77 +271,67 @@ export default function HostContent() {
 
   // ── LIVE TAB — IDLE: no active session ──
   const LiveTabIdle = () => (
-    <div className="flex flex-col items-center gap-6 px-6 py-12 text-center">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
-          No Session Live
+    <div className="flex flex-col gap-5 px-6 py-8">
+      <div className="space-y-1">
+        <h2 className="text-xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+          Select a session to start
         </h2>
-        <p className="text-[#8B949E] text-sm">Select a session to activate it for attendees.</p>
+        <p className="text-[#8B949E] text-sm">Tap a session below — attendees will see it go live instantly.</p>
       </div>
 
-      {!showSessionList ? (
-        <button
-          onClick={() => setShowSessionList(true)}
-          className="flex items-center justify-center gap-3 w-full max-w-sm py-5 rounded-2xl font-bold text-base transition-all hover:brightness-110"
-          style={{ background: GOLD, color: "#0D1117" }}
+      {liveEventError ? (
+        <div
+          className="rounded-2xl border px-4 py-5 text-center space-y-3"
+          style={{ background: "#161B22", borderColor: "#21262D" }}
         >
-          <Radio size={20} />
-          Activate Live Session
-        </button>
+          <p className="text-sm text-[#8B949E]">{liveEventError}</p>
+          <Link href="/admin?tab=conference" className="text-xs font-bold underline" style={{ color: GOLD }}>
+            Go to Admin → Conference
+          </Link>
+        </div>
+      ) : allSessions.length === 0 ? (
+        <div
+          className="rounded-2xl border px-4 py-5 text-center space-y-3"
+          style={{ background: "#161B22", borderColor: "#21262D" }}
+        >
+          <p className="text-sm text-[#8B949E]">No sessions found for this event.</p>
+          <Link href="/admin?tab=conference" className="text-xs font-bold underline" style={{ color: GOLD }}>
+            Add sessions in Admin
+          </Link>
+        </div>
       ) : (
-        <div className="w-full max-w-sm space-y-3">
-          <p className="text-xs text-[#8B949E] font-semibold tracking-widest text-left">
-            SELECT A SESSION
-          </p>
-          {liveEventError ? (
-            <p className="text-sm text-[#8B949E] py-6">{liveEventError}</p>
-          ) : allSessions.length === 0 ? (
-            <p className="text-sm text-[#8B949E] py-6">
-              No sessions found. Create one in the{" "}
-              <Link href="/admin" className="underline" style={{ color: GOLD }}>
-                Admin panel
-              </Link>
-              .
-            </p>
-          ) : (
-            allSessions.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => activateSession(s.id)}
-                disabled={activating === s.id}
-                className="w-full text-left px-4 py-4 rounded-2xl border transition-all disabled:opacity-50"
-                style={{ background: "#161B22", borderColor: "#21262D" }}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{s.title}</p>
-                    {s.time_label && (
-                      <p className="text-xs text-[#8B949E] mt-0.5">{s.time_label}</p>
-                    )}
-                    {s.speaker && (
-                      <p className="text-xs text-[#8B949E]">{s.speaker}</p>
-                    )}
-                  </div>
-                  {activating === s.id ? (
-                    <div
-                      className="w-4 h-4 border-2 rounded-full animate-spin shrink-0"
-                      style={{ borderColor: "#21262D", borderTopColor: GOLD }}
-                    />
-                  ) : (
-                    <span className="text-xs font-bold shrink-0" style={{ color: GOLD }}>
-                      GO LIVE
-                    </span>
+        <div className="space-y-3">
+          {allSessions.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => activateSession(s.id)}
+              disabled={activating === s.id}
+              className="w-full text-left px-4 py-4 rounded-2xl border transition-all disabled:opacity-50 hover:border-[#C8A84E]/40"
+              style={{ background: "#161B22", borderColor: "#21262D" }}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">{s.title}</p>
+                  {s.time_label && (
+                    <p className="text-xs text-[#8B949E] mt-0.5">{s.time_label}</p>
+                  )}
+                  {s.speaker && (
+                    <p className="text-xs text-[#8B949E]">{s.speaker}</p>
                   )}
                 </div>
-              </button>
-            ))
-          )}
-          <button
-            onClick={() => { setShowSessionList(false); setLiveEventError(null); }}
-            className="text-xs text-[#8B949E] underline"
-          >
-            Cancel
-          </button>
+                {activating === s.id ? (
+                  <div
+                    className="w-4 h-4 border-2 rounded-full animate-spin shrink-0"
+                    style={{ borderColor: "#21262D", borderTopColor: GOLD }}
+                  />
+                ) : (
+                  <span className="text-xs font-bold shrink-0" style={{ color: GOLD }}>
+                    GO LIVE →
+                  </span>
+                )}
+              </div>
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -481,89 +425,6 @@ export default function HostContent() {
   );
 
   // ── RESULTS TAB ──
-  const ResultsTab = () => {
-    if (!eventId) {
-      return (
-        <div className="flex flex-col items-center justify-center py-16 px-6 text-center gap-3">
-          <p className="text-sm text-[#8B949E]">No event linked to the active session.</p>
-        </div>
-      );
-    }
-
-    if (polls.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center py-16 px-6 text-center gap-3">
-          <TrendingUp size={32} className="text-[#30363D]" />
-          <p className="text-sm text-[#8B949E]">No polls yet. Deploy a poll from the Polls tab.</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="px-4 py-4 space-y-4">
-        <p className="text-[10px] font-bold tracking-widest text-[#8B949E]">
-          LIVE RESULTS — updates every 10s
-        </p>
-        {polls.map((poll) => {
-          const total = poll.totalVotes ?? 0;
-          const isLive = poll.is_deployed && !poll.closed_at;
-          const isClosed = !!poll.closed_at;
-
-          return (
-            <div
-              key={poll.id}
-              className="rounded-2xl border p-4 space-y-3"
-              style={{ background: "#161B22", borderColor: "#21262D" }}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-semibold text-white leading-snug">{poll.question}</p>
-                <span
-                  className="text-[10px] font-bold tracking-widest shrink-0 px-2 py-1 rounded-full"
-                  style={
-                    isLive
-                      ? { background: "rgba(239,68,68,0.1)", color: "#EF4444" }
-                      : isClosed
-                      ? { background: "rgba(107,114,128,0.1)", color: "#6B7280" }
-                      : { background: "rgba(39,100,255,0.1)", color: "#60a5fa" }
-                  }
-                >
-                  {isLive ? "LIVE" : isClosed ? "CLOSED" : "QUEUED"}
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                {poll.options.map((option, idx) => {
-                  const votes = poll.votes?.[idx] ?? 0;
-                  const pct = total > 0 ? Math.round((votes / total) * 100) : 0;
-                  return (
-                    <div key={idx} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-[#8B949E] truncate mr-2">{option}</span>
-                        <span className="text-white font-semibold shrink-0">
-                          {votes} <span className="text-[#8B949E] font-normal">({pct}%)</span>
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#21262D" }}>
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{ width: `${pct}%`, background: GOLD }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="flex items-center gap-1.5 pt-1">
-                <CheckCircle2 size={12} className="text-[#8B949E]" />
-                <span className="text-[11px] text-[#8B949E]">{total} vote{total !== 1 ? "s" : ""} cast</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
 
   // ── MAIN LAYOUT ──
   return (
@@ -685,8 +546,6 @@ export default function HostContent() {
             )}
           </div>
         )}
-
-        {tab === "results" && <ResultsTab />}
 
         {tab === "history" && (
           <div className="px-4 pt-4">

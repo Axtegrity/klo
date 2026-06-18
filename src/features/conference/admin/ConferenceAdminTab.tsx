@@ -468,32 +468,22 @@ function SetupStrip({
   if (isLive) {
     return (
       <div
-        className="flex items-center justify-between px-4 py-3
-          rounded-xl mb-4 border"
-        style={{
-          background: "rgba(16,185,129,0.08)",
-          borderColor: "rgba(16,185,129,0.2)",
-        }}
+        className="rounded-xl mb-4 border overflow-hidden"
+        style={{ borderColor: "rgba(16,185,129,0.3)" }}
       >
-        <div className="flex items-center gap-2">
-          <span
-            className="w-2 h-2 rounded-full animate-pulse"
-            style={{ background: "#10B981" }}
-          />
-          <span
-            className="text-sm font-semibold"
-            style={{ color: "#10B981" }}
-          >
-            Event is live
-          </span>
+        <div
+          className="flex items-center gap-2 px-4 py-2"
+          style={{ background: "rgba(16,185,129,0.1)" }}
+        >
+          <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#10B981" }} />
+          <span className="text-xs font-bold tracking-widest" style={{ color: "#10B981" }}>EVENT IS LIVE</span>
         </div>
         <button
           onClick={onGoToHost}
-          className="text-xs font-bold px-3 py-1.5 rounded-lg
-            transition-all hover:brightness-110"
-          style={{ background: "#10B981", color: "#fff" }}
+          className="w-full flex items-center justify-center gap-3 py-4 font-bold text-base transition-all hover:brightness-110"
+          style={{ background: "#10B981", color: "#0D1117" }}
         >
-          Open war room →
+          Open Host War Room →
         </button>
       </div>
     );
@@ -513,6 +503,38 @@ function SetupStrip({
   ]
     .filter(Boolean)
     .join(" or ");
+
+  // When both sessions and polls are ready — collapse to one action
+  const isReady = sessionCount > 0 && pollCount > 0;
+
+  if (isReady && !showWarning) {
+    return (
+      <div className="rounded-xl mb-4 border overflow-hidden" style={{ borderColor: "rgba(200,168,78,0.3)" }}>
+        <div className="grid grid-cols-2 divide-x" style={{ background: "rgba(200,168,78,0.06)", borderColor: "rgba(200,168,78,0.15)" }}>
+          <div className="flex items-center gap-2 px-4 py-2.5">
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#10B981" }} />
+            <span className="text-xs font-semibold text-white">{sessionCount} session{sessionCount !== 1 ? "s" : ""}</span>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2.5">
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#10B981" }} />
+            <span className="text-xs font-semibold text-white">{pollCount} poll{pollCount !== 1 ? "s" : ""}</span>
+          </div>
+        </div>
+        <button
+          onClick={handleGoLive}
+          className="w-full flex items-center justify-center gap-3 py-4 font-bold text-base transition-all hover:brightness-110"
+          style={{ background: "#C8A84E", color: "#0D1117" }}
+        >
+          Go Live Now →
+        </button>
+        <div className="flex justify-center py-2" style={{ background: "rgba(200,168,78,0.06)" }}>
+          <button onClick={onDismiss} className="text-[10px] text-klo-muted hover:text-white transition-colors">
+            Dismiss
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl mb-4 border overflow-hidden"
