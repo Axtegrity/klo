@@ -1,5 +1,5 @@
-import PresenterContent from "./_PresenterContent";
+import { redirect } from "next/navigation";
 
 export default function PresenterPage() {
-  return <PresenterContent />;
+  redirect("/host");
 }

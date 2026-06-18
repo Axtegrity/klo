@@ -15,6 +15,7 @@ import QuestionModerator from "@/features/conference/admin/QuestionModerator";
 import AnnouncementManager from "@/features/conference/admin/AnnouncementManager";
 import SessionHistory from "@/features/conference/admin/SessionHistory";
 import { useConferenceRealtime } from "@/features/conference/hooks/useConferenceRealtime";
+import type { PollWithVotes } from "@/features/conference/types";
 import { CONFERENCE_COLORS } from "@/features/conference/constants";
 import type { ConferenceSession } from "@/features/conference/types";
 
@@ -38,6 +39,10 @@ export default function HostContent() {
   const [qaOpen, setQaOpen] = useState(true);
   const [announceOpen, setAnnounceOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+
+  // Result sharing
+  const [polls, setPolls] = useState<PollWithVotes[]>([]);
+  const [sharingBusy, setSharingBusy] = useState(false);
 
   // Session picker
   const [activating, setActivating] = useState<string | null>(null);
@@ -91,6 +96,18 @@ export default function HostContent() {
     }
   }, []);
 
+  const fetchPolls = useCallback(async (eventId: string) => {
+    try {
+      const res = await fetch(`/api/conference/polls?event_id=${eventId}`);
+      if (!res.ok) return;
+      const data: PollWithVotes[] = await res.json();
+      setPolls(data);
+      setAnyPollDeployed(data.some((p) => p.is_deployed));
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const fetchPollsDeployed = useCallback(async (eventId: string) => {
     try {
       const res = await fetch(`/api/conference/polls?event_id=${eventId}`);
@@ -109,9 +126,9 @@ export default function HostContent() {
 
   useEffect(() => {
     if (activeSession?.event_id) {
-      fetchPollsDeployed(activeSession.event_id);
+      fetchPolls(activeSession.event_id);
     }
-  }, [activeSession, fetchPollsDeployed]);
+  }, [activeSession, fetchPolls]);
 
   useEffect(() => {
     if (elapsedRef.current) clearInterval(elapsedRef.current);
@@ -193,6 +210,46 @@ export default function HostContent() {
       setEndError("Failed to end session");
     } finally {
       setEndingSession(false);
+    }
+  };
+
+  const showAllResults = async () => {
+    if (!activeSession?.event_id) return;
+    setSharingBusy(true);
+    try {
+      const closed = polls.filter((p) => p.is_deployed && !p.is_active);
+      await Promise.all(
+        closed.map((p) =>
+          fetch(`/api/conference/polls/${p.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ show_results: true }),
+          })
+        )
+      );
+      await fetchPolls(activeSession.event_id);
+    } finally {
+      setSharingBusy(false);
+    }
+  };
+
+  const stopSharing = async () => {
+    if (!activeSession?.event_id) return;
+    setSharingBusy(true);
+    try {
+      const showing = polls.filter((p) => p.show_results);
+      await Promise.all(
+        showing.map((p) =>
+          fetch(`/api/conference/polls/${p.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ show_results: false }),
+          })
+        )
+      );
+      await fetchPolls(activeSession.event_id);
+    } finally {
+      setSharingBusy(false);
     }
   };
 
@@ -447,6 +504,31 @@ export default function HostContent() {
             </div>
           )}
         </div>
+
+        {/* Result sharing — only when closed polls exist */}
+        {polls.some((p) => p.is_deployed && !p.is_active) && (
+          <div className="border-t px-4 py-3 space-y-2" style={{ borderColor: "#21262D" }}>
+            <p className="text-[10px] font-bold tracking-widest text-[#8B949E]">RESULTS</p>
+            <div className="flex gap-3">
+              <button
+                onClick={showAllResults}
+                disabled={sharingBusy}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm transition-all disabled:opacity-50"
+                style={{ background: "rgba(39,100,255,0.15)", color: "#60a5fa", border: "1px solid rgba(39,100,255,0.3)" }}
+              >
+                Show All Results
+              </button>
+              <button
+                onClick={stopSharing}
+                disabled={sharingBusy || !polls.some((p) => p.show_results)}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm transition-all disabled:opacity-50"
+                style={{ background: "rgba(107,114,128,0.1)", color: "#9CA3AF", border: "1px solid rgba(107,114,128,0.2)" }}
+              >
+                Stop Sharing
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* History — collapsible */}
         <div className="border-t" style={{ borderColor: "#21262D" }}>
