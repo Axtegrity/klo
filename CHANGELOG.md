@@ -4,7 +4,10 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
-## [Unreleased] — Unified Conference Tab + Single-Screen Host War Room
+## [Unreleased] — Unified Events Tab + Single-Screen Host War Room
+
+### Added
+- **Admin: Unified Events tab** — replaces the separate Conference tab and Events Page tab with a single Events tab; everything needed to set up and run an event (Details, Sessions, Polls, Q&A, Word Cloud, Announcements, Files, Roles, Publish, History) lives inside one event record in a top-to-bottom accordion flow
 
 ### Changed
 - **Admin: Events tab removed** — event creation and management are now fully inside the Conference tab; Events tab no longer appears in the admin nav
