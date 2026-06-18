@@ -344,7 +344,7 @@ function EventDetail({ event, onBack, onRefresh }: {
       </div>
 
       {/* ── 1. DETAILS ── */}
-      <Section title="Details" icon={FileText} defaultOpen>
+      <Section title="Details" icon={FileText}>
         <div className="space-y-4 pt-4">
           {saveError && <p className="text-xs text-red-400">{saveError}</p>}
           <div className="grid grid-cols-1 gap-3">
@@ -446,14 +446,14 @@ function EventDetail({ event, onBack, onRefresh }: {
       </Section>
 
       {/* ── 2. SESSIONS ── */}
-      <Section title="Sessions" icon={Radio} badge={sessionCount} defaultOpen={sessionCount === 0}>
+      <Section title="Sessions" icon={Radio} badge={sessionCount}>
         <div className="pt-4">
           <SessionManager eventId={ev.id} />
         </div>
       </Section>
 
       {/* ── 3. POLLS ── */}
-      <Section title="Polls" icon={BarChart3} badge={pollCount} defaultOpen={pollCount === 0}>
+      <Section title="Polls" icon={BarChart3} badge={pollCount}>
         <div className="pt-4">
           <PollManager eventId={ev.id} />
         </div>
@@ -520,7 +520,7 @@ function EventDetail({ event, onBack, onRefresh }: {
       </Section>
 
       {/* ── 9. PUBLISH ── */}
-      <Section title="Publish & Spotlight" icon={Globe} defaultOpen={!isLive}>
+      <Section title="Publish & Spotlight" icon={Globe}>
         <div className="pt-4 space-y-5">
           {/* Go Live */}
           <div className="rounded-xl border p-4 space-y-3" style={{ background: isLive ? "rgba(16,185,129,0.05)" : "rgba(39,100,255,0.05)", borderColor: isLive ? "rgba(16,185,129,0.2)" : "rgba(39,100,255,0.2)" }}>
