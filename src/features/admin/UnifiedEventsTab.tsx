@@ -138,6 +138,7 @@ function EventDetail({ event, onBack, onRefresh }: {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isLive, setIsLive] = useState(ev.seminar_mode);
   const [goingLive, setGoingLive] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   // File upload state
   const [uploading, setUploading] = useState(false);
@@ -340,6 +341,37 @@ function EventDetail({ event, onBack, onRefresh }: {
           >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${isLive ? "translate-x-5" : ""}`} />
           </button>
+          {!isLive && (
+            deleteConfirm ? (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={async () => {
+                    await fetch(`/api/admin/events/${ev.id}`, { method: "DELETE" });
+                    setDeleteConfirm(false);
+                    onBack();
+                    onRefresh();
+                  }}
+                  className="px-2.5 py-1 rounded-lg text-xs font-bold text-red-400 bg-red-500/15 border border-red-500/30 hover:bg-red-500/25 transition-colors"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => setDeleteConfirm(false)}
+                  className="px-2.5 py-1 rounded-lg text-xs text-[#8B949E] hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setDeleteConfirm(true)}
+                className="p-1.5 rounded-lg text-[#8B949E] hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                title="Delete event"
+              >
+                <Trash2 size={14} />
+              </button>
+            )
+          )}
         </div>
       </div>
 
