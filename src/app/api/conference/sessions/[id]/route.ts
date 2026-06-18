@@ -143,6 +143,7 @@ export async function DELETE(
   await Promise.all([
     supabase.from("conference_polls").delete().eq("session_id", id),
     supabase.from("conference_questions").delete().eq("session_id", id),
+    supabase.from("conference_session_snapshots").delete().eq("session_id", id),
   ]);
 
   const { error } = await supabase
