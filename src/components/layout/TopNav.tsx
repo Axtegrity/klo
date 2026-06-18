@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import UserMenu from "@/components/layout/UserMenu";
 import { useSeminarMode } from "@/features/conference/hooks/useSeminarMode";
+import { useHostRole } from "@/features/conference/hooks/useHostRole";
 import { useActiveSurvey } from "@/components/layout/ActiveSurveyProvider";
 
 interface NavLink {
@@ -35,6 +36,7 @@ export default function TopNav() {
   const userRole = (session?.user as { role?: string } | undefined)?.role;
   const isAdmin = ["owner", "admin"].includes(userRole ?? "");
   const { seminarMode, eventSlug } = useSeminarMode();
+  const { isHost } = useHostRole();
   const { survey: activeSurvey } = useActiveSurvey();
 
   const activeNavLinks = useMemo(
@@ -49,10 +51,11 @@ export default function TopNav() {
       if (activeSurvey) {
         links = [...links, { label: "Survey", href: `/survey/${activeSurvey.slug}` }];
       }
-      if (isAdmin) links = [...links, { label: "Admin", href: "/admin" }, { label: "Host", href: "/host" }];
+      if (isAdmin) links = [...links, { label: "Admin", href: "/admin" }];
+      if (isHost) links = [...links, { label: "Host", href: "/host" }];
       return links;
     },
-    [isAdmin, seminarMode.active, activeSurvey, eventSlug]
+    [isAdmin, isHost, seminarMode.active, activeSurvey, eventSlug]
   );
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);

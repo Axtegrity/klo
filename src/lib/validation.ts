@@ -276,9 +276,11 @@ export const announcementCreateSchema = z.object({
 // ----------------------------------------------------------------
 
 export const roleAssignSchema = z.object({
-  user_id: nonEmptyString,
+  user_id: z.string().optional(),
+  email: z.string().email().optional(),
   session_id: z.string().optional(),
-  role: z.enum(["admin", "moderator", "presenter", "attendee"]),
+  event_id: z.string().optional(),
+  role: z.enum(["admin", "moderator", "presenter", "attendee", "host"]),
 });
 
 // ----------------------------------------------------------------

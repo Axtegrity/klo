@@ -99,7 +99,8 @@ export interface ConferenceUserRole {
   id: string;
   user_id: string;
   session_id: string | null;
-  role: "admin" | "moderator" | "presenter" | "attendee";
+  event_id: string | null;
+  role: "admin" | "moderator" | "presenter" | "attendee" | "host";
   assigned_by: string | null;
   created_at: string;
 }

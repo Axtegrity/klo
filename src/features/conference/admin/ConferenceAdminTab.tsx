@@ -896,9 +896,9 @@ export default function ConferenceAdminTab({
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <h3 className="text-base font-semibold text-klo-text">Roles</h3>
-                  <span className="text-xs text-klo-muted">— assign moderators and presenters</span>
+                  <span className="text-xs text-klo-muted">— assign host, moderators and presenters</span>
                 </div>
-                <RoleManager />
+                <RoleManager eventId={selectedEventId} />
               </div>
             </div>
           )}
