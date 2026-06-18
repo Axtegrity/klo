@@ -12,25 +12,26 @@ export function useHostRole() {
   const appRole = (session?.user as { role?: string } | undefined)?.role;
 
   useEffect(() => {
-    // Owner and admin always have host access — no DB check needed
-    if (appRole === "owner" || appRole === "admin") {
-      setIsHost(false); // owners/admins get their own dashboard, not host nav
-      setLoading(false);
-      return;
+    let cancelled = false;
+
+    async function check() {
+      // owners/admins get their own dashboard, not host nav
+      if (appRole === "owner" || appRole === "admin" || !userId) {
+        if (!cancelled) { setIsHost(false); setLoading(false); }
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/conference/roles/check-host");
+        const data = res.ok ? await res.json() : { isHost: false };
+        if (!cancelled) { setIsHost(data.isHost ?? false); setLoading(false); }
+      } catch {
+        if (!cancelled) { setIsHost(false); setLoading(false); }
+      }
     }
 
-    if (!userId) {
-      setIsHost(false);
-      setLoading(false);
-      return;
-    }
-
-    // Check if this user has a host role for any active event
-    fetch("/api/conference/roles/check-host")
-      .then((res) => res.ok ? res.json() : { isHost: false })
-      .then((data) => setIsHost(data.isHost ?? false))
-      .catch(() => setIsHost(false))
-      .finally(() => setLoading(false));
+    check();
+    return () => { cancelled = true; };
   }, [userId, appRole]);
 
   return { isHost, loading };
