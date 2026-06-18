@@ -141,6 +141,12 @@ export async function DELETE(
   }
 
   await Promise.all([
+    supabase.from("conference_poll_votes").delete().in("poll_id", pollIds.length > 0 ? pollIds : [""]),
+    supabase.from("conference_user_roles").delete().eq("session_id", id),
+    supabase.from("conference_session_attendees").delete().eq("session_id", id),
+  ]);
+
+  await Promise.all([
     supabase.from("conference_polls").delete().eq("session_id", id),
     supabase.from("conference_questions").delete().eq("session_id", id),
     supabase.from("conference_session_snapshots").delete().eq("session_id", id),
