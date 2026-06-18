@@ -57,8 +57,7 @@ import type {
   AdminAssessmentResult,
 } from "@/types";
 import { ASSESSMENTS } from "@/lib/constants";
-import ConferenceAdminTab from "@/features/conference/admin/ConferenceAdminTab";
-import EventsAdminTab from "@/features/admin/EventsAdminTab";
+import UnifiedEventsTab from "@/features/admin/UnifiedEventsTab";
 import InquiriesAdminTab from "@/features/admin/InquiriesAdminTab";
 import PresentationsAdminTab from "@/features/admin/PresentationsAdminTab";
 import NotificationsAdminTab from "@/features/admin/NotificationsAdminTab";
@@ -139,7 +138,7 @@ function StatCard({
 // Tab definitions
 // ------------------------------------------------------------
 
-type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "events-page" | "presentations" | "inquiries" | "notifications" | "tools" | "customize" | "content-manager" | "surveys" | "creative-studio" | "testimonials" | "leads";
+type TabId = "overview" | "users" | "content" | "revenue" | "events" | "presentations" | "inquiries" | "notifications" | "tools" | "customize" | "content-manager" | "surveys" | "creative-studio" | "testimonials" | "leads";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -148,8 +147,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "content-manager", label: "Content", icon: FileEdit },
   { id: "testimonials", label: "Testimonials", icon: MessageSquareQuote },
   { id: "surveys", label: "Surveys", icon: ClipboardCheck },
-  { id: "conference", label: "Conference", icon: BarChart3 },
-  { id: "events-page", label: "Events Page", icon: Vote },
+  { id: "events", label: "Events", icon: Vote },
   { id: "inquiries", label: "Inquiries", icon: Inbox },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "presentations", label: "Presentations", icon: ClipboardCheck },
@@ -163,7 +161,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
 const TAB_GROUPS: { label: string; ids: TabId[] }[] = [
   { label: "Dashboard", ids: ["overview"] },
   { label: "Content", ids: ["creative-studio", "customize", "content-manager", "testimonials", "surveys"] },
-  { label: "Events", ids: ["conference", "events-page"] },
+  { label: "Events", ids: ["events"] },
   { label: "Engagement", ids: ["inquiries", "notifications", "presentations"] },
   { label: "Platform", ids: ["users", "leads", "content", "revenue", "tools"] },
 ];
@@ -699,7 +697,7 @@ export default function AdminPage() {
         )}
 
         {/* Loading state (only for data-dependent tabs) */}
-        {loading && activeTab !== "conference" && activeTab !== "events-page" && activeTab !== "inquiries" && activeTab !== "tools" && activeTab !== "surveys" && activeTab !== "leads" && (
+        {loading && activeTab !== "events" && activeTab !== "inquiries" && activeTab !== "tools" && activeTab !== "surveys" && activeTab !== "leads" && (
           <div className="flex items-center justify-center py-20">
             <RefreshCw className="w-8 h-8 text-klo-gold animate-spin" />
           </div>
@@ -1597,19 +1595,14 @@ export default function AdminPage() {
             </div>
           </div>
         )}
-        {/* CONFERENCE TAB */}
-        {activeTab === "conference" && (
-          <ConferenceAdminTab />
+        {/* EVENTS TAB */}
+        {activeTab === "events" && (
+          <UnifiedEventsTab />
         )}
 
         {/* PRESENTATIONS TAB */}
         {activeTab === "presentations" && (
           <PresentationsAdminTab />
-        )}
-
-        {/* EVENTS PAGE TAB */}
-        {activeTab === "events-page" && (
-          <EventsAdminTab onNavigateToConference={() => handleTabChange("conference")} />
         )}
 
         {/* INQUIRIES TAB */}
