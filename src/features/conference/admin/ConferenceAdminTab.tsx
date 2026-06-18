@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import {
   CalendarDays,
   Radio,
@@ -16,7 +15,9 @@ import {
   MapPin,
   Archive,
   AlertCircle,
+  Plus,
 } from "lucide-react";
+import Modal from "@/components/shared/Modal";
 import PollManager from "./PollManager";
 import PresenterRemote from "./PresenterRemote";
 import QuestionModerator from "./QuestionModerator";
@@ -468,32 +469,22 @@ function SetupStrip({
   if (isLive) {
     return (
       <div
-        className="flex items-center justify-between px-4 py-3
-          rounded-xl mb-4 border"
-        style={{
-          background: "rgba(16,185,129,0.08)",
-          borderColor: "rgba(16,185,129,0.2)",
-        }}
+        className="rounded-xl mb-4 border overflow-hidden"
+        style={{ borderColor: "rgba(16,185,129,0.3)" }}
       >
-        <div className="flex items-center gap-2">
-          <span
-            className="w-2 h-2 rounded-full animate-pulse"
-            style={{ background: "#10B981" }}
-          />
-          <span
-            className="text-sm font-semibold"
-            style={{ color: "#10B981" }}
-          >
-            Event is live
-          </span>
+        <div
+          className="flex items-center gap-2 px-4 py-2"
+          style={{ background: "rgba(16,185,129,0.1)" }}
+        >
+          <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#10B981" }} />
+          <span className="text-xs font-bold tracking-widest" style={{ color: "#10B981" }}>EVENT IS LIVE</span>
         </div>
         <button
           onClick={onGoToHost}
-          className="text-xs font-bold px-3 py-1.5 rounded-lg
-            transition-all hover:brightness-110"
-          style={{ background: "#10B981", color: "#fff" }}
+          className="w-full flex items-center justify-center gap-3 py-4 font-bold text-base transition-all hover:brightness-110"
+          style={{ background: "#10B981", color: "#0D1117" }}
         >
-          Open war room →
+          Open Host War Room →
         </button>
       </div>
     );
@@ -513,6 +504,38 @@ function SetupStrip({
   ]
     .filter(Boolean)
     .join(" or ");
+
+  // When both sessions and polls are ready — collapse to one action
+  const isReady = sessionCount > 0 && pollCount > 0;
+
+  if (isReady && !showWarning) {
+    return (
+      <div className="rounded-xl mb-4 border overflow-hidden" style={{ borderColor: "rgba(200,168,78,0.3)" }}>
+        <div className="grid grid-cols-2 divide-x" style={{ background: "rgba(200,168,78,0.06)", borderColor: "rgba(200,168,78,0.15)" }}>
+          <div className="flex items-center gap-2 px-4 py-2.5">
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#10B981" }} />
+            <span className="text-xs font-semibold text-white">{sessionCount} session{sessionCount !== 1 ? "s" : ""}</span>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2.5">
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#10B981" }} />
+            <span className="text-xs font-semibold text-white">{pollCount} poll{pollCount !== 1 ? "s" : ""}</span>
+          </div>
+        </div>
+        <button
+          onClick={handleGoLive}
+          className="w-full flex items-center justify-center gap-3 py-4 font-bold text-base transition-all hover:brightness-110"
+          style={{ background: "#C8A84E", color: "#0D1117" }}
+        >
+          Go Live Now →
+        </button>
+        <div className="flex justify-center py-2" style={{ background: "rgba(200,168,78,0.06)" }}>
+          <button onClick={onDismiss} className="text-[10px] text-klo-muted hover:text-white transition-colors">
+            Dismiss
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl mb-4 border overflow-hidden"
@@ -649,18 +672,19 @@ function SetupStrip({
   );
 }
 
-export default function ConferenceAdminTab({
-  initialEventId,
-  onEventIdConsumed,
-}: {
-  initialEventId?: string | null;
-  onEventIdConsumed?: () => void;
-} = {}) {
+export default function ConferenceAdminTab() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [events, setEvents] = useState<EventOption[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(searchParams.get("event") ?? null);
+
+  // Create event
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createName, setCreateName] = useState("");
+  const [createDate, setCreateDate] = useState("");
+  const [createSubmitting, setCreateSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [subTab, setSubTab] = useState<SubTab>("sessions");
   const [sessionCounts, setSessionCounts] = useState<Record<string, number>>({});
   const [isLive, setIsLive] = useState(false);
@@ -715,12 +739,38 @@ export default function ConferenceAdminTab({
     setStripDismissed(false);
   }, [selectedEventId]);
 
-  useEffect(() => {
-    if (initialEventId) {
-      setSelectedEventId(initialEventId);
-      onEventIdConsumed?.();
+  const handleCreateEvent = async () => {
+    if (!createName.trim() || !createDate.trim()) {
+      setCreateError("Event name and date are required");
+      return;
     }
-  }, [initialEventId, onEventIdConsumed]);
+    setCreateSubmitting(true);
+    setCreateError(null);
+    try {
+      const res = await fetch("/api/admin/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: createName.trim(),
+          conference_name: createName.trim(),
+          event_date: createDate,
+          start_date: createDate,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCreateError(data.error || "Failed to create event");
+        return;
+      }
+      setCreateOpen(false);
+      setCreateName("");
+      setCreateDate("");
+      await fetchEvents();
+      setSelectedEventId(data.id);
+    } finally {
+      setCreateSubmitting(false);
+    }
+  };
 
   // Keep URL in sync when selectedEventId changes
   useEffect(() => {
@@ -939,10 +989,60 @@ export default function ConferenceAdminTab({
       </div>
 
       {/* Header */}
-      <div>
-        <h2 className="text-lg font-bold text-klo-text">Your Events</h2>
-        <p className="text-xs text-klo-muted">Tap an event to manage its sessions, polls, Q&A, and more.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-klo-text">Your Events</h2>
+          <p className="text-xs text-klo-muted">Tap an event to manage sessions, polls, Q&A, and more.</p>
+        </div>
+        <button
+          onClick={() => setCreateOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-[#2764FF] text-white hover:brightness-110 transition-all"
+        >
+          <Plus size={15} />
+          New Event
+        </button>
       </div>
+
+      {/* Create Event Modal */}
+      <Modal isOpen={createOpen} onClose={() => { setCreateOpen(false); setCreateError(null); }} title="Create Event">
+        <div className="space-y-4">
+          {createError && (
+            <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20">
+              <p className="text-sm text-red-400">{createError}</p>
+            </div>
+          )}
+          <div className="space-y-3">
+            <input
+              type="text"
+              placeholder="Event name"
+              value={createName}
+              onChange={(e) => setCreateName(e.target.value)}
+              className="w-full bg-klo-dark border border-white/10 rounded-xl px-4 py-3 text-sm text-klo-text placeholder:text-klo-muted focus:outline-none focus:border-[#2764FF]/50"
+            />
+            <input
+              type="date"
+              value={createDate}
+              onChange={(e) => setCreateDate(e.target.value)}
+              className="w-full bg-klo-dark border border-white/10 rounded-xl px-4 py-3 text-sm text-klo-text focus:outline-none focus:border-[#2764FF]/50"
+            />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => { setCreateOpen(false); setCreateError(null); }}
+              className="flex-1 py-3 rounded-xl text-sm font-semibold border border-white/10 text-klo-muted hover:text-klo-text transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreateEvent}
+              disabled={createSubmitting}
+              className="flex-1 py-3 rounded-xl text-sm font-semibold bg-[#2764FF] text-white hover:brightness-110 transition-all disabled:opacity-50"
+            >
+              {createSubmitting ? "Creating..." : "Create & Set Up"}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Event cards */}
       {eventsLoading ? (
@@ -952,10 +1052,19 @@ export default function ConferenceAdminTab({
           ))}
         </div>
       ) : events.length === 0 ? (
-        <div className="glass rounded-2xl p-8 border border-white/5 text-center">
-          <CalendarDays size={32} className="text-klo-muted mx-auto mb-3" />
-          <p className="text-sm text-klo-muted mb-1">No events yet.</p>
-          <p className="text-xs text-klo-muted">Go to the <Link href="/admin?tab=events" className="text-[#2764FF] font-medium underline-offset-2 hover:underline">Events tab</Link> to create one first.</p>
+        <div className="glass rounded-2xl p-8 border border-white/5 text-center space-y-4">
+          <CalendarDays size={32} className="text-klo-muted mx-auto" />
+          <div>
+            <p className="text-sm font-semibold text-klo-text mb-1">No events yet</p>
+            <p className="text-xs text-klo-muted">Create your first event to get started.</p>
+          </div>
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#2764FF] text-white hover:brightness-110 transition-all"
+          >
+            <Plus size={15} />
+            Create Event
+          </button>
         </div>
       ) : (() => {
         // Fix 3: group events by upcoming/active vs past
@@ -980,22 +1089,6 @@ export default function ConferenceAdminTab({
               }`}
             >
               <div className="flex items-center gap-3 p-4">
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleEventLive(ev); }}
-                  className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ${
-                    ev.seminar_mode ? "bg-emerald-500" : "bg-klo-slate"
-                  }`}
-                  title={ev.seminar_mode ? "Turn OFF — hide from attendees" : "Turn ON — make visible to attendees"}
-                  role="switch"
-                  aria-checked={ev.seminar_mode}
-                  aria-label={`${ev.conference_name || ev.title} live toggle`}
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
-                      ev.seminar_mode ? "translate-x-5" : ""
-                    }`}
-                  />
-                </button>
                 <button
                   onClick={() => setSelectedEventId(ev.id)}
                   className="flex-1 min-w-0 text-left"
