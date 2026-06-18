@@ -4,6 +4,18 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [Unreleased] — Unified Conference Tab + Single-Screen Host War Room
+
+### Changed
+- **Admin: Events tab removed** — event creation and management are now fully inside the Conference tab; Events tab no longer appears in the admin nav
+- **Conference: Create Event inline** — "New Event" button added to the Conference tab header; entering a name and date creates the event and auto-selects it so Keith goes straight into setup
+- **Conference: seminar_mode toggle removed from event cards** — the only Go Live action is now the SetupStrip button; event cards show LIVE badge only
+- **Conference: empty state** — "Go to Events tab" link replaced with a "Create Event" button directly in the Conference empty state
+- **Host war room: tabs eliminated** — the tab bar is gone; when a session is active, polls, Q&A, announcements, and history are all on one scrollable page; Q&A is expanded by default, Announce and History are collapsible
+- **Host war room: idle screen** — shows session picker immediately on load; no extra button required to reveal the list
+
+---
+
 ## [2026-06-16] — Host War Room, Event Setup Flow, Conference URL State
 
 ### Added

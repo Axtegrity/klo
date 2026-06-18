@@ -139,7 +139,7 @@ function StatCard({
 // Tab definitions
 // ------------------------------------------------------------
 
-type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "presentations" | "events" | "inquiries" | "notifications" | "tools" | "customize" | "content-manager" | "surveys" | "creative-studio" | "testimonials" | "leads";
+type TabId = "overview" | "users" | "content" | "revenue" | "conference" | "events-page" | "presentations" | "inquiries" | "notifications" | "tools" | "customize" | "content-manager" | "surveys" | "creative-studio" | "testimonials" | "leads";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -148,8 +148,8 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "content-manager", label: "Content", icon: FileEdit },
   { id: "testimonials", label: "Testimonials", icon: MessageSquareQuote },
   { id: "surveys", label: "Surveys", icon: ClipboardCheck },
-  { id: "events", label: "Events", icon: Vote },
   { id: "conference", label: "Conference", icon: BarChart3 },
+  { id: "events-page", label: "Events Page", icon: Vote },
   { id: "inquiries", label: "Inquiries", icon: Inbox },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "presentations", label: "Presentations", icon: ClipboardCheck },
@@ -163,7 +163,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
 const TAB_GROUPS: { label: string; ids: TabId[] }[] = [
   { label: "Dashboard", ids: ["overview"] },
   { label: "Content", ids: ["creative-studio", "customize", "content-manager", "testimonials", "surveys"] },
-  { label: "Events", ids: ["events", "conference"] },
+  { label: "Events", ids: ["conference", "events-page"] },
   { label: "Engagement", ids: ["inquiries", "notifications", "presentations"] },
   { label: "Platform", ids: ["users", "leads", "content", "revenue", "tools"] },
 ];
@@ -262,7 +262,6 @@ export default function AdminPage() {
   const [inquiriesNewCount, setInquiriesNewCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pendingConferenceEventId, setPendingConferenceEventId] = useState<string | null>(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -700,7 +699,7 @@ export default function AdminPage() {
         )}
 
         {/* Loading state (only for data-dependent tabs) */}
-        {loading && activeTab !== "conference" && activeTab !== "events" && activeTab !== "inquiries" && activeTab !== "tools" && activeTab !== "surveys" && activeTab !== "leads" && (
+        {loading && activeTab !== "conference" && activeTab !== "events-page" && activeTab !== "inquiries" && activeTab !== "tools" && activeTab !== "surveys" && activeTab !== "leads" && (
           <div className="flex items-center justify-center py-20">
             <RefreshCw className="w-8 h-8 text-klo-gold animate-spin" />
           </div>
@@ -1600,10 +1599,7 @@ export default function AdminPage() {
         )}
         {/* CONFERENCE TAB */}
         {activeTab === "conference" && (
-          <ConferenceAdminTab
-            initialEventId={pendingConferenceEventId}
-            onEventIdConsumed={() => setPendingConferenceEventId(null)}
-          />
+          <ConferenceAdminTab />
         )}
 
         {/* PRESENTATIONS TAB */}
@@ -1611,14 +1607,9 @@ export default function AdminPage() {
           <PresentationsAdminTab />
         )}
 
-        {/* EVENTS TAB */}
-        {activeTab === "events" && (
-          <EventsAdminTab
-              onNavigateToConference={(eventId: string) => {
-                setPendingConferenceEventId(eventId);
-                handleTabChange("conference");
-              }}
-            />
+        {/* EVENTS PAGE TAB */}
+        {activeTab === "events-page" && (
+          <EventsAdminTab onNavigateToConference={() => handleTabChange("conference")} />
         )}
 
         {/* INQUIRIES TAB */}
