@@ -22,9 +22,7 @@ import {
   DollarSign,
   Lock,
   Radio,
-  MessageSquare,
   MessageSquareQuote,
-  Cloud,
   Megaphone,
   Shield,
   ChevronRight,
@@ -58,7 +56,6 @@ import {
   RefreshCw,
   Save,
   Monitor,
-  Archive,
 } from "lucide-react";
 
 // ------------------------------------------------------------

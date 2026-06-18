@@ -3,15 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Plus, Trash2, Upload, ChevronDown, ChevronUp, MapPin, Calendar,
-  FileText, RefreshCw, Star, Globe, GlobeOff, CheckCircle, AlertCircle,
-  Loader2, Pencil, X, Save, Radio, Search, ExternalLink, Eye, EyeOff,
-  Share2, ArrowLeft, BarChart3, MessageSquare, Cloud, Megaphone, Shield,
-  Archive, ChevronRight, Power, Monitor,
+  Plus, Trash2, Upload, ChevronDown, ChevronUp, Calendar,
+  FileText, RefreshCw, Globe, Loader2, Radio, Search, Eye, EyeOff,
+  ArrowLeft, BarChart3, MessageSquare, Cloud, Megaphone, Shield,
+  Archive, ChevronRight,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import PollManager from "@/features/conference/admin/PollManager";
-import PresenterRemote from "@/features/conference/admin/PresenterRemote";
 import QuestionModerator from "@/features/conference/admin/QuestionModerator";
 import WordCloudManager from "@/features/conference/admin/WordCloudManager";
 import SessionManager from "@/features/conference/admin/SessionManager";
@@ -64,10 +62,6 @@ interface Event {
   event_status_override: boolean;
   pinned_as_next: boolean;
   event_files: EventFile[];
-}
-
-interface SessionCount {
-  [eventId: string]: number;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
