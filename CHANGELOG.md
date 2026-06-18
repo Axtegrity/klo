@@ -8,6 +8,8 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ### Added
 - **Admin: Unified Events tab** — replaces the separate Conference tab and Events Page tab with a single Events tab; everything needed to set up and run an event (Details, Sessions, Polls, Q&A, Word Cloud, Announcements, Files, Roles, Publish, History) lives inside one event record in a top-to-bottom accordion flow
+- **Host: result sharing controls** — Show All Results and Stop Sharing buttons appear automatically on /host when closed polls exist; no separate presenter view needed
+- **Presenter route retired** — /presenter now redirects to /host; one URL for everything
 
 ### Changed
 - **Admin: Events tab removed** — event creation and management are now fully inside the Conference tab; Events tab no longer appears in the admin nav
