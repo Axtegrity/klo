@@ -94,26 +94,13 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
       }
     });
 
-  const toggleResults = (poll: PollWithVotes) =>
-    act(async () => {
-      const res = await fetch(`/api/conference/polls/${poll.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ show_results: !poll.show_results }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to toggle results");
-      }
-    });
-
   const closePoll = () => {
     if (!live) return;
     act(async () => {
       const res = await fetch(`/api/conference/polls/${live.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_active: false, show_results: false }),
+        body: JSON.stringify({ is_active: false, show_results: true }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -128,7 +115,7 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
       const closeRes = await fetch(`/api/conference/polls/${live.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_active: false, show_results: false }),
+        body: JSON.stringify({ is_active: false, show_results: true }),
       });
       if (!closeRes.ok) {
         const body = await closeRes.json().catch(() => ({}));
@@ -296,19 +283,6 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
 
           {/* Buttons */}
           <div className="flex gap-3 pt-1">
-            <button
-              onClick={() => toggleResults(live)}
-              disabled={busy}
-              className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-base transition-all disabled:opacity-50 ${
-                live.show_results
-                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30"
-                  : "bg-[#2764FF]/20 text-[#2764FF] border border-[#2764FF]/30 hover:bg-[#2764FF]/30"
-              }`}
-            >
-              <BarChart2 size={20} />
-              {live.show_results ? "Hide Results" : "Show Results"}
-            </button>
-
             {/* Close & Next — only when a next poll is queued */}
             {nextInQueue ? (
               <button

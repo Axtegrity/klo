@@ -46,7 +46,7 @@ export default function PollVoteForm({ poll, onVote }: PollVoteFormProps) {
                 <span className="w-2.5 h-2.5 rounded-full bg-[#2764FF]" />
               )}
             </span>
-            {option}
+            <span className="text-sm">{option}</span>
           </span>
         </button>
       ))}
