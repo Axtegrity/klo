@@ -10,7 +10,6 @@ import {
   Clock,
   MapPin,
   User,
-  RefreshCw,
   Pencil,
   Check,
   X,
@@ -37,8 +36,6 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
   const [qaEnabled, setQaEnabled] = useState(true);
   const [creating, setCreating] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [autoFetch, setAutoFetch] = useState(false);
-  const [autoFetchLoading, setAutoFetchLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editFields, setEditFields] = useState({
@@ -62,32 +59,9 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
     }
   }, [eventId]);
 
-  const fetchAutoFetchSetting = useCallback(async () => {
-    try {
-      const res = await fetch("/api/conference/settings?key=auto_fetch_schedule");
-      if (res.ok) {
-        const data = await res.json();
-        setAutoFetch(data.value === "true");
-      }
-    } finally {
-      setAutoFetchLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     fetchSessions();
-    fetchAutoFetchSetting();
-  }, [fetchSessions, fetchAutoFetchSetting]);
-
-  const toggleAutoFetch = async () => {
-    const newValue = !autoFetch;
-    setAutoFetch(newValue);
-    await fetch("/api/conference/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: "auto_fetch_schedule", value: String(newValue) }),
-    });
-  };
+  }, [fetchSessions]);
 
   // Build time_label from start/end time inputs (e.g. "9:00 AM – 10:15 AM")
   const buildTimeLabel = () => {
@@ -279,34 +253,6 @@ export default function SessionManager({ eventId }: SessionManagerProps = {}) {
         }`}>
           {saveMsg.type === "success" ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
           {saveMsg.text}
-        </div>
-      )}
-
-      {/* Auto-fetch toggle */}
-      {!autoFetchLoading && (
-        <div className="glass rounded-2xl p-4 border border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <RefreshCw size={16} className="text-[#2764FF]" />
-            <div>
-              <p className="text-sm font-medium text-klo-text">Auto-fetch schedule from web</p>
-              <p className="text-xs text-klo-muted">Syncs every 7 days via n8n automation</p>
-            </div>
-          </div>
-          <button
-            onClick={toggleAutoFetch}
-            className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
-              autoFetch ? "bg-emerald-500" : "bg-klo-slate"
-            }`}
-            role="switch"
-            aria-checked={autoFetch}
-            aria-label="Auto-fetch sessions"
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
-                autoFetch ? "translate-x-5" : ""
-              }`}
-            />
-          </button>
         </div>
       )}
 
