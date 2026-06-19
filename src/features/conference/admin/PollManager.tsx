@@ -589,36 +589,9 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
                         <div className="flex items-center gap-1 shrink-0">
                           {poll.is_deployed ? (
                             <>
-                              <button
-                                onClick={() => undeployPoll(poll.id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-colors text-xs font-medium"
-                                title="Move back to queue — removes from attendees' screens"
-                              >
-                                <Undo2 size={12} />
-                                Pull Back
-                              </button>
-                              <button
-                                onClick={() => togglePoll(poll.id, "is_active", !poll.is_active)}
-                                className={`p-1.5 rounded-lg transition-colors ${
-                                  poll.is_active
-                                    ? "text-emerald-400 hover:bg-emerald-500/10"
-                                    : "text-klo-muted hover:bg-white/5"
-                                }`}
-                                title={poll.is_active ? "End poll — removes from attendees' screens" : "Reopen poll"}
-                              >
-                                {poll.is_active ? <Power size={14} /> : <PowerOff size={14} />}
-                              </button>
-                              <button
-                                onClick={() => togglePoll(poll.id, "show_results", !poll.show_results)}
-                                className={`p-1.5 rounded-lg transition-colors ${
-                                  poll.show_results
-                                    ? "text-[#2764FF] hover:bg-[#2764FF]/10"
-                                    : "text-klo-muted hover:bg-white/5"
-                                }`}
-                                title={poll.show_results ? "Hide results from attendees" : "Show results to attendees"}
-                              >
-                                {poll.show_results ? <Eye size={14} /> : <EyeOff size={14} />}
-                              </button>
+                              <span className={`text-xs font-semibold px-2 py-1 rounded-full ${poll.is_active ? "text-emerald-400 bg-emerald-500/10" : "text-[#8B949E] bg-white/5"}`}>
+                                {poll.is_active ? "Live" : "Closed"}
+                              </span>
                             </>
                           ) : (
                             <button
