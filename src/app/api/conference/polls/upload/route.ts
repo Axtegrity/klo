@@ -4,6 +4,37 @@ import { sendAdvisorMessage } from "@/lib/claude";
 import { logError, logRequest } from "@/lib/logger";
 import { verifyConferenceRole } from "@/lib/conference-auth";
 
+function parseNumberedQuestions(text: string): { question: string; options: string[] }[] {
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  const questions: { question: string; options: string[] }[] = [];
+  let currentQuestion: string | null = null;
+  let currentOptions: string[] = [];
+
+  for (const line of lines) {
+    if (/^question\s*#?\d+$/i.test(line)) continue;
+    if (/^opening section/i.test(line)) continue;
+
+    const numberedQ = line.match(/^\d+\.\s+(.+)/);
+    const isQuestion = numberedQ || (line.endsWith("?") && line.length > 15);
+
+    if (isQuestion) {
+      if (currentQuestion && currentOptions.length >= 2) {
+        questions.push({ question: currentQuestion, options: currentOptions });
+      }
+      currentQuestion = numberedQ ? numberedQ[1].trim() : line;
+      currentOptions = [];
+    } else if (currentQuestion && line.length > 0 && line.length < 100) {
+      currentOptions.push(line);
+    }
+  }
+
+  if (currentQuestion && currentOptions.length >= 2) {
+    questions.push({ question: currentQuestion, options: currentOptions });
+  }
+
+  return questions;
+}
+
 function parseTextToQuestions(text: string): { question: string; options: string[] }[] {
   const lines = text
     .split("\n")
@@ -176,7 +207,12 @@ export async function POST(request: NextRequest) {
     questions = parseTextToQuestions(extractedText);
   }
 
-  // If pipe-format found nothing, use AI to parse the document
+  // If pipe-format found nothing, try numbered question format
+  if (questions.length === 0 && extractedText) {
+    questions = parseNumberedQuestions(extractedText);
+  }
+
+  // If still nothing, use AI to parse the document
   if (questions.length === 0 && extractedText) {
     try {
       questions = await parseWithAI(extractedText);
