@@ -55,7 +55,7 @@ export async function POST(
 
     if (!activeSession) {
       return NextResponse.json(
-        { error: "No active session found. Activate a session before deploying polls." },
+        { error: "Please activate your session first, then deploy polls." },
         { status: 400 }
       );
     }
