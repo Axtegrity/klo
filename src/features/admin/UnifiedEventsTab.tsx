@@ -94,20 +94,22 @@ function isEventPast(ev: Event): boolean {
 // ── Accordion section wrapper ──────────────────────────────────────────
 
 function Section({
-  title, icon: Icon, children, defaultOpen = false, badge,
+  title, icon: Icon, children, defaultOpen = false, badge, forceClose = false,
 }: {
   title: string;
   icon: React.ElementType;
   children: React.ReactNode;
   defaultOpen?: boolean;
   badge?: string | number;
+  forceClose?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const isOpen = forceClose ? false : open;
   return (
     <div className="rounded-2xl border overflow-hidden" style={{ background: "#161B22", borderColor: "#21262D" }}>
       <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-white/[0.02] transition-colors"
+        className={`w-full flex items-center justify-between px-4 py-4 text-left transition-colors ${forceClose ? "opacity-40 cursor-default" : "hover:bg-white/[0.02]"}`}
+        onClick={() => !forceClose && setOpen((v) => !v)}
       >
         <div className="flex items-center gap-3">
           <Icon size={16} className="text-[#8B949E] shrink-0" />
@@ -120,7 +122,7 @@ function Section({
         </div>
         {open ? <ChevronUp size={16} className="text-[#8B949E] shrink-0" /> : <ChevronDown size={16} className="text-[#8B949E] shrink-0" />}
       </button>
-      {open && <div className="px-4 pb-4 border-t" style={{ borderColor: "#21262D" }}>{children}</div>}
+      {isOpen && <div className="px-4 pb-4 border-t" style={{ borderColor: "#21262D" }}>{children}</div>}
     </div>
   );
 }
@@ -384,7 +386,7 @@ function EventDetail({ event, onBack, onRefresh }: {
       </div>
 
       {/* ── 1. DETAILS ── */}
-      <Section title="Details" icon={FileText}>
+      <Section title="Details" icon={FileText} forceClose={isLive}>
         <div className="space-y-4 pt-4">
           {saveError && <p className="text-xs text-red-400">{saveError}</p>}
           <div className="grid grid-cols-1 gap-3">
@@ -486,7 +488,7 @@ function EventDetail({ event, onBack, onRefresh }: {
       </Section>
 
       {/* ── 2. SESSIONS ── */}
-      <Section title="Sessions" icon={Radio} badge={sessionCount}>
+      <Section title="Sessions" icon={Radio} badge={sessionCount} forceClose={isLive}>
         <div className="pt-4">
           <SessionManagerWithPolls eventId={ev.id} />
         </div>
@@ -495,28 +497,28 @@ function EventDetail({ event, onBack, onRefresh }: {
       {/* Polls live inside sessions — see Sessions section above */}
 
       {/* ── 4. Q&A ── */}
-      <Section title="Q&A" icon={MessageSquare}>
+      <Section title="Q&A" icon={MessageSquare} forceClose={isLive}>
         <div className="pt-4">
           <QuestionModerator eventId={ev.id} />
         </div>
       </Section>
 
       {/* ── 5. WORD CLOUD ── */}
-      <Section title="Word Cloud" icon={Cloud}>
+      <Section title="Word Cloud" icon={Cloud} forceClose={isLive}>
         <div className="pt-4">
           <WordCloudManager eventId={ev.id} />
         </div>
       </Section>
 
       {/* ── 6. ANNOUNCEMENTS ── */}
-      <Section title="Announcements" icon={Megaphone}>
+      <Section title="Announcements" icon={Megaphone} forceClose={isLive}>
         <div className="pt-4">
           <AnnouncementManager eventId={ev.id} />
         </div>
       </Section>
 
       {/* ── 7. FILES ── */}
-      <Section title="Files" icon={FileText} badge={ev.event_files?.filter(f => f.is_visible).length}>
+      <Section title="Files" icon={FileText} badge={ev.event_files?.filter(f => f.is_visible).length} forceClose={isLive}>
         <div className="pt-4 space-y-4">
           {uploadError && <p className="text-xs text-red-400">{uploadError}</p>}
           {/* Upload zone */}
@@ -544,7 +546,7 @@ function EventDetail({ event, onBack, onRefresh }: {
       </Section>
 
       {/* ── 8. ROLES ── */}
-      <Section title="Roles" icon={Shield}>
+      <Section title="Roles" icon={Shield} forceClose={isLive}>
         <div className="pt-4 space-y-4">
           <RoleManager eventId={ev.id} />
           <div className="border-t pt-4" style={{ borderColor: "#21262D" }}>
@@ -555,7 +557,7 @@ function EventDetail({ event, onBack, onRefresh }: {
       </Section>
 
       {/* ── 9. PUBLISH ── */}
-      <Section title={isLive ? "🔴 Live — Run Your Session" : "Publish & Spotlight"} icon={Globe}>
+      <Section title={isLive ? "🔴 Live — Run Your Session" : "Publish & Spotlight"} icon={Globe} defaultOpen={isLive}>
         <div className="pt-4 space-y-5">
           {/* Go Live toggle */}
           <div className="rounded-xl border p-4 space-y-3" style={{ background: isLive ? "rgba(16,185,129,0.05)" : "rgba(39,100,255,0.05)", borderColor: isLive ? "rgba(16,185,129,0.2)" : "rgba(39,100,255,0.2)" }}>
@@ -695,7 +697,7 @@ function EventDetail({ event, onBack, onRefresh }: {
       </Section>
 
       {/* ── 10. HISTORY ── */}
-      <Section title="History" icon={Archive}>
+      <Section title="History" icon={Archive} forceClose={isLive}>
         <div className="pt-4">
           <SessionHistory eventId={ev.id} />
         </div>
