@@ -69,8 +69,11 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
   const live = polls.find((p) => p.is_active);
   const queued = polls.filter((p) => !p.is_deployed && !p.is_active);
   const done = polls.filter((p) => p.is_deployed && !p.is_active);
+  const deployed = polls.filter((p) => p.is_deployed);
   const totalVotes = live ? live.votes.reduce((s, v) => s + v, 0) : 0;
   const nextInQueue = queued[0] ?? null;
+  const totalResponsesAcrossAll = deployed.reduce((sum, p) => sum + p.votes.reduce((s, v) => s + v, 0), 0);
+  const isSimultaneous = sessionMode === "simultaneous";
 
   const act = async (fn: () => Promise<void>) => {
     setBusy(true);
@@ -255,8 +258,52 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
         </div>
       )}
 
-      {/* ── LIVE POLL ── */}
-      {live ? (
+      {/* ── SIMULTANEOUS MODE VIEW ── */}
+      {isSimultaneous && deployed.length > 0 && (
+        <div className="glass rounded-3xl p-6 border border-purple-500/30 space-y-5">
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+              ALL QUESTIONS LIVE
+            </span>
+            <span className="text-xs text-klo-muted">{deployed.length} questions</span>
+          </div>
+          <div className="text-center">
+            <p className="text-5xl font-black text-purple-400">{totalResponsesAcrossAll}</p>
+            <p className="text-sm text-klo-muted mt-1">total responses received</p>
+          </div>
+          <div className="space-y-2">
+            {deployed.map((poll, idx) => {
+              const pollVotes = poll.votes.reduce((s, v) => s + v, 0);
+              return (
+                <div key={poll.id} className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/5">
+                  <span className="text-xs text-klo-muted truncate flex-1 pr-3">Q{idx + 1}: {poll.question}</span>
+                  <span className="text-xs font-bold text-purple-400 shrink-0">{pollVotes} votes</span>
+                </div>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => act(async () => {
+              await Promise.all(deployed.map(p =>
+                fetch(`/api/conference/polls/${p.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ is_active: false, show_results: true }),
+                })
+              ));
+            })}
+            disabled={busy}
+            className="w-full flex items-center justify-center gap-2 py-4 bg-purple-500/10 text-purple-400 border border-purple-500/30 rounded-2xl font-bold text-base hover:bg-purple-500/20 transition-all disabled:opacity-50"
+          >
+            <StopCircle size={20} />
+            Close All &amp; Show Results
+          </button>
+        </div>
+      )}
+
+      {/* ── SEQUENTIAL: LIVE POLL ── */}
+      {!isSimultaneous && live ? (
         <div className="glass rounded-3xl p-6 border border-emerald-500/30 space-y-5">
           {/* Status badge */}
           <div className="flex items-center justify-between">
@@ -328,7 +375,7 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
             )}
           </div>
         </div>
-      ) : queued.length > 0 ? (
+      ) : !isSimultaneous && queued.length > 0 ? (
         /* ── NO ACTIVE POLL — READY FOR NEXT ── */
         <div className="glass rounded-3xl p-6 border border-[#2764FF]/20 space-y-5 text-center">
           <p className="text-xs font-semibold text-klo-muted uppercase tracking-wider">
@@ -349,8 +396,8 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
             {done.length === 0 ? "Start Poll" : "Start Next Poll"}
           </button>
         </div>
-      ) : (
-        /* ── ALL DONE ── */
+      ) : !isSimultaneous ? (
+        /* ── ALL DONE (sequential) ── */
         <div className="glass rounded-3xl p-6 border border-emerald-500/20 text-center space-y-4">
           <p className="text-2xl">All polls complete!</p>
           <p className="text-lg font-bold text-klo-text">Well done.</p>
@@ -363,7 +410,7 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
             Reopen All Polls
           </button>
         </div>
-      )}
+      ) : null}
 
       {/* ── QUEUE ── */}
       {queued.length > (live ? 0 : 1) && (
