@@ -218,22 +218,21 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
   const deployAllPolls = async () => {
     if (queuedPolls.length === 0) return;
     setDeployingAll(true);
-    const failed: string[] = [];
+    setError(null);
     try {
-      // Sequential — each deploy closes siblings before the next one fires,
-      // so the single-active-poll guarantee is never broken by a race.
-      for (const p of queuedPolls) {
-        const res = await fetch(`/api/conference/polls/${p.id}/deploy`, { method: "POST" });
-        if (res.ok) {
-          setDeployedSet((prev) => new Set(prev).add(p.id));
-        } else {
-          failed.push(p.question);
-        }
-      }
-      if (failed.length === 0) {
+      // Use bulk deploy endpoint to avoid sibling-closing logic
+      const ids = queuedPolls.map((p) => p.id);
+      const res = await fetch("/api/conference/polls/deploy-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ poll_ids: ids, event_id: eventId }),
+      });
+      if (res.ok) {
+        ids.forEach((id) => setDeployedSet((prev) => new Set(prev).add(id)));
         showSuccess(`${queuedPolls.length} poll${queuedPolls.length !== 1 ? "s" : ""} deployed!`);
       } else {
-        setError(`${failed.length} poll${failed.length !== 1 ? "s" : ""} failed to deploy: ${failed.join(", ")}`);
+        const data = await res.json().catch(() => null);
+        setError(data?.error || "Failed to deploy polls");
       }
       fetchPolls();
     } finally {
