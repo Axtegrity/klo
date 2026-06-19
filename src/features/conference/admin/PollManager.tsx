@@ -13,6 +13,7 @@ import {
   FileText,
   Download,
   Undo2,
+  RefreshCw,
 } from "lucide-react";
 // PollResults and CollectiveResultsChart available if needed for detailed views
 import { useConferenceRealtime } from "../hooks/useConferenceRealtime";
@@ -534,17 +535,28 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
                       {exporting ? "Exporting..." : "Download PDF"}
                     </button>
                   )}
-                  {queuedPolls.length > 0 && (
-                    <button
-                      onClick={deployAllPolls}
-                      disabled={deployingAll}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:brightness-110 transition-colors text-xs font-semibold disabled:opacity-50"
-                      title="Deploy all queued polls at once"
-                    >
-                      <Rocket size={14} />
-                      {deployingAll ? "Deploying..." : `Deploy All (${queuedPolls.length})`}
-                    </button>
-                  )}
+                  {filteredPolls.length > 0 && filteredPolls.some(p => p.is_deployed) && (
+                      <button
+                        onClick={pullBackAll}
+                        disabled={pullingBack}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 hover:bg-yellow-500/20 transition-colors text-xs font-semibold disabled:opacity-50"
+                        title="Reset all polls back to queue"
+                      >
+                        <RefreshCw size={14} />
+                        {pullingBack ? "Resetting..." : "Reset All"}
+                      </button>
+                    )}
+                    {queuedPolls.length > 0 && (
+                      <button
+                        onClick={deployAllPolls}
+                        disabled={deployingAll}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:brightness-110 transition-colors text-xs font-semibold disabled:opacity-50"
+                        title="Deploy all queued polls at once"
+                      >
+                        <Rocket size={14} />
+                        {deployingAll ? "Deploying..." : `Deploy All (${queuedPolls.length})`}
+                      </button>
+                    )}
                 </div>
               </div>
 

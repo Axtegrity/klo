@@ -401,17 +401,7 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
                     <div className="flex items-center gap-3">
                       <span className="text-emerald-400 text-xs shrink-0">✓</span>
                       <p className="text-sm text-klo-muted flex-1">{poll.question}</p>
-                      <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            onClick={() => recallPoll(poll.id)}
-                            disabled={busy}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-klo-muted hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-40"
-                            title="Reopen — clears votes and puts back in queue"
-                          >
-                            <Undo2 size={12} />
-                            Reopen
-                          </button>
-                        </div>
+                        <div className="shrink-0" />
                     </div>
                     {/* Frozen vote results */}
                     <div className="space-y-1 pl-4">
