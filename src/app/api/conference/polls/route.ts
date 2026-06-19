@@ -27,7 +27,7 @@ export async function GET(request: Request) {
 
   // Fetch polls and pre-aggregated vote counts in two queries
   // (avoids fetching every individual vote row)
-  let pollsQuery = supabase.from("conference_polls").select("*").order("created_at", { ascending: false });
+  let pollsQuery = supabase.from("conference_polls").select("*").order("sort_order", { ascending: true, nullsFirst: false }).order("created_at", { ascending: true });
   if (eventId) {
     pollsQuery = pollsQuery.eq("event_id", eventId);
   } else if (sessionId) {

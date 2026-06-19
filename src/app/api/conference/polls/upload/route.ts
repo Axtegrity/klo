@@ -237,11 +237,12 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = getServiceSupabase();
-  const rows = questions.map((q) => ({
+  const rows = questions.map((q, idx) => ({
     question: q.question,
     options: q.options,
     is_active: false,
     is_deployed: false,
+    sort_order: idx + 1,
     ...(eventId ? { event_id: eventId } : {}),
     ...(sessionId ? { session_id: sessionId } : {}),
   }));
