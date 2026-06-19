@@ -109,9 +109,23 @@ export async function POST(request: NextRequest) {
     } else if (name.endsWith(".doc") || name.endsWith(".docx")) {
       const buffer = Buffer.from(await file.arrayBuffer());
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const mammoth = require("mammoth");
-      const result = await mammoth.extractRawText({ buffer });
-      extractedText = result.value;
+      const JSZip = require("jszip");
+      const zip = await JSZip.loadAsync(buffer);
+      const docXml = zip.file("word/document.xml");
+      if (!docXml) throw new Error("Invalid docx file — missing word/document.xml");
+      const xmlText = await docXml.async("string");
+      // Strip XML tags and decode entities to plain text
+      extractedText = xmlText
+        .replace(/<w:br[^>]*\/>/g, "\n")
+        .replace(/<w:p[ >][^>]*>/g, "\n")
+        .replace(/<[^>]+>/g, "")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
     } else if (name.endsWith(".xls") || name.endsWith(".xlsx")) {
       const ExcelJS = (await import("exceljs")).default;
       const arrayBuffer = await file.arrayBuffer();
