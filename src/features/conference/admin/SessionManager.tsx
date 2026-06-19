@@ -118,6 +118,14 @@ export default function SessionManager({ eventId, renderSessionExtra, onSessions
         setShowCreateForm(false);
         fetchSessions();
         onSessionsChange?.();
+        // Sync first session title to event_presentations.session_name
+        if (eventId) {
+          fetch(`/api/admin/events/${eventId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session_name: title.trim() }),
+          }).catch(() => {});
+        }
         setSaveMsg({ type: "success", text: "Session created. Activate it with the power button before deploying polls." });
         setTimeout(() => setSaveMsg(null), 5000);
       }
@@ -153,6 +161,14 @@ export default function SessionManager({ eventId, renderSessionExtra, onSessions
     setEditingId(null);
     fetchSessions();
     onSessionsChange?.();
+    // Sync session title to event_presentations.session_name
+    if (eventId) {
+      fetch(`/api/admin/events/${eventId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_name: editFields.title.trim() }),
+      }).catch(() => {});
+    }
   };
 
   const cancelEdit = () => {
