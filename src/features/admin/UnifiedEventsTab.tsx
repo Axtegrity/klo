@@ -135,6 +135,11 @@ function EventDetail({ event, onBack, onRefresh }: {
   onRefresh: () => void;
 }) {
   const [ev, setEv] = useState<Event>(event);
+
+  useEffect(() => {
+    setEv(event);
+  }, [event]);
+
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
