@@ -5,11 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   Plus, Trash2, Upload, ChevronDown, ChevronUp, Calendar,
   FileText, RefreshCw, Globe, Loader2, Radio, Search, Eye, EyeOff,
-  ArrowLeft, BarChart3, MessageSquare, Cloud, Megaphone, Shield,
+  ArrowLeft, MessageSquare, Cloud, Megaphone, Shield,
   Archive, ChevronRight,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
-import PollManager from "@/features/conference/admin/PollManager";
 import QuestionModerator from "@/features/conference/admin/QuestionModerator";
 import WordCloudManager from "@/features/conference/admin/WordCloudManager";
 import SessionManagerWithPolls from "@/features/conference/admin/SessionManagerWithPolls";
@@ -157,8 +156,6 @@ function EventDetail({ event, onBack, onRefresh }: {
   const [showUpcoming, setShowUpcoming] = useState(true);
   const [showPast, setShowPast] = useState(true);
 
-  // Poll count for badge
-  const [pollCount, setPollCount] = useState(0);
   const [sessionCount, setSessionCount] = useState(0);
 
   useEffect(() => {
@@ -172,7 +169,6 @@ function EventDetail({ event, onBack, onRefresh }: {
       .catch(() => {});
     fetch(`/api/conference/polls?event_id=${ev.id}`)
       .then(r => r.json())
-      .then(d => setPollCount(Array.isArray(d) ? d.length : 0))
       .catch(() => {});
     fetch(`/api/conference/sessions?event_id=${ev.id}`)
       .then(r => r.json())

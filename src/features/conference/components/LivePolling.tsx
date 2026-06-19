@@ -38,8 +38,6 @@ export default function LivePolling({ polls, loading, onVote }: LivePollingProps
   const active = polls.filter((p) => p.is_active);
   // Closed polls Keith has pushed results for
   const visibleClosed = polls.filter((p) => !p.is_active && p.show_results);
-  // Polls attendee has voted on but results not yet shown — blank wait state
-  const votedWaiting = active.filter((p) => p.hasVoted);
 
   return (
     <div className="space-y-4">
