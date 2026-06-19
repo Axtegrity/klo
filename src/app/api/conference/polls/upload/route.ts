@@ -101,11 +101,10 @@ export async function POST(request: NextRequest) {
     if (name.endsWith(".txt")) {
       extractedText = await file.text();
     } else if (name.endsWith(".pdf")) {
-      const { PDFParse } = await import("pdf-parse");
       const buffer = Buffer.from(await file.arrayBuffer());
-      const parser = new PDFParse({ data: new Uint8Array(buffer) });
-      const result = await parser.getText();
-      await parser.destroy();
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const pdfParse = require("pdf-parse");
+      const result = await pdfParse(buffer);
       extractedText = result.text;
     } else if (name.endsWith(".doc") || name.endsWith(".docx")) {
       const mammoth = await import("mammoth");

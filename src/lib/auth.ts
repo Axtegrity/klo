@@ -74,26 +74,26 @@ export const authOptions: NextAuthOptions = {
       name: "next-auth.session-token",
       options: {
         httpOnly: true,
-        sameSite: "none" as const,
+        sameSite: process.env.NODE_ENV === "production" ? "none" as const : "lax" as const,
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
       },
     },
     callbackUrl: {
       name: "next-auth.callback-url",
       options: {
-        sameSite: "none" as const,
+        sameSite: process.env.NODE_ENV === "production" ? "none" as const : "lax" as const,
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
       },
     },
     csrfToken: {
       name: "next-auth.csrf-token",
       options: {
         httpOnly: false,
-        sameSite: "none" as const,
+        sameSite: process.env.NODE_ENV === "production" ? "none" as const : "lax" as const,
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
       },
     },
   },
@@ -114,7 +114,7 @@ export const authOptions: NextAuthOptions = {
           const qaEmail = process.env.QA_ADMIN_EMAIL?.trim();
           const qaPassword = process.env.QA_ADMIN_PASSWORD?.trim();
           if (qaEmail && qaPassword && credentials.email === qaEmail && credentials.password === qaPassword) {
-            return { id: "qa-admin", name: "QA Admin", email: qaEmail, role: "admin" };
+            return { id: "00000000-0000-0000-0000-000000000099", name: "QA Admin", email: qaEmail, role: "admin" };
           }
         }
 
