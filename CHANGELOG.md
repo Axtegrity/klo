@@ -4,20 +4,51 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
-## [Unreleased] — Unified Events Tab + Single-Screen Host War Room
+## [Unreleased] — June 18-19, 2026 Session
 
 ### Added
-- **Admin: Unified Events tab** — replaces the separate Conference tab and Events Page tab with a single Events tab; everything needed to set up and run an event (Details, Sessions, Polls, Q&A, Word Cloud, Announcements, Files, Roles, Publish, History) lives inside one event record in a top-to-bottom accordion flow
-- **Host: result sharing controls** — Show All Results and Stop Sharing buttons appear automatically on /host when closed polls exist; no separate presenter view needed
-- **Presenter route retired** — /presenter now redirects to /host; one URL for everything
+- **Admin: Unified Events tab** — replaces the separate Conference tab and Events Page tab with a single Events tab; Details, Sessions, Polls, Q&A, Word Cloud, Announcements, Files, Roles, Publish, and History all live inside one event record in a top-to-bottom accordion flow
+- **Polls moved inside sessions** — poll management now lives within each session accordion rather than as a top-level event section
+- **Live run panel** — control panel appears inside the Publish section when Go Live is ON; Keith can manage the active session from within the event detail view
+- **Deploy All bulk endpoint** — deploys all polls for a session in one action without closing sibling polls
+- **Reset All** — deletes all poll votes for a clean redeploy before a live run
+- **Sequential vs simultaneous poll mode** — admin toggle controls whether attendee polls deploy one-at-a-time or all at once
+- **Reopen All Polls button** — reopens all polls in a session with a single click
+- **Delete event from event detail** — admins can delete an event directly from the event detail view
+- **Numbered question parser** — imports Keith's numbered docx question format (1., 2., 3.) and maps them to poll questions automatically
+- **E2E Playwright lifecycle test** — 12-step test covering the full poll lifecycle (create → deploy → vote → results → reset); all passing
+- **Host: result sharing controls** — Show All Results and Stop Sharing buttons appear on /host when closed polls exist; no separate presenter view needed
+- **Events page search + filter** — search bar filters by title/description/location in real time; tabs default to "Upcoming"
+- **Ask Keith RAG** — AI advisor performs keyword-based retrieval against `vault_content` before each response; top 3 matching articles injected as context
+- **Q&A release_mode fully wired** — all three modes work: `all` (immediate), `single` (per-question Eye toggle), `hide_all` (nothing shown to guests)
+- **Strategy Room join URL field** — admins can paste a Zoom/Teams/Meet link per session; shown as a "Join Session" button to registered members only
+- **Home page strategy room widget — live tier badge** — "Next Strategy Room" card now renders the correct Pro or Executive tier badge from the real session record
+- **Vault feed quick-toggle** — ⭐ Feed button on each vault article for instant featured-in-feed toggling without opening an edit modal
+- **Training sync validation system** — CI workflow + pre-commit hook enforcing every admin tab has a corresponding training section
+- **Strategy Rooms training section** — admin training page documents the Strategy Rooms tab: create/edit/publish/delete flows, tier selection, seat limits, replay URL, notes URL
+
+### Fixed
+- **JSZip replaces mammoth for docx parsing** — eliminates DOMParser error that caused silent import failures; docx files now parsed reliably in the browser
+- **PDF upload require() fix** — dynamic require() in the PDF upload path replaced with a compatible import; fixes runtime error on Vercel Edge
+- **Session delete cascade fix** — deleting a session now cascades to its polls and votes; previously left orphaned records causing deploy errors
+- **Scroll restoration fix** — `ScrollToTop` now uses `behavior: "instant"` and sets `window.history.scrollRestoration = "manual"` to prevent browser from restoring scroll position on route change
+- **Florida Cocoa spotlight** — auto mode now correctly picks the nearest upcoming event; Florida Cocoa Church of God convention spotlighted as expected
+- **Poll deploy error message simplified** — error surfaced to admin is now plain English instead of a raw Supabase error object
+- **QA bypass user ID** — E2E test bypass path now uses a valid UUID format; previously caused FK constraint errors in test runs
+- **Conference: `likeQuestion` called wrong endpoint** — authenticated heart-likes now route correctly to `/api/conference/questions/[id]/like`; previously both paths hit `/upvote`
 
 ### Changed
-- **Admin: Events tab removed** — event creation and management are now fully inside the Conference tab; Events tab no longer appears in the admin nav
-- **Conference: Create Event inline** — "New Event" button added to the Conference tab header; entering a name and date creates the event and auto-selects it so Keith goes straight into setup
-- **Conference: seminar_mode toggle removed from event cards** — the only Go Live action is now the SetupStrip button; event cards show LIVE badge only
-- **Conference: empty state** — "Go to Events tab" link replaced with a "Create Event" button directly in the Conference empty state
-- **Host war room: tabs eliminated** — the tab bar is gone; when a session is active, polls, Q&A, announcements, and history are all on one scrollable page; Q&A is expanded by default, Announce and History are collapsible
-- **Host war room: idle screen** — shows session picker immediately on load; no extra button required to reveal the list
+- **Presenter route retired** — /presenter now redirects to /host; one URL for everything
+- **Admin: Conference tab removed** — event creation and management fully consolidated into the Unified Events tab
+- **Conference: Create Event inline** — "New Event" button in the tab header creates the event and auto-selects it
+- **Host war room: tabs eliminated** — single scrollable page when a session is active; Q&A expanded by default, Announce and History collapsible
+- **Host war room: idle screen** — shows session picker immediately on load; no extra button required
+
+### Security
+- Bump Next.js to 16.2.6 (CVE-2026-44573/44574/44575/44578/45109 — middleware auth bypass + DoS)
+- **Conference: Monitor View gated to admins** — "Monitor View" button was shown to all users; now only admins see it
+- **Conference: draft polls hidden from guests** — `GET /api/conference/polls` now filters to `is_deployed=true` for non-admin callers
+- **Conference: questions scoped per event** — `GET /api/conference/questions` returns `[]` when caller is not admin and no `event_id`/`session_id` is provided
 
 ---
 
@@ -58,35 +89,6 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
-## [Unreleased]
-
-### Security
-- bump Next.js to 16.2.6 (CVE-2026-44573/44574/44575/44578/45109 — middleware auth bypass + DoS)
-- **Conference: Monitor View gated to admins** — "Monitor View" button was shown to all users; now only admins see it.
-- **Conference: draft polls hidden from guests** — `GET /api/conference/polls` now filters to `is_deployed=true` for non-admin callers; draft questions were previously exposed.
-- **Conference: questions scoped per event** — `GET /api/conference/questions` returns `[]` when neither `event_id` nor `session_id` is provided and caller is not admin; previously returned questions across all conferences.
-
-### Fixed
-- **Conference: `likeQuestion` called wrong endpoint** — authenticated heart-likes now route to `/api/conference/questions/[id]/like`; anonymous ChevronUp upvotes use `/upvote`. Previously both paths hit `/upvote`, causing authenticated upvotes to silently record as likes.
-
-### Added
-- **Events page search + filter** — search bar filters events by title/description/location in real time; filter tabs (Upcoming / All Events / Past) default to "Upcoming" so guests see future events first; all three sections (Live, Upcoming, Past) respect both the search query and active filter.
-- **Ask Keith RAG** — AI advisor now performs keyword-based retrieval against `vault_content` before each response; top 3 matching articles are injected as context into the system prompt so answers are grounded in Keith's published material rather than generic knowledge.
-- **Q&A release_mode fully wired** — all three modes now work: `all` shows every submitted question immediately; `single` requires per-question release via the Eye button; `hide_all` shows nothing to guests. Mode is set per session in the admin SessionManager. Fixed three bugs found in code review: (1) activation side-effect no longer mass-releases questions in `single`/`hide_all` mode; (2) `event_id` question fetch now scopes to the active session so mode and data are aligned; (3) `release_mode` Zod schemas now enforce the enum (rejects invalid values).
-
-### Added (earlier this session)
-- **Strategy Room join URL field** — admins can now paste a Zoom/Teams/Meet link onto any session; shown as a clickable green "Join Session" button only to registered members; non-registered users see a disabled button. DB migration `20260609000001` adds `join_url text` column to `strategy_sessions` (applied to both prod and dev Supabase 2026-06-09). Root-cause context: the "Join Session" button on the detail page (`StrategyRoomDetailClient.tsx:537`) existed as a dead stub — disabled when not registered, but never wired to a URL even when registered. Fix: added `join_url` to `strategy_sessions` table, `StrategySessionRow` type, Zod validation schema, admin form modal, and detail page button logic.
-- **Home page strategy room widget — live tier badge** — the "Next Strategy Room" card on the home page now renders the correct Pro or Executive tier badge pulled from the real session record. Root-cause context: `UpcomingStrategyRoom` hardcoded "Executive" regardless of actual session tier. Fix: added `tier` field to `StrategyConfig` interface, passed it from `getNextStrategySession()` in `page.tsx`, and updated the widget to branch on `session.tier`.
-- **Dev Supabase — strategy sessions tables** — applied `create_strategy_sessions`, `seed_strategy_sessions`, and `add_join_url_to_strategy_sessions` migrations to `klo-app-dev` (project `ykregzbladhwzyagkkdf`) so local dev no longer falls back to hardcoded defaults for strategy room features (2026-06-10).
-
-### Fixed
-- **Home page strategy room widget data source confirmed** — widget already pulled live data (title, date, description, seats) from `strategy_sessions` via `getNextStrategySession()` in `page.tsx`; fell back to `page_configs.strategy_config` only when no upcoming published session existed. The only gap was the hardcoded tier badge (fixed above).
-
-- **Vault feed quick-toggle button** — ⭐ Feed button on each vault article in the admin library allows Keith to instantly feature articles in the Executive Feed without opening an edit modal; toggle fires async API call with loading spinner, success/error toast feedback, and disabled state during flight.
-- **Training sync validation system** — CI workflow + pre-commit hook that enforces every admin tab has a corresponding training section; blocks merges when admin tabs and training docs are out of sync.
-- **Strategy Rooms training section** — admin training page now documents the Strategy Rooms tab: create/edit/publish/delete flows, tier selection, seat limits, replay URL, and notes URL.
-
----
 
 ## [2026-05-07f] — Strategy Rooms: Full Database-Backed System
 
