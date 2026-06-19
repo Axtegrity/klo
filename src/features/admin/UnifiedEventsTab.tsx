@@ -166,15 +166,23 @@ function EventDetail({ event, onBack, onRefresh }: {
 
   const [sessionCount, setSessionCount] = useState(0);
 
+  const refreshSessions = useCallback(async () => {
+    try {
+      const [activeRes, allRes] = await Promise.all([
+        fetch(`/api/conference/sessions?event_id=${ev.id}&active_only=true`),
+        fetch(`/api/conference/sessions?event_id=${ev.id}`),
+      ]);
+      const activeData = await activeRes.json();
+      const allData = await allRes.json();
+      if (Array.isArray(activeData) && activeData.length > 0) setActiveSessionId(activeData[0].id);
+      if (Array.isArray(allData)) setSessions(allData);
+    } catch {
+      // keep current state
+    }
+  }, [ev.id]);
+
   useEffect(() => {
-    fetch(`/api/conference/sessions?event_id=${ev.id}&active_only=true`)
-      .then(r => r.json())
-      .then(d => { if (Array.isArray(d) && d.length > 0) setActiveSessionId(d[0].id); })
-      .catch(() => {});
-    fetch(`/api/conference/sessions?event_id=${ev.id}`)
-      .then(r => r.json())
-      .then(d => { if (Array.isArray(d)) setSessions(d); })
-      .catch(() => {});
+    refreshSessions();
     fetch(`/api/conference/polls?event_id=${ev.id}`)
       .then(r => r.json())
       .catch(() => {});
@@ -496,7 +504,7 @@ function EventDetail({ event, onBack, onRefresh }: {
       {/* ── 2. SESSIONS ── */}
       <Section title="Sessions" icon={Radio} badge={sessionCount} forceClose={isLive}>
         <div className="pt-4">
-          <SessionManagerWithPolls eventId={ev.id} />
+          <SessionManagerWithPolls eventId={ev.id} onSessionsChange={refreshSessions} />
         </div>
       </Section>
 

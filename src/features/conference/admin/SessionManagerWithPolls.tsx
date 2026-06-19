@@ -7,6 +7,7 @@ import PollManager from "./PollManager";
 
 interface Props {
   eventId: string;
+  onSessionsChange?: () => void;
 }
 
 interface SessionPollsProps {
@@ -41,11 +42,12 @@ function SessionPolls({ sessionId, eventId }: SessionPollsProps) {
   );
 }
 
-export default function SessionManagerWithPolls({ eventId }: Props) {
+export default function SessionManagerWithPolls({ eventId, onSessionsChange }: Props) {
   return (
     <div>
       <SessionManager
         eventId={eventId}
+        onSessionsChange={onSessionsChange}
         renderSessionExtra={(session) => (
           <SessionPolls sessionId={session.id} eventId={eventId} />
         )}

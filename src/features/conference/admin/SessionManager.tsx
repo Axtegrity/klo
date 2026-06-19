@@ -21,9 +21,10 @@ import type { ConferenceSession } from "../types";
 interface SessionManagerProps {
   eventId?: string;
   renderSessionExtra?: (session: ConferenceSession) => React.ReactNode;
+  onSessionsChange?: () => void;
 }
 
-export default function SessionManager({ eventId, renderSessionExtra }: SessionManagerProps = {}) {
+export default function SessionManager({ eventId, renderSessionExtra, onSessionsChange }: SessionManagerProps = {}) {
   const [sessions, setSessions] = useState<ConferenceSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
@@ -116,6 +117,7 @@ export default function SessionManager({ eventId, renderSessionExtra }: SessionM
         setQaEnabled(true);
         setShowCreateForm(false);
         fetchSessions();
+        onSessionsChange?.();
         setSaveMsg({ type: "success", text: "Session created. Activate it with the power button before deploying polls." });
         setTimeout(() => setSaveMsg(null), 5000);
       }
@@ -150,6 +152,7 @@ export default function SessionManager({ eventId, renderSessionExtra }: SessionM
     });
     setEditingId(null);
     fetchSessions();
+    onSessionsChange?.();
   };
 
   const cancelEdit = () => {
