@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getServiceSupabase } from "@/lib/supabase";
 import { adminEventUpdateSchema } from "@/lib/validation";
 import { verifyAdmin } from "@/lib/admin-auth";
@@ -54,6 +55,8 @@ export async function PUT(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  revalidatePath("/events");
+  revalidatePath("/");
   return NextResponse.json(data);
 }
 
