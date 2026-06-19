@@ -107,8 +107,9 @@ export async function POST(request: NextRequest) {
       const result = await pdfParse(buffer);
       extractedText = result.text;
     } else if (name.endsWith(".doc") || name.endsWith(".docx")) {
-      const mammoth = await import("mammoth");
       const buffer = Buffer.from(await file.arrayBuffer());
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const mammoth = require("mammoth");
       const result = await mammoth.extractRawText({ buffer });
       extractedText = result.value;
     } else if (name.endsWith(".xls") || name.endsWith(".xlsx")) {
