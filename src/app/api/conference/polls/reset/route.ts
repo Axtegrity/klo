@@ -35,6 +35,22 @@ export async function POST(request: Request) {
     closed_at: null,
   };
 
+  // Get all poll IDs for this event so we can delete votes
+  const { data: eventPolls } = await supabase
+    .from("conference_polls")
+    .select("id")
+    .eq("event_id", eventId);
+
+  const pollIds = (eventPolls ?? []).map((p: { id: string }) => p.id);
+
+  // Delete all votes for these polls
+  if (pollIds.length > 0) {
+    await supabase
+      .from("conference_poll_votes")
+      .delete()
+      .in("poll_id", pollIds);
+  }
+
   // Reset polls tagged with event_id
   const { error: e1 } = await supabase
     .from("conference_polls")
