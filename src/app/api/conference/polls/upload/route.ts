@@ -144,8 +144,11 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : "";
+    console.error("[poll-upload] parse error:", msg, stack);
     return NextResponse.json(
-      { error: `Failed to parse file: ${err instanceof Error ? err.message : "Unknown error"}` },
+      { error: `Failed to parse file: ${msg}` },
       { status: 400 }
     );
   }
