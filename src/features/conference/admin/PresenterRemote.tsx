@@ -132,6 +132,29 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
     });
   };
 
+  const recallPoll = (id: string) =>
+    act(async () => {
+      const res = await fetch(`/api/conference/polls/${id}/recall`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to reopen poll");
+      }
+    });
+
+  const recallAll = () =>
+    act(async () => {
+      if (!eventId) return;
+      const res = await fetch(`/api/conference/polls/reset?event_id=${eventId}`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to reopen all polls");
+      }
+    });
+
   const undeployPoll = (id: string) =>
     act(async () => {
       const res = await fetch(`/api/conference/polls/${id}`, {
@@ -328,10 +351,17 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
         </div>
       ) : (
         /* ── ALL DONE ── */
-        <div className="glass rounded-3xl p-6 border border-emerald-500/20 text-center space-y-2">
+        <div className="glass rounded-3xl p-6 border border-emerald-500/20 text-center space-y-4">
           <p className="text-2xl">All polls complete!</p>
           <p className="text-lg font-bold text-klo-text">Well done.</p>
           <p className="text-sm text-klo-muted">End the session to archive results.</p>
+          <button
+            onClick={recallAll}
+            disabled={busy}
+            className="w-full py-3 rounded-2xl text-sm font-bold text-yellow-400 border border-yellow-500/30 hover:bg-yellow-500/10 transition-colors disabled:opacity-40"
+          >
+            Reopen All Polls
+          </button>
         </div>
       )}
 
@@ -371,15 +401,17 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
                     <div className="flex items-center gap-3">
                       <span className="text-emerald-400 text-xs shrink-0">✓</span>
                       <p className="text-sm text-klo-muted flex-1">{poll.question}</p>
-                      <button
-                        onClick={() => undeployPoll(poll.id)}
-                        disabled={busy}
-                        className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-klo-muted hover:text-yellow-400 hover:bg-yellow-500/10 transition-colors disabled:opacity-40"
-                        title="Put back in queue"
-                      >
-                        <Undo2 size={12} />
-                        Put back
-                      </button>
+                      <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => recallPoll(poll.id)}
+                            disabled={busy}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-klo-muted hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-40"
+                            title="Reopen — clears votes and puts back in queue"
+                          >
+                            <Undo2 size={12} />
+                            Reopen
+                          </button>
+                        </div>
                     </div>
                     {/* Frozen vote results */}
                     <div className="space-y-1 pl-4">

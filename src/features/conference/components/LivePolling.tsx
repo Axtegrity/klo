@@ -10,9 +10,10 @@ interface LivePollingProps {
   polls: PollWithVotes[];
   loading: boolean;
   onVote: (pollId: string, optionIndex: number) => Promise<boolean>;
+  sessionMode?: "sequential" | "simultaneous";
 }
 
-export default function LivePolling({ polls, loading, onVote }: LivePollingProps) {
+export default function LivePolling({ polls, loading, onVote, sessionMode = "sequential" }: LivePollingProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -34,25 +35,33 @@ export default function LivePolling({ polls, loading, onVote }: LivePollingProps
     );
   }
 
-  // Active polls attendees can vote on
   const active = polls.filter((p) => p.is_active);
-  // Closed polls Keith has pushed results for
   const visibleClosed = polls.filter((p) => !p.is_active && p.show_results);
+  const deployedPolls = polls.filter((p) => p.is_deployed);
+  const allAnswered = deployedPolls.length > 0 && deployedPolls.every((p) => p.hasVoted);
+  const isSimultaneous = sessionMode === "simultaneous";
 
   return (
     <div className="space-y-4">
-      {/* Active polls — show vote form or blank wait state */}
       {active.map((poll) => (
         <Card key={poll.id}>
           {poll.hasVoted ? (
-            /* Attendee voted — show blank wait state, no results yet */
-            <div className="py-8 text-center">
-              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
-                <span className="text-emerald-400 text-lg">✓</span>
+            isSimultaneous ? (
+              <div className="py-8 text-center">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
+                  <span className="text-emerald-400 text-lg">✓</span>
+                </div>
+                <p className="text-klo-text font-semibold text-sm">Response submitted</p>
+                <p className="text-klo-muted text-xs mt-1">
+                  {allAnswered ? "Stand by for all results..." : "Continue answering the questions below..."}
+                </p>
               </div>
-              <p className="text-klo-text font-semibold text-sm">Response submitted</p>
-              <p className="text-klo-muted text-xs mt-1">Stand by for results...</p>
-            </div>
+            ) : (
+              <>
+                <h3 className="text-lg font-semibold text-klo-text mb-4">{poll.question}</h3>
+                <PollResults poll={poll} live />
+              </>
+            )
           ) : (
             <>
               <h3 className="text-lg font-semibold text-klo-text mb-4">{poll.question}</h3>
@@ -62,8 +71,19 @@ export default function LivePolling({ polls, loading, onVote }: LivePollingProps
         </Card>
       ))}
 
-      {/* Results Keith has pushed */}
-      {visibleClosed.length > 0 && (
+      {isSimultaneous && allAnswered && deployedPolls.length > 0 && (
+        <div className="space-y-4">
+          <p className="text-xs font-bold text-[#8B949E] uppercase tracking-wider text-center pt-2">All Results</p>
+          {deployedPolls.map((poll) => (
+            <Card key={poll.id}>
+              <h3 className="text-lg font-semibold text-klo-text mb-4">{poll.question}</h3>
+              <PollResults poll={poll} />
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {!isSimultaneous && visibleClosed.length > 0 && (
         <div className="space-y-4">
           {active.length > 0 && (
             <p className="text-xs text-klo-muted font-medium pt-2">Previous Results</p>
@@ -77,8 +97,7 @@ export default function LivePolling({ polls, loading, onVote }: LivePollingProps
         </div>
       )}
 
-      {/* No active polls and no visible results — blank wait state */}
-      {active.length === 0 && visibleClosed.length === 0 && polls.length > 0 && (
+      {active.length === 0 && visibleClosed.length === 0 && !allAnswered && polls.length > 0 && (
         <Card className="text-center py-12">
           <p className="text-klo-muted text-sm">Stand by...</p>
         </Card>

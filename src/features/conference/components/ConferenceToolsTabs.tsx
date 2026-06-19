@@ -76,6 +76,7 @@ export default function ConferenceToolsTabs({ eventId, sessionId }: ConferenceTo
   const visibleAnnouncements = announcements.filter((a) => !dismissedIds.has(a.id));
 
   const selectedSession = sessionId ? sessions.find((s) => s.id === sessionId) : activeSession;
+  const sessionMode = selectedSession?.session_mode ?? "sequential";
   const qaDisabled = selectedSession && !selectedSession.qa_enabled;
 
   return (
@@ -141,6 +142,7 @@ export default function ConferenceToolsTabs({ eventId, sessionId }: ConferenceTo
             polls={pollsHook.visiblePolls}
             loading={pollsHook.loading}
             onVote={pollsHook.vote}
+            sessionMode={sessionMode}
           />
         )}
 

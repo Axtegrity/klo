@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { verifyConferenceRole } from "@/lib/conference-auth";
 
+// POST /api/conference/polls/:id/recall
+// Resets a single poll — deletes all votes, sets back to queued state
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -14,22 +16,22 @@ export async function POST(
   const { id } = await params;
   const supabase = getServiceSupabase();
 
-  // Delete all votes cast against this poll
-  const { error: votesError } = await supabase
+  // Delete all votes for this poll
+  const { error: voteErr } = await supabase
     .from("conference_poll_votes")
     .delete()
     .eq("poll_id", id);
 
-  if (votesError) {
-    return NextResponse.json({ error: votesError.message }, { status: 500 });
+  if (voteErr) {
+    return NextResponse.json({ error: voteErr.message }, { status: 500 });
   }
 
-  // Reset poll to undeployed state
+  // Reset poll to queued state
   const { data, error } = await supabase
     .from("conference_polls")
     .update({
-      is_deployed: false,
       is_active: false,
+      is_deployed: false,
       show_results: false,
       closed_at: null,
     })
