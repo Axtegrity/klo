@@ -143,6 +143,7 @@ function EventDetail({ event, onBack, onRefresh }: {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [activatingSession, setActivatingSession] = useState<string | null>(null);
+  const [sessionMode, setSessionMode] = useState<"sequential" | "simultaneous">("sequential");
   const [sessions, setSessions] = useState<{ id: string; title: string; time_label?: string | null }[]>([]);
 
   // File upload state
@@ -633,6 +634,35 @@ function EventDetail({ event, onBack, onRefresh }: {
                       className="text-xs font-bold px-3 py-1.5 rounded-xl text-red-400 border border-red-500/30 hover:bg-red-500/10 transition-colors"
                     >
                       End Session
+                    </button>
+                  </div>
+                  {/* Deploy mode selector */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        await fetch(`/api/conference/sessions/${activeSessionId}`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ session_mode: "sequential" }),
+                        });
+                        setSessionMode("sequential");
+                      }}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${sessionMode === "sequential" ? "bg-[#2764FF] text-white" : "bg-[#21262D] text-[#8B949E] hover:text-white"}`}
+                    >
+                      One at a Time
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await fetch(`/api/conference/sessions/${activeSessionId}`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ session_mode: "simultaneous" }),
+                        });
+                        setSessionMode("simultaneous");
+                      }}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${sessionMode === "simultaneous" ? "bg-purple-500 text-white" : "bg-[#21262D] text-[#8B949E] hover:text-white"}`}
+                    >
+                      Deploy All
                     </button>
                   </div>
                   <PresenterRemote eventId={ev.id} sessionId={activeSessionId} />
