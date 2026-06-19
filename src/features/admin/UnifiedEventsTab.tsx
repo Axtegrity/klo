@@ -13,6 +13,7 @@ import PollManager from "@/features/conference/admin/PollManager";
 import QuestionModerator from "@/features/conference/admin/QuestionModerator";
 import WordCloudManager from "@/features/conference/admin/WordCloudManager";
 import SessionManagerWithPolls from "@/features/conference/admin/SessionManagerWithPolls";
+import PresenterRemote from "@/features/conference/admin/PresenterRemote";
 import RoleManager from "@/features/conference/admin/RoleManager";
 import ProfanityManager from "@/features/conference/admin/ProfanityManager";
 import AnnouncementManager from "@/features/conference/admin/AnnouncementManager";
@@ -139,6 +140,9 @@ function EventDetail({ event, onBack, onRefresh }: {
   const [isLive, setIsLive] = useState(ev.seminar_mode);
   const [goingLive, setGoingLive] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activatingSession, setActivatingSession] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<{ id: string; title: string; time_label?: string | null }[]>([]);
 
   // File upload state
   const [uploading, setUploading] = useState(false);
@@ -158,6 +162,14 @@ function EventDetail({ event, onBack, onRefresh }: {
   const [sessionCount, setSessionCount] = useState(0);
 
   useEffect(() => {
+    fetch(`/api/conference/sessions?event_id=${ev.id}&active_only=true`)
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d) && d.length > 0) setActiveSessionId(d[0].id); })
+      .catch(() => {});
+    fetch(`/api/conference/sessions?event_id=${ev.id}`)
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setSessions(d); })
+      .catch(() => {});
     fetch(`/api/conference/polls?event_id=${ev.id}`)
       .then(r => r.json())
       .then(d => setPollCount(Array.isArray(d) ? d.length : 0))
@@ -547,9 +559,9 @@ function EventDetail({ event, onBack, onRefresh }: {
       </Section>
 
       {/* ── 9. PUBLISH ── */}
-      <Section title="Publish & Spotlight" icon={Globe}>
+      <Section title={isLive ? "🔴 Live — Run Your Session" : "Publish & Spotlight"} icon={Globe}>
         <div className="pt-4 space-y-5">
-          {/* Go Live */}
+          {/* Go Live toggle */}
           <div className="rounded-xl border p-4 space-y-3" style={{ background: isLive ? "rgba(16,185,129,0.05)" : "rgba(39,100,255,0.05)", borderColor: isLive ? "rgba(16,185,129,0.2)" : "rgba(39,100,255,0.2)" }}>
             <div className="flex items-center justify-between">
               <div>
@@ -567,6 +579,69 @@ function EventDetail({ event, onBack, onRefresh }: {
               </button>
             </div>
           </div>
+
+          {/* Live run panel — appears when event is live */}
+          {isLive && (
+            <div className="space-y-4">
+              {!activeSessionId ? (
+                <div className="space-y-3">
+                  <p className="text-xs font-bold tracking-widest text-[#8B949E]">SELECT A SESSION TO START</p>
+                  {sessions.length === 0 ? (
+                    <p className="text-sm text-[#8B949E]">No sessions found. Add a session above first.</p>
+                  ) : (
+                    sessions.map((s) => (
+                      <button
+                        key={s.id}
+                        onClick={async () => {
+                          setActivatingSession(s.id);
+                          await fetch(`/api/conference/sessions/${s.id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ is_active: true }),
+                          });
+                          setActiveSessionId(s.id);
+                          setActivatingSession(null);
+                        }}
+                        disabled={activatingSession === s.id}
+                        className="w-full text-left px-4 py-4 rounded-2xl border transition-all disabled:opacity-50 hover:border-[#C8A84E]/40"
+                        style={{ background: "#0D1117", borderColor: "#21262D" }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-white">{s.title}</p>
+                            {s.time_label && <p className="text-xs text-[#8B949E] mt-0.5">{s.time_label}</p>}
+                          </div>
+                          <span className="text-xs font-bold" style={{ color: GOLD }}>
+                            {activatingSession === s.id ? "Starting..." : "START →"}
+                          </span>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full animate-pulse bg-red-500" />
+                      <span className="text-xs font-bold tracking-widest text-red-400">SESSION LIVE</span>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (!window.confirm("End this session? Results will be archived.")) return;
+                        await fetch(`/api/conference/sessions/${activeSessionId}/end`, { method: "POST" });
+                        setActiveSessionId(null);
+                      }}
+                      className="text-xs font-bold px-3 py-1.5 rounded-xl text-red-400 border border-red-500/30 hover:bg-red-500/10 transition-colors"
+                    >
+                      End Session
+                    </button>
+                  </div>
+                  <PresenterRemote eventId={ev.id} sessionId={activeSessionId} />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Spotlight controls */}
           <div className="space-y-3">

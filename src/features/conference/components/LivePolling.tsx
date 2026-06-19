@@ -34,39 +34,55 @@ export default function LivePolling({ polls, loading, onVote }: LivePollingProps
     );
   }
 
-  // Active polls — attendees can vote or see results if they already voted
+  // Active polls attendees can vote on
   const active = polls.filter((p) => p.is_active);
-  // Closed polls that Keith has chosen to show results for
+  // Closed polls Keith has pushed results for
   const visibleClosed = polls.filter((p) => !p.is_active && p.show_results);
+  // Polls attendee has voted on but results not yet shown — blank wait state
+  const votedWaiting = active.filter((p) => p.hasVoted);
 
   return (
     <div className="space-y-4">
+      {/* Active polls — show vote form or blank wait state */}
       {active.map((poll) => (
         <Card key={poll.id}>
-          <h3 className="text-lg font-semibold text-klo-text mb-4">{poll.question}</h3>
           {poll.hasVoted ? (
-            <PollResults poll={poll} live />
+            /* Attendee voted — show blank wait state, no results yet */
+            <div className="py-8 text-center">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
+                <span className="text-emerald-400 text-lg">✓</span>
+              </div>
+              <p className="text-klo-text font-semibold text-sm">Response submitted</p>
+              <p className="text-klo-muted text-xs mt-1">Stand by for results...</p>
+            </div>
           ) : (
-            <PollVoteForm poll={poll} onVote={onVote} />
+            <>
+              <h3 className="text-lg font-semibold text-klo-text mb-4">{poll.question}</h3>
+              <PollVoteForm poll={poll} onVote={onVote} />
+            </>
           )}
         </Card>
       ))}
+
+      {/* Results Keith has pushed */}
       {visibleClosed.length > 0 && (
-        <>
+        <div className="space-y-4">
           {active.length > 0 && (
             <p className="text-xs text-klo-muted font-medium pt-2">Previous Results</p>
           )}
           {visibleClosed.map((poll) => (
-            <Card key={poll.id} className="opacity-80">
+            <Card key={poll.id}>
               <h3 className="text-lg font-semibold text-klo-text mb-4">{poll.question}</h3>
               <PollResults poll={poll} />
             </Card>
           ))}
-        </>
+        </div>
       )}
+
+      {/* No active polls and no visible results — blank wait state */}
       {active.length === 0 && visibleClosed.length === 0 && polls.length > 0 && (
-        <Card className="text-center py-8">
-          <p className="text-klo-muted text-sm">Stand by — the next question is coming.</p>
+        <Card className="text-center py-12">
+          <p className="text-klo-muted text-sm">Stand by...</p>
         </Card>
       )}
     </div>
