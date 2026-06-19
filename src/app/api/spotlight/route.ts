@@ -75,14 +75,18 @@ export async function GET() {
   }
 
   const { data: sessions } = await supabase
-    .from("event_sessions")
-    .select("*")
+    .from("conference_sessions")
+    .select("id, title, speaker, time_label, room, sort_order, is_active")
     .eq("event_id", eventId)
-    .order("sort_order", { ascending: true });
+    .order("sort_order", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: true });
 
   return NextResponse.json({
     event,
-    sessions: sessions ?? [],
+      sessions: (sessions ?? []).map((s: { id: string; title: string; speaker?: string | null; time_label?: string | null; room?: string | null; sort_order?: number | null; is_active?: boolean }) => ({
+        ...s,
+        session_name: s.title,
+      })),
     show_countdown: cfg?.show_countdown ?? true,
     card_position: (cfg?.card_position === "above" ? "above" : "below") as "above" | "below",
     ...sections,
