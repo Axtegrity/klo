@@ -114,16 +114,20 @@ export async function POST(request: NextRequest) {
       const docXml = zip.file("word/document.xml");
       if (!docXml) throw new Error("Invalid docx file — missing word/document.xml");
       const xmlText = await docXml.async("string");
-      // Strip XML tags and decode entities to plain text
+      // Extract text from XML — add space between runs to avoid word concatenation
       extractedText = xmlText
         .replace(/<w:br[^>]*\/>/g, "\n")
-        .replace(/<w:p[ >][^>]*>/g, "\n")
+        .replace(/<\/w:p>/g, "\n")
+        .replace(/<\/w:r>/g, " ")
+        .replace(/<w:t[^>]*>/g, "")
+        .replace(/<\/w:t>/g, "")
         .replace(/<[^>]+>/g, "")
         .replace(/&amp;/g, "&")
         .replace(/&lt;/g, "<")
         .replace(/&gt;/g, ">")
         .replace(/&quot;/g, '"')
         .replace(/&apos;/g, "'")
+        .replace(/ {2,}/g, " ")
         .replace(/\n{3,}/g, "\n\n")
         .trim();
     } else if (name.endsWith(".xls") || name.endsWith(".xlsx")) {
