@@ -22,7 +22,7 @@ export async function GET() {
   // Fetch all upcoming published events (today and future)
   const { data: events, error } = await supabase
     .from("event_presentations")
-    .select(`id, title, conference_name, conference_location, event_date, event_time, event_timezone, description, slug, website_url, start_date, end_date,
+    .select(`id, title, conference_name, conference_location, event_date, event_time, event_timezone, description, slug, website_url, start_date, end_date, is_featured,
       keynote_session:conference_sessions!keynote_session_id (
         id, speaker, room, time_label, sort_order
       )`)
@@ -74,7 +74,11 @@ export async function GET() {
     return NextResponse.json(todayEvents[0]);
   }
 
-  // No timed events today — return the nearest upcoming event (skip SAVE THE DATE)
+  // No timed events today — check for manually featured event first
+  const featured = events.find((e) => (e as unknown as { is_featured?: boolean }).is_featured === true && e.event_date !== "SAVE THE DATE");
+  if (featured) return NextResponse.json(featured);
+
+  // Fall back to nearest upcoming event (skip SAVE THE DATE)
   const upcoming = events.find((e) => e.event_date !== "SAVE THE DATE");
   return NextResponse.json(upcoming ?? events[0]);
 }
