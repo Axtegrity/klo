@@ -596,21 +596,19 @@ function EventDetail({ event, onBack, onRefresh }: {
               )}
             </div>
 
-          {/* Go Live toggle */}
+          {/* Start Event button */}
           <div className="rounded-xl border p-4 space-y-3" style={{ background: isLive ? "rgba(16,185,129,0.05)" : "rgba(39,100,255,0.05)", borderColor: isLive ? "rgba(16,185,129,0.2)" : "rgba(39,100,255,0.2)" }}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-white">{isLive ? "Event is Live" : "Go Live"}</p>
-                <p className="text-xs text-[#8B949E] mt-0.5">{isLive ? "Attendees can see engagement tools" : "Flip to make engagement tools visible to attendees"}</p>
+                <p className="text-sm font-bold text-white">{isLive ? "🔴 Event is Live" : "Start Event"}</p>
+                <p className="text-xs text-[#8B949E] mt-0.5">{isLive ? "Attendees can join and participate" : "Tap to open your event to attendees"}</p>
               </div>
               <button
                 onClick={toggleLive}
                 disabled={goingLive}
-                className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-50 ${isLive ? "bg-emerald-500" : "bg-[#21262D]"}`}
-                role="switch"
-                aria-checked={isLive}
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-50 ${isLive ? "bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20" : "bg-emerald-500 text-white hover:brightness-110"}`}
               >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${isLive ? "translate-x-5" : ""}`} />
+                {goingLive ? "..." : isLive ? "End Event" : "Start Event"}
               </button>
             </div>
           </div>
