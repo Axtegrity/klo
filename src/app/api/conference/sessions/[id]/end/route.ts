@@ -97,6 +97,21 @@ export async function POST(
     created_at: q.created_at as string,
   }));
 
+  // 3b. Fetch visible event files
+  let filesSnapshot: { file_name: string; file_url: string; file_type: string }[] = [];
+  if (sessionData.event_id) {
+    const { data: filesData } = await supabase
+      .from("event_files")
+      .select("file_name, file_url, file_type")
+      .eq("event_id", sessionData.event_id)
+      .eq("is_visible", true);
+    filesSnapshot = (filesData || []).map((f) => ({
+      file_name: f.file_name as string,
+      file_url: f.file_url as string,
+      file_type: f.file_type as string,
+    }));
+  }
+
   // 4. Fetch attendee count — gracefully handle missing table
   let attendeeCount = 0;
   try {
@@ -121,6 +136,7 @@ export async function POST(
     },
     polls: pollsSnapshot,
     questions: questionsSnapshot,
+    files: filesSnapshot,
     attendee_count: attendeeCount,
   };
 
