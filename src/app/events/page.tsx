@@ -939,6 +939,24 @@ function CountdownClock({
 /*  Spotlight Card                                                      */
 /* ------------------------------------------------------------------ */
 
+function ExpandableDescription({ description }: { description: string }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const teaser = description.length > 120 ? description.slice(0, 120) + "..." : description;
+  return (
+    <div className="text-sm text-klo-muted text-center max-w-2xl mx-auto">
+      <p>{expanded ? description : teaser}</p>
+      {description.length > 120 && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="text-[#2764FF] text-xs font-semibold mt-1 hover:underline transition-colors"
+        >
+          {expanded ? "Show less" : "View Details"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function SpotlightCard({ event, sessions, cfg }: { event: EventItem; sessions: EventSession[]; cfg: SpotlightPayload }) {
   // Spotlight always leads with the conference/event name so visitors have
   // context. If a session_name exists and is different, show it as a subtitle.
@@ -990,6 +1008,10 @@ function SpotlightCard({ event, sessions, cfg }: { event: EventItem; sessions: E
               </div>
             )}
           </div>
+
+            {event.description && (
+              <ExpandableDescription description={event.description} />
+            )}
 
           {showSessions && (
             <div className="mx-auto max-w-2xl px-2 space-y-2">
@@ -1090,9 +1112,7 @@ function EventCard({
               </p>
             )}
             {event.description && (
-              <p className="text-sm text-klo-muted/70 leading-relaxed">
-                {linkifyText(event.description)}
-              </p>
+              <ExpandableDescription description={event.description} />
             )}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-klo-muted pt-1">
               <span className="inline-flex items-center gap-1.5">
