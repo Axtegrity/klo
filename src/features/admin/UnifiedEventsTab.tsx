@@ -354,18 +354,6 @@ function EventDetail({ event, onBack, onRefresh }: {
           <p className="text-xs text-[#8B949E]">{formatEventDate(ev)}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className={`text-xs font-bold ${isLive ? "text-emerald-400" : "text-[#8B949E]"}`}>
-            {isLive ? "LIVE" : "OFF"}
-          </span>
-          <button
-            onClick={toggleLive}
-            disabled={goingLive}
-            className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-50 ${isLive ? "bg-emerald-500" : "bg-[#21262D]"}`}
-            role="switch"
-            aria-checked={isLive}
-          >
-            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${isLive ? "translate-x-5" : ""}`} />
-          </button>
           {!isLive && (
             deleteConfirm ? (
               <div className="flex items-center gap-1">
@@ -401,7 +389,7 @@ function EventDetail({ event, onBack, onRefresh }: {
       </div>
 
       {/* ── 1. DETAILS ── */}
-      <Section title="Details" icon={FileText} forceClose={isLive}>
+      <Section title="Details" icon={FileText}>
         <div className="space-y-4 pt-4">
           {saveError && <p className="text-xs text-red-400">{saveError}</p>}
           <div className="grid grid-cols-1 gap-3">
@@ -491,8 +479,49 @@ function EventDetail({ event, onBack, onRefresh }: {
               </div>
             ))}
           </div>
+        {/* Public page settings */}
+        <div className="border-t pt-4 space-y-3" style={{ borderColor: "#21262D" }}>
+          <p className="text-xs font-semibold text-[#8B949E] uppercase tracking-wider">Public Events Page</p>
+          {[
+            { label: "Show Countdown Timer", value: showCountdown, set: setShowCountdown },
+            { label: "Show Live Section", value: showLive, set: setShowLive },
+            { label: "Show Upcoming Section", value: showUpcoming, set: setShowUpcoming },
+            { label: "Show Past Section", value: showPast, set: setShowPast },
+          ].map(({ label, value, set }) => (
+            <div key={label} className="flex items-center justify-between">
+              <span className="text-sm text-[#8B949E]">{label}</span>
+              <button
+                onClick={() => set(!value)}
+                className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${value ? "bg-[#2764FF]" : "bg-[#21262D]"}`}
+                role="switch"
+                aria-checked={value}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${value ? "translate-x-5" : ""}`} />
+              </button>
+            </div>
+          ))}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[#8B949E]">Spotlight this event</span>
+            <button
+              onClick={() => setAutoPick(!autoPick)}
+              className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${!autoPick ? "bg-[#2764FF]" : "bg-[#21262D]"}`}
+              role="switch"
+              aria-checked={!autoPick}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${!autoPick ? "translate-x-5" : ""}`} />
+            </button>
+          </div>
           <button
-            onClick={saveDetails}
+            onClick={saveSpotlight}
+            disabled={spotlightLoading}
+            className="w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+            style={{ background: "rgba(39,100,255,0.15)", color: "#60a5fa", border: "1px solid rgba(39,100,255,0.3)" }}
+          >
+            {spotlightLoading ? "Saving…" : "Save Page Settings"}
+          </button>
+        </div>
+        <button
+          onClick={saveDetails}
             disabled={saving}
             className="w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50 hover:brightness-110"
             style={{ background: GOLD, color: "#0D1117" }}
@@ -503,37 +532,37 @@ function EventDetail({ event, onBack, onRefresh }: {
       </Section>
 
       {/* ── 2. SESSIONS ── */}
-      <Section title="Sessions" icon={Radio} badge={sessionCount} forceClose={isLive}>
+      <Section title="Sessions" icon={Radio} badge={sessionCount}>
         <div className="pt-4">
-          <SessionManagerWithPolls eventId={ev.id} onSessionsChange={refreshSessions} />
+          <SessionManagerWithPolls eventId={ev.id} eventSlug={ev.slug} onSessionsChange={refreshSessions} />
         </div>
       </Section>
 
       {/* Polls live inside sessions — see Sessions section above */}
 
       {/* ── 4. Q&A ── */}
-      <Section title="Q&A" icon={MessageSquare} forceClose={isLive}>
+      <Section title="Q&A" icon={MessageSquare}>
         <div className="pt-4">
           <QuestionModerator eventId={ev.id} />
         </div>
       </Section>
 
       {/* ── 5. WORD CLOUD ── */}
-      <Section title="Word Cloud" icon={Cloud} forceClose={isLive}>
+      <Section title="Word Cloud" icon={Cloud}>
         <div className="pt-4">
           <WordCloudManager eventId={ev.id} />
         </div>
       </Section>
 
       {/* ── 6. ANNOUNCEMENTS ── */}
-      <Section title="Announcements" icon={Megaphone} forceClose={isLive}>
+      <Section title="Announcements" icon={Megaphone}>
         <div className="pt-4">
           <AnnouncementManager eventId={ev.id} />
         </div>
       </Section>
 
       {/* ── 8. ROLES ── */}
-      <Section title="Roles" icon={Shield} forceClose={isLive}>
+      <Section title="Roles" icon={Shield}>
         <div className="pt-4 space-y-4">
           <RoleManager eventId={ev.id} />
           <div className="border-t pt-4" style={{ borderColor: "#21262D" }}>
@@ -543,225 +572,8 @@ function EventDetail({ event, onBack, onRefresh }: {
         </div>
       </Section>
 
-      {/* ── 9. PUBLISH ── */}
-      <Section title={isLive ? "🔴 Live — Run Your Session" : "Publish & Spotlight"} icon={Globe} defaultOpen={isLive}>
-        <div className="pt-4 space-y-5">
-            {/* Rehearsal mode */}
-            <div className="rounded-xl border p-4 space-y-3" style={{ background: isRehearsal ? "rgba(139,92,246,0.05)" : "rgba(107,114,128,0.05)", borderColor: isRehearsal ? "rgba(139,92,246,0.3)" : "rgba(107,114,128,0.2)" }}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-white">{isRehearsal ? "🎭 Rehearsal Mode" : "Rehearsal"}</p>
-                  <p className="text-xs text-[#8B949E] mt-0.5">{isRehearsal ? "Only you can see the conference page" : "Test your event privately before going live"}</p>
-                </div>
-                <button
-                  onClick={async () => {
-                    const newMode = !isRehearsal;
-                    await fetch(`/api/admin/events/${ev.id}`, {
-                      method: "PUT",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ rehearsal_mode: newMode }),
-                    });
-                    setIsRehearsal(newMode);
-                    setEv((prev) => ({ ...prev, rehearsal_mode: newMode }));
-                  }}
-                  className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${isRehearsal ? "bg-purple-500" : "bg-[#21262D]"}`}
-                  role="switch"
-                  aria-checked={isRehearsal}
-                >
-                  <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${isRehearsal ? "translate-x-5" : ""}`} />
-                </button>
-              </div>
-              {isRehearsal && (
-                <div className="flex gap-2 pt-1">
-                  <a
-                    href={`/conference/${ev.slug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all"
-                    style={{ background: "rgba(139,92,246,0.1)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.3)" }}
-                  >
-                    Open Attendee View →
-                  </a>
-                  <button
-                    onClick={async () => {
-                      if (!window.confirm("Reset all polls? This clears all test votes.")) return;
-                      await fetch(`/api/conference/polls/reset?event_id=${ev.id}`, { method: "POST" });
-                    }}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all"
-                    style={{ background: "rgba(107,114,128,0.1)", color: "#9CA3AF", border: "1px solid rgba(107,114,128,0.2)" }}
-                  >
-                    Reset Test Data
-                  </button>
-                </div>
-              )}
-            </div>
-
-          {/* Start Event button */}
-          <div className="rounded-xl border p-4 space-y-3" style={{ background: isLive ? "rgba(16,185,129,0.05)" : "rgba(39,100,255,0.05)", borderColor: isLive ? "rgba(16,185,129,0.2)" : "rgba(39,100,255,0.2)" }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-white">{isLive ? "🔴 Event is Live" : "Start Event"}</p>
-                <p className="text-xs text-[#8B949E] mt-0.5">{isLive ? "Attendees can join and participate" : "Tap to open your event to attendees"}</p>
-              </div>
-              <button
-                onClick={toggleLive}
-                disabled={goingLive}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-50 ${isLive ? "bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20" : "bg-emerald-500 text-white hover:brightness-110"}`}
-              >
-                {goingLive ? "..." : isLive ? "End Event" : "Start Event"}
-              </button>
-            </div>
-          </div>
-
-          {/* Live run panel — appears when event is live or in rehearsal */}
-          {(isLive || isRehearsal) && (
-            <div className="space-y-4">
-              {!activeSessionId ? (
-                <div className="space-y-3">
-                  <p className="text-xs font-bold tracking-widest text-[#8B949E]">SELECT A SESSION TO START</p>
-                  {sessions.length === 0 ? (
-                    <p className="text-sm text-[#8B949E]">No sessions found. Add a session above first.</p>
-                  ) : (
-                    sessions.map((s) => (
-                      <button
-                        key={s.id}
-                        onClick={async () => {
-                          setActivatingSession(s.id);
-                          await fetch(`/api/conference/sessions/${s.id}`, {
-                            method: "PUT",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ is_active: true }),
-                          });
-                          setActiveSessionId(s.id);
-                          setActivatingSession(null);
-                        }}
-                        disabled={activatingSession === s.id}
-                        className="w-full text-left px-4 py-4 rounded-2xl border transition-all disabled:opacity-50 hover:border-[#C8A84E]/40"
-                        style={{ background: "#0D1117", borderColor: "#21262D" }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-semibold text-white">{s.title}</p>
-                            {s.time_label && <p className="text-xs text-[#8B949E] mt-0.5">{s.time_label}</p>}
-                          </div>
-                          <span className="text-xs font-bold" style={{ color: GOLD }}>
-                            {activatingSession === s.id ? "Starting..." : "START →"}
-                          </span>
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full animate-pulse bg-red-500" />
-                      <span className="text-xs font-bold tracking-widest text-red-400">SESSION LIVE</span>
-                    </div>
-                    <button
-                      onClick={async () => {
-                        if (!window.confirm("End this session? Results will be archived.")) return;
-                        await fetch(`/api/conference/sessions/${activeSessionId}/end`, { method: "POST" });
-                        setActiveSessionId(null);
-                      }}
-                      className="text-xs font-bold px-3 py-1.5 rounded-xl text-red-400 border border-red-500/30 hover:bg-red-500/10 transition-colors"
-                    >
-                      End Session
-                    </button>
-                  </div>
-                  {/* Deploy mode selector */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={async () => {
-                        await fetch(`/api/conference/sessions/${activeSessionId}`, {
-                          method: "PUT",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ session_mode: "sequential" }),
-                        });
-                        setSessionMode("sequential");
-                      }}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${sessionMode === "sequential" ? "bg-[#2764FF] text-white" : "bg-[#21262D] text-[#8B949E] hover:text-white"}`}
-                    >
-                      One at a Time
-                    </button>
-                    <button
-                      onClick={async () => {
-                        await fetch(`/api/conference/sessions/${activeSessionId}`, {
-                          method: "PUT",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ session_mode: "simultaneous" }),
-                        });
-                        setSessionMode("simultaneous");
-                      }}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${sessionMode === "simultaneous" ? "bg-purple-500 text-white" : "bg-[#21262D] text-[#8B949E] hover:text-white"}`}
-                    >
-                      Deploy All
-                    </button>
-                  </div>
-                  <PresenterRemote eventId={ev.id} sessionId={activeSessionId} />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Spotlight controls */}
-          <div className="space-y-3">
-            <p className="text-xs font-semibold text-[#8B949E] uppercase tracking-wider">Public Events Page</p>
-            {[
-              { label: "Show Countdown Timer", value: showCountdown, set: setShowCountdown },
-              { label: "Show Live Section", value: showLive, set: setShowLive },
-              { label: "Show Upcoming Section", value: showUpcoming, set: setShowUpcoming },
-              { label: "Show Past Section", value: showPast, set: setShowPast },
-            ].map(({ label, value, set }) => (
-              <div key={label} className="flex items-center justify-between">
-                <span className="text-sm text-[#8B949E]">{label}</span>
-                <button
-                  onClick={() => set(!value)}
-                  className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${value ? "bg-[#2764FF]" : "bg-[#21262D]"}`}
-                  role="switch"
-                  aria-checked={value}
-                >
-                  <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${value ? "translate-x-5" : ""}`} />
-                </button>
-              </div>
-            ))}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[#8B949E]">Card Position</span>
-              <select
-                value={cardPosition}
-                onChange={(e) => setCardPosition(e.target.value as "above" | "below")}
-                className="bg-[#0D1117] border border-[#30363D] text-white rounded-lg px-3 py-1.5 text-xs focus:outline-none"
-              >
-                <option value="above">Above Countdown</option>
-                <option value="below">Below Countdown</option>
-              </select>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[#8B949E]">Spotlight this event</span>
-              <button
-                onClick={() => setAutoPick(!autoPick)}
-                className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${!autoPick ? "bg-[#2764FF]" : "bg-[#21262D]"}`}
-                role="switch"
-                aria-checked={!autoPick}
-              >
-                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${!autoPick ? "translate-x-5" : ""}`} />
-              </button>
-            </div>
-            <button
-              onClick={saveSpotlight}
-              disabled={spotlightLoading}
-              className="w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
-              style={{ background: "rgba(39,100,255,0.15)", color: "#60a5fa", border: "1px solid rgba(39,100,255,0.3)" }}
-            >
-              {spotlightLoading ? "Saving…" : "Save Page Settings"}
-            </button>
-          </div>
-        </div>
-      </Section>
-
       {/* ── 10. HISTORY ── */}
-      <Section title="History" icon={Archive} forceClose={isLive}>
+      <Section title="History" icon={Archive}>
         <div className="pt-4">
           <SessionHistory eventId={ev.id} />
         </div>
