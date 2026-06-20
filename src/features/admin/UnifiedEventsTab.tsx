@@ -530,34 +530,6 @@ function EventDetail({ event, onBack, onRefresh }: {
         </div>
       </Section>
 
-      {/* ── 7. FILES ── */}
-      <Section title="Files" icon={FileText} badge={ev.event_files?.filter(f => f.is_visible).length} forceClose={isLive}>
-        <div className="pt-4 space-y-4">
-          {uploadError && <p className="text-xs text-red-400">{uploadError}</p>}
-          {/* Upload zone */}
-          <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-6 cursor-pointer hover:border-[#2764FF]/50 transition-colors" style={{ borderColor: "#30363D" }}>
-            {uploading ? <Loader2 size={20} className="text-[#8B949E] animate-spin" /> : <Upload size={20} className="text-[#8B949E]" />}
-            <span className="text-xs text-[#8B949E]">{uploading ? "Uploading…" : "Tap to upload a file"}</span>
-            <input type="file" className="hidden" onChange={(e) => { if (e.target.files?.[0]) uploadFile(e.target.files[0]); }} />
-          </label>
-          {/* File list */}
-          {ev.event_files?.map((file) => (
-            <div key={file.id} className="flex items-center gap-3 px-3 py-2 rounded-xl border" style={{ background: "#0D1117", borderColor: "#21262D" }}>
-              <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#2764FF]/10 text-[#2764FF] shrink-0">{file.file_type}</span>
-              <span className="text-sm text-white truncate flex-1">{file.file_name}</span>
-              <div className="flex items-center gap-1 shrink-0">
-                <button onClick={() => toggleFileVisibility(file.id, file.is_visible)} className="p-1.5 rounded-lg hover:bg-white/5 transition-colors" title={file.is_visible ? "Hide from attendees" : "Show to attendees"}>
-                  {file.is_visible ? <Eye size={14} className="text-emerald-400" /> : <EyeOff size={14} className="text-[#8B949E]" />}
-                </button>
-                <button onClick={() => deleteFile(file.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors">
-                  <Trash2 size={14} className="text-[#8B949E] hover:text-red-400" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Section>
-
       {/* ── 8. ROLES ── */}
       <Section title="Roles" icon={Shield} forceClose={isLive}>
         <div className="pt-4 space-y-4">

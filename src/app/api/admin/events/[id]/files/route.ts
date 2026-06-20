@@ -11,6 +11,40 @@ async function verifyAdmin() {
   return session;
 }
 
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await verifyAdmin();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id: eventId } = await params;
+  const { searchParams } = new URL(req.url);
+  const sessionId = searchParams.get("session_id");
+
+  const supabase = getServiceSupabase();
+
+  let query = supabase
+    .from("event_files")
+    .select("*")
+    .eq("event_id", eventId)
+    .order("created_at", { ascending: true });
+
+  if (sessionId) {
+    query = query.eq("session_id", sessionId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data ?? []);
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -23,6 +57,7 @@ export async function POST(
   const { id: eventId } = await params;
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
+  const sessionId = formData.get("session_id") as string | null;
 
   if (!file) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -81,6 +116,7 @@ export async function POST(
     .from("event_files")
     .insert({
       event_id: eventId,
+      session_id: sessionId || null,
       file_name: file.name,
       file_type: ext,
       file_url: urlData.publicUrl,
