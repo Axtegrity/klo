@@ -279,8 +279,7 @@ function EventDetail({ event, onBack, onRefresh }: {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("event_id", ev.id);
-      const res = await fetch("/api/admin/events/upload", { method: "POST", body: formData });
+      const res = await fetch(`/api/admin/events/${ev.id}/files`, { method: "POST", body: formData });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         setUploadError(d.error || "Upload failed");
