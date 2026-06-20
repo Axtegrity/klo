@@ -340,7 +340,9 @@ export default function EventsPage() {
   }, [searchQuery]);
 
   const filteredLive     = useMemo(() => liveEvents.filter(matchesSearch),     [liveEvents,     matchesSearch]);
-  const filteredUpcoming = useMemo(() => upcomingEvents.filter(matchesSearch), [upcomingEvents, matchesSearch]);
+  const filteredUpcoming = useMemo(() =>
+    upcomingEvents.filter((e) => matchesSearch(e) && e.id !== spotlight?.event?.id),
+    [upcomingEvents, matchesSearch, spotlight]);
   const filteredPast     = useMemo(() => pastEvents.filter(matchesSearch),     [pastEvents,     matchesSearch]);
 
   // Up Next: pinned event wins; otherwise auto-select first upcoming by date.
@@ -682,44 +684,6 @@ export default function EventsPage() {
         </div>
       )}
 
-      {/* Up Next banner — shown when no live event; auto or admin-pinned */}
-      {showUpcoming && upNextEvent && !searchQuery && (
-        <section className="px-6 pb-0">
-          <div className="max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Card className="relative overflow-hidden border-[#2764FF]/30 bg-gradient-to-br from-[#2764FF]/8 via-transparent to-[#21B8CD]/5">
-                <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD]" />
-                <div className="py-2 flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-[#2764FF] uppercase tracking-wider mb-1">Up Next</p>
-                    <h3 className="text-lg font-bold text-klo-text truncate">
-                      {upNextEvent.conference_name || upNextEvent.title}
-                    </h3>
-                    {upNextEvent.session_name && (
-                      <p className="text-sm text-klo-muted">{upNextEvent.session_name}</p>
-                    )}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-klo-muted mt-1.5">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Calendar size={12} className="text-[#2764FF]/70" />
-                        {formatDateRange(upNextEvent.start_date, upNextEvent.end_date, upNextEvent.event_date)}
-                        {upNextEvent.event_time && ` at ${formatTime(upNextEvent.event_time)}`}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <MapPin size={12} className="text-[#2764FF]/70" />
-                        {upNextEvent.conference_location}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          </div>
-        </section>
-      )}
 
       {/* Upcoming Events */}
       {showUpcoming && (
