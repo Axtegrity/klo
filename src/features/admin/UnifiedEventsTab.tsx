@@ -48,6 +48,7 @@ interface Event {
   is_featured: boolean;
   access_code: string | null;
   seminar_mode: boolean;
+  rehearsal_mode: boolean;
   website_url: string | null;
   start_date: string | null;
   end_date: string | null;
@@ -144,6 +145,7 @@ function EventDetail({ event, onBack, onRefresh }: {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isLive, setIsLive] = useState(ev.seminar_mode);
+  const [isRehearsal, setIsRehearsal] = useState(ev.rehearsal_mode ?? false);
   const [goingLive, setGoingLive] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -544,27 +546,54 @@ function EventDetail({ event, onBack, onRefresh }: {
       {/* ── 9. PUBLISH ── */}
       <Section title={isLive ? "🔴 Live — Run Your Session" : "Publish & Spotlight"} icon={Globe} defaultOpen={isLive}>
         <div className="pt-4 space-y-5">
-            {/* Rehearse + Reset */}
-            <div className="flex gap-3">
-              <a
-                href={`/conference/${ev.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all"
-                style={{ background: "rgba(39,100,255,0.1)", color: "#60a5fa", border: "1px solid rgba(39,100,255,0.3)" }}
-              >
-                Rehearse →
-              </a>
-              <button
-                onClick={async () => {
-                  if (!window.confirm("Reset all polls? This clears all test votes.")) return;
-                  await fetch(`/api/conference/polls/reset?event_id=${ev.id}`, { method: "POST" });
-                }}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all"
-                style={{ background: "rgba(107,114,128,0.1)", color: "#9CA3AF", border: "1px solid rgba(107,114,128,0.2)" }}
-              >
-                Reset
-              </button>
+            {/* Rehearsal mode */}
+            <div className="rounded-xl border p-4 space-y-3" style={{ background: isRehearsal ? "rgba(139,92,246,0.05)" : "rgba(107,114,128,0.05)", borderColor: isRehearsal ? "rgba(139,92,246,0.3)" : "rgba(107,114,128,0.2)" }}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-white">{isRehearsal ? "🎭 Rehearsal Mode" : "Rehearsal"}</p>
+                  <p className="text-xs text-[#8B949E] mt-0.5">{isRehearsal ? "Only you can see the conference page" : "Test your event privately before going live"}</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    const newMode = !isRehearsal;
+                    await fetch(`/api/admin/events/${ev.id}`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ rehearsal_mode: newMode }),
+                    });
+                    setIsRehearsal(newMode);
+                    setEv((prev) => ({ ...prev, rehearsal_mode: newMode }));
+                  }}
+                  className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${isRehearsal ? "bg-purple-500" : "bg-[#21262D]"}`}
+                  role="switch"
+                  aria-checked={isRehearsal}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${isRehearsal ? "translate-x-5" : ""}`} />
+                </button>
+              </div>
+              {isRehearsal && (
+                <div className="flex gap-2 pt-1">
+                  <a
+                    href={`/conference/${ev.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all"
+                    style={{ background: "rgba(139,92,246,0.1)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.3)" }}
+                  >
+                    Open Attendee View →
+                  </a>
+                  <button
+                    onClick={async () => {
+                      if (!window.confirm("Reset all polls? This clears all test votes.")) return;
+                      await fetch(`/api/conference/polls/reset?event_id=${ev.id}`, { method: "POST" });
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all"
+                    style={{ background: "rgba(107,114,128,0.1)", color: "#9CA3AF", border: "1px solid rgba(107,114,128,0.2)" }}
+                  >
+                    Reset Test Data
+                  </button>
+                </div>
+              )}
             </div>
 
           {/* Go Live toggle */}

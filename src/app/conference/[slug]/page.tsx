@@ -40,6 +40,7 @@ interface EventData {
   description: string | null;
   access_code: string | null;
   seminar_mode: boolean;
+  rehearsal_mode: boolean;
   start_date: string | null;
   end_date: string | null;
   event_files: EventFile[];
@@ -196,6 +197,19 @@ export default function EventConferencePage() {
       </div>
     );
   }
+
+    // Block non-admins when event is in rehearsal mode
+    if (event && event.rehearsal_mode && !isAdmin) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-6" style={{ background: "#0D1117" }}>
+          <div className="w-16 h-16 rounded-2xl bg-[#2764FF]/10 flex items-center justify-center">
+            <span className="text-3xl">🎭</span>
+          </div>
+          <h1 className="text-2xl font-bold text-white">Rehearsal in Progress</h1>
+          <p className="text-sm text-[#8B949E] max-w-sm">This event is currently in rehearsal mode. Check back soon for the live session.</p>
+        </div>
+      );
+    }
 
   if (notFound || !event) {
     return (

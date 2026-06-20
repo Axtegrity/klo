@@ -37,7 +37,7 @@ export async function PUT(
     "access_code", "seminar_mode", "website_url", "start_date", "end_date",
     "notes", "session_name", "room_location", "is_guest_presenter", "session_end_time",
     "event_status", "event_status_override", "display_name_mode",
-    "hosting_entity", "display_on_events_page", "pinned_as_next",
+    "hosting_entity", "display_on_events_page", "pinned_as_next", "rehearsal_mode",
   ] as const;
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   for (const key of ALLOWED_FIELDS) {
