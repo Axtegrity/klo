@@ -91,6 +91,11 @@ export interface SessionSnapshot {
       archived_at: string | null;
       created_at: string;
     }>;
+    files: Array<{
+      file_name: string;
+      file_url: string;
+      file_type: string;
+    }>;
     attendee_count: number;
   };
 }

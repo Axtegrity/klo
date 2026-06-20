@@ -224,6 +224,29 @@ export default function SessionHistory({ eventId }: SessionHistoryProps) {
                       <p className="text-xs text-klo-muted">No polls in this session.</p>
                     )}
 
+                    {/* Files */}
+                    {detail.snapshot_data.files && detail.snapshot_data.files.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-klo-muted uppercase tracking-wider mb-2">
+                          Files
+                        </p>
+                        <div className="space-y-1.5">
+                          {detail.snapshot_data.files.map((f, fIdx) => (
+                            <a
+                              key={fIdx}
+                              href={f.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-xs text-[#2764FF] hover:text-[#2764FF]/80 transition-colors"
+                            >
+                              <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#2764FF]/10 shrink-0">{f.file_type}</span>
+                              <span className="truncate">{f.file_name}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Questions summary */}
                     {detail.snapshot_data.questions.length > 0 && (
                       <div>
