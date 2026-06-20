@@ -429,7 +429,7 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
               style={{ background: "rgba(39,100,255,0.05)", color: "#60a5fa", border: "1px solid rgba(39,100,255,0.2)" }}
             >
               <Plus size={13} />
-              Add more
+              + Polls
             </button>
           </div>
         )}
