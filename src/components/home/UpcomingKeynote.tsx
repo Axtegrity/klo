@@ -81,7 +81,7 @@ export default function UpcomingKeynote() {
               </div>
 
               <Link
-                href={event.slug ? `/events/${event.slug}` : "/events"}
+                href="/events"
                 className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-bold text-sm uppercase tracking-wider rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-[#2764FF]/25 hover:scale-105 active:scale-[0.98] shrink-0 w-full sm:w-auto"
               >
                 Learn More
