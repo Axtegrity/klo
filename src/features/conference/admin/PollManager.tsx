@@ -14,6 +14,8 @@ import {
   Download,
   Undo2,
   RefreshCw,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 // PollResults and CollectiveResultsChart available if needed for detailed views
 import { useConferenceRealtime } from "../hooks/useConferenceRealtime";
@@ -332,6 +334,32 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
   const deployedNotActivePollCount = filteredPolls.filter((p) => p.is_deployed && !p.is_active).length;
   const hasDeployedPolls = deployedPolls.length > 0;
 
+  function PollPreview({ question, options }: { question: string; options: string[] }) {
+    const [open, setOpen] = useState(false);
+    return (
+      <div className="border-t border-white/5">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-4 py-2 text-xs text-klo-muted hover:text-klo-text transition-colors"
+        >
+          <span>Preview</span>
+          {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        </button>
+        {open && (
+          <div className="px-4 pb-3 space-y-2">
+            <p className="text-sm font-medium text-klo-text">{question}</p>
+            {options.map((opt, idx) => (
+              <div key={idx} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5">
+                <span className="w-5 h-5 rounded-full border border-white/20 shrink-0" />
+                <span className="text-xs text-klo-muted">{opt}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* ── PULL BACK ALL — emergency banner when polls are live ── */}
@@ -593,15 +621,7 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
                               </span>
                             </>
                           ) : (
-                            <button
-                              onClick={() => deployPoll(poll.id)}
-                              disabled={deployingId === poll.id || deployingAll}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors text-xs font-medium disabled:opacity-50"
-                              title="Deploy to attendees"
-                            >
-                              <Rocket size={14} />
-                              {deployingId === poll.id ? "Deploying..." : "Deploy"}
-                            </button>
+                            <span className="text-xs text-klo-muted/60 px-2">Queued</span>
                           )}
                           <button
                             onClick={() => deletePoll(poll.id)}
@@ -613,6 +633,11 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
                         </div>
                       </div>
                     </div>
+
+                    {/* Preview — shows question and options before deployment */}
+                    {!poll.is_deployed && (
+                      <PollPreview options={pollOptions} question={poll.question} />
+                    )}
 
                     {/* Vote results — shown inline once deployed */}
                     {poll.is_deployed && (

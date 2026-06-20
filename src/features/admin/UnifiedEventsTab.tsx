@@ -613,8 +613,8 @@ function EventDetail({ event, onBack, onRefresh }: {
             </div>
           </div>
 
-          {/* Live run panel — appears when event is live */}
-          {isLive && (
+          {/* Live run panel — appears when event is live or in rehearsal */}
+          {(isLive || isRehearsal) && (
             <div className="space-y-4">
               {!activeSessionId ? (
                 <div className="space-y-3">
