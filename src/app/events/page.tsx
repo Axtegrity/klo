@@ -940,7 +940,7 @@ function CountdownClock({
 /* ------------------------------------------------------------------ */
 
 function ExpandableDescription({ description }: { description: string }) {
-  const [expanded, setExpanded] = React.useState(false);
+  const [expanded, setExpanded] = useState(false);
   const teaser = description.length > 120 ? description.slice(0, 120) + "..." : description;
   return (
     <div className="text-sm text-klo-muted text-center max-w-2xl mx-auto">
