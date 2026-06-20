@@ -38,6 +38,8 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
   const [inputMode, setInputMode] = useState<InputMode>("single");
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addMode, setAddMode] = useState<"upload" | "manual" | null>(null);
   const [pullingBack, setPullingBack] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -360,9 +362,91 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
     );
   }
 
+  const hasPolls = filteredPolls.length > 0;
+
+  if (!hasPolls && !showAddModal && addMode === null) {
+    return (
+      <div className="flex items-center justify-between py-2">
+        <span className="text-xs text-klo-muted">No polls added yet</span>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+          style={{ background: "rgba(39,100,255,0.1)", color: "#60a5fa", border: "1px solid rgba(39,100,255,0.2)" }}
+        >
+          <Plus size={13} />
+          Add Polls
+        </button>
+      </div>
+    );
+  }
+
+  if (showAddModal && addMode === null) {
+    return (
+      <div className="space-y-2">
+        <p className="text-xs font-semibold text-klo-muted uppercase tracking-wider">How would you like to add polls?</p>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => { setAddMode("upload"); setShowAddModal(false); }}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors hover:bg-white/5"
+            style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
+          >
+            <Upload size={18} className="text-klo-muted shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-klo-text">Upload a file</p>
+              <p className="text-xs text-klo-muted">Import from .docx, .pdf, .txt</p>
+            </div>
+          </button>
+          <button
+            onClick={() => { setAddMode("manual"); setShowAddModal(false); }}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors hover:bg-white/5"
+            style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
+          >
+            <Plus size={18} className="text-klo-muted shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-klo-text">Add manually</p>
+              <p className="text-xs text-klo-muted">Type questions one by one</p>
+            </div>
+          </button>
+          <button
+            onClick={() => setShowAddModal(false)}
+            className="text-xs text-klo-muted hover:text-klo-text transition-colors py-1"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* ── PULL BACK ALL — emergency banner when polls are live ── */}
+        {/* Add more button when polls exist */}
+        {hasPolls && addMode === null && (
+          <div className="flex justify-end">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+              style={{ background: "rgba(39,100,255,0.05)", color: "#60a5fa", border: "1px solid rgba(39,100,255,0.2)" }}
+            >
+              <Plus size={13} />
+              Add more
+            </button>
+          </div>
+        )}
+
+        {/* Create form — only shown when addMode is set */}
+        {addMode !== null && (
+          <div className="flex justify-end mb-2">
+            <button
+              onClick={() => setAddMode(null)}
+              className="text-xs text-klo-muted hover:text-klo-text transition-colors"
+            >
+              ← Back to polls
+            </button>
+          </div>
+        )}
+
+        {/* ── PULL BACK ALL — emergency banner when polls are live ── */}
       {hasDeployedPolls && eventId && (
         <div className="rounded-2xl p-4 border border-orange-500/40 bg-orange-500/10 flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1 min-w-0">
@@ -424,10 +508,12 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
         </div>
       )}
 
-      {/* Create section */}
+      {/* Create section — only shown when addMode is set */}
+      {addMode !== null && (
       <div className="glass rounded-2xl p-6 border border-white/5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-klo-text">Create Polls</h3>
+          {addMode === "manual" && (
           <div className="flex gap-1 p-0.5 rounded-lg bg-klo-dark/50 border border-white/5">
             <button
               onClick={() => setInputMode("single")}
@@ -450,9 +536,10 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
               Batch
             </button>
           </div>
+          )}
         </div>
 
-        {inputMode === "single" ? (
+        {addMode === "manual" && inputMode === "single" ? (
           <div className="space-y-3">
             <input
               type="text"
@@ -496,7 +583,7 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
               {creating ? "Creating..." : "Create Poll (Queued)"}
             </button>
           </div>
-        ) : (
+        ) : addMode === "manual" ? (
           <div className="space-y-3">
             <textarea
               value={batchText}
@@ -516,26 +603,29 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
               {creating ? "Creating..." : "Create Batch (Queued)"}
             </button>
           </div>
-        )}
+        ) : null}
 
-        {/* File upload */}
-        <div className="mt-4 pt-4 border-t border-white/5">
-          <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-klo-slate border border-white/10 text-sm text-klo-muted hover:text-klo-text transition-colors cursor-pointer">
-            <Upload size={16} />
-            {uploading ? "Uploading..." : "Upload File"}
-            <input
-              type="file"
-              accept=".txt,.pdf,.doc,.docx,.xls,.xlsx"
-              onChange={handleFileUpload}
-              className="hidden"
-              disabled={uploading}
-            />
-          </label>
-          <span className="ml-3 text-xs text-klo-muted">
-            Upload any survey or poll document (.txt, .pdf, .doc, .docx, .xls, .xlsx)
-          </span>
-        </div>
+        {/* File upload — only shown in upload mode */}
+        {addMode === "upload" && (
+          <div className="mt-4 pt-4 border-t border-white/5">
+            <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-klo-slate border border-white/10 text-sm text-klo-muted hover:text-klo-text transition-colors cursor-pointer">
+              <Upload size={16} />
+              {uploading ? "Uploading..." : "Upload File"}
+              <input
+                type="file"
+                accept=".txt,.pdf,.doc,.docx,.xls,.xlsx"
+                onChange={handleFileUpload}
+                className="hidden"
+                disabled={uploading}
+              />
+            </label>
+            <span className="ml-3 text-xs text-klo-muted">
+              Upload any survey or poll document (.txt, .pdf, .doc, .docx, .xls, .xlsx)
+            </span>
+          </div>
+        )}
       </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-8">
