@@ -358,6 +358,14 @@ export default function EventConferencePage() {
                       )}
                       <a
                         href={file.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors"
+                      >
+                        Preview
+                      </a>
+                      <a
+                        href={file.file_url}
                         download
                         className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2764FF] hover:bg-[#2764FF]/80 text-white text-xs font-semibold transition-colors"
                       >
