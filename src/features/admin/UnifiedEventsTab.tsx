@@ -296,8 +296,8 @@ function EventDetail({ event, onBack, onRefresh }: {
   };
 
   const toggleFileVisibility = async (fileId: string, current: boolean) => {
-    await fetch(`/api/admin/events/${ev.id}/files/${fileId}`, {
-      method: "PUT",
+    await fetch(`/api/admin/events/${ev.id}/files?fileId=${fileId}`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ is_visible: !current }),
     });
@@ -310,7 +310,7 @@ function EventDetail({ event, onBack, onRefresh }: {
   };
 
   const deleteFile = async (fileId: string) => {
-    await fetch(`/api/admin/events/${ev.id}/files/${fileId}`, { method: "DELETE" });
+    await fetch(`/api/admin/events/${ev.id}/files?fileId=${fileId}`, { method: "DELETE" });
     setEv((prev) => ({ ...prev, event_files: prev.event_files.filter((f) => f.id !== fileId) }));
   };
 
