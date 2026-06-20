@@ -329,7 +329,7 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
 
   const filteredPolls = filterSessionId === "all"
     ? polls
-    : polls.filter((p) => p.session_id === filterSessionId);
+    : polls.filter((p) => p.session_id === filterSessionId || p.session_id === null);
   const deployedPolls = filteredPolls.filter((p) => p.is_deployed);
 
   const activePollCount = filteredPolls.filter((p) => p.is_active).length;
