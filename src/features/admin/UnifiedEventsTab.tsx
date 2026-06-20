@@ -572,6 +572,29 @@ function EventDetail({ event, onBack, onRefresh }: {
       {/* ── 9. PUBLISH ── */}
       <Section title={isLive ? "🔴 Live — Run Your Session" : "Publish & Spotlight"} icon={Globe} defaultOpen={isLive}>
         <div className="pt-4 space-y-5">
+            {/* Rehearse + Reset */}
+            <div className="flex gap-3">
+              <a
+                href={`/conference/${ev.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all"
+                style={{ background: "rgba(39,100,255,0.1)", color: "#60a5fa", border: "1px solid rgba(39,100,255,0.3)" }}
+              >
+                Rehearse →
+              </a>
+              <button
+                onClick={async () => {
+                  if (!window.confirm("Reset all polls? This clears all test votes.")) return;
+                  await fetch(`/api/conference/polls/reset?event_id=${ev.id}`, { method: "POST" });
+                }}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all"
+                style={{ background: "rgba(107,114,128,0.1)", color: "#9CA3AF", border: "1px solid rgba(107,114,128,0.2)" }}
+              >
+                Reset
+              </button>
+            </div>
+
           {/* Go Live toggle */}
           <div className="rounded-xl border p-4 space-y-3" style={{ background: isLive ? "rgba(16,185,129,0.05)" : "rgba(39,100,255,0.05)", borderColor: isLive ? "rgba(16,185,129,0.2)" : "rgba(39,100,255,0.2)" }}>
             <div className="flex items-center justify-between">
