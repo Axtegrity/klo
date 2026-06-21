@@ -1019,9 +1019,10 @@ function SpotlightCard({ event, sessions, cfg }: { event: EventItem; sessions: E
                 {sessions.length === 1 ? "Session" : "Sessions"}
               </p>
               {sessions.map((s) => (
-                <div
+                <Link
                   key={s.id}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 rounded-lg bg-white/[0.03] border border-white/5"
+                  href={`/conference/${event.slug}`}
+                  className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 rounded-lg bg-white/[0.03] border border-white/5 hover:border-[#2764FF]/30 hover:bg-white/[0.06] transition-all cursor-pointer"
                 >
                   <span className="font-semibold text-sm text-klo-text flex-1 min-w-[12rem]">
                     {s.session_name}
@@ -1039,7 +1040,7 @@ function SpotlightCard({ event, sessions, cfg }: { event: EventItem; sessions: E
                       {[s.location, s.room].filter(Boolean).join(" · ")}
                     </span>
                   )}
-                </div>
+                </Link>
               ))}
             </div>
           )}
