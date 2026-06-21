@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Archive, ChevronDown, ChevronUp, BarChart2 } from "lucide-react";
+import { Archive, ChevronDown, ChevronUp, BarChart2, Download } from "lucide-react";
 import type { SessionSnapshot } from "../types";
 
 interface SessionHistoryProps {
@@ -82,6 +82,45 @@ export default function SessionHistory({ eventId }: SessionHistoryProps) {
       hour: "numeric",
       minute: "2-digit",
     });
+
+  const downloadCSV = (snapshot: SessionSnapshot) => {
+    const rows: string[][] = [];
+    rows.push(["Session", snapshot.snapshot_data.session.title]);
+    rows.push(["Ended", formatDate(snapshot.snapshot_data.session.ended_at)]);
+    rows.push(["Attendees", String(snapshot.snapshot_data.attendee_count)]);
+    rows.push([]);
+    rows.push(["POLLS"]);
+    rows.push(["Question", "Option", "Votes", "Percentage"]);
+    for (const poll of snapshot.snapshot_data.polls) {
+      poll.options.forEach((opt, idx) => {
+        rows.push([
+          poll.question,
+          opt,
+          String(poll.votes[idx] ?? 0),
+          `${poll.percentages[idx] ?? 0}%`,
+        ]);
+      });
+      rows.push(["", "Total Votes", String(poll.total_votes), ""]);
+      rows.push([]);
+    }
+    if (snapshot.snapshot_data.questions.length > 0) {
+      rows.push(["Q&A"]);
+      rows.push(["Question", "Upvotes"]);
+      for (const q of snapshot.snapshot_data.questions) {
+        rows.push([q.text, String(q.upvotes)]);
+      }
+    }
+    const csv = rows
+      .map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${snapshot.snapshot_data.session.title.replace(/\s+/g, "-")}-results.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (loading) {
     return (
@@ -171,6 +210,14 @@ export default function SessionHistory({ eventId }: SessionHistoryProps) {
                 )}
                 {!isLoadingDetail && detail && (
                   <div className="space-y-5">
+                      <button
+                        onClick={() => downloadCSV(detail)}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                        style={{ background: "rgba(39,100,255,0.1)", color: "#60a5fa", border: "1px solid rgba(39,100,255,0.2)" }}
+                      >
+                        <Download size={12} />
+                        Download CSV
+                      </button>
                     {/* Meta row */}
                     <div className="flex flex-wrap gap-4 text-xs text-klo-muted">
                       <span>
