@@ -78,8 +78,10 @@ function SessionPresenter({ session, eventId, eventSlug, onEnd, autoShowResults,
   const [mode, setMode] = useState<"rehearsal" | "live" | null>(null);
   const [sessionMode, setSessionMode] = useState<"sequential" | "simultaneous">("sequential");
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [justExited, setJustExited] = useState(false);
 
   const startSession = async (newMode: "rehearsal" | "live") => {
+    setJustExited(false);
     // Activate this session
     await fetch(`/api/conference/sessions/${session.id}`, {
       method: "PUT",
@@ -116,6 +118,25 @@ function SessionPresenter({ session, eventId, eventSlug, onEnd, autoShowResults,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ seminar_mode: false, rehearsal_mode: false }),
     });
+    setJustExited(true);
+    setMode(null);
+    setSessionStarted(false);
+    onEnd();
+  };
+
+  const exitRehearsal = async () => {
+    await fetch(`/api/conference/sessions/${session.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_active: false }),
+    });
+    await fetch(`/api/admin/events/${eventId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ seminar_mode: false, rehearsal_mode: false }),
+    });
+    await fetch(`/api/conference/polls/reset?event_id=${eventId}`, { method: "POST" });
+    setJustExited(true);
     setMode(null);
     setSessionStarted(false);
     onEnd();
@@ -129,6 +150,15 @@ function SessionPresenter({ session, eventId, eventSlug, onEnd, autoShowResults,
   if (!mode) {
     return (
       <div className="border-t pt-3 space-y-2" style={{ borderColor: "#21262D" }}>
+          <div className="rounded-xl px-3 py-2 flex items-center gap-2" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.2)" }}>
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: "#6B7280" }} />
+            <span className="text-xs font-semibold" style={{ color: "#9CA3AF" }}>Offline — attendees see the event page but no polls</span>
+          </div>
+          {justExited && (
+            <div className="rounded-xl px-3 py-2 flex items-center gap-2" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+              <span className="text-xs font-semibold" style={{ color: "#f87171" }}>✓ Session ended — event is now offline</span>
+            </div>
+          )}
         <div className="flex gap-2">
           <button
             onClick={() => startSession("rehearsal")}
@@ -163,7 +193,7 @@ function SessionPresenter({ session, eventId, eventSlug, onEnd, autoShowResults,
             {mode === "rehearsal" ? "🎭 Rehearsal" : "🔴 Live"}
           </span>
           <button
-            onClick={endSession}
+            onClick={mode === "rehearsal" ? exitRehearsal : endSession}
             className="px-3 py-1 rounded-lg text-xs font-bold"
             style={{ background: "rgba(239,68,68,0.1)", color: "#f87171", border: "1px solid rgba(239,68,68,0.3)" }}
           >
