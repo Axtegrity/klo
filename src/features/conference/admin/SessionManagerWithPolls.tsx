@@ -95,7 +95,7 @@ function SessionPresenter({ session, eventId, eventSlug, onEnd }: {
       await fetch(`/api/admin/events/${eventId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rehearsal_mode: true }),
+        body: JSON.stringify({ rehearsal_mode: true, seminar_mode: true }),
       });
     }
     setMode(newMode);
