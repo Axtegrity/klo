@@ -9,7 +9,6 @@ import QuestionList from "./QuestionList";
 import QuestionInput from "./QuestionInput";
 import WordCloudCanvas from "./WordCloudCanvas";
 import WordCloudInput from "./WordCloudInput";
-import PresentationModeButton from "./PresentationModeButton";
 import InstructionsSection from "./InstructionsSection";
 import { usePolls } from "../hooks/usePolls";
 import { useQuestions } from "../hooks/useQuestions";
@@ -128,7 +127,6 @@ export default function ConferenceToolsTabs({ eventId, sessionId, autoShowResult
             );
           })}
         </div>
-        {isAdmin && <PresentationModeButton />}
       </div>
 
       {/* Tab content */}
