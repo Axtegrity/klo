@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from("event_presentations")
-    .select("id, title, slug, conference_name, conference_location, event_date, event_time, description, access_code, seminar_mode, rehearsal_mode, is_published, start_date, end_date, event_files(*)")
+    .select("id, title, slug, conference_name, conference_location, event_date, event_time, description, access_code, seminar_mode, rehearsal_mode, auto_show_results, is_published, start_date, end_date, event_files(*)")
     .eq("slug", slug)
     .eq("is_published", true)
     .single();

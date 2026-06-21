@@ -35,9 +35,10 @@ const TAB_ICONS: Record<ConferenceToolTab, React.ElementType> = {
 interface ConferenceToolsTabsProps {
   eventId?: string;
   sessionId?: string;
+  autoShowResults?: boolean;
 }
 
-export default function ConferenceToolsTabs({ eventId, sessionId }: ConferenceToolsTabsProps = {}) {
+export default function ConferenceToolsTabs({ eventId, sessionId, autoShowResults = true }: ConferenceToolsTabsProps = {}) {
   const [activeTab, setActiveTab] = useState<ConferenceToolTab>("polls");
   const { sessions, activeSession } = useSessions(eventId ? { eventId } : undefined);
   const { isAuthenticated, isAdmin } = useConferenceRoles();
@@ -143,6 +144,7 @@ export default function ConferenceToolsTabs({ eventId, sessionId }: ConferenceTo
             loading={pollsHook.loading}
             onVote={pollsHook.vote}
             sessionMode={sessionMode}
+            autoShowResults={autoShowResults}
           />
         )}
 

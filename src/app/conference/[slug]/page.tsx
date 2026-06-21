@@ -41,6 +41,7 @@ interface EventData {
   access_code: string | null;
   seminar_mode: boolean;
   rehearsal_mode: boolean;
+  auto_show_results: boolean;
   start_date: string | null;
   end_date: string | null;
   event_files: EventFile[];
@@ -341,7 +342,7 @@ export default function EventConferencePage() {
           <motion.div variants={fadeUp} custom={1}>
             {event.seminar_mode ? (
               <SeminarModeGate eventId={event.id}>
-                <ConferenceToolsTabs eventId={event.id} sessionId={selectedSession?.id} />
+                <ConferenceToolsTabs eventId={event.id} sessionId={selectedSession?.id} autoShowResults={event.auto_show_results} />
               </SeminarModeGate>
             ) : (
               <div className="flex items-center justify-center py-16 rounded-2xl border border-white/[0.06] bg-white/[0.02]">

@@ -67,11 +67,13 @@ function SessionFilesSection({ sessionId, eventId }: { sessionId: string; eventI
   );
 }
 
-function SessionPresenter({ session, eventId, eventSlug, onEnd }: {
+function SessionPresenter({ session, eventId, eventSlug, onEnd, autoShowResults, onToggleAutoShow }: {
   session: { id: string; title: string };
   eventId: string;
   eventSlug: string;
   onEnd: () => void;
+  autoShowResults?: boolean;
+  onToggleAutoShow?: (value: boolean) => void;
 }) {
   const [mode, setMode] = useState<"rehearsal" | "live" | null>(null);
   const [sessionMode, setSessionMode] = useState<"sequential" | "simultaneous">("sequential");
@@ -213,13 +215,34 @@ function SessionPresenter({ session, eventId, eventSlug, onEnd }: {
       </div>
 
       {/* Live run panel — only render after session is activated */}
-      {sessionStarted && <PresenterRemote eventId={eventId} sessionId={session.id} />}
+      {sessionStarted && <PresenterRemote eventId={eventId} sessionId={session.id} autoShowResults={autoShowResults} onToggleAutoShow={onToggleAutoShow} />}
     </div>
   );
 }
 
 export default function SessionManagerWithPolls({ eventId, eventSlug, onSessionsChange }: Props) {
   const [pollCounts, setPollCounts] = useState<Record<string, number>>({});
+  const [autoShowResults, setAutoShowResults] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/admin/events/${eventId}`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data && typeof data.auto_show_results === "boolean") {
+          setAutoShowResults(data.auto_show_results);
+        }
+      })
+      .catch(() => {});
+  }, [eventId]);
+
+  const handleToggleAutoShow = async (value: boolean) => {
+    setAutoShowResults(value);
+    await fetch(`/api/admin/events/${eventId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ auto_show_results: value }),
+    });
+  };
 
   const fetchPollCounts = useCallback(async () => {
     const res = await fetch(`/api/conference/polls?event_id=${eventId}`);
@@ -248,6 +271,8 @@ export default function SessionManagerWithPolls({ eventId, eventSlug, onSessions
               eventId={eventId}
               eventSlug={eventSlug}
               onEnd={() => { onSessionsChange?.(); fetchPollCounts(); }}
+              autoShowResults={autoShowResults}
+              onToggleAutoShow={handleToggleAutoShow}
             />
           </div>
         )}

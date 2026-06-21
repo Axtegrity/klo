@@ -17,9 +17,11 @@ import type { PollWithVotes } from "../types";
 interface PresenterRemoteProps {
   eventId: string;
   sessionId?: string;
+  autoShowResults?: boolean;
+  onToggleAutoShow?: (value: boolean) => void;
 }
 
-export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteProps) {
+export default function PresenterRemote({ eventId, sessionId, autoShowResults = true, onToggleAutoShow }: PresenterRemoteProps) {
   const [polls, setPolls] = useState<PollWithVotes[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -156,6 +158,20 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || "Failed to reopen all polls");
       }
+    });
+
+  const pushResults = (pollIds?: string[]) =>
+    act(async () => {
+      const targets = pollIds ?? deployed.map((p) => p.id);
+      await Promise.all(
+        targets.map((id) =>
+          fetch(`/api/conference/polls/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ show_results: true }),
+          })
+        )
+      );
     });
 
   const deployAll = () =>
@@ -327,6 +343,44 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
             <StopCircle size={20} />
             Close All &amp; Show Results
           </button>
+
+            {/* Auto-show toggle */}
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs text-klo-muted font-medium">Auto-show results when attendees finish</span>
+              <button
+                onClick={() => onToggleAutoShow?.(!autoShowResults)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoShowResults ? "bg-purple-500" : "bg-white/10"}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${autoShowResults ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
+            </div>
+
+            {/* Manual push results — only when auto-show is off */}
+            {!autoShowResults && deployed.length > 0 && (
+              <div className="space-y-2">
+                <button
+                  onClick={() => pushResults()}
+                  disabled={busy}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-2xl font-bold text-sm hover:bg-emerald-500/20 transition-all disabled:opacity-50"
+                >
+                  Push All Results
+                </button>
+                <div className="space-y-1">
+                  {deployed.map((poll, idx) => (
+                    <button
+                      key={poll.id}
+                      onClick={() => pushResults([poll.id])}
+                      disabled={busy || poll.show_results}
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all disabled:opacity-40"
+                      style={{ background: poll.show_results ? "rgba(16,185,129,0.1)" : "rgba(255,255,255,0.05)", color: poll.show_results ? "#34d399" : "#8B949E", border: `1px solid ${poll.show_results ? "rgba(16,185,129,0.3)" : "rgba(255,255,255,0.1)"}` }}
+                    >
+                      <span className="truncate text-left">Q{idx + 1}: {poll.question}</span>
+                      <span className="shrink-0">{poll.show_results ? "✓ Pushed" : "Push"}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
         </div>
       )}
 

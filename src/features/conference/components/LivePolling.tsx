@@ -11,9 +11,10 @@ interface LivePollingProps {
   loading: boolean;
   onVote: (pollId: string, optionIndex: number) => Promise<boolean>;
   sessionMode?: "sequential" | "simultaneous";
+  autoShowResults?: boolean;
 }
 
-export default function LivePolling({ polls, loading, onVote, sessionMode = "sequential" }: LivePollingProps) {
+export default function LivePolling({ polls, loading, onVote, sessionMode = "sequential", autoShowResults = true }: LivePollingProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -40,6 +41,7 @@ export default function LivePolling({ polls, loading, onVote, sessionMode = "seq
   const deployedPolls = polls.filter((p) => p.is_deployed);
   const allAnswered = deployedPolls.length > 0 && deployedPolls.every((p) => p.hasVoted);
   const isSimultaneous = sessionMode === "simultaneous";
+  const manualResults = isSimultaneous && !autoShowResults ? deployedPolls.filter((p) => p.show_results) : [];
 
   return (
     <div className="space-y-4">
@@ -72,9 +74,31 @@ export default function LivePolling({ polls, loading, onVote, sessionMode = "seq
       ))}
 
       {isSimultaneous && allAnswered && deployedPolls.length > 0 && (
+        autoShowResults ? (
+          <div className="space-y-4">
+            <p className="text-xs font-bold text-[#8B949E] uppercase tracking-wider text-center pt-2">All Results</p>
+            {deployedPolls.map((poll) => (
+              <Card key={poll.id}>
+                <h3 className="text-lg font-semibold text-klo-text mb-4">{poll.question}</h3>
+                <PollResults poll={poll} />
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="text-center py-12">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
+              <span className="text-2xl">🙏</span>
+            </div>
+            <p className="text-klo-text font-semibold">Thank you for participating!</p>
+            <p className="text-klo-muted text-sm mt-1">Results will be shared shortly.</p>
+          </Card>
+        )
+      )}
+
+      {isSimultaneous && !autoShowResults && manualResults.length > 0 && !allAnswered && (
         <div className="space-y-4">
-          <p className="text-xs font-bold text-[#8B949E] uppercase tracking-wider text-center pt-2">All Results</p>
-          {deployedPolls.map((poll) => (
+          <p className="text-xs font-bold text-[#8B949E] uppercase tracking-wider text-center pt-2">Results</p>
+          {manualResults.map((poll) => (
             <Card key={poll.id}>
               <h3 className="text-lg font-semibold text-klo-text mb-4">{poll.question}</h3>
               <PollResults poll={poll} />
