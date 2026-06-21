@@ -38,7 +38,13 @@ export function usePolls({ sessionId, eventId }: { sessionId?: string; eventId?:
         : "/api/conference/polls";
       const res = await fetch(url);
       if (!res.ok) return;
-      const data = await res.json();
+      const data: PollWithVotes[] = await res.json();
+        // If all polls are reset (none deployed), clear local voted state
+        const anyDeployed = data.some((p: PollWithVotes) => p.is_deployed);
+        if (!anyDeployed && typeof window !== "undefined") {
+          sessionStorage.removeItem("klo-voted-polls");
+          setVotedPolls(new Set());
+        }
 
       const pollsWithVoted: PollWithVotes[] = data.map(
         (poll: PollWithVotes) => ({
