@@ -9,7 +9,6 @@ import {
   Power,
   PowerOff,
   Upload,
-  Rocket,
   FileText,
   Download,
   Undo2,
@@ -192,57 +191,7 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
     }
   };
 
-  const [deployedSet, setDeployedSet] = useState<Set<string>>(new Set());
-  const [deployingId, setDeployingId] = useState<string | null>(null);
-  const [deployingAll, setDeployingAll] = useState(false);
-
   const queuedPolls = (filterSessionId === "all" ? polls : polls.filter((p) => p.session_id === filterSessionId)).filter((p) => !p.is_deployed);
-
-  const deployPoll = async (id: string) => {
-    // If already deployed in this session, confirm before re-deploying
-    if (deployedSet.has(id)) {
-      if (!confirm("This poll has already been deployed. Are you sure you want to deploy it again?")) return;
-    }
-    setDeployingId(id);
-    try {
-      const res = await fetch(`/api/conference/polls/${id}/deploy`, { method: "POST" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        setError(body?.error || `Failed to deploy poll (${res.status})`);
-        return;
-      }
-      setDeployedSet((prev) => new Set(prev).add(id));
-      showSuccess("Poll deployed!");
-      fetchPolls();
-    } finally {
-      setDeployingId(null);
-    }
-  };
-
-  const deployAllPolls = async () => {
-    if (queuedPolls.length === 0) return;
-    setDeployingAll(true);
-    setError(null);
-    try {
-      // Use bulk deploy endpoint to avoid sibling-closing logic
-      const ids = queuedPolls.map((p) => p.id);
-      const res = await fetch("/api/conference/polls/deploy-all", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ poll_ids: ids, event_id: eventId }),
-      });
-      if (res.ok) {
-        ids.forEach((id) => setDeployedSet((prev) => new Set(prev).add(id)));
-        showSuccess(`${queuedPolls.length} poll${queuedPolls.length !== 1 ? "s" : ""} deployed!`);
-      } else {
-        const data = await res.json().catch(() => null);
-        setError(data?.error || "Failed to deploy polls");
-      }
-      fetchPolls();
-    } finally {
-      setDeployingAll(false);
-    }
-  };
 
   const pullBackAll = async () => {
     if (!eventId) return;
@@ -661,17 +610,6 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
                       >
                         <RefreshCw size={14} />
                         {pullingBack ? "Resetting..." : "Reset All"}
-                      </button>
-                    )}
-                    {queuedPolls.length > 0 && (
-                      <button
-                        onClick={deployAllPolls}
-                        disabled={deployingAll}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:brightness-110 transition-colors text-xs font-semibold disabled:opacity-50"
-                        title="Deploy all queued polls at once"
-                      >
-                        <Rocket size={14} />
-                        {deployingAll ? "Deploying..." : `Deploy All (${queuedPolls.length})`}
                       </button>
                     )}
                 </div>
