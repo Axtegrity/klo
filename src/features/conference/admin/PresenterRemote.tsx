@@ -158,6 +158,24 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
       }
     });
 
+  const deployAll = () =>
+    act(async () => {
+      const undeployed = polls.filter((p) => !p.is_deployed);
+      if (undeployed.length === 0) return;
+      const res = await fetch("/api/conference/polls/deploy-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          poll_ids: undeployed.map((p) => p.id),
+          event_id: eventId,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to deploy all polls");
+      }
+    });
+
   const undeployPoll = (id: string) =>
     act(async () => {
       const res = await fetch(`/api/conference/polls/${id}`, {
@@ -259,7 +277,7 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
       )}
 
       {/* ── SIMULTANEOUS MODE VIEW ── */}
-      {isSimultaneous && deployed.length > 0 && (
+      {isSimultaneous && (
         <div className="glass rounded-3xl p-6 border border-purple-500/30 space-y-5">
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full">
@@ -283,6 +301,16 @@ export default function PresenterRemote({ eventId, sessionId }: PresenterRemoteP
               );
             })}
           </div>
+          {polls.filter((p) => !p.is_deployed).length > 0 && (
+            <button
+              onClick={deployAll}
+              disabled={busy}
+              className="w-full flex items-center justify-center gap-2 py-4 bg-purple-500/10 text-purple-400 border border-purple-500/30 rounded-2xl font-bold text-base hover:bg-purple-500/20 transition-all disabled:opacity-50"
+            >
+              <Play size={20} />
+              Deploy All Polls
+            </button>
+          )}
           <button
             onClick={() => act(async () => {
               await Promise.all(deployed.map(p =>
