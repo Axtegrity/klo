@@ -270,23 +270,6 @@ export default function PresenterRemote({ eventId, sessionId, autoShowResults = 
 
   return (
     <div className="flex flex-col gap-4 px-4 pb-8 max-w-lg mx-auto">
-      {/* ── SESSION MODE BADGE ── */}
-      <div className="flex items-center justify-between">
-        <span
-          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${
-            sessionMode === "simultaneous"
-              ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
-              : "bg-[#2764FF]/10 text-[#2764FF] border border-[#2764FF]/20"
-          }`}
-        >
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              sessionMode === "simultaneous" ? "bg-purple-400" : "bg-[#2764FF]"
-            }`}
-          />
-          {sessionMode === "simultaneous" ? "SIMULTANEOUS MODE" : "SEQUENTIAL MODE"}
-        </span>
-      </div>
 
       {/* ── ERROR DISPLAY ── */}
       {error && (
