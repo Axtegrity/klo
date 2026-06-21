@@ -100,6 +100,11 @@ function SessionPresenter({ session, eventId, eventSlug, onEnd, autoShowResults,
         body: JSON.stringify({ rehearsal_mode: true, seminar_mode: true }),
       });
     }
+    await fetch(`/api/conference/sessions/${session.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_mode: sessionMode }),
+    });
     setMode(newMode);
     setSessionStarted(true);
   };
@@ -169,7 +174,14 @@ function SessionPresenter({ session, eventId, eventSlug, onEnd, autoShowResults,
         {/* Mode selector */}
         <div className="flex gap-2">
           <button
-            onClick={() => setSessionMode("sequential")}
+            onClick={async () => {
+              setSessionMode("sequential");
+              await fetch(`/api/conference/sessions/${session.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ session_mode: "sequential" }),
+              });
+            }}
             className="flex-1 py-2 rounded-lg text-xs font-bold transition-all"
             style={{
               background: sessionMode === "sequential" ? "rgba(39,100,255,0.2)" : "rgba(255,255,255,0.05)",
@@ -180,7 +192,14 @@ function SessionPresenter({ session, eventId, eventSlug, onEnd, autoShowResults,
             One at a Time
           </button>
           <button
-            onClick={() => setSessionMode("simultaneous")}
+            onClick={async () => {
+              setSessionMode("simultaneous");
+              await fetch(`/api/conference/sessions/${session.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ session_mode: "simultaneous" }),
+              });
+            }}
             className="flex-1 py-2 rounded-lg text-xs font-bold transition-all"
             style={{
               background: sessionMode === "simultaneous" ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.05)",
