@@ -24,6 +24,9 @@ function parseNumberedQuestions(text: string): { question: string; options: stri
       currentQuestion = numberedQ ? numberedQ[1].trim() : line;
       currentOptions = [];
     } else if (currentQuestion && line.length > 0 && line.length < 100) {
+      // Skip lines that look like question headers or section labels
+      if (/^question\s*#?\s*\d+/i.test(line)) continue;
+      if (/^\d+$/.test(line.trim())) continue; // bare numbers
       currentOptions.push(line);
     }
   }
@@ -52,7 +55,7 @@ function parseTextToQuestions(text: string): { question: string; options: string
 
 async function parseWithAI(text: string): Promise<{ question: string; options: string[] }[]> {
   const prompt = `You are parsing a poll/survey document. Extract only the questions and their answer choices.
-Ignore all instructions, headers, page numbers, titles, and other non-question content.
+Ignore all instructions, headers, page numbers, titles, question numbers, section labels like "Question #1", and other non-question content. Never include question numbers or section headers as answer options.
 Return ONLY valid JSON in this format:
 {
   "questions": [
