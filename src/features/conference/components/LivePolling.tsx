@@ -60,13 +60,13 @@ export default function LivePolling({ polls, loading, onVote, sessionMode = "seq
               </div>
             ) : (
               <>
-                <h3 className="text-lg font-semibold text-klo-text mb-4">{poll.question}</h3>
+                <h3 className="text-lg font-semibold text-klo-text mb-4"><span className="text-klo-muted font-normal mr-1">{poll.sort_order}.</span>{poll.question}</h3>
                 <PollResults poll={poll} live />
               </>
             )
           ) : (
             <>
-              <h3 className="text-lg font-semibold text-klo-text mb-4">{poll.question}</h3>
+              <h3 className="text-lg font-semibold text-klo-text mb-4"><span className="text-klo-muted font-normal mr-1">{poll.sort_order}.</span>{poll.question}</h3>
               <PollVoteForm poll={poll} onVote={onVote} />
             </>
           )}
@@ -79,7 +79,7 @@ export default function LivePolling({ polls, loading, onVote, sessionMode = "seq
             <p className="text-xs font-bold text-[#8B949E] uppercase tracking-wider text-center pt-2">All Results</p>
             {deployedPolls.map((poll) => (
               <Card key={poll.id}>
-                <h3 className="text-lg font-semibold text-klo-text mb-4">{poll.question}</h3>
+                <h3 className="text-lg font-semibold text-klo-text mb-4"><span className="text-klo-muted font-normal mr-1">{poll.sort_order}.</span>{poll.question}</h3>
                 <PollResults poll={poll} />
               </Card>
             ))}
@@ -100,7 +100,7 @@ export default function LivePolling({ polls, loading, onVote, sessionMode = "seq
           <p className="text-xs font-bold text-[#8B949E] uppercase tracking-wider text-center pt-2">Results</p>
           {manualResults.map((poll) => (
             <Card key={poll.id}>
-              <h3 className="text-lg font-semibold text-klo-text mb-4">{poll.question}</h3>
+              <h3 className="text-lg font-semibold text-klo-text mb-4"><span className="text-klo-muted font-normal mr-1">{poll.sort_order}.</span>{poll.question}</h3>
               <PollResults poll={poll} />
             </Card>
           ))}
@@ -114,7 +114,7 @@ export default function LivePolling({ polls, loading, onVote, sessionMode = "seq
           )}
           {visibleClosed.map((poll) => (
             <Card key={poll.id}>
-              <h3 className="text-lg font-semibold text-klo-text mb-4">{poll.question}</h3>
+              <h3 className="text-lg font-semibold text-klo-text mb-4"><span className="text-klo-muted font-normal mr-1">{poll.sort_order}.</span>{poll.question}</h3>
               <PollResults poll={poll} />
             </Card>
           ))}

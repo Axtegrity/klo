@@ -385,7 +385,7 @@ export default function PresenterRemote({ eventId, sessionId, autoShowResults = 
           </div>
 
           {/* Question */}
-          <p className="text-2xl font-bold text-klo-text leading-snug">{live.question}</p>
+          <p className="text-2xl font-bold text-klo-text leading-snug"><span className="text-klo-muted font-normal mr-1">{live.sort_order}.</span>{live.question}</p>
 
           {/* Vote count */}
           <p className="text-4xl font-black text-[#2764FF]">
@@ -450,7 +450,7 @@ export default function PresenterRemote({ eventId, sessionId, autoShowResults = 
             {done.length === 0 ? "Up First" : "Next Question"}
           </p>
           <p className="text-2xl font-bold text-klo-text leading-snug">
-            {queued[0].question}
+            <span className="text-klo-muted font-normal mr-1">{queued[0].sort_order}.</span>{queued[0].question}
           </p>
           <p className="text-xs text-klo-muted">
             {(queued[0].options as string[]).join(" · ")}

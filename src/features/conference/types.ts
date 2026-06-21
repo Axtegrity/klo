@@ -9,6 +9,7 @@ export interface Poll {
   closed_at: string | null;
   session_id: string | null;
   event_id: string | null;
+  sort_order: number;
 }
 
 export interface PollVote {
