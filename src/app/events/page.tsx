@@ -1022,11 +1022,12 @@ function SpotlightCard({ event, sessions, cfg }: { event: EventItem; sessions: E
                 <Link
                   key={s.id}
                   href={`/conference/${event.slug}`}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 rounded-lg bg-white/[0.03] border border-white/5 hover:border-[#2764FF]/30 hover:bg-white/[0.06] transition-all cursor-pointer"
+                  className="flex items-center justify-between gap-4 px-4 py-3 rounded-lg bg-white/[0.03] border border-white/5 hover:border-[#2764FF]/40 hover:bg-[#2764FF]/5 transition-all cursor-pointer group"
                 >
-                  <span className="font-semibold text-sm text-klo-text flex-1 min-w-[12rem]">
-                    {s.session_name}
-                  </span>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 flex-1">
+                      <span className="font-semibold text-sm text-klo-text w-full text-center">
+                        {s.session_name}
+                      </span>
                   {s.start_time && (
                     <span className="inline-flex items-center gap-1.5 text-xs text-klo-muted">
                       <Calendar size={12} className="text-[#2764FF]/70" />
@@ -1040,6 +1041,8 @@ function SpotlightCard({ event, sessions, cfg }: { event: EventItem; sessions: E
                       {[s.location, s.room].filter(Boolean).join(" · ")}
                     </span>
                   )}
+                    </div>
+                    <span className="text-xs font-bold text-[#2764FF] shrink-0 group-hover:translate-x-1 transition-transform">Join →</span>
                 </Link>
               ))}
             </div>
