@@ -212,8 +212,8 @@ function SessionPresenter({ session, eventId, eventSlug, onEnd }: {
         )}
       </div>
 
-      {/* Live run panel */}
-      <PresenterRemote eventId={eventId} sessionId={session.id} />
+      {/* Live run panel — only render after session is activated */}
+      {sessionStarted && <PresenterRemote eventId={eventId} sessionId={session.id} />}
     </div>
   );
 }
