@@ -19,14 +19,16 @@ interface PresenterRemoteProps {
   sessionId?: string;
   autoShowResults?: boolean;
   onToggleAutoShow?: (value: boolean) => void;
+  sessionMode?: "sequential" | "simultaneous";
 }
 
-export default function PresenterRemote({ eventId, sessionId, autoShowResults = true, onToggleAutoShow }: PresenterRemoteProps) {
+export default function PresenterRemote({ eventId, sessionId, autoShowResults = true, onToggleAutoShow, sessionMode: sessionModeProp }: PresenterRemoteProps) {
   const [polls, setPolls] = useState<PollWithVotes[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [showDone, setShowDone] = useState(false);
-  const [sessionMode, setSessionMode] = useState<"sequential" | "simultaneous">("sequential");
+  const [sessionModeInternal, setSessionModeInternal] = useState<"sequential" | "simultaneous">("sequential");
+  const sessionMode = sessionModeProp ?? sessionModeInternal;
   const [error, setError] = useState<string | null>(null);
   const [sessionEnded, setSessionEnded] = useState(false);
 
@@ -48,6 +50,7 @@ export default function PresenterRemote({ eventId, sessionId, autoShowResults = 
 
   // Fetch the active session's session_mode at mount
   useEffect(() => {
+    if (sessionModeProp) return; // prop takes priority, skip fetch
     async function fetchSessionMode() {
       try {
         const res = await fetch(
@@ -56,14 +59,14 @@ export default function PresenterRemote({ eventId, sessionId, autoShowResults = 
         if (!res.ok) return;
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0 && data[0]?.session_mode) {
-          setSessionMode(data[0].session_mode as "sequential" | "simultaneous");
+          setSessionModeInternal(data[0].session_mode as "sequential" | "simultaneous");
         }
       } catch {
         // Non-fatal — default stays "sequential"
       }
     }
     fetchSessionMode();
-  }, [eventId]);
+  }, [eventId, sessionModeProp]);
 
   useEffect(() => { fetchPolls(); }, [fetchPolls]);
   useConferenceRealtime({ onPollsChange: fetchPolls, onVotesChange: fetchPolls });

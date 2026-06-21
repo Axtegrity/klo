@@ -176,11 +176,13 @@ function SessionPresenter({ session, eventId, eventSlug, onEnd, autoShowResults,
           <button
             onClick={async () => {
               setSessionMode("sequential");
-              await fetch(`/api/conference/sessions/${session.id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ session_mode: "sequential" }),
-              });
+              try {
+                await fetch(`/api/conference/sessions/${session.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ session_mode: "sequential" }),
+                });
+              } catch { /* ignore if mode lock prevents change */ }
             }}
             className="flex-1 py-2 rounded-lg text-xs font-bold transition-all"
             style={{
@@ -194,11 +196,13 @@ function SessionPresenter({ session, eventId, eventSlug, onEnd, autoShowResults,
           <button
             onClick={async () => {
               setSessionMode("simultaneous");
-              await fetch(`/api/conference/sessions/${session.id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ session_mode: "simultaneous" }),
-              });
+              try {
+                await fetch(`/api/conference/sessions/${session.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ session_mode: "simultaneous" }),
+                });
+              } catch { /* ignore if mode lock prevents change */ }
             }}
             className="flex-1 py-2 rounded-lg text-xs font-bold transition-all"
             style={{
@@ -234,7 +238,7 @@ function SessionPresenter({ session, eventId, eventSlug, onEnd, autoShowResults,
       </div>
 
       {/* Live run panel — only render after session is activated */}
-      {sessionStarted && <PresenterRemote eventId={eventId} sessionId={session.id} autoShowResults={autoShowResults} onToggleAutoShow={onToggleAutoShow} />}
+      {sessionStarted && <PresenterRemote eventId={eventId} sessionId={session.id} autoShowResults={autoShowResults} onToggleAutoShow={onToggleAutoShow} sessionMode={sessionMode} />}
     </div>
   );
 }
