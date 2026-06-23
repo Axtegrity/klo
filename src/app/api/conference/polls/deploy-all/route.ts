@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const { poll_ids, event_id } = body as { poll_ids?: string[]; event_id?: string };
+  const { poll_ids, event_id, auto_show_results } = body as { poll_ids?: string[]; event_id?: string; auto_show_results?: boolean };
 
   if (!poll_ids || !Array.isArray(poll_ids) || poll_ids.length === 0) {
     return NextResponse.json({ error: "poll_ids array required" }, { status: 400 });
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   // Deploy all polls simultaneously — no sibling closing
   const { data, error } = await supabase
     .from("conference_polls")
-    .update({ is_deployed: true, is_active: true })
+    .update({ is_deployed: true, is_active: true, show_results: auto_show_results === true })
     .in("id", poll_ids)
     .select();
 

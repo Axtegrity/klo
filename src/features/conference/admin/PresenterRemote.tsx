@@ -187,6 +187,7 @@ export default function PresenterRemote({ eventId, sessionId, autoShowResults = 
         body: JSON.stringify({
           poll_ids: undeployed.map((p) => p.id),
           event_id: eventId,
+          auto_show_results: autoShowResults,
         }),
       });
       if (!res.ok) {
@@ -332,7 +333,7 @@ export default function PresenterRemote({ eventId, sessionId, autoShowResults = 
 
             {/* Auto-show toggle */}
             <div className="flex items-center justify-between px-1">
-              <span className="text-xs text-klo-muted font-medium">Auto-show results when attendees finish</span>
+              <span className="text-xs text-klo-muted font-medium">Show results after each question</span>
               <button
                 onClick={() => onToggleAutoShow?.(!autoShowResults)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoShowResults ? "bg-purple-500" : "bg-white/10"}`}
