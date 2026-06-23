@@ -18,6 +18,7 @@ import SeminarModeGate from "@/features/conference/components/SeminarModeGate";
 import ConferenceToolsTabs from "@/features/conference/components/ConferenceToolsTabs";
 import { useSessions } from "@/features/conference/hooks/useSessions";
 import { useConferenceRoles } from "@/features/conference/hooks/useConferenceRoles";
+import { useConferenceRealtime } from "@/features/conference/hooks/useConferenceRealtime";
 import type { ConferenceSession } from "@/features/conference/types";
 
 interface EventFile {
@@ -175,7 +176,7 @@ export default function EventConferencePage() {
   }, [sessions, selectedSession]);
 
   // Fetch event by slug
-  useEffect(() => {
+  const fetchEvent = useCallback(() => {
     fetch(`/api/conference/event-by-slug?slug=${encodeURIComponent(slug)}`)
       .then((res) => {
         if (!res.ok) {
@@ -190,6 +191,10 @@ export default function EventConferencePage() {
       .catch(() => setNotFound(true))
       .finally(() => setEventLoading(false));
   }, [slug]);
+
+  useEffect(() => { fetchEvent(); }, [fetchEvent]);
+
+  useConferenceRealtime({ onSettingsChange: fetchEvent });
 
   if (eventLoading) {
     return (

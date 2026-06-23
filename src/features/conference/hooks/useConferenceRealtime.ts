@@ -21,6 +21,7 @@ type CallbackKey = keyof RealtimeCallbacks;
 // Map table names to callback keys
 const TABLE_TO_CALLBACK: Record<string, CallbackKey> = {
   app_settings: "onSettingsChange",
+  event_presentations: "onSettingsChange",
   conference_polls: "onPollsChange",
   conference_poll_votes: "onVotesChange",
   conference_questions: "onQuestionsChange",
