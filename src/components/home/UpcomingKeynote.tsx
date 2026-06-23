@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Calendar, MapPin, ArrowRight } from "lucide-react";
+import { useConferenceRealtime } from "@/features/conference/hooks/useConferenceRealtime";
 
 interface FeaturedEvent {
   id: string;
@@ -29,7 +30,7 @@ function formatDate(dateStr: string): string {
 export default function UpcomingKeynote() {
   const [event, setEvent] = useState<FeaturedEvent | null>(null);
 
-  useEffect(() => {
+  const fetchKeynote = useCallback(() => {
     fetch("/api/featured-keynote")
       .then((res) => res.json())
       .then((data) => {
@@ -37,6 +38,10 @@ export default function UpcomingKeynote() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => { fetchKeynote(); }, [fetchKeynote]);
+
+  useConferenceRealtime({ onSettingsChange: fetchKeynote });
 
   if (!event) return null;
 

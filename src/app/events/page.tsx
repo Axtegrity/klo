@@ -26,6 +26,7 @@ import { useSession } from "next-auth/react";
 import Badge from "@/components/shared/Badge";
 import Card from "@/components/shared/Card";
 import { nativeShare } from "@/lib/native-share";
+import { useConferenceRealtime } from "@/features/conference/hooks/useConferenceRealtime";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -263,17 +264,22 @@ export default function EventsPage() {
     return () => clearInterval(id);
   }, []);
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     Promise.all([
-      fetch("/api/events").then((r) => r.json()).catch(() => []),
-      fetch("/api/spotlight").then((r) => r.json()).catch(() => null),
+      fetch("/api/events"),
+      fetch("/api/spotlight"),
     ])
+      .then(([evRes, spRes]) => Promise.all([evRes.json(), spRes.json()]))
       .then(([eventsData, spotlightData]) => {
         if (Array.isArray(eventsData)) setEvents(eventsData);
         if (spotlightData) setSpotlight(spotlightData as SpotlightPayload);
       })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  useConferenceRealtime({ onSettingsChange: fetchData });
 
   // Load poll results when viewing a past event detail.
   // Note: we don't clear eventPolls when selectedEventId becomes null — the
