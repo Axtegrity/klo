@@ -22,7 +22,7 @@ export async function GET() {
   // Fetch all upcoming published events (today and future)
   const { data: events, error } = await supabase
     .from("event_presentations")
-    .select(`id, title, conference_name, conference_location, event_date, event_time, event_timezone, description, slug, website_url, start_date, end_date, is_featured,
+    .select(`id, title, conference_name, conference_location, event_date, event_time, event_timezone, description, slug, website_url, start_date, end_date, is_featured, seminar_mode,
       keynote_session:conference_sessions!keynote_session_id (
         id, speaker, room, time_label, sort_order
       )`)
