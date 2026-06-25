@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Archive, ChevronDown, ChevronUp, BarChart2, Download } from "lucide-react";
 import type { SessionSnapshot } from "../types";
+import PublicPollResults from "../components/PublicPollResults";
 
 interface SessionHistoryProps {
   eventId: string;
@@ -230,43 +231,11 @@ export default function SessionHistory({ eventId }: SessionHistoryProps) {
 
                     {/* Polls */}
                     {detail.snapshot_data.polls.length > 0 ? (
-                      <div className="space-y-4">
-                        <p className="text-xs font-semibold text-klo-muted uppercase tracking-wider">
-                          Polls
-                        </p>
-                        {detail.snapshot_data.polls.map((poll, pollIdx) => (
-                          <div key={pollIdx} className="space-y-2">
-                            <p className="text-sm font-medium text-klo-text">
-                              {poll.question}
-                            </p>
-                            <p className="text-xs text-klo-muted">
-                              {poll.total_votes} total vote{poll.total_votes !== 1 ? "s" : ""}
-                            </p>
-                            <div className="space-y-1.5">
-                              {poll.options.map((opt, optIdx) => {
-                                const pct = poll.percentages[optIdx] ?? 0;
-                                const votes = poll.votes[optIdx] ?? 0;
-                                return (
-                                  <div key={optIdx}>
-                                    <div className="flex justify-between text-xs mb-0.5">
-                                      <span className="text-klo-muted truncate pr-2">{opt}</span>
-                                      <span className="text-klo-muted/70 shrink-0">
-                                        {votes} ({pct}%)
-                                      </span>
-                                    </div>
-                                    <div className="h-2 rounded-full bg-white/5">
-                                      <div
-                                        className="h-full rounded-full bg-[#2764FF]/70 transition-all duration-500"
-                                        style={{ width: `${pct}%` }}
-                                      />
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      <PublicPollResults
+                        polls={detail.snapshot_data.polls}
+                        sessionTitle={detail.snapshot_data.session.title}
+                        endedAt={detail.snapshot_data.session.ended_at}
+                      />
                     ) : (
                       <p className="text-xs text-klo-muted">No polls in this session.</p>
                     )}
