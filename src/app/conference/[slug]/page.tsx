@@ -20,6 +20,7 @@ import { useSessions } from "@/features/conference/hooks/useSessions";
 import { useConferenceRoles } from "@/features/conference/hooks/useConferenceRoles";
 import { useConferenceRealtime } from "@/features/conference/hooks/useConferenceRealtime";
 import type { ConferenceSession } from "@/features/conference/types";
+import PublicPollResults from "@/features/conference/components/PublicPollResults";
 
 interface EventFile {
   id: string;
@@ -46,6 +47,23 @@ interface EventData {
   start_date: string | null;
   end_date: string | null;
   event_files: EventFile[];
+}
+
+interface PollSnapshot {
+  question: string;
+  options: string[];
+  votes: number[];
+  total_votes: number;
+  percentages: number[];
+}
+
+interface SessionSnapshot {
+  id: string;
+  created_at: string;
+  snapshot_data: {
+    session: { title: string; ended_at: string };
+    polls: PollSnapshot[];
+  };
 }
 
 const fadeUp = {
@@ -111,6 +129,7 @@ export default function EventConferencePage() {
   const [event, setEvent] = useState<EventData | null>(null);
   const [eventLoading, setEventLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [snapshot, setSnapshot] = useState<SessionSnapshot | null>(null);
 
   const { isAdmin } = useConferenceRoles();
   const [selectedSession, setSelectedSession] = useState<ConferenceSession | null>(null);
@@ -193,6 +212,16 @@ export default function EventConferencePage() {
   }, [slug]);
 
   useEffect(() => { fetchEvent(); }, [fetchEvent]);
+
+  const fetchSnapshot = useCallback(() => {
+    if (!event?.id) return;
+    fetch(`/api/conference/results?event_id=${event.id}`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => { if (data) setSnapshot(data); })
+      .catch(() => {});
+  }, [event?.id]);
+
+  useEffect(() => { fetchSnapshot(); }, [fetchSnapshot]);
 
   useConferenceRealtime({ onSettingsChange: fetchEvent });
 
@@ -349,6 +378,12 @@ export default function EventConferencePage() {
               <SeminarModeGate eventId={event.id}>
                 <ConferenceToolsTabs eventId={event.id} sessionId={selectedSession?.id} autoShowResults={event.auto_show_results} />
               </SeminarModeGate>
+            ) : snapshot && (snapshot.snapshot_data?.polls?.length ?? 0) > 0 ? (
+              <PublicPollResults
+                polls={snapshot.snapshot_data.polls}
+                sessionTitle={snapshot.snapshot_data.session.title}
+                endedAt={snapshot.snapshot_data.session.ended_at}
+              />
             ) : (
               <div className="flex items-center justify-center py-16 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
                 <p className="text-klo-muted text-center text-base">
