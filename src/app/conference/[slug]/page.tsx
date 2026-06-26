@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   CalendarDays,
@@ -194,6 +194,27 @@ export default function EventConferencePage() {
     }
   }, [sessions, selectedSession]);
 
+  const searchParams = useSearchParams();
+  const isSimplifiedMode = !!searchParams.get("session");
+
+  useEffect(() => {
+    if (isSimplifiedMode) {
+      document.body.classList.add("simplified-attendee-mode");
+    }
+    return () => {
+      document.body.classList.remove("simplified-attendee-mode");
+    };
+  }, [isSimplifiedMode]);
+
+  useEffect(() => {
+    if (!sessions.length || sessionsLoading) return;
+    const sessionParam = searchParams.get("session");
+    if (sessionParam) {
+      const match = sessions.find((s) => s.id === sessionParam);
+      if (match) handleSessionChange(match.id);
+    }
+  }, [sessions, sessionsLoading, searchParams, handleSessionChange]);
+
   // Fetch event by slug
   const fetchEvent = useCallback(() => {
     fetch(`/api/conference/event-by-slug?slug=${encodeURIComponent(slug)}`)
@@ -261,7 +282,7 @@ export default function EventConferencePage() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero */}
+      {!isSimplifiedMode && (
       <section className="relative overflow-hidden py-20 md:py-28 px-6">
         <div className="absolute inset-0 bg-gradient-to-b from-klo-gold/5 via-transparent to-transparent pointer-events-none" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#2764FF]/3 blur-[120px] rounded-full pointer-events-none" />
@@ -340,6 +361,7 @@ export default function EventConferencePage() {
           )}
         </motion.div>
       </section>
+      )}
 
       {/* Interactive Tools */}
       <section className="px-6 py-16 md:py-24 bg-klo-dark/40">
