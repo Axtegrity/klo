@@ -1,4 +1,5 @@
 import HeroBanner from "@/components/home/HeroBanner";
+import LiveSessionGate from "@/components/home/LiveSessionGate";
 import SurveyCTA from "@/components/home/SurveyCTA";
 import LatestBrief from "@/components/home/LatestBrief";
 import TrendingTopics from "@/components/home/TrendingTopics";
@@ -95,6 +96,7 @@ export default async function Home() {
 
   return (
     <>
+      <LiveSessionGate />
       {/* Hero — full width. Admin-overridable via page_configs.hero_config */}
       <HeroBanner
         label={hero?.label || undefined}
