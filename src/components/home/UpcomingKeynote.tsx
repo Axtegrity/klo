@@ -17,6 +17,12 @@ interface FeaturedEvent {
   seminar_mode: boolean;
 }
 
+function isToday(dateStr: string): boolean {
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  return dateStr === todayStr;
+}
+
 function formatDate(dateStr: string): string {
   if (dateStr === "SAVE THE DATE") return "SAVE THE DATE";
   const d = new Date(dateStr + "T12:00:00");
@@ -61,7 +67,7 @@ export default function UpcomingKeynote() {
             </div>
           ) : (
             <h2 className="font-display text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#E6EDF3] to-[#8B949E] bg-clip-text text-transparent uppercase tracking-wide">
-              Upcoming Event
+              {isToday(event.event_date) ? "Today's Event" : "Upcoming Event"}
             </h2>
           )}
       </div>

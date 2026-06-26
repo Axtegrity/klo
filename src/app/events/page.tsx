@@ -231,7 +231,19 @@ function isPastEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_d
 function isUpcomingEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode" | "event_status">): boolean {
   if (event.seminar_mode) return false;
   if (event.event_date === "SAVE THE DATE") return true;
+  if (isTodayEvent(event)) return false;
   return !isLiveNow(event) && !isPastEvent(event);
+}
+
+function isTodayEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode" | "event_status">): boolean {
+  if (event.seminar_mode) return false; // live takes priority
+  if (event.event_date === "SAVE THE DATE") return false;
+  if (isPastEvent(event)) return false;
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const startDate = event.event_date;
+  const endDate = event.end_date || event.event_date;
+  return startDate <= todayStr && endDate >= todayStr;
 }
 
 const fileTypeColors: Record<string, string> = {
@@ -326,6 +338,11 @@ export default function EventsPage() {
   const liveEvents = useMemo(() =>
     events.filter(isLiveNow).sort((a, b) => sortDate(a.event_date) - sortDate(b.event_date)),
     [events, sortDate]);
+  const todayEvents = useMemo(() => events.filter(isTodayEvent).sort((a, b) => {
+    const aTime = a.event_time || "00:00";
+    const bTime = b.event_time || "00:00";
+    return aTime.localeCompare(bTime);
+  }), [events]);
   const upcomingEvents = useMemo(() =>
     events.filter(isUpcomingEvent).sort((a, b) => sortDate(a.event_date) - sortDate(b.event_date)),
     [events, sortDate]);
@@ -691,6 +708,22 @@ export default function EventsPage() {
       )}
 
 
+      {/* Today Events */}
+      {!loading && todayEvents.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Today</p>
+          {todayEvents.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              isPastEvent={false}
+              isLive={isLiveNow(event)}
+              onViewDetails={setSelectedEventId}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Upcoming Events */}
       {showUpcoming && (
       <section className="px-6 py-16 md:py-24">
@@ -987,7 +1020,9 @@ function SpotlightCard({ event, sessions, cfg }: { event: EventItem; sessions: E
         <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD]" />
         <div className="py-4 space-y-5">
           <div className="text-center space-y-2">
-            <p className="text-sm font-medium text-[#2764FF] uppercase tracking-wider">Up Next</p>
+            <p className="text-sm font-medium uppercase tracking-wider" style={{ color: isTodayEvent(event) ? "#34d399" : "#2764FF" }}>
+                {isTodayEvent(event) ? "Today" : "Up Next"}
+              </p>
             {showHost && (
               <p className="text-sm text-klo-muted">Hosted by {event.hosting_entity}</p>
             )}
