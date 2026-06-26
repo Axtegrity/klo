@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart2 } from "lucide-react";
+import { BarChart2, Download } from "lucide-react";
 import Card from "@/components/shared/Card";
 
 interface PollSnapshot {
@@ -26,6 +26,36 @@ function formatDate(iso: string): string {
 }
 
 export default function PublicPollResults({ polls, sessionTitle, endedAt }: PublicPollResultsProps) {
+  const downloadCSV = () => {
+    const rows: string[][] = [];
+    rows.push(["Session Results — " + sessionTitle]);
+    rows.push(["Date", formatDate(endedAt)]);
+    rows.push([]);
+    rows.push(["Question", "Option", "Votes", "Percentage"]);
+    polls.forEach((poll, idx) => {
+      poll.options.forEach((opt, optIdx) => {
+        rows.push([
+          `${idx + 1}. ${poll.question}`,
+          opt,
+          String(poll.votes[optIdx] ?? 0),
+          `${poll.percentages[optIdx] ?? 0}%`,
+        ]);
+      });
+      rows.push(["", "Total Responses", String(poll.total_votes), ""]);
+      rows.push([]);
+    });
+    const csv = rows
+      .map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${sessionTitle.replace(/\s+/g, "-")}-results.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (polls.length === 0) return null;
 
   return (
@@ -39,6 +69,15 @@ export default function PublicPollResults({ polls, sessionTitle, endedAt }: Publ
           <p className="text-xs text-klo-muted">{sessionTitle} · {formatDate(endedAt)}</p>
         </div>
       </div>
+
+      <button
+        onClick={downloadCSV}
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+        style={{ background: "rgba(39,100,255,0.1)", color: "#60a5fa", border: "1px solid rgba(39,100,255,0.2)" }}
+      >
+        <Download size={12} />
+        Download Results
+      </button>
 
       <div className="space-y-4">
         {polls.map((poll, pollIdx) => {
