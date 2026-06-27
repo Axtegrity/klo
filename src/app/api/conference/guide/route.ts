@@ -7,109 +7,140 @@ export const dynamic = "force-dynamic";
 const ATTENDEE_CONTEXT = `
 The KLO app (keithlodom.ai) is Pastor Keith L. Odom's conference engagement platform.
 
-ATTENDEE FLOW:
+GETTING IN:
 1. Download the KLO app from the App Store (search "Keith L. Odom") OR open keithlodom.ai in a browser
-2. When Keith's event is live, the app shows a full-screen "Live now" entry screen automatically
-3. If the event has an access code, enter the code Keith announces from the podium
-4. If there are multiple sessions, tap the session name to join your room
-5. Once inside, tap the Polls tab to see and answer poll questions
-6. Each question has multiple choice answers — tap one to submit
-7. After answering, results show immediately for that question
-8. Progress bar at top shows how many questions remain
-9. When all questions are answered, a completion screen appears
-10. Use the Q&A tab to submit questions to Keith at any time during the session
-11. Results remain visible at keithlodom.ai/conference/[event-slug] after the session ends
-12. Download poll results as CSV using the "Download Results" button
+2. When Keith's event is live, the app shows a full-screen "Live now" entry screen automatically — no navigation needed
+3. You can also go directly to keithlodom.ai/join on any device
+4. If the event has an access code, Keith will announce it from the podium — enter it when prompted
+5. If there are multiple sessions, tap the session name for your room
+6. Once inside, you'll see only the Interactive Tools — polls, Q&A, and word cloud. No distractions.
 
-ACCESS:
-- Web: keithlodom.ai/join (shows current live session)
-- App: Download from App Store, search "Keith L. Odom"
-- Direct link: keithlodom.ai/conference/[event-slug] (find slug in admin → Events → Details)
-- When joining via keithlodom.ai/join, the app strips away navigation automatically — attendees only see the polls and Q&A, nothing else
+ANSWERING POLLS:
+1. Tap the Polls tab
+2. Each question appears with multiple choice answers — tap one to submit
+3. Results show immediately after you answer each question
+4. A progress bar shows how many questions remain
+5. When all questions are answered, a completion screen appears
+6. You can still see all results after the session ends — they stay permanently at the same URL
+
+Q&A:
+1. Tap the Q&A tab at any time during the session
+2. Type your question and submit
+3. Keith or a moderator may release your question to the full audience
+
+AFTER THE SESSION:
+- Poll results remain permanently visible at keithlodom.ai/conference/[event-slug]
+- Download results as CSV using the "Download Results" button
+- Go back to Keith's site anytime using the "← Back to Keith's site" link
+
+TROUBLESHOOTING:
+- Can't find the session? Go to keithlodom.ai/join directly
+- Wrong access code? Check with Keith or a team member for today's code
+- Polls not showing? The presenter hasn't deployed them yet — wait a moment
+- Page looks stuck? Pull down to refresh on mobile
 `;
 
 const HOST_CONTEXT = `
 The KLO app host flow for Pastor Keith L. Odom:
 
-PRE-EVENT SETUP:
+PRE-EVENT SETUP (do this before the day):
 1. Go to keithlodom.ai/admin → Events → select the event
-2. Under Sessions, verify the session is set up with correct title, speaker, time
-3. Under Polls, verify all 12 polls are uploaded and queued (not deployed)
-4. Set an access code in event Details if you want to restrict entry
-5. Tell attendees: "Download the KLO app, search Keith L. Odom"
+2. Under Sessions — verify session title, speaker, time, room are correct
+3. Under Polls — upload your poll document (.docx, .pdf, .txt) — AI parses it automatically
+4. Review parsed questions — delete any that look wrong
+5. Set an access code in event Details (optional but recommended for private events)
+6. Tell attendees in advance: "Download the KLO app, search Keith L. Odom"
 
 DAY OF EVENT:
-1. Go to admin → Events → select the event → Sessions
-2. Click "Start Event" — this opens the event to attendees
-3. Announce the access code from the podium if one is set
-4. Attendees go to keithlodom.ai/join or open the app
+1. Go to admin → Events → select the event → Sessions panel
+2. Optional: click "Rehearse" to test polls privately — only you can see them
+3. Click "Exit Rehearsal" when done — polls reset automatically, nothing is archived
+4. When ready for attendees: click "Start Event"
+5. Announce from podium: "Go to keithlodom.ai/join or open the KLO app"
+6. If access code is set: announce the code from the podium
 
 RUNNING POLLS:
-1. In the Sessions panel, the Presenter Remote appears after clicking Start Event
-2. Choose "One at a Time" or "Deploy All" mode
-3. One at a Time: click "Start Poll" for each question, discuss results, click "Close & Next"
-4. Deploy All: click "Deploy All Polls" — all 12 appear on attendee screens at once
-5. With "Show results after each question" toggle ON — results show automatically as attendees answer
-6. With toggle OFF — use "Push All Results" or per-question push buttons to reveal results manually
+1. After clicking Start Event, the Presenter Remote appears in the Sessions panel
+2. Choose mode BEFORE deploying any polls:
+   - "One at a Time" — deploy one poll, discuss results, move to next
+   - "Deploy All" — all polls appear on attendee screens at once
+3. One at a Time: click "Start Poll" → discuss results → "Close & Next"
+4. Deploy All: click "Deploy All Polls" → all 12 appear simultaneously
+5. Toggle "Show results after each question" ON = results show automatically as attendees answer
+6. Toggle OFF = use "Push All Results" or per-question push buttons to reveal manually
 
 ENDING THE SESSION:
-1. Click "End Event" in the Presenter Remote — archives all results
-2. Results are permanently available at the conference page for attendees
+1. Click "End Event" — archives all results permanently
+2. Attendees can see results immediately at the conference page
 3. View full results in admin → Events → History section
 4. Download CSV from History or from the public conference page
 
-REHEARSAL MODE:
-1. Click "Rehearse" instead of "Start Event" to test without attendees seeing
-2. Click "Exit Rehearsal" when done — polls reset automatically, nothing is archived
-3. Rehearsal does not block you from going live afterward
+REHEARSAL vs LIVE:
+- Rehearse = test mode, non-admins blocked, polls reset on exit, nothing archived
+- Start Event = live mode, all attendees can join, results archived when you end
 
-HOST DASHBOARD (mobile):
-- Go to keithlodom.ai/host on your phone for a mobile-optimized control panel
+LATECOMERS:
+- Attendees can join at any time while the event is live
+- If polls are already deployed, latecomers will see them immediately
+- If using Deploy All mode, latecomers see all active polls at once
 
 GUIDE:
-- Full app guide available at keithlodom.ai/guide (admin login required)
-- Guide regenerates with AI on every visit — always current
+- Full app guide at keithlodom.ai/guide (admin login required)
 `;
 
 const ADMIN_CONTEXT = `
-The KLO app admin flow for managing events, sessions, and polls:
+The KLO app admin reference for managing the conference platform:
 
 EVENT MANAGEMENT:
 - Admin → Events → New Event to create
-- Fill in: event name, date, location, access code (optional)
-- Toggle "Display on Events Page" to show on public events listing
-- Toggle "Pin as Up Next" to feature on home page
+- Required: event name, start date
+- Optional: end date (for multi-day events), location, access code, website URL
+- Toggles: Display on Events Page, Feature on Home Page, Pin as Up Next
+- Event states: Upcoming (future date), Today (event date = today), Past (after 11:59 PM on last day)
+- Live overrides all states — seminar_mode ON = LIVE regardless of date
+- Events move to Past automatically based on date — no manual update needed
+- event_status field can force "past" manually if needed
 
 SESSION MANAGEMENT:
 - Inside an event → Sessions → Add Session
-- Set session title, speaker, time label, room
-- Multiple sessions appear as a picker in the attendee entry screen
-- Q&A can be enabled/disabled per session
-- Q&A release modes: Show All (public), Single Release (Keith approves each), Hide All
+- Fields: title, speaker, time label, room, start/end time
+- Multiple sessions appear as a picker in the attendee entry screen at keithlodom.ai/join
+- Q&A modes per session: Show All (public), Single Release (approve each), Hide All
+- Sessions can be activated (is_active) independently
 
 POLL MANAGEMENT:
-- Inside a session → Polls → Upload a file (.docx, .pdf, .txt)
-- AI parses the document and extracts questions automatically
-- Review questions in the poll list — delete any that parsed incorrectly
-- Polls sit as "Queued" until deployed during a live session
-- Reset All clears all votes and resets polls to queued state
+- Inside a session → Polls → Upload a file (.docx, .pdf, .txt, .xlsx)
+- AI parses document and extracts questions automatically
+- Question numbers in the document are stripped — not included as answer options
+- Review parsed questions in the poll list before going live
+- Delete individual polls using the trash icon
+- Reset All clears all votes and resets polls to Queued state
+- Polls deploy from the Presenter Remote during a live session — not from the setup view
+
+ATTENDEE ENTRY:
+- keithlodom.ai/join — dedicated entry URL, always shows current live session
+- Home page (keithlodom.ai) — shows full-screen gate when event is live
+- Simplified mode: when joining via /join, nav/header/footer are hidden — attendees only see polls and Q&A
+- Access code gate appears before session entry if code is set on the event
+- "← Back to Keith's site" link always visible in simplified mode
 
 RESULTS AND HISTORY:
-- Admin → Events → History section shows all past session snapshots
-- Each snapshot shows full poll results with vote bars and percentages
-- Download CSV button available on each snapshot
-- Public results visible at the conference page after session ends
+- Admin → Events → History — shows all past session snapshots
+- Each snapshot: poll results with vote bars, percentages, attendee count, Q&A
+- Download CSV button on each snapshot (admin view)
+- Public results: visible at conference page after session ends, with Download Results CSV button
+- Results are permanent — never deleted unless event is deleted
 
 REALTIME BEHAVIOR:
-- All pages update automatically when event state changes — no manual refresh needed
-- When Keith clicks Start Event, attendee screens activate within seconds
-- When Keith ends session, all screens update automatically
+- All pages update automatically — no manual refresh needed
+- Start Event → attendee screens activate within seconds
+- End Event → all screens update automatically
+- seminar_mode change → home page, events page, and conference page all update instantly
 
-EVENT STATE RULES:
-- seminar_mode ON = event is live, attendees can participate
-- rehearsal_mode ON = rehearsal only, non-admins blocked
-- Today's events show in "Today" section on events page
-- Past events move automatically at 11:59 PM on last day
+GUIDE:
+- This guide lives at keithlodom.ai/guide
+- Regenerates with AI on every tab click — always reflects current app state
+- Update src/app/api/conference/guide/route.ts context strings after every feature change
 `;
 
 const CONTEXTS: Record<string, string> = {
