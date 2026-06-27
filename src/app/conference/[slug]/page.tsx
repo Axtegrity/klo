@@ -381,15 +381,6 @@ export default function EventConferencePage() {
                 Interactive Tools
               </h2>
             </div>
-            {isAdmin && event.id && (
-              <a
-                href={`/conference/present?event_id=${event.id}`}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-[#2764FF]/10 text-[#2764FF] border border-[#2764FF]/20 rounded-xl text-sm font-semibold hover:bg-[#2764FF]/20 transition-colors"
-              >
-                <Play size={14} fill="currentColor" />
-                Presenter Remote
-              </a>
-            )}
             <p className="text-klo-muted w-full">
               Participate in live polls, ask questions, and contribute to the word cloud.
             </p>
@@ -457,6 +448,14 @@ export default function EventConferencePage() {
           )}
         </motion.div>
       </section>
-    </div>
+
+        {isSimplifiedMode && (
+          <div className="text-center py-8">
+            <a href="/" className="text-xs text-[#8B949E] hover:text-white transition-colors">
+              ← Back to Keith's site
+            </a>
+          </div>
+        )}
+      </div>
   );
 }
