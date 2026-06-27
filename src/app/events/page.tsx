@@ -223,9 +223,9 @@ function isPastEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_d
   if (event.event_date === "SAVE THE DATE") return false;
   if (event.seminar_mode) return false;
   if (event.event_status === "past") return true;
-  if (event.event_status === "upcoming" || event.event_status === "live") return false;
   const end = eventEnd(event);
-  return end ? end < new Date() : false;
+  if (end && end < new Date()) return true;
+  return false;
 }
 
 function isUpcomingEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode" | "event_status">): boolean {
