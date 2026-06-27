@@ -24,7 +24,8 @@ ATTENDEE FLOW:
 ACCESS:
 - Web: keithlodom.ai/join (shows current live session)
 - App: Download from App Store, search "Keith L. Odom"
-- Direct link: keithlodom.ai/conference/northern-nevada-first-jurisdiction-holy-convocation
+- Direct link: keithlodom.ai/conference/[event-slug] (find slug in admin → Events → Details)
+- When joining via keithlodom.ai/join, the app strips away navigation automatically — attendees only see the polls and Q&A, nothing else
 `;
 
 const HOST_CONTEXT = `
@@ -64,6 +65,10 @@ REHEARSAL MODE:
 
 HOST DASHBOARD (mobile):
 - Go to keithlodom.ai/host on your phone for a mobile-optimized control panel
+
+GUIDE:
+- Full app guide available at keithlodom.ai/guide (admin login required)
+- Guide regenerates with AI on every visit — always current
 `;
 
 const ADMIN_CONTEXT = `
