@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       description: description?.trim() || null,
       scheduled_at: scheduled_at || null,
       qa_enabled: qa_enabled ?? true,
-      release_mode: release_mode || "all",
+      release_mode: release_mode || "single",
       speaker: speaker?.trim() || null,
       room: room?.trim() || null,
       time_label: time_label?.trim() || null,
