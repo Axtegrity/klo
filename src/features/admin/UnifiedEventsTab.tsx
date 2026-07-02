@@ -149,6 +149,7 @@ function EventDetail({ event, onBack, onRefresh }: {
   // Spotlight state
   const [spotlightLoading, setSpotlightLoading] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
+  // Fetched from /api/spotlight and saved via saveSpotlight, but no UI control sets it yet.
   const [cardPosition, setCardPosition] = useState<"above" | "below">("above");
   const [autoPick, setAutoPick] = useState(true);
   const [showLive, setShowLive] = useState(true);
