@@ -149,7 +149,6 @@ function EventDetail({ event, onBack, onRefresh }: {
   // Spotlight state
   const [spotlightLoading, setSpotlightLoading] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
-  // Fetched from /api/spotlight and saved via saveSpotlight, but no UI control sets it yet.
   const [cardPosition, setCardPosition] = useState<"above" | "below">("above");
   const [autoPick, setAutoPick] = useState(true);
   const [showLive, setShowLive] = useState(true);
@@ -432,6 +431,26 @@ function EventDetail({ event, onBack, onRefresh }: {
               </button>
             </div>
           ))}
+          <div>
+            <span className="text-sm text-[#8B949E] block mb-2">Card position</span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setCardPosition("above")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${cardPosition === "above" ? "bg-[#2764FF] text-white" : "bg-white/5 text-klo-muted hover:bg-white/10"}`}
+              >
+                Above countdown
+              </button>
+              <button
+                type="button"
+                onClick={() => setCardPosition("below")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${cardPosition === "below" ? "bg-[#2764FF] text-white" : "bg-white/5 text-klo-muted hover:bg-white/10"}`}
+              >
+                Below countdown
+              </button>
+            </div>
+            <p className="text-xs text-klo-muted/60 mt-1">Where the event details card sits relative to the countdown timer on /events.</p>
+          </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-[#8B949E]">Spotlight this event</span>
             <button
