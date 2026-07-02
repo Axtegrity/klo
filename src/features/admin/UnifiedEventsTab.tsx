@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Plus, Trash2, ChevronDown, ChevronUp, Calendar,
-  FileText, RefreshCw, Radio, Search,
+  FileText, RefreshCw, Globe, Radio, Search,
   ArrowLeft, MessageSquare, Cloud, Megaphone, Shield,
   Archive, ChevronRight,
 } from "lucide-react";
@@ -399,9 +399,20 @@ function EventDetail({ event, onBack, onRefresh }: {
               </div>
             ))}
           </div>
-        {/* Public page settings */}
-        <div className="border-t pt-4 space-y-3" style={{ borderColor: "#21262D" }}>
-          <p className="text-xs font-semibold text-[#8B949E] uppercase tracking-wider">Public Events Page</p>
+        <button
+          onClick={saveDetails}
+            disabled={saving}
+            className="w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50 hover:brightness-110"
+            style={{ background: GOLD, color: "#0D1117" }}
+          >
+            {saving ? "Saving…" : saveSuccess ? "Saved ✓" : "Save Details"}
+          </button>
+        </div>
+      </Section>
+
+      {/* ── WEBSITE DISPLAY ── */}
+      <Section title="Website Display" icon={Globe}>
+        <div className="pt-4 space-y-3">
           {[
             { label: "Show Countdown Timer", value: showCountdown, set: setShowCountdown },
             { label: "Show Live Section", value: showLive, set: setShowLive },
@@ -437,16 +448,7 @@ function EventDetail({ event, onBack, onRefresh }: {
             className="w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
             style={{ background: "rgba(39,100,255,0.15)", color: "#60a5fa", border: "1px solid rgba(39,100,255,0.3)" }}
           >
-            {spotlightLoading ? "Saving…" : "Save Page Settings"}
-          </button>
-        </div>
-        <button
-          onClick={saveDetails}
-            disabled={saving}
-            className="w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50 hover:brightness-110"
-            style={{ background: GOLD, color: "#0D1117" }}
-          >
-            {saving ? "Saving…" : saveSuccess ? "Saved ✓" : "Save Details"}
+            {spotlightLoading ? "Saving…" : "Save Website Display"}
           </button>
         </div>
       </Section>
