@@ -622,20 +622,23 @@ export default function SessionManager({ eventId, renderSessionExtra, onSessions
               </div>
 
               {/* Release mode selector */}
-              <div className="mt-3 flex gap-2">
-                {(["all", "single", "hide_all"] as const).map((mode) => (
-                  <button
-                    key={mode}
-                    onClick={() => setReleaseMode(s.id, mode)}
-                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                      s.release_mode === mode
-                        ? "bg-[#2764FF]/20 text-[#2764FF] border border-[#2764FF]/30"
-                        : "bg-klo-navy/50 text-klo-muted hover:text-klo-text border border-white/5"
-                    }`}
-                  >
-                    {mode === "all" ? "Show All" : mode === "single" ? "Single Release" : "Hide All"}
-                  </button>
-                ))}
+              <div className="mt-3">
+                <p className="text-xs text-klo-muted mb-2 font-medium">Q&A Release Mode</p>
+                <div className="flex gap-2">
+                  {(["all", "single", "hide_all"] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setReleaseMode(s.id, mode)}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                        s.release_mode === mode
+                          ? "bg-[#2764FF]/20 text-[#2764FF] border border-[#2764FF]/30"
+                          : "bg-klo-navy/50 text-klo-muted hover:text-klo-text border border-white/5"
+                      }`}
+                    >
+                      {mode === "all" ? "Show All" : mode === "single" ? "Single Release" : "Hide All"}
+                    </button>
+                  ))}
+                </div>
               </div>
               {renderSessionExtra?.(s)}
             </>
