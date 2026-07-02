@@ -336,27 +336,51 @@ export default function EventConferencePage() {
 
           {/* Session selector — always requires selection */}
           {hasSessions && !sessionsLoading && (
-            <motion.div variants={fadeUp} custom={4} className="mt-8">
-              <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-klo-dark/60 border border-white/10 backdrop-blur-sm">
-                <Radio size={16} className="text-[#2764FF] shrink-0" />
-                <label className="text-sm text-klo-muted shrink-0">Session:</label>
-                <div className="relative">
-                  <select
-                    value={selectedSession?.id || ""}
-                    onChange={(e) => handleSessionChange(e.target.value)}
-                    className="appearance-none bg-transparent border border-white/10 rounded-lg pl-3 pr-8 py-1.5 text-sm text-klo-text font-medium focus:outline-none focus:border-[#2764FF]/50 cursor-pointer min-w-[200px]"
-                  >
-                    <option value="" disabled>Select a session…</option>
-                    {sessions.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.title}
-                        {s.time_label ? ` — ${s.time_label}` : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-klo-muted pointer-events-none" />
+            <motion.div variants={fadeUp} custom={4} className="mt-8 w-full max-w-sm mx-auto">
+              {event.seminar_mode ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-[#8B949E] text-center uppercase tracking-wider font-semibold mb-3">Select your session</p>
+                  {sessions.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => handleSessionChange(s.id)}
+                      className="w-full text-left px-4 py-3 rounded-xl transition-all"
+                      style={{
+                        background: s.is_active ? "#34d399" : "#161B22",
+                        border: s.is_active ? "none" : "0.5px solid #21262D",
+                      }}
+                    >
+                      <span className="block text-sm font-semibold" style={{ color: s.is_active ? "#052e16" : "#E6EDF3" }}>
+                        {s.is_active ? "Join now" : s.title}
+                      </span>
+                      <span className="block text-xs mt-0.5" style={{ color: s.is_active ? "rgba(5,46,22,0.7)" : "#8B949E" }}>
+                        {s.is_active ? `${s.title}${s.time_label ? ` · ${s.time_label}` : ""}` : s.time_label || ""}
+                      </span>
+                    </button>
+                  ))}
                 </div>
-              </div>
+              ) : (
+                <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-klo-dark/60 border border-white/10 backdrop-blur-sm">
+                  <Radio size={16} className="text-[#2764FF] shrink-0" />
+                  <label className="text-sm text-klo-muted shrink-0">Session:</label>
+                  <div className="relative">
+                    <select
+                      value={selectedSession?.id || ""}
+                      onChange={(e) => handleSessionChange(e.target.value)}
+                      className="appearance-none bg-transparent border border-white/10 rounded-lg pl-3 pr-8 py-1.5 text-sm text-klo-text font-medium focus:outline-none focus:border-[#2764FF]/50 cursor-pointer min-w-[200px]"
+                    >
+                      <option value="" disabled>Select a session…</option>
+                      {sessions.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.title}
+                          {s.time_label ? ` — ${s.time_label}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-klo-muted pointer-events-none" />
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
         </motion.div>
