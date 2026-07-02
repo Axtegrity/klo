@@ -81,7 +81,7 @@ export default function LiveSessionEntry({ event, sessions }: LiveSessionEntryPr
         {/* Access code gate */}
         {!codeVerified ? (
           <div className="space-y-3">
-            <p className="text-sm text-center text-[#8B949E] mb-4">Enter today's code to join</p>
+            <p className="text-sm text-center text-[#8B949E] mb-4">Enter today&apos;s code to join</p>
             <input
               type="text"
               value={code}
@@ -169,7 +169,7 @@ export default function LiveSessionEntry({ event, sessions }: LiveSessionEntryPr
             onClick={() => router.push("/")}
             className="text-xs text-[#8B949E] hover:text-white transition-colors"
           >
-            Browse Keith's site →
+            Browse Keith&apos;s site →
           </button>
         </div>
       </motion.div>

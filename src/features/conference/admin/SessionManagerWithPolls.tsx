@@ -81,6 +81,22 @@ function SessionPresenter({ session, eventId, eventSlug, onEnd, autoShowResults,
   const [justExited, setJustExited] = useState(false);
 
   const startSession = async (newMode: "rehearsal" | "live") => {
+    // Check if another session is already active for this event
+    const activeCheckRes = await fetch(`/api/conference/sessions?event_id=${eventId}&active_only=true`);
+    if (activeCheckRes.ok) {
+      const activeSessions = await activeCheckRes.json();
+      const otherActive = Array.isArray(activeSessions)
+        ? activeSessions.filter((s: { id: string }) => s.id !== session.id)
+        : [];
+      if (otherActive.length > 0) {
+        const otherSession = otherActive[0] as { id: string; title: string };
+        const confirmed = window.confirm(
+          `"${otherSession.title}" is currently open.\n\nStarting this session will close it and all its polls. Attendees will no longer be able to vote.\n\nContinue?`
+        );
+        if (!confirmed) return;
+      }
+    }
+
     setJustExited(false);
     // Activate this session
     await fetch(`/api/conference/sessions/${session.id}`, {
@@ -308,7 +324,7 @@ export default function SessionManagerWithPolls({ eventId, eventSlug, onSessions
     setPollCounts(counts);
   }, [eventId]);
 
-  useEffect(() => { fetchPollCounts(); }, [fetchPollCounts]);
+  useEffect(() => { queueMicrotask(() => fetchPollCounts()); }, [fetchPollCounts]);
 
   return (
     <div>

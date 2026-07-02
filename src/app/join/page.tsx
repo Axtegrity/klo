@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { useConferenceRealtime } from "@/features/conference/hooks/useConferenceRealtime";
 import LiveSessionEntry from "@/features/conference/components/LiveSessionEntry";
 
@@ -66,9 +67,9 @@ export default function JoinPage() {
         <p className="text-sm text-[#8B949E] max-w-xs">
           Check back when Keith goes live. This page will update automatically.
         </p>
-        <a href="/" className="text-sm text-[#2764FF] hover:underline mt-2">
-          Browse Keith's site →
-        </a>
+        <Link href="/" className="text-sm text-[#2764FF] hover:underline mt-2">
+          Browse Keith&apos;s site →
+        </Link>
       </div>
     );
   }

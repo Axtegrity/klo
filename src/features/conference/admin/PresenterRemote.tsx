@@ -7,7 +7,6 @@ import {
   StopCircle,
   ChevronDown,
   ChevronUp,
-  Undo2,
   ArrowRight,
   PowerOff,
 } from "lucide-react";
@@ -140,17 +139,6 @@ export default function PresenterRemote({ eventId, sessionId, autoShowResults = 
     });
   };
 
-  const recallPoll = (id: string) =>
-    act(async () => {
-      const res = await fetch(`/api/conference/polls/${id}/recall`, {
-        method: "POST",
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to reopen poll");
-      }
-    });
-
   const recallAll = () =>
     act(async () => {
       if (!eventId) return;
@@ -193,19 +181,6 @@ export default function PresenterRemote({ eventId, sessionId, autoShowResults = 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || "Failed to deploy all polls");
-      }
-    });
-
-  const undeployPoll = (id: string) =>
-    act(async () => {
-      const res = await fetch(`/api/conference/polls/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_deployed: false }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to put poll back");
       }
     });
 

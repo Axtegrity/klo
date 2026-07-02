@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const { poll_ids, event_id, auto_show_results } = body as { poll_ids?: string[]; event_id?: string; auto_show_results?: boolean };
+  const { poll_ids, auto_show_results } = body as { poll_ids?: string[]; auto_show_results?: boolean };
 
   if (!poll_ids || !Array.isArray(poll_ids) || poll_ids.length === 0) {
     return NextResponse.json({ error: "poll_ids array required" }, { status: 400 });
