@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Plus, Trash2, Upload, ChevronDown, ChevronUp, Calendar,
-  FileText, RefreshCw, Globe, Loader2, Radio, Search, Eye, EyeOff,
+  Plus, Trash2, ChevronDown, ChevronUp, Calendar,
+  FileText, RefreshCw, Radio, Search,
   ArrowLeft, MessageSquare, Cloud, Megaphone, Shield,
   Archive, ChevronRight,
 } from "lucide-react";
@@ -12,7 +12,6 @@ import Modal from "@/components/shared/Modal";
 import QuestionModerator from "@/features/conference/admin/QuestionModerator";
 import WordCloudManager from "@/features/conference/admin/WordCloudManager";
 import SessionManagerWithPolls from "@/features/conference/admin/SessionManagerWithPolls";
-import PresenterRemote from "@/features/conference/admin/PresenterRemote";
 import RoleManager from "@/features/conference/admin/RoleManager";
 import ProfanityManager from "@/features/conference/admin/ProfanityManager";
 import AnnouncementManager from "@/features/conference/admin/AnnouncementManager";
@@ -144,18 +143,8 @@ function EventDetail({ event, onBack, onRefresh }: {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [isLive, setIsLive] = useState(ev.seminar_mode);
-  const [isRehearsal, setIsRehearsal] = useState(ev.rehearsal_mode ?? false);
-  const [goingLive, setGoingLive] = useState(false);
+  const isLive = ev.seminar_mode;
   const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [activatingSession, setActivatingSession] = useState<string | null>(null);
-  const [sessionMode, setSessionMode] = useState<"sequential" | "simultaneous">("sequential");
-  const [sessions, setSessions] = useState<{ id: string; title: string; time_label?: string | null }[]>([]);
-
-  // File upload state
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Spotlight state
   const [spotlightLoading, setSpotlightLoading] = useState(false);
@@ -170,14 +159,9 @@ function EventDetail({ event, onBack, onRefresh }: {
 
   const refreshSessions = useCallback(async () => {
     try {
-      const [activeRes, allRes] = await Promise.all([
-        fetch(`/api/conference/sessions?event_id=${ev.id}&active_only=true`),
-        fetch(`/api/conference/sessions?event_id=${ev.id}`),
-      ]);
-      const activeData = await activeRes.json();
-      const allData = await allRes.json();
-      if (Array.isArray(activeData) && activeData.length > 0) setActiveSessionId(activeData[0].id);
-      if (Array.isArray(allData)) setSessions(allData);
+      const res = await fetch(`/api/conference/sessions?event_id=${ev.id}`);
+      const data = await res.json();
+      if (Array.isArray(data)) setSessionCount(data.length);
     } catch {
       // keep current state
     }
@@ -187,10 +171,6 @@ function EventDetail({ event, onBack, onRefresh }: {
     refreshSessions();
     fetch(`/api/conference/polls?event_id=${ev.id}`)
       .then(r => r.json())
-      .catch(() => {});
-    fetch(`/api/conference/sessions?event_id=${ev.id}`)
-      .then(r => r.json())
-      .then(d => setSessionCount(Array.isArray(d) ? d.length : 0))
       .catch(() => {});
     fetch("/api/spotlight")
       .then(r => r.json())
@@ -205,7 +185,7 @@ function EventDetail({ event, onBack, onRefresh }: {
         }
       })
       .catch(() => {});
-  }, [ev.id]);
+  }, [ev.id, refreshSessions]);
 
   const update = (field: keyof Event, value: unknown) => {
     setEv((prev) => ({ ...prev, [field]: value }));
@@ -254,66 +234,6 @@ function EventDetail({ event, onBack, onRefresh }: {
     } finally {
       setSaving(false);
     }
-  };
-
-  const toggleLive = async () => {
-    setGoingLive(true);
-    const newMode = !isLive;
-    try {
-      const res = await fetch(`/api/admin/events/${ev.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seminar_mode: newMode }),
-      });
-      if (res.ok) {
-        setIsLive(newMode);
-        setEv((prev) => ({ ...prev, seminar_mode: newMode }));
-        onRefresh();
-      }
-    } finally {
-      setGoingLive(false);
-    }
-  };
-
-  const uploadFile = async (file: File) => {
-    setUploading(true);
-    setUploadError(null);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch(`/api/admin/events/${ev.id}/files`, { method: "POST", body: formData });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        setUploadError(d.error || "Upload failed");
-        return;
-      }
-      const fresh = await fetch(`/api/admin/events/${ev.id}`);
-      if (fresh.ok) {
-        const d = await fresh.json();
-        setEv((prev) => ({ ...prev, event_files: d.event_files ?? prev.event_files }));
-      }
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const toggleFileVisibility = async (fileId: string, current: boolean) => {
-    await fetch(`/api/admin/events/${ev.id}/files?fileId=${fileId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ is_visible: !current }),
-    });
-    setEv((prev) => ({
-      ...prev,
-      event_files: prev.event_files.map((f) =>
-        f.id === fileId ? { ...f, is_visible: !current } : f
-      ),
-    }));
-  };
-
-  const deleteFile = async (fileId: string) => {
-    await fetch(`/api/admin/events/${ev.id}/files?fileId=${fileId}`, { method: "DELETE" });
-    setEv((prev) => ({ ...prev, event_files: prev.event_files.filter((f) => f.id !== fileId) }));
   };
 
   const saveSpotlight = async () => {

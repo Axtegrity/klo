@@ -40,7 +40,7 @@ interface ConferenceToolsTabsProps {
 export default function ConferenceToolsTabs({ eventId, sessionId, autoShowResults = true }: ConferenceToolsTabsProps = {}) {
   const [activeTab, setActiveTab] = useState<ConferenceToolTab>("polls");
   const { sessions, activeSession } = useSessions(eventId ? { eventId } : undefined);
-  const { isAuthenticated, isAdmin } = useConferenceRoles();
+  const { isAuthenticated } = useConferenceRoles();
   // Use explicit sessionId prop (guest-selected) if provided, otherwise fall back to admin-activated session
   const effectiveSessionId = sessionId ?? activeSession?.id ?? undefined;
   const pollsHook = usePolls({ sessionId: effectiveSessionId, eventId });

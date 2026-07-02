@@ -308,7 +308,7 @@ export default function SessionManagerWithPolls({ eventId, eventSlug, onSessions
     setPollCounts(counts);
   }, [eventId]);
 
-  useEffect(() => { fetchPollCounts(); }, [fetchPollCounts]);
+  useEffect(() => { queueMicrotask(() => fetchPollCounts()); }, [fetchPollCounts]);
 
   return (
     <div>

@@ -4,10 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   Trash2,
-  Eye,
-  EyeOff,
-  Power,
-  PowerOff,
   Upload,
   FileText,
   Download,
@@ -191,8 +187,6 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
     }
   };
 
-  const queuedPolls = (filterSessionId === "all" ? polls : polls.filter((p) => p.session_id === filterSessionId)).filter((p) => !p.is_deployed);
-
   const pullBackAll = async () => {
     if (!eventId) return;
     setPullingBack(true);
@@ -211,35 +205,6 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
     } finally {
       setPullingBack(false);
     }
-  };
-
-  const undeployPoll = async (id: string) => {
-    await fetch(`/api/conference/polls/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ is_deployed: false }),
-    });
-    fetchPolls();
-    showSuccess("Poll moved back to queue.");
-  };
-
-  const togglePoll = async (id: string, field: "is_active" | "show_results", value: boolean) => {
-    // Confirmation prompt when closing a poll (deactivating)
-    if (field === "is_active" && value === false) {
-      const confirmed = window.confirm(
-        "Are you sure you want to close this poll? Once closed, no more votes can be submitted."
-      );
-      if (!confirmed) return;
-    }
-
-    const body: Record<string, unknown> = { [field]: value };
-
-    await fetch(`/api/conference/polls/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    fetchPolls();
   };
 
   const deletePoll = async (id: string) => {

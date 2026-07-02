@@ -368,16 +368,6 @@ export default function EventsPage() {
     [upcomingEvents, matchesSearch, spotlight]);
   const filteredPast     = useMemo(() => pastEvents.filter(matchesSearch),     [pastEvents,     matchesSearch]);
 
-  // Up Next: pinned event wins; otherwise auto-select first upcoming by date.
-  // Only shown when there's no live event (live takes visual precedence).
-  const upNextEvent = useMemo(() => {
-    if (liveEvents.length > 0) return null;
-    return (
-      upcomingEvents.find((e) => e.pinned_as_next) ||
-      (upcomingEvents.length > 0 ? upcomingEvents[0] : null)
-    );
-  }, [liveEvents, upcomingEvents]);
-
   // Countdown target: spotlighted event's first session start, falling back
   // to the event's own event_time. Only shown while the target is in the future.
   const spotlightCountdownTarget = (() => {

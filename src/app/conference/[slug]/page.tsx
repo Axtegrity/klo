@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   CalendarDays,
   MapPin,
-  Play,
   Radio,
   Sparkles,
   ChevronDown,
@@ -211,7 +211,7 @@ export default function EventConferencePage() {
     const sessionParam = searchParams.get("session");
     if (sessionParam) {
       const match = sessions.find((s) => s.id === sessionParam);
-      if (match) handleSessionChange(match.id);
+      if (match) queueMicrotask(() => handleSessionChange(match.id));
     }
   }, [sessions, sessionsLoading, searchParams, handleSessionChange]);
 
@@ -240,7 +240,7 @@ export default function EventConferencePage() {
       .then((res) => res.ok ? res.json() : null)
       .then((data) => { if (data) setSnapshot(data); })
       .catch(() => {});
-  }, [event?.id]);
+  }, [event]);
 
   useEffect(() => { fetchSnapshot(); }, [fetchSnapshot]);
 
@@ -475,9 +475,9 @@ export default function EventConferencePage() {
 
         {isSimplifiedMode && (
           <div className="text-center py-8">
-            <a href="/" className="text-xs text-[#8B949E] hover:text-white transition-colors">
-              ← Back to Keith's site
-            </a>
+            <Link href="/" className="text-xs text-[#8B949E] hover:text-white transition-colors">
+              ← Back to Keith&apos;s site
+            </Link>
           </div>
         )}
       </div>
