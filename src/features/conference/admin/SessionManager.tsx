@@ -277,7 +277,15 @@ export default function SessionManager({ eventId, renderSessionExtra, onSessions
       )}
 
       {/* Create form toggle */}
-      {showCreateForm && (
+      {!showCreateForm ? (
+        <button
+          onClick={() => setShowCreateForm(true)}
+          className="w-full glass rounded-2xl p-4 border border-dashed border-white/10 hover:border-[#2764FF]/30 transition-colors flex items-center justify-center gap-2 text-sm text-klo-muted hover:text-klo-text"
+        >
+          <Plus size={16} />
+          Add Session
+        </button>
+      ) : (
         <div className="glass rounded-2xl p-5 border border-[#2764FF]/20 space-y-3">
           <div className="flex items-center justify-between mb-1">
             <h3 className="text-sm font-semibold text-klo-text">New Session</h3>
