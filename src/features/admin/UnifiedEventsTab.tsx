@@ -319,7 +319,7 @@ function EventDetail({ event, onBack, onRefresh }: {
             </div>
             <div>
               <label className={labelCls}>Title / Session</label>
-              <input className={inputCls} value={ev.title} onChange={(e) => { update("title", e.target.value); update("session_name", e.target.value); }} placeholder="e.g. AI & The Future of Ministry" />
+              <input className={inputCls} value={ev.title} onChange={(e) => update("title", e.target.value)} placeholder="e.g. AI & The Future of Ministry" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
