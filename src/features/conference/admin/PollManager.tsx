@@ -33,7 +33,6 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
   const [inputMode, setInputMode] = useState<InputMode>("single");
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
   const [addMode, setAddMode] = useState<"upload" | "manual" | null>(null);
   const [pullingBack, setPullingBack] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -278,12 +277,12 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
 
   const hasPolls = filteredPolls.length > 0;
 
-  if (!hasPolls && !showAddModal && addMode === null) {
+  if (!hasPolls && addMode === null) {
     return (
       <div className="flex items-center justify-between py-2">
         <span className="text-xs text-klo-muted">No polls added yet</span>
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={() => setAddMode("upload")}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
           style={{ background: "rgba(39,100,255,0.1)", color: "#60a5fa", border: "1px solid rgba(39,100,255,0.2)" }}
         >
@@ -294,51 +293,13 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
     );
   }
 
-  if (showAddModal && addMode === null) {
-    return (
-      <div className="space-y-2">
-        <p className="text-xs font-semibold text-klo-muted uppercase tracking-wider">How would you like to add polls?</p>
-        <div className="flex flex-col gap-2">
-          <button
-            onClick={() => { setAddMode("upload"); setShowAddModal(false); }}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors hover:bg-white/5"
-            style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
-          >
-            <Upload size={18} className="text-klo-muted shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-klo-text">Upload a file</p>
-              <p className="text-xs text-klo-muted">Import from .docx, .pdf, .txt</p>
-            </div>
-          </button>
-          <button
-            onClick={() => { setAddMode("manual"); setShowAddModal(false); }}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors hover:bg-white/5"
-            style={{ border: "0.5px solid rgba(255,255,255,0.1)" }}
-          >
-            <Plus size={18} className="text-klo-muted shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-klo-text">Add manually</p>
-              <p className="text-xs text-klo-muted">Type questions one by one</p>
-            </div>
-          </button>
-          <button
-            onClick={() => setShowAddModal(false)}
-            className="text-xs text-klo-muted hover:text-klo-text transition-colors py-1"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
         {/* Add more button when polls exist */}
         {hasPolls && addMode === null && (
           <div className="flex justify-end">
             <button
-              onClick={() => setShowAddModal(true)}
+              onClick={() => setAddMode("upload")}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
               style={{ background: "rgba(39,100,255,0.05)", color: "#60a5fa", border: "1px solid rgba(39,100,255,0.2)" }}
             >
@@ -536,6 +497,14 @@ export default function PollManager({ eventId, sessionId }: PollManagerProps = {
             <span className="ml-3 text-xs text-klo-muted">
               Upload any survey or poll document (.txt, .pdf, .doc, .docx, .xls, .xlsx)
             </span>
+            <p style={{ textAlign: "center", marginTop: "12px" }}>
+              <button
+                onClick={() => setAddMode("manual")}
+                className="text-xs text-klo-muted hover:text-klo-text transition-colors"
+              >
+                Or add questions manually instead
+              </button>
+            </p>
           </div>
         )}
       </div>
