@@ -36,6 +36,7 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 - **Poll deploy error message simplified** — error surfaced to admin is now plain English instead of a raw Supabase error object
 - **QA bypass user ID** — E2E test bypass path now uses a valid UUID format; previously caused FK constraint errors in test runs
 - **Conference: `likeQuestion` called wrong endpoint** — authenticated heart-likes now route correctly to `/api/conference/questions/[id]/like`; previously both paths hit `/upvote`
+- **SessionManager: clear `event_presentations.session_name` when last session is deleted** — prevents stale subtitle showing on public Events page spotlight card (bug root cause: session create synced title to parent event but delete did not reverse it)
 
 ### Changed
 - **Presenter route retired** — /presenter now redirects to /host; one URL for everything
