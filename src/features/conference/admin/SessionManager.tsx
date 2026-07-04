@@ -226,6 +226,7 @@ export default function SessionManager({ eventId, renderSessionExtra, onSessions
   };
 
   const deleteSession = async (id: string) => {
+    const wasLastSession = sessions.length === 1;
     // Optimistic: remove from UI immediately
     setSessions((prev) => prev.filter((s) => s.id !== id));
     setDeleteConfirmId(null);
@@ -233,6 +234,16 @@ export default function SessionManager({ eventId, renderSessionExtra, onSessions
     if (!res.ok) {
       // Revert on failure
       fetchSessions();
+      return;
+    }
+    // Clear the parent event's stale session_name once the last session is gone —
+    // create/edit sync it (see createSession/saveEdit), but delete never reversed it.
+    if (wasLastSession && eventId) {
+      fetch(`/api/admin/events/${eventId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_name: "" }),
+      }).catch(() => {});
     }
   };
 
