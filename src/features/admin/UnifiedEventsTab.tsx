@@ -411,7 +411,7 @@ function EventDetail({ event, onBack, onRefresh }: {
       </Section>
 
       {/* ── WEBSITE DISPLAY ── */}
-      <Section title="Website Display" icon={Globe}>
+      <Section title="KLO Website Display" icon={Globe}>
         <div className="pt-4 space-y-3">
           {[
             { label: "Show Countdown Timer", value: showCountdown, set: setShowCountdown },
@@ -468,7 +468,7 @@ function EventDetail({ event, onBack, onRefresh }: {
             className="w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
             style={{ background: "rgba(39,100,255,0.15)", color: "#60a5fa", border: "1px solid rgba(39,100,255,0.3)" }}
           >
-            {spotlightLoading ? "Saving…" : "Save Website Display"}
+            {spotlightLoading ? "Saving…" : "Save KLO Website Display"}
           </button>
         </div>
       </Section>
