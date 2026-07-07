@@ -30,6 +30,7 @@ import {
   Share2,
   MonitorOff,
 } from "lucide-react";
+import { getSupabase } from "@/lib/supabase";
 
 interface EventFile {
   id: string;
@@ -387,11 +388,35 @@ export default function EventsAdminTab({
 
     setUploading(eventId);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const signRes = await fetch(`/api/admin/events/${eventId}/files/sign-upload`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName: file.name, fileSize: file.size }),
+      });
+      const signData = await signRes.json().catch(() => ({}));
+      if (!signRes.ok) {
+        setUploadMsg({ eventId, type: "error", text: signData.error || "Upload failed" });
+        setTimeout(() => setUploadMsg(null), 5000);
+        return;
+      }
+
+      const { error: uploadError } = await getSupabase()
+        .storage.from("event-files")
+        .uploadToSignedUrl(signData.path, signData.token, file);
+      if (uploadError) {
+        setUploadMsg({ eventId, type: "error", text: uploadError.message || "Upload failed" });
+        setTimeout(() => setUploadMsg(null), 5000);
+        return;
+      }
+
       const res = await fetch(`/api/admin/events/${eventId}/files`, {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filePath: signData.path,
+          fileName: file.name,
+          fileSizeBytes: file.size,
+        }),
       });
       if (res.ok) {
         setUploadMsg({ eventId, type: "success", text: `"${file.name}" uploaded successfully` });
