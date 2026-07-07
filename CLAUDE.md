@@ -143,6 +143,25 @@ Every API route must:
 4. Never interpolate user input into queries
 5. Log errors with route context: `console.error('[POST /api/route]', error)`
 
+### File uploads must never send the file body through a Next.js API route
+Vercel serverless functions cap request bodies at ~4.5MB. A route handler's own
+size check (e.g. "max 50MB") never runs if Vercel rejects the request first —
+the client gets a non-JSON error page it can't parse, which surfaces as a
+generic "Upload failed" with no useful detail. This bit us in
+`/api/admin/events/[id]/files` (PR #203, 2026-07-06): files under ~4MB worked,
+anything bigger silently failed.
+
+Pattern to follow for any new upload feature (see `sign-upload/route.ts` +
+`SessionFiles.tsx` for the reference implementation):
+1. Client requests a signed Supabase Storage upload URL from a small JSON
+   endpoint (`fileName`, `fileSize` in the body — validate size/ext here).
+2. Browser uploads the file directly to Supabase Storage using that signed
+   URL (`supabase.storage.from(bucket).uploadToSignedUrl(path, token, file)`),
+   bypassing the Vercel function entirely.
+3. Client POSTs small JSON metadata (`filePath`, `fileName`, `fileSizeBytes`)
+   to record the DB row — server re-validates and confirms the file landed in
+   storage via `.storage.from(bucket).list()` before inserting.
+
 ## Security Headers
 All security headers are set in `next.config.ts` via `headers()`:
 CSP, HSTS, X-Frame-Options (SAMEORIGIN), X-Content-Type-Options, Referrer-Policy, Permissions-Policy.

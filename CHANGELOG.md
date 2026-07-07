@@ -37,6 +37,7 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 - **QA bypass user ID** — E2E test bypass path now uses a valid UUID format; previously caused FK constraint errors in test runs
 - **Conference: `likeQuestion` called wrong endpoint** — authenticated heart-likes now route correctly to `/api/conference/questions/[id]/like`; previously both paths hit `/upvote`
 - **SessionManager: clear `event_presentations.session_name` when last session is deleted** — prevents stale subtitle showing on public Events page spotlight card (bug root cause: session create synced title to parent event but delete did not reverse it)
+- **Session/event file upload silently failed above ~4MB** — uploads now go directly from the browser to Supabase Storage via a signed upload URL instead of through the Next.js API route body, avoiding Vercel's ~4.5MB serverless function request limit; files up to the app's 50MB cap now upload reliably
 
 ### Changed
 - **Presenter route retired** — /presenter now redirects to /host; one URL for everything

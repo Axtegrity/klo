@@ -55,23 +55,21 @@ export async function POST(
   }
 
   const { id: eventId } = await params;
-  const formData = await req.formData();
-  const file = formData.get("file") as File | null;
-  const sessionId = formData.get("session_id") as string | null;
+  const body = await req.json().catch(() => null);
+  const filePath = body?.filePath as string | undefined;
+  const fileName = body?.fileName as string | undefined;
+  const fileSizeBytes = body?.fileSizeBytes as number | undefined;
+  const sessionId = (body?.sessionId as string | null | undefined) ?? null;
 
-  if (!file) {
-    return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  if (!filePath || !fileName || typeof fileSizeBytes !== "number") {
+    return NextResponse.json({ error: "filePath, fileName, and fileSizeBytes required" }, { status: 400 });
   }
 
-  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-  if (file.size > MAX_FILE_SIZE) {
-    return NextResponse.json(
-      { error: "File too large. Maximum size is 50MB." },
-      { status: 413 }
-    );
+  if (!filePath.startsWith(`${eventId}/`)) {
+    return NextResponse.json({ error: "filePath does not match event" }, { status: 400 });
   }
 
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
   const allowedTypes = ["pdf", "doc", "docx", "xls", "xlsx", "txt", "ppt", "pptx"];
   if (!allowedTypes.includes(ext)) {
     return NextResponse.json(
@@ -82,19 +80,12 @@ export async function POST(
 
   const supabase = getServiceSupabase();
 
-  // Upload to storage
-  const filePath = `${eventId}/${Date.now()}-${file.name}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  const { error: uploadError } = await supabase.storage
+  // Confirm the file actually landed in storage before recording it
+  const { data: existing } = await supabase.storage
     .from("event-files")
-    .upload(filePath, buffer, {
-      contentType: file.type,
-      upsert: false,
-    });
-
-  if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 });
+    .list(eventId, { search: filePath.split("/").pop() });
+  if (!existing || existing.length === 0) {
+    return NextResponse.json({ error: "Uploaded file not found in storage" }, { status: 400 });
   }
 
   // Get public URL
@@ -102,13 +93,8 @@ export async function POST(
     .from("event-files")
     .getPublicUrl(filePath);
 
-  // Determine simplified file type
-  let fileType = ext;
-  if (fileType === "docx") fileType = "doc";
-  if (fileType === "xlsx") fileType = "xls";
-
   // Format file size
-  const sizeKB = Math.round(file.size / 1024);
+  const sizeKB = Math.round(fileSizeBytes / 1024);
   const fileSize = sizeKB > 1024 ? `${(sizeKB / 1024).toFixed(1)} MB` : `${sizeKB} KB`;
 
   // Insert record
@@ -116,8 +102,8 @@ export async function POST(
     .from("event_files")
     .insert({
       event_id: eventId,
-      session_id: sessionId || null,
-      file_name: file.name,
+      session_id: sessionId,
+      file_name: fileName,
       file_type: ext,
       file_url: urlData.publicUrl,
       file_size: fileSize,

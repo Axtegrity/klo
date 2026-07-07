@@ -2,6 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Upload, Trash2, Eye, EyeOff, Loader2, FileText } from "lucide-react";
+import { getSupabase } from "@/lib/supabase";
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const ALLOWED_FILE_TYPES = ["pdf", "doc", "docx", "xls", "xlsx", "txt", "ppt", "pptx"];
 
 interface EventFile {
   id: string;
@@ -30,13 +34,48 @@ export default function SessionFiles({ eventId, sessionId }: SessionFilesProps) 
   useEffect(() => { fetchFiles(); }, [fetchFiles]);
 
   const uploadFile = async (file: File) => {
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`File too large. Maximum size is 50MB. (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+      return;
+    }
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    if (!ALLOWED_FILE_TYPES.includes(ext)) {
+      setError(`File type .${ext} not allowed. Allowed: ${ALLOWED_FILE_TYPES.join(", ")}`);
+      return;
+    }
+
     setUploading(true);
     setError(null);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("session_id", sessionId);
-      const res = await fetch(`/api/admin/events/${eventId}/files`, { method: "POST", body: formData });
+      const signRes = await fetch(`/api/admin/events/${eventId}/files/sign-upload`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName: file.name, fileSize: file.size }),
+      });
+      const signData = await signRes.json().catch(() => ({}));
+      if (!signRes.ok) {
+        setError(signData.error || "Upload failed");
+        return;
+      }
+
+      const { error: uploadError } = await getSupabase()
+        .storage.from("event-files")
+        .uploadToSignedUrl(signData.path, signData.token, file);
+      if (uploadError) {
+        setError(uploadError.message || "Upload failed");
+        return;
+      }
+
+      const res = await fetch(`/api/admin/events/${eventId}/files`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filePath: signData.path,
+          fileName: file.name,
+          fileSizeBytes: file.size,
+          sessionId,
+        }),
+      });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         setError(d.error || "Upload failed");
