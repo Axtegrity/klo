@@ -50,7 +50,6 @@ export async function POST(req: NextRequest) {
     event_time,
     event_timezone,
     website_url,
-    start_date,
     end_date,
     notes,
     session_name,
@@ -79,7 +78,10 @@ export async function POST(req: NextRequest) {
       event_time: event_time || null,
       event_timezone: event_timezone || "America/Chicago",
       website_url: website_url || null,
-      start_date: start_date || null,
+      // start_date always mirrors event_date — enforced server-side, ignoring
+      // whatever the client sent, since there's no independently-editable
+      // start date exposed to admins.
+      start_date: event_date,
       end_date: end_date || null,
       notes: notes || null,
       session_name: session_name || null,

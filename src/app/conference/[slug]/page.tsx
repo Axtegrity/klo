@@ -104,6 +104,67 @@ function formatDateRange(startDate: string | null, endDate: string | null, event
   return `${formatDate(start)} – ${formatDate(end)}`;
 }
 
+function formatDayHeader(dateStr: string): string {
+  const d = new Date(dateStr + "T12:00:00");
+  return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+}
+
+function todayStr(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
+interface SessionDayGroup {
+  date: string | null;
+  label: string;
+  isToday: boolean;
+  sessions: ConferenceSession[];
+}
+
+// Groups sessions by session_date, sorted chronologically. Sessions with no
+// session_date land in a trailing "General Sessions" group.
+function groupSessionsByDay(sessions: ConferenceSession[]): SessionDayGroup[] {
+  const groups = new Map<string, ConferenceSession[]>();
+  const undated: ConferenceSession[] = [];
+  for (const s of sessions) {
+    const key = s.session_date;
+    if (!key) {
+      undated.push(s);
+      continue;
+    }
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(s);
+  }
+  const today = todayStr();
+  const dated: SessionDayGroup[] = Array.from(groups.entries())
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([date, list]) => ({
+      date,
+      label: formatDayHeader(date),
+      isToday: date === today,
+      sessions: list,
+    }));
+  if (undated.length > 0) {
+    dated.push({ date: null, label: "General Sessions", isToday: false, sessions: undated });
+  }
+  return dated;
+}
+
+function DayHeader({ label, isToday }: { label: string; isToday: boolean }) {
+  return (
+    <div className="pt-3 first:pt-0">
+      <div className={`border-t pt-2 flex items-center gap-2 ${isToday ? "border-emerald-500/30" : "border-white/5"}`}>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-klo-muted">{label}</p>
+        {isToday && (
+          <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+            Today
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function LiveBadge() {
   return (
     <motion.span
@@ -279,6 +340,8 @@ export default function EventConferencePage() {
   }
 
   const hasSessions = sessions.length > 0;
+  const isMultiDayEvent = !!event.end_date && event.end_date !== (event.start_date || event.event_date);
+  const sessionDayGroups = isMultiDayEvent ? groupSessionsByDay(sessions) : null;
 
   return (
     <div className="min-h-screen">
@@ -340,24 +403,50 @@ export default function EventConferencePage() {
               {event.seminar_mode ? (
                 <div className="space-y-2">
                   <p className="text-xs text-[#8B949E] text-center uppercase tracking-wider font-semibold mb-3">Select your session</p>
-                  {sessions.map((s) => (
-                    <button
-                      key={s.id}
-                      onClick={() => handleSessionChange(s.id)}
-                      className="w-full text-left px-4 py-3 rounded-xl transition-all"
-                      style={{
-                        background: s.is_active ? "#34d399" : "#161B22",
-                        border: s.is_active ? "none" : "0.5px solid #21262D",
-                      }}
-                    >
-                      <span className="block text-sm font-semibold" style={{ color: s.is_active ? "#052e16" : "#E6EDF3" }}>
-                        {s.is_active ? "Join now" : s.title}
-                      </span>
-                      <span className="block text-xs mt-0.5" style={{ color: s.is_active ? "rgba(5,46,22,0.7)" : "#8B949E" }}>
-                        {s.is_active ? `${s.title}${s.time_label ? ` · ${s.time_label}` : ""}` : s.time_label || ""}
-                      </span>
-                    </button>
-                  ))}
+                  {sessionDayGroups ? (
+                    sessionDayGroups.map((group) => (
+                      <div key={group.date ?? "general"} className="space-y-2">
+                        <DayHeader label={group.label} isToday={group.isToday} />
+                        {group.sessions.map((s) => (
+                          <button
+                            key={s.id}
+                            onClick={() => handleSessionChange(s.id)}
+                            className="w-full text-left px-4 py-3 rounded-xl transition-all"
+                            style={{
+                              background: s.is_active ? "#34d399" : "#161B22",
+                              border: s.is_active ? "none" : "0.5px solid #21262D",
+                            }}
+                          >
+                            <span className="block text-sm font-semibold" style={{ color: s.is_active ? "#052e16" : "#E6EDF3" }}>
+                              {s.is_active ? "Join now" : s.title}
+                            </span>
+                            <span className="block text-xs mt-0.5" style={{ color: s.is_active ? "rgba(5,46,22,0.7)" : "#8B949E" }}>
+                              {s.is_active ? `${s.title}${s.time_label ? ` · ${s.time_label}` : ""}` : s.time_label || ""}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    ))
+                  ) : (
+                    sessions.map((s) => (
+                      <button
+                        key={s.id}
+                        onClick={() => handleSessionChange(s.id)}
+                        className="w-full text-left px-4 py-3 rounded-xl transition-all"
+                        style={{
+                          background: s.is_active ? "#34d399" : "#161B22",
+                          border: s.is_active ? "none" : "0.5px solid #21262D",
+                        }}
+                      >
+                        <span className="block text-sm font-semibold" style={{ color: s.is_active ? "#052e16" : "#E6EDF3" }}>
+                          {s.is_active ? "Join now" : s.title}
+                        </span>
+                        <span className="block text-xs mt-0.5" style={{ color: s.is_active ? "rgba(5,46,22,0.7)" : "#8B949E" }}>
+                          {s.is_active ? `${s.title}${s.time_label ? ` · ${s.time_label}` : ""}` : s.time_label || ""}
+                        </span>
+                      </button>
+                    ))
+                  )}
                 </div>
               ) : (
                 <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-klo-dark/60 border border-white/10 backdrop-blur-sm">
@@ -370,12 +459,25 @@ export default function EventConferencePage() {
                       className="appearance-none bg-transparent border border-white/10 rounded-lg pl-3 pr-8 py-1.5 text-sm text-klo-text font-medium focus:outline-none focus:border-[#2764FF]/50 cursor-pointer min-w-[200px]"
                     >
                       <option value="" disabled>Select a session…</option>
-                      {sessions.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.title}
-                          {s.time_label ? ` — ${s.time_label}` : ""}
-                        </option>
-                      ))}
+                      {sessionDayGroups ? (
+                        sessionDayGroups.map((group) => (
+                          <optgroup key={group.date ?? "general"} label={group.isToday ? `${group.label} (Today)` : group.label}>
+                            {group.sessions.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.title}
+                                {s.time_label ? ` — ${s.time_label}` : ""}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))
+                      ) : (
+                        sessions.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.title}
+                            {s.time_label ? ` — ${s.time_label}` : ""}
+                          </option>
+                        ))
+                      )}
                     </select>
                     <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-klo-muted pointer-events-none" />
                   </div>

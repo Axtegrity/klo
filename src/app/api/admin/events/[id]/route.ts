@@ -69,6 +69,17 @@ export async function PUT(
     if (key in validatedBody) updates[key] = validatedBody[key as keyof typeof validatedBody];
   }
 
+  // start_date always mirrors event_date — there is no independently-editable
+  // start date exposed to admins, so enforce this server-side rather than
+  // trusting whatever the client happened to send.
+  if ("event_date" in updates) {
+    updates.start_date = updates.event_date;
+  }
+  // A DATE column rejects "" — normalize a cleared end_date to null.
+  if (updates.end_date === "") {
+    updates.end_date = null;
+  }
+
   const { data, error } = await supabase
     .from("event_presentations")
     .update(updates)

@@ -107,6 +107,7 @@ export async function POST(
       file_type: ext,
       file_url: urlData.publicUrl,
       file_size: fileSize,
+      is_visible: true,
     })
     .select()
     .single();

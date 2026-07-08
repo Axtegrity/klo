@@ -323,12 +323,12 @@ function EventDetail({ event, onBack, onRefresh }: {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelCls}>Start Date</label>
+                <label className={labelCls}>Event Date</label>
                 <input type="date" className={inputCls} value={ev.start_date || ev.event_date} onChange={(e) => { update("start_date", e.target.value); update("event_date", e.target.value); }} />
               </div>
               <div>
-                <label className={labelCls}>End Date</label>
-                <input type="date" className={inputCls} value={ev.end_date || ""} onChange={(e) => update("end_date", e.target.value)} />
+                <label className={labelCls}>End Date (leave blank for single-day events)</label>
+                <input type="date" className={inputCls} value={ev.end_date || ""} onChange={(e) => update("end_date", e.target.value || null)} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
