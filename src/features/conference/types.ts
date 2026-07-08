@@ -68,6 +68,7 @@ export interface ConferenceSession {
   created_at: string;
   closed_at: string | null;
   session_mode: "sequential" | "simultaneous";
+  session_date: string | null;
 }
 
 export interface SessionSnapshot {
