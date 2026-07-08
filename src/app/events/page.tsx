@@ -235,15 +235,24 @@ function isUpcomingEvent(event: Pick<EventItem, "event_date" | "event_time" | "e
   return !isLiveNow(event) && !isPastEvent(event);
 }
 
-function isTodayEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode" | "event_status">): boolean {
+function isTodayEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode" | "event_status"> & { start_date?: string | null }): boolean {
   if (event.seminar_mode) return false; // live takes priority
   if (event.event_date === "SAVE THE DATE") return false;
   if (isPastEvent(event)) return false;
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  const startDate = event.event_date;
+  // Prefer start_date (the canonical range-start field) over event_date, which
+  // is kept in sync with it but start_date is the source of truth for ranges.
+  const startDate = event.start_date || event.event_date;
   const endDate = event.end_date || event.event_date;
   return startDate <= todayStr && endDate >= todayStr;
+}
+
+// True when an event's start_date/end_date span more than a single calendar day.
+function isMultiDaySpan(event: Pick<EventItem, "event_date" | "end_date"> & { start_date?: string | null }): boolean {
+  const start = event.start_date || event.event_date;
+  const end = event.end_date || event.event_date;
+  return !!end && end !== start;
 }
 
 const fileTypeColors: Record<string, string> = {
@@ -346,6 +355,10 @@ export default function EventsPage() {
   const upcomingEvents = useMemo(() =>
     events.filter(isUpcomingEvent).sort((a, b) => sortDate(a.event_date) - sortDate(b.event_date)),
     [events, sortDate]);
+  // "Happening Now" when any active-today event spans multiple days; "Today" otherwise.
+  const todayHeadingLabel = useMemo(() =>
+    todayEvents.some(isMultiDaySpan) ? "Happening Now" : "Today",
+    [todayEvents]);
   const pastEvents = useMemo(() =>
     events.filter(isPastEvent).sort((a, b) => sortDate(b.event_date) - sortDate(a.event_date)),
     [events, sortDate]);
@@ -701,7 +714,7 @@ export default function EventsPage() {
       {/* Today Events */}
       {!loading && todayEvents.length > 0 && (
         <div className="space-y-3">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Today</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">{todayHeadingLabel}</p>
           {todayEvents.map((event) => (
             <EventCard
               key={event.id}
