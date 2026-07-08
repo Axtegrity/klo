@@ -134,6 +134,14 @@ NEXT_PUBLIC_SENTRY_DSN
 - RLS enabled on all tables — always include user_id filter on top of RLS
 - Migrations in `supabase/migrations/` — additive only, never ALTER/DROP in production
 - Key type interfaces exported from `src/lib/supabase.ts`: `Profile`, `AssessmentResult`, `VaultContent`, etc.
+- **Prod project ref**: `yrztblvazkrzxgztfzzn` | **Dev project ref**: `ykregzbladhwzyagkkdf`
+- **CLI must stay linked to prod as the default state** (`supabase/.temp/project-ref` should read `yrztblvazkrzxgztfzzn`). If a session needs to check dev, relink and then relink back to prod before ending — do not leave the CLI silently pointed at dev.
+
+### Migration Discipline (MANDATORY — origin: 2026-07-08 reconciliation, PR #206)
+The CLI was found silently linked to dev for weeks, causing 12 local migration filenames to drift from prod's actual applied version strings and 7 migrations to be applied directly to prod (dashboard/MCP) with no local file ever committed. `supabase db push` was completely broken for this repo until a full reconciliation.
+1. Every schema change starts as a local migration file first — commit it before it ever touches prod.
+2. `supabase db push` through Toya is the only approved path to prod. No direct dashboard SQL editor or MCP `apply_migration`/`execute_sql` DDL writes to prod except declared emergencies (logged, Tier-3 approved).
+3. If a migration is ever applied outside the CLI path (emergency), immediately commit a matching local file with the exact prod-assigned version string — don't let drift accumulate.
 
 ## API Route Conventions
 Every API route must:
