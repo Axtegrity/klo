@@ -360,7 +360,14 @@ export default function EventsPage() {
     todayEvents.some(isMultiDaySpan) ? "Happening Now" : "Today",
     [todayEvents]);
   const pastEvents = useMemo(() =>
-    events.filter(isPastEvent).sort((a, b) => sortDate(b.event_date) - sortDate(a.event_date)),
+    events.filter((e) => {
+      if (!isPastEvent(e)) return false;
+      // Never show in Past if the event is still within its date range
+      const todayStr = new Date().toISOString().split("T")[0];
+      const endStr = e.end_date || e.event_date;
+      if (endStr >= todayStr) return false;
+      return true;
+    }).sort((a, b) => sortDate(b.event_date) - sortDate(a.event_date)),
     [events, sortDate]);
 
 
@@ -375,10 +382,16 @@ export default function EventsPage() {
     );
   }, [searchQuery]);
 
-  const filteredLive     = useMemo(() => liveEvents.filter(matchesSearch),     [liveEvents,     matchesSearch]);
+  const filteredLive     = useMemo(() =>
+    liveEvents.filter((e) => matchesSearch(e) && e.id !== spotlight?.event?.id),
+    [liveEvents, matchesSearch, spotlight]);
   const filteredUpcoming = useMemo(() =>
-    upcomingEvents.filter((e) => matchesSearch(e) && e.id !== spotlight?.event?.id),
-    [upcomingEvents, matchesSearch, spotlight]);
+    upcomingEvents.filter((e) => {
+      const isInLive = liveEvents.some((l) => l.id === e.id);
+      const isInToday = todayEvents.some((t) => t.id === e.id);
+      return matchesSearch(e) && !isInLive && !isInToday && e.id !== spotlight?.event?.id;
+    }),
+    [upcomingEvents, liveEvents, todayEvents, matchesSearch, spotlight]);
   const filteredPast     = useMemo(() => pastEvents.filter(matchesSearch),     [pastEvents,     matchesSearch]);
 
   // Countdown target: spotlighted event's first session start, falling back
