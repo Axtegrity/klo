@@ -35,12 +35,31 @@ export async function GET() {
     // return no spotlight rather than silently falling back to auto.
     eventId = cfg.manual_event_id ?? null;
   } else {
-    // Auto: pick the nearest upcoming published + visible event.
+    // Auto mode picks a spotlight event using a 3-tier priority:
+    //   1. A multi-day event currently within its start_date..end_date range
+    //      that has a live session running (seminar_mode) — live always wins.
+    //   2. Any event currently within its date range, even with no live
+    //      session — "happening now" beats anything merely upcoming.
+    //   3. Otherwise, the nearest upcoming event (original single-query logic).
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+    // Pool A: events whose start_date..end_date range covers today. Events
+    // without start_date/end_date never match here — null comparisons are
+    // never true in Postgres — and simply fall through to Pool B below.
+    const { data: activeCandidates } = await supabase
+      .from("event_presentations")
+      .select("id, event_date, event_time, end_date, start_date, seminar_mode")
+      .eq("is_published", true)
+      .eq("display_on_events_page", true)
+      .lte("start_date", todayStr)
+      .gte("end_date", todayStr)
+      .neq("event_date", "SAVE THE DATE");
+
+    // Pool B: nearest upcoming published + visible events.
     const { data: candidates } = await supabase
       .from("event_presentations")
-      .select("id, event_date, event_time, end_date")
+      .select("id, event_date, event_time, end_date, start_date, seminar_mode")
       .eq("is_published", true)
       .eq("display_on_events_page", true)
       .gte("event_date", todayStr)
@@ -49,10 +68,18 @@ export async function GET() {
       .order("event_time", { ascending: true, nullsFirst: true })
       .limit(10);
 
-    if (candidates && candidates.length > 0) {
-      // Pick the first event that hasn't ended yet. Using end_date (or event_date
-      // for single-day events) means a multi-day event stays spotlighted for its
-      // full run — not just until its start time passes.
+    const activeLive = activeCandidates?.find((c) => c.seminar_mode === true);
+    const activeAny = activeCandidates?.[0];
+
+    if (activeLive) {
+      eventId = activeLive.id;
+    } else if (activeAny) {
+      eventId = activeAny.id;
+    } else if (candidates && candidates.length > 0) {
+      // Fallback: pick the first upcoming event that hasn't ended yet. Using
+      // end_date (or event_date for single-day events) means a multi-day
+      // event stays spotlighted for its full run — not just until its start
+      // time passes.
       const pick = candidates.find((c) => {
         const endStr = c.end_date || c.event_date;
         return new Date(`${endStr}T23:59:59`) >= now;
