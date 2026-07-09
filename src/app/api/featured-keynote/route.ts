@@ -19,6 +19,28 @@ export async function GET() {
   // Use default timezone to compute a rough "today" for the initial query filter
   const { today } = getLocalTime(defaultTz);
 
+  // Pool A: active multi-day events (today falls within start_date..end_date),
+  // e.g. a conference that started before today but hasn't ended yet.
+  // Restricted to genuinely multi-day events (start_date !== end_date) so this
+  // never intercepts single-day "today" events — those stay on the existing
+  // same-day 60-minute rotation logic below.
+  const { data: activeEvents } = await supabase
+    .from("event_presentations")
+    .select("id, title, slug, conference_name, conference_location, event_date, start_date, end_date, description, seminar_mode")
+    .eq("is_published", true)
+    .lte("start_date", today)
+    .gte("end_date", today)
+    .neq("event_date", "SAVE THE DATE")
+    .order("start_date", { ascending: true });
+
+  const activeMultiDayEvents = (activeEvents ?? []).filter((e) => e.start_date !== e.end_date);
+
+  if (activeMultiDayEvents.length > 0) {
+    const live = activeMultiDayEvents.find((e) => e.seminar_mode === true);
+    if (live) return NextResponse.json(live);
+    return NextResponse.json(activeMultiDayEvents[0]);
+  }
+
   // Fetch all upcoming published events (today and future)
   const { data: events, error } = await supabase
     .from("event_presentations")
