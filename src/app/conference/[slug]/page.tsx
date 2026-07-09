@@ -91,6 +91,15 @@ function formatDate(dateStr: string): string {
   });
 }
 
+function getEventActiveState(event: Pick<EventData, "start_date" | "end_date" | "event_date">): "pre" | "active" | "past" {
+  const today = new Date().toISOString().split("T")[0];
+  const start = event.start_date || event.event_date;
+  const end = event.end_date || event.event_date;
+  if (today < start) return "pre";
+  if (today > end) return "past";
+  return "active";
+}
+
 function formatDateRange(startDate: string | null, endDate: string | null, eventDate: string): string {
   if (eventDate === "SAVE THE DATE") return "SAVE THE DATE";
   const start = startDate || eventDate;
@@ -524,11 +533,35 @@ export default function EventConferencePage() {
                 endedAt={snapshot.snapshot_data.session.ended_at}
               />
             ) : (
-              <div className="flex items-center justify-center py-16 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
-                <p className="text-klo-muted text-center text-base">
-                  Session not currently active
-                </p>
-              </div>
+              (() => {
+                switch (getEventActiveState(event)) {
+                  case "active":
+                    return (
+                      <div className="flex items-center justify-center py-16 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+                        <div className="text-center py-8 space-y-2">
+                          <p className="text-klo-text font-medium">No session is live right now.</p>
+                          <p className="text-klo-muted text-sm">This event is in progress — check back soon or browse sessions below.</p>
+                        </div>
+                      </div>
+                    );
+                  case "pre":
+                    return (
+                      <div className="flex items-center justify-center py-16 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+                        <div className="text-center py-8">
+                          <p className="text-klo-muted text-sm">Sessions will be available when this event begins.</p>
+                        </div>
+                      </div>
+                    );
+                  default:
+                    return (
+                      <div className="flex items-center justify-center py-16 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+                        <p className="text-klo-muted text-center text-base">
+                          Session not currently active
+                        </p>
+                      </div>
+                    );
+                }
+              })()
             )}
           </motion.div>
 
