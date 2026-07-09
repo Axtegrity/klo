@@ -25,6 +25,7 @@ export async function PUT(
   if (typeof validatedBody.title === "string") updates.title = validatedBody.title.trim();
   if (typeof validatedBody.description === "string") updates.description = validatedBody.description.trim() || null;
   if (validatedBody.scheduled_at !== undefined) updates.scheduled_at = validatedBody.scheduled_at;
+  if (validatedBody.session_date !== undefined) updates.session_date = validatedBody.session_date;
   if (typeof validatedBody.is_active === "boolean") updates.is_active = validatedBody.is_active;
   if (typeof validatedBody.qa_enabled === "boolean") updates.qa_enabled = validatedBody.qa_enabled;
   if (typeof validatedBody.release_mode === "string") updates.release_mode = validatedBody.release_mode;

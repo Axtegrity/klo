@@ -46,6 +46,9 @@ export default function SessionManager({ eventId, renderSessionExtra, onSessions
     speaker: "",
     room: "",
     time_label: "",
+    sessionDate: "",
+    startTime: "",
+    endTime: "",
   });
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -66,17 +69,17 @@ export default function SessionManager({ eventId, renderSessionExtra, onSessions
   }, [fetchSessions]);
 
   // Build time_label from start/end time inputs (e.g. "9:00 AM – 10:15 AM")
-  const buildTimeLabel = () => {
-    if (timeLabel) return timeLabel; // manual override
-    if (!startTime) return undefined;
+  const buildTimeLabel = (manual: string, start: string, end: string) => {
+    if (manual) return manual; // manual override
+    if (!start) return undefined;
     const fmt = (t: string) => {
       const [h, m] = t.split(":").map(Number);
       const ampm = h >= 12 ? "PM" : "AM";
       const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
       return `${h12}:${m.toString().padStart(2, "0")} ${ampm}`;
     };
-    if (!endTime) return fmt(startTime);
-    return `${fmt(startTime)} – ${fmt(endTime)}`;
+    if (!end) return fmt(start);
+    return `${fmt(start)} – ${fmt(end)}`;
   };
 
   const createSession = async () => {
@@ -99,8 +102,9 @@ export default function SessionManager({ eventId, renderSessionExtra, onSessions
           description,
           speaker: speaker || undefined,
           room: room || undefined,
-          time_label: buildTimeLabel() || undefined,
+          time_label: buildTimeLabel(timeLabel, startTime, endTime) || undefined,
           scheduled_at: scheduledAt || undefined,
+          session_date: sessionDate || null,
           qa_enabled: qaEnabled,
           ...(eventId ? { event_id: eventId } : {}),
         }),
@@ -134,20 +138,45 @@ export default function SessionManager({ eventId, renderSessionExtra, onSessions
     }
   };
 
+  // Split an ISO scheduled_at timestamp into local date/time strings for
+  // populating the edit form. Uses local Date getters (not toISOString
+  // slicing) so it correctly reverses createSession's local-time parsing
+  // of `${sessionDate}T${startTime}:00` near timezone/DST boundaries.
+  const splitScheduledAt = (iso: string | null): { date: string; time: string } => {
+    if (!iso) return { date: "", time: "" };
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return { date: "", time: "" };
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return { date, time };
+  };
+
   const startEdit = (s: ConferenceSession) => {
     setEditingId(s.id);
+    const { date, time } = splitScheduledAt(s.scheduled_at);
     setEditFields({
       title: s.title,
       description: s.description || "",
       speaker: s.speaker || "",
       room: s.room || "",
       time_label: s.time_label || "",
+      sessionDate: date,
+      startTime: time,
+      endTime: "",
     });
   };
 
   const saveEdit = async () => {
     if (!editingId || !editFields.title.trim()) return;
-    await fetch(`/api/conference/sessions/${editingId}`, {
+    // Build scheduled_at from date + start time, same as createSession.
+    let scheduledAt: string | null = null;
+    if (editFields.sessionDate && editFields.startTime) {
+      scheduledAt = new Date(`${editFields.sessionDate}T${editFields.startTime}:00`).toISOString();
+    } else if (editFields.sessionDate) {
+      scheduledAt = new Date(`${editFields.sessionDate}T00:00:00`).toISOString();
+    }
+    const res = await fetch(`/api/conference/sessions/${editingId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -155,9 +184,17 @@ export default function SessionManager({ eventId, renderSessionExtra, onSessions
         description: editFields.description,
         speaker: editFields.speaker,
         room: editFields.room,
-        time_label: editFields.time_label,
+        time_label: buildTimeLabel(editFields.time_label, editFields.startTime, editFields.endTime) ?? "",
+        scheduled_at: scheduledAt,
+        session_date: editFields.sessionDate || null,
       }),
     });
+    if (!res.ok) {
+      // Keep editingId set so the admin doesn't lose their in-progress edits.
+      setSaveMsg({ type: "error", text: "Failed to save session. Please try again." });
+      setTimeout(() => setSaveMsg(null), 5000);
+      return;
+    }
     setEditingId(null);
     fetchSessions();
     onSessionsChange?.();
@@ -387,7 +424,7 @@ export default function SessionManager({ eventId, renderSessionExtra, onSessions
               value={timeLabel}
               onChange={(e) => setTimeLabel(e.target.value)}
               onKeyDown={handleCreateKeyDown}
-              placeholder={startTime ? buildTimeLabel() || "" : "e.g. 9:00 AM – 10:15 AM"}
+              placeholder={startTime ? buildTimeLabel(timeLabel, startTime, endTime) || "" : "e.g. 9:00 AM – 10:15 AM"}
               className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text placeholder:text-klo-muted/50 focus:outline-none focus:border-[#2764FF]/50"
             />
           </div>
@@ -502,6 +539,35 @@ export default function SessionManager({ eventId, renderSessionExtra, onSessions
                     value={editFields.time_label}
                     onChange={(e) => setEditFields({ ...editFields, time_label: e.target.value })}
                     onKeyDown={handleEditKeyDown}
+                    className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text focus:outline-none focus:border-[#2764FF]/50"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs text-klo-muted mb-1">Date</label>
+                  <input
+                    type="date"
+                    value={editFields.sessionDate}
+                    onChange={(e) => setEditFields({ ...editFields, sessionDate: e.target.value })}
+                    className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text focus:outline-none focus:border-[#2764FF]/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-klo-muted mb-1">Start Time</label>
+                  <input
+                    type="time"
+                    value={editFields.startTime}
+                    onChange={(e) => setEditFields({ ...editFields, startTime: e.target.value })}
+                    className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text focus:outline-none focus:border-[#2764FF]/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-klo-muted mb-1">End Time</label>
+                  <input
+                    type="time"
+                    value={editFields.endTime}
+                    onChange={(e) => setEditFields({ ...editFields, endTime: e.target.value })}
                     className="w-full bg-klo-navy/50 border border-klo-slate rounded-lg px-4 py-2 text-sm text-klo-text focus:outline-none focus:border-[#2764FF]/50"
                   />
                 </div>

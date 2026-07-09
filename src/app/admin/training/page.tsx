@@ -56,6 +56,7 @@ import {
   RefreshCw,
   Save,
   Monitor,
+  Clock,
 } from "lucide-react";
 
 // ------------------------------------------------------------
@@ -369,6 +370,31 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       "Events are split into \"Current Events\" (future dates) and \"Previous Events\" (past dates).",
       "Supports 7 US timezones: Eastern, Central, Mountain, Pacific, Arizona, Alaska, and Hawaii.",
       "File uploads are stored in Supabase and served via secure signed URLs.",
+    ],
+    subSections: [
+      {
+        id: "conference-sessions",
+        title: "Conference Sessions",
+        icon: BarChart3,
+        description: "Create and manage the live sessions that run during an actual conference — schedule, speakers, and timing that drive polls, Q&A, and real-time content on the public conference page. A completely different system from the basic Session Editor also in this section — see tips.",
+        steps: [
+          { icon: Plus, label: "Create a Session", detail: "Admin → Events → click into a specific event → expand to the \"Sessions\" section (shows a session count badge) → \"Add Session.\" Requires a Title; Description, Speaker, Room, Date, Start Time, End Time, Time Label, and the Q&A toggle are all set on the same form." },
+          { icon: Clock, label: "Date, Start Time, End Time", detail: "Three separate inputs. Date + Start Time combine into the session's scheduled timestamp. Date alone controls which day-header the session groups under on the public conference page (/conference/[slug]) for multi-day events — a session dated July 6 appears under the \"July 6\" header regardless of what time it starts. Get this field wrong on a multi-day event and the session shows up under the wrong day." },
+          { icon: Radio, label: "Time Label (display override)", detail: "The time text attendees actually see on the public page. Auto-generated from Start Time + End Time (e.g., \"9:00 AM – 10:15 AM\") if left blank. Typing anything into Time Label overrides the auto-generated value permanently for that session — clear it to go back to auto-generation." },
+          { icon: Users, label: "Speaker & Room", detail: "Free-text fields, shown alongside the session on the public page. No dropdown or validation — type exactly what should display." },
+          { icon: MessageSquareQuote, label: "Q&A Toggle", detail: "Per-session switch for whether attendees can submit questions during that session. Independent of Release Mode (below), which controls how submitted questions are revealed, not whether they can be submitted." },
+          { icon: Pencil, label: "Edit a Session", detail: "Same fields as create — Title, Description, Speaker, Room, Time Label, Date, Start Time, and End Time are all editable. End Time is never pre-filled when you reopen an existing session, since only the combined display label is stored, not a separate end-time value — re-enter it if you want to change the displayed time range." },
+          { icon: Power, label: "Activate / Deactivate", detail: "Power-button toggle. Activating a session pushes its polls and Q&A live and automatically deactivates any other active session on the same event — only one session can be live per event at a time. Deactivating pulls its polls/Q&A back offline." },
+          { icon: Eye, label: "Release Mode", detail: "Three states — Show All, Single Release, Hide All — controlling how submitted audience questions are revealed to the room during a live session." },
+          { icon: Trash2, label: "Delete Session", detail: "Removes the session permanently, with a confirmation prompt. Deletes all polls, questions, and votes tied to that session — not recoverable." },
+        ],
+        tips: [
+          "This is NOT the same feature as \"Session Editor\" under Events Management. That one lives inside an individual event's edit form, stores up to 10 simple name/time/room entries in event_sessions, and only displays as a static list on the public spotlight card. Conference Sessions (this section) is a full session-management system in conference_sessions used to run polls, Q&A, and live content during an actual event. Similar names, different tables, different purposes — don't confuse them when training or troubleshooting.",
+          "Time Label always wins over the auto-generated Start/End display. If a session's displayed time looks wrong or stale, check Time Label first before troubleshooting Start Time / End Time.",
+          "Date (session_date) is what groups sessions under day-headers on multi-day conference pages — it is not just metadata. Double-check it on every session when building a multi-day event.",
+          "When editing an existing session, always re-enter End Time if you're changing the time range — it won't carry over from the original creation.",
+        ],
+      },
     ],
   },
   {
