@@ -379,7 +379,8 @@ export const questionUpdateSchema = z.object({
 export const sessionCreateSchema = z.object({
   title: z.string().min(1).max(500),
   description: z.string().max(5000).optional(),
-  scheduled_at: z.string().optional(),
+  scheduled_at: z.string().datetime().optional(),
+  session_date: z.string().date().optional().nullable(),
   qa_enabled: z.boolean().optional(),
   release_mode: z.enum(["all", "single", "hide_all"]).optional(),
   speaker: z.string().max(200).optional(),
@@ -396,7 +397,8 @@ export const sessionCreateSchema = z.object({
 export const sessionUpdateSchema = z.object({
   title: z.string().max(500).optional(),
   description: z.string().max(5000).optional(),
-  scheduled_at: z.string().optional(),
+  scheduled_at: z.string().datetime().optional().nullable(),
+  session_date: z.string().date().optional().nullable(),
   is_active: z.boolean().optional(),
   qa_enabled: z.boolean().optional(),
   release_mode: z.enum(["all", "single", "hide_all"]).optional(),

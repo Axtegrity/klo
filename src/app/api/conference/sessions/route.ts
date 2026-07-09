@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Title required" }, { status: 400 });
   }
-  const { title, description, scheduled_at, qa_enabled, release_mode, speaker, room, time_label, sort_order, event_id } = parsed.data;
+  const { title, description, scheduled_at, session_date, qa_enabled, release_mode, speaker, room, time_label, sort_order, event_id } = parsed.data;
 
   const supabase = getServiceSupabase();
   const { data, error } = await supabase
@@ -67,6 +67,7 @@ export async function POST(request: Request) {
       title: title.trim(),
       description: description?.trim() || null,
       scheduled_at: scheduled_at || null,
+      session_date: session_date || null,
       qa_enabled: qa_enabled ?? true,
       release_mode: release_mode || "single",
       speaker: speaker?.trim() || null,
