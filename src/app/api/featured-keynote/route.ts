@@ -19,6 +19,23 @@ export async function GET() {
   // Use default timezone to compute a rough "today" for the initial query filter
   const { today } = getLocalTime(defaultTz);
 
+  // Pool A: active multi-day events (today falls within start_date..end_date),
+  // e.g. a conference that started before today but hasn't ended yet.
+  const { data: activeEvents } = await supabase
+    .from("event_presentations")
+    .select("id, title, slug, conference_name, conference_location, event_date, event_time, end_date, start_date, seminar_mode, is_featured, description, access_code, rehearsal_mode, auto_show_results, display_name_mode, event_timezone, session_end_time, hosting_entity")
+    .eq("is_published", true)
+    .lte("start_date", today)
+    .gte("end_date", today)
+    .neq("event_date", "SAVE THE DATE")
+    .order("start_date", { ascending: true });
+
+  if (activeEvents && activeEvents.length > 0) {
+    const live = activeEvents.find((e) => e.seminar_mode === true);
+    if (live) return NextResponse.json(live);
+    return NextResponse.json(activeEvents[0]);
+  }
+
   // Fetch all upcoming published events (today and future)
   const { data: events, error } = await supabase
     .from("event_presentations")
