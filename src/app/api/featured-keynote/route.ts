@@ -21,19 +21,24 @@ export async function GET() {
 
   // Pool A: active multi-day events (today falls within start_date..end_date),
   // e.g. a conference that started before today but hasn't ended yet.
+  // Restricted to genuinely multi-day events (start_date !== end_date) so this
+  // never intercepts single-day "today" events — those stay on the existing
+  // same-day 60-minute rotation logic below.
   const { data: activeEvents } = await supabase
     .from("event_presentations")
-    .select("id, title, slug, conference_name, conference_location, event_date, event_time, end_date, start_date, seminar_mode, is_featured, description, access_code, rehearsal_mode, auto_show_results, display_name_mode, event_timezone, session_end_time, hosting_entity")
+    .select("id, title, slug, conference_name, conference_location, event_date, start_date, end_date, description, seminar_mode")
     .eq("is_published", true)
     .lte("start_date", today)
     .gte("end_date", today)
     .neq("event_date", "SAVE THE DATE")
     .order("start_date", { ascending: true });
 
-  if (activeEvents && activeEvents.length > 0) {
-    const live = activeEvents.find((e) => e.seminar_mode === true);
+  const activeMultiDayEvents = (activeEvents ?? []).filter((e) => e.start_date !== e.end_date);
+
+  if (activeMultiDayEvents.length > 0) {
+    const live = activeMultiDayEvents.find((e) => e.seminar_mode === true);
     if (live) return NextResponse.json(live);
-    return NextResponse.json(activeEvents[0]);
+    return NextResponse.json(activeMultiDayEvents[0]);
   }
 
   // Fetch all upcoming published events (today and future)
