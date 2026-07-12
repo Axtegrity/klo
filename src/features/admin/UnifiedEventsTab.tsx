@@ -143,6 +143,7 @@ function EventDetail({ event, onBack, onRefresh }: {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [endTimeError, setEndTimeError] = useState(false);
   const isLive = ev.seminar_mode;
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
@@ -192,6 +193,12 @@ function EventDetail({ event, onBack, onRefresh }: {
   };
 
   const saveDetails = async () => {
+    if (!ev.session_end_time || !ev.session_end_time.trim()) {
+      setEndTimeError(true);
+      setSaveError("Session End Time is required");
+      return;
+    }
+    setEndTimeError(false);
     setSaving(true);
     setSaveError(null);
     setSaveSuccess(false);
@@ -210,6 +217,7 @@ function EventDetail({ event, onBack, onRefresh }: {
           end_date: ev.end_date,
           event_time: ev.event_time,
           event_timezone: ev.event_timezone,
+          session_end_time: ev.session_end_time,
           website_url: ev.website_url,
           session_name: ev.session_name,
           room_location: ev.room_location,
@@ -337,9 +345,18 @@ function EventDetail({ event, onBack, onRefresh }: {
                 <input type="time" className={inputCls} value={ev.event_time || ""} onChange={(e) => update("event_time", e.target.value)} />
               </div>
               <div>
-                <label className={labelCls}>Timezone</label>
-                <input className={inputCls} value={ev.event_timezone || ""} onChange={(e) => update("event_timezone", e.target.value)} placeholder="America/Chicago" />
+                <label className={labelCls}>Session End Time<span className="text-red-400 ml-0.5">*</span></label>
+                <input
+                  type="time"
+                  className={`${inputCls} ${endTimeError ? "border-red-500/50" : ""}`}
+                  value={ev.session_end_time || ""}
+                  onChange={(e) => { update("session_end_time", e.target.value); if (endTimeError) setEndTimeError(false); }}
+                />
               </div>
+            </div>
+            <div>
+              <label className={labelCls}>Timezone</label>
+              <input className={inputCls} value={ev.event_timezone || ""} onChange={(e) => update("event_timezone", e.target.value)} placeholder="America/Chicago" />
             </div>
             <div>
               <label className={labelCls}>Location</label>
@@ -374,6 +391,7 @@ function EventDetail({ event, onBack, onRefresh }: {
               <select className={inputCls} value={ev.event_status} onChange={(e) => update("event_status", e.target.value)}>
                 <option value="upcoming">Upcoming</option>
                 <option value="live">Live</option>
+                <option value="ended">Ended</option>
                 <option value="past">Past</option>
               </select>
             </div>
@@ -540,6 +558,7 @@ export default function UnifiedEventsTab() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState("");
   const [createDate, setCreateDate] = useState("");
+  const [createSessionEndTime, setCreateSessionEndTime] = useState("");
   const [createSubmitting, setCreateSubmitting] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -564,8 +583,8 @@ export default function UnifiedEventsTab() {
   }, [selectedEventId, router]);
 
   const handleCreateEvent = async () => {
-    if (!createName.trim() || !createDate.trim()) {
-      setCreateError("Event name and date are required");
+    if (!createName.trim() || !createDate.trim() || !createSessionEndTime.trim()) {
+      setCreateError("Event name, date, and session end time are required");
       return;
     }
     setCreateSubmitting(true);
@@ -580,6 +599,7 @@ export default function UnifiedEventsTab() {
           event_date: createDate,
           start_date: createDate,
           conference_location: "",
+          session_end_time: createSessionEndTime,
         }),
       });
       const data = await res.json();
@@ -590,6 +610,7 @@ export default function UnifiedEventsTab() {
       setCreateOpen(false);
       setCreateName("");
       setCreateDate("");
+      setCreateSessionEndTime("");
       await fetchEvents();
       setSelectedEventId(data.id);
     } finally {
@@ -641,7 +662,7 @@ export default function UnifiedEventsTab() {
       </div>
 
       {/* Create Event Modal */}
-      <Modal isOpen={createOpen} onClose={() => { setCreateOpen(false); setCreateError(null); }} title="New Event">
+      <Modal isOpen={createOpen} onClose={() => { setCreateOpen(false); setCreateError(null); setCreateSessionEndTime(""); }} title="New Event">
         <div className="space-y-4">
           {createError && (
             <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20">
@@ -662,10 +683,21 @@ export default function UnifiedEventsTab() {
               onChange={(e) => setCreateDate(e.target.value)}
               className="w-full bg-[#0D1117] border border-[#30363D] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#2764FF]/50"
             />
+            <div>
+              <label className="text-xs font-semibold text-[#8B949E] uppercase tracking-wider mb-1 block">
+                Session End Time<span className="text-red-400 ml-0.5">*</span>
+              </label>
+              <input
+                type="time"
+                value={createSessionEndTime}
+                onChange={(e) => setCreateSessionEndTime(e.target.value)}
+                className="w-full bg-[#0D1117] border border-[#30363D] text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#2764FF]/50"
+              />
+            </div>
           </div>
           <div className="flex gap-3 pt-2">
             <button
-              onClick={() => { setCreateOpen(false); setCreateError(null); }}
+              onClick={() => { setCreateOpen(false); setCreateError(null); setCreateSessionEndTime(""); }}
               className="flex-1 py-3 rounded-xl text-sm font-semibold border border-[#30363D] text-[#8B949E] hover:text-white transition-colors"
             >
               Cancel

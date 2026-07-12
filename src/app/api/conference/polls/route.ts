@@ -8,6 +8,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get("session_id");
   const eventId = searchParams.get("event_id");
+  const status = searchParams.get("status");
 
   // Admins see all polls; guests only see deployed + active polls.
   const adminSession = await verifyConferenceRole(["admin", "moderator"]);
@@ -35,8 +36,11 @@ export async function GET(request: Request) {
   }
 
   // Server-side gate: non-admins only receive polls that are deployed and active.
-  // Client-side filtering is not a security boundary.
-  if (!isAdmin) {
+  // Client-side filtering is not a security boundary. `status=open` forces the
+  // same gate regardless of role — used by the public Events page's "Open
+  // Polls" section, where even an admin viewer should only see genuinely open
+  // polls (not every poll ever created for that event).
+  if (!isAdmin || status === "open") {
     pollsQuery = pollsQuery.eq("is_deployed", true).eq("is_active", true);
   }
 

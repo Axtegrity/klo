@@ -360,6 +360,8 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       { icon: Star, label: "Feature on Home Page (toggle)", detail: "Per-event gold switch inside the edit form — or click the star icon in the row action bar for a shortcut. Controls homepage-hero display only; does NOT affect the events-page spotlight." },
       { icon: Upload, label: "Upload Files", detail: "Expand an event to attach files (PDF, PPT, DOC, XLS, TXT — up to 50MB each). Downloadable by attendees." },
       { icon: Zap, label: "AI Document Parse", detail: "Upload a conference schedule PDF/DOC and let AI auto-extract event details. Supports multiple events per document." },
+      { icon: Clock, label: "Session End Time (required)", detail: "Inside the Details section, next to Time. Marked with a red asterisk — every event must have an end time set before \"Save Details\" will go through. Used by the auto-end safety net (see tips) to know when a forgotten live event should be automatically wrapped up." },
+      { icon: Radio, label: "Event Status — now 4 states", detail: "Upcoming → Live → Ended → Past. \"Ended\" is new: the event is off the home page, but its polls stay open for stragglers. \"Past\" locks polls completely. Normally set automatically by the End Event / Close Event buttons on /host — the dropdown here is a manual override." },
       { icon: Trash2, label: "Delete Event", detail: "Remove an event permanently (with confirmation prompt)." },
     ],
     tips: [
@@ -370,6 +372,9 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       "Events are split into \"Current Events\" (future dates) and \"Previous Events\" (past dates).",
       "Supports 7 US timezones: Eastern, Central, Mountain, Pacific, Arizona, Alaska, and Hawaii.",
       "File uploads are stored in Supabase and served via secure signed URLs.",
+      "Safety net: a background job checks every 5 minutes for live events whose Session End Time passed more than 30 minutes ago and automatically sets them to \"Ended\" (not \"Past\" — polls stay open). This only fires if Session End Time was actually set; it's a backstop for a forgotten End Event click, not a replacement for it.",
+      "The public /events page has a new \"Open Polls\" section, between Upcoming and Past — it lists any \"Ended\" event that still has open polls, with a direct \"Take Poll\" link. It disappears once you click Close Event (or once polls close naturally).",
+      "Top navigation \"Events\" link is now labeled \"Events / Polls\" to reflect that attendees can vote from that page after an event ends.",
     ],
     subSections: [
       {
@@ -592,11 +597,14 @@ const WORKFLOWS: Workflow[] = [
     title: "After the Event",
     emoji: "📊",
     steps: [
-      "On /host — tap the End Session button (sticky button, always visible at bottom of screen)",
+      "On /host — tap the End Session button (sticky button, always visible at bottom of screen) to close out the current segment/talk",
       "Session archives automatically with immutable snapshot — poll results, Q&A transcript, vote counts",
       "On /host → scroll down → tap 'HISTORY' to view the session archive",
       "Download PDF results from the archive view",
-      "Toggle LIVE to OFF — Events tab, tap your event, Publish section",
+      "When the WHOLE event is done: on /host, tap 'End Event' (gold button, above END SESSION) — takes the event off the home page but leaves its polls open so stragglers can still vote from the Events page",
+      "Once you're sure no more votes are needed, tap 'Close Event' (dark red button, below End Event) — locks every poll and moves the event to Past for good. This step can't be undone.",
+      "Forgot to click End Event? A background job auto-ends any live event 30 minutes past its Session End Time — but don't rely on it as your main workflow.",
+      "Toggle LIVE to OFF — Events tab, tap your event, Publish section (alternate/manual path to the same seminar_mode-off state as End Event / Close Event)",
       "Check Revenue tab in Admin for conversions",
     ],
   },

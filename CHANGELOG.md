@@ -4,6 +4,19 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [Unreleased] — July 11, 2026 Session
+
+### Added
+- **Session lifecycle: Live → Ended → Closed** — events now have an explicit three-state lifecycle. "End Event" (new, on /host) takes an event off the home page but leaves its polls open for stragglers. "Close Event" (new, on /host) locks every poll and moves the event to Past for good. A two-step inline confirm replaces `window.confirm()` for both.
+- **Session End Time is now a required field** — Admin → Events → Details. Every new event must set an end time; existing events can be saved without one until it's filled in, but the "Save Details" button will block a save that clears it.
+- **Event Status: new "Ended" option** — Admin → Events → Details → Event Status dropdown now has Upcoming → Live → Ended → Past.
+- **Auto-end safety net (cron)** — a background job checks every 5 minutes for live events whose Session End Time passed more than 30 minutes ago (using the event's own timezone) and automatically sets them to "Ended." Backstop only — not a substitute for clicking End Event.
+- **Public Events page: "Open Polls" section** — lists any "Ended" event that still has open polls, with a direct "Take Poll" link. No countdown/urgency chrome — just the event name and a CTA.
+- **Top nav: "Events" renamed to "Events / Polls"** — reflects that attendees can still vote after an event ends.
+
+### Fixed
+- **"New Event" quick-create was missing Session End Time** — since it's now a required field on creation, the create modal collects it before allowing "Create & Set Up."
+
 ## [Unreleased] — June 18-19, 2026 Session
 
 ### Added
