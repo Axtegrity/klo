@@ -1,72 +1,57 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
 .DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
+.env.local.backup*
 .env*
-
-# vercel
+.guide-screenshots/
+.klo-*.mjs
+.pnp.*
+.pnpm-debug.log*
 .vercel
-
-# typescript
+.yarn/*
+*.pem
 *.tsbuildinfo
-next-env.d.ts
-
+/.next/
+/.pnp
+/android/
+/build
+/builds/
+/coverage
+/ios/
+/node_modules
+/out/
+# build artifacts
+# capacitor native platforms
+# debug
+# dependencies
+# env files (can opt-in for committing if needed)
+# Local dev helper scripts (auto-signin, QA runner)
+# Local screenshot and debug script artifacts
+# misc
+# next.js
 # playwright
-test-results/
+# production
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# sensitive slides
+# Supabase CLI temp files (local version checks, not project state)
+# testing
+# typescript
+# Use bun.lock instead
+# vercel
+next-env.d.ts
+npm-debug.log*
+package-lock.json
 playwright-report/
 playwright/.cache/
-
-# capacitor native platforms
-/ios/
-/android/
-
-# build artifacts
-/builds/
-
-# sensitive slides
 public/credentials-slide.*
 public/training/audio/.content-hashes.json
-# Use bun.lock instead
-package-lock.json
-
-# Local dev helper scripts (auto-signin, QA runner)
-.klo-*.mjs
-.env.local.backup*
-
-# Local screenshot and debug script artifacts
 screenshots/
-.guide-screenshots/
 scripts/screenshot-*.mjs
 scripts/verify-*.mjs
-
-# Supabase CLI temp files (local version checks, not project state)
 supabase/.temp/
+test-results/
+yarn-debug.log*
+yarn-error.log*
