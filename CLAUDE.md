@@ -117,6 +117,7 @@ SENTRY_ORG
 SENTRY_PROJECT
 SENTRY_AUTH_TOKEN
 NEXT_PUBLIC_SENTRY_DSN
+CRON_SECRET                      # shared bearer secret for Vercel Cron routes (sync-events, auto-end-sessions)
 ```
 
 ## Auth Setup

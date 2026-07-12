@@ -35,6 +35,18 @@ export default function HostContent() {
   const [endError, setEndError] = useState<string | null>(null);
   const [sessionEnded, setSessionEnded] = useState(false);
 
+  // Event-level lifecycle (End Event / Close Event) — a different granularity
+  // than the per-session END SESSION button above: these act on the whole
+  // event_presentations row, not a single conference_sessions segment.
+  const [liveEventSeminarMode, setLiveEventSeminarMode] = useState(false);
+  const [endEventConfirm, setEndEventConfirm] = useState(false);
+  const [closeEventConfirm, setCloseEventConfirm] = useState(false);
+  const [endEventBusy, setEndEventBusy] = useState(false);
+  const [closeEventBusy, setCloseEventBusy] = useState(false);
+  const [endEventError, setEndEventError] = useState<string | null>(null);
+  const [closeEventError, setCloseEventError] = useState<string | null>(null);
+  const [eventLifecycleResult, setEventLifecycleResult] = useState<"ended" | "closed" | null>(null);
+
   // Secondary sections (collapsed by default on mobile to keep polls front-and-center)
   const [qaOpen, setQaOpen] = useState(true);
   const [announceOpen, setAnnounceOpen] = useState(false);
@@ -81,9 +93,11 @@ export default function HostContent() {
       const { event } = await eventRes.json();
       if (!event) {
         setAllSessions([]);
+        setLiveEventSeminarMode(false);
         setLiveEventError("No live event found. Ask your admin to go live first.");
         return;
       }
+      setLiveEventSeminarMode(!!event.seminar_mode);
       const sessionsRes = await fetch(`/api/conference/sessions?event_id=${event.id}`);
       if (!sessionsRes.ok) {
         setLiveEventError("Could not load sessions. Try again.");
@@ -92,6 +106,7 @@ export default function HostContent() {
       const data: ConferenceSession[] = await sessionsRes.json();
       setAllSessions(data);
     } catch {
+      setLiveEventSeminarMode(false);
       setLiveEventError("Could not load sessions. Try again.");
     }
   }, []);
@@ -213,6 +228,80 @@ export default function HostContent() {
     }
   };
 
+  // End Event — soft close. Takes the event off the home page but leaves its
+  // polls open for stragglers (attendees can still vote from the Events page
+  // Open Polls section). Reuses the existing admin events PUT endpoint —
+  // does not touch conference_polls at all.
+  const endEvent = async () => {
+    const eventId = activeSession?.event_id;
+    if (!eventId) return;
+    setEndEventBusy(true);
+    setEndEventError(null);
+    try {
+      const res = await fetch(`/api/admin/events/${eventId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seminar_mode: false, event_status: "ended" }),
+      });
+      if (res.ok) {
+        setEventLifecycleResult("ended");
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setEndEventError((body as { error?: string }).error || "Failed to end event");
+      }
+    } catch {
+      setEndEventError("Failed to end event");
+    } finally {
+      setEndEventBusy(false);
+      setEndEventConfirm(false);
+    }
+  };
+
+  // Close Event — hard close. Locks the event AND every open poll tied to it
+  // (across all sessions in this event, not just the currently active one).
+  // Reuses the same per-poll PUT mechanism showAllResults/stopSharing use
+  // below (PUT /api/conference/polls/[id] { is_active: false }) rather than
+  // inventing a new bulk-close route.
+  const closeEvent = async () => {
+    const eventId = activeSession?.event_id;
+    if (!eventId) return;
+    setCloseEventBusy(true);
+    setCloseEventError(null);
+    try {
+      const [eventRes, pollsRes] = await Promise.all([
+        fetch(`/api/admin/events/${eventId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ seminar_mode: false, event_status: "past" }),
+        }),
+        fetch(`/api/conference/polls?event_id=${eventId}&status=open`),
+      ]);
+      if (!eventRes.ok) {
+        const body = await eventRes.json().catch(() => ({}));
+        setCloseEventError((body as { error?: string }).error || "Failed to close event");
+        return;
+      }
+      if (pollsRes.ok) {
+        const openPolls: { id: string }[] = await pollsRes.json();
+        await Promise.all(
+          openPolls.map((p) =>
+            fetch(`/api/conference/polls/${p.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ is_active: false }),
+            })
+          )
+        );
+      }
+      setEventLifecycleResult("closed");
+    } catch {
+      setCloseEventError("Failed to close event");
+    } finally {
+      setCloseEventBusy(false);
+      setCloseEventConfirm(false);
+    }
+  };
+
   const showAllResults = async () => {
     if (!activeSession?.event_id) return;
     setSharingBusy(true);
@@ -268,6 +357,36 @@ export default function HostContent() {
           className="w-8 h-8 border-2 rounded-full animate-spin"
           style={{ borderColor: "#21262D", borderTopColor: GOLD }}
         />
+      </div>
+    );
+  }
+
+  if (eventLifecycleResult) {
+    const isClosed = eventLifecycleResult === "closed";
+    return (
+      <div
+        className="flex flex-col items-center justify-center min-h-screen gap-6 px-6 text-center"
+        style={{ background: "#0D1117" }}
+      >
+        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+          {isClosed ? "Event Closed" : "Event Ended"}
+        </h1>
+        <p className="text-[#8B949E] text-sm max-w-xs">
+          {isClosed
+            ? "All polls have been locked. This event has moved to Past."
+            : "Polls stay open for stragglers on the Events page. The event is off the home page."}
+        </p>
+        <button
+          onClick={() => {
+            setEventLifecycleResult(null);
+            setLoading(true);
+            fetchActiveSession();
+            fetchLiveEventSessions();
+          }}
+          className="px-6 py-3 rounded-2xl text-sm font-semibold border border-[#21262D] text-[#8B949E] hover:text-white hover:border-[#30363D] transition-all"
+        >
+          Back to Dashboard
+        </button>
       </div>
     );
   }
@@ -379,6 +498,10 @@ export default function HostContent() {
     );
   }
 
+  // Extra scroll padding so content isn't hidden behind the End/Close Event
+  // bar when it's showing (it stacks directly above the END SESSION bar).
+  const eventActionsBarHeight = liveEventSeminarMode ? 144 : 0;
+
   // ── ACTIVE: single-screen run-of-show ──
   return (
     <div
@@ -421,7 +544,7 @@ export default function HostContent() {
       {/* Scrollable content */}
       <div
         className="flex-1 overflow-y-auto"
-        style={{ paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))" }}
+        style={{ paddingBottom: `calc(${80 + eventActionsBarHeight}px + env(safe-area-inset-bottom, 0px))` }}
       >
         {/* Poll mode selector */}
         <div className="px-4 pt-4 pb-2">
@@ -549,6 +672,84 @@ export default function HostContent() {
           )}
         </div>
       </div>
+
+      {/* End Event / Close Event — sticky bar, event-level (separate from the
+          per-session END SESSION bar below). Stacks directly above it. */}
+      {liveEventSeminarMode && (
+        <div
+          className="fixed left-0 right-0 border-t"
+          style={{
+            bottom: "calc(152px + env(safe-area-inset-bottom, 0px))",
+            background: "#0D1117",
+            borderColor: "#21262D",
+            zIndex: 30,
+            padding: "12px 16px",
+          }}
+        >
+          {endEventError && <p className="text-xs text-red-400 text-center mb-2">{endEventError}</p>}
+          {closeEventError && <p className="text-xs text-red-400 text-center mb-2">{closeEventError}</p>}
+
+          <div className="flex flex-col gap-2">
+            {/* End Event — soft, polls stay open */}
+            {endEventConfirm ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={endEvent}
+                  disabled={endEventBusy}
+                  className="flex-1 font-bold text-sm rounded-2xl transition-all disabled:opacity-40 disabled:cursor-not-allowed py-3"
+                  style={{ background: "rgba(200,168,78,0.12)", border: "1px solid rgba(200,168,78,0.35)", color: "#C8A84E" }}
+                >
+                  {endEventBusy ? "Ending…" : "Confirm — polls stay open"}
+                </button>
+                <button
+                  onClick={() => setEndEventConfirm(false)}
+                  disabled={endEventBusy}
+                  className="px-4 py-3 rounded-2xl text-sm font-semibold text-[#8B949E] hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setEndEventConfirm(true)}
+                className="w-full font-bold text-base rounded-2xl transition-all"
+                style={{ background: "rgba(200,168,78,0.12)", border: "1px solid rgba(200,168,78,0.35)", color: "#C8A84E", minHeight: "56px" }}
+              >
+                End Event
+              </button>
+            )}
+
+            {/* Close Event — hard, polls lock */}
+            {closeEventConfirm ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={closeEvent}
+                  disabled={closeEventBusy}
+                  className="flex-1 font-bold text-sm rounded-2xl transition-all disabled:opacity-40 disabled:cursor-not-allowed py-3"
+                  style={{ background: "#7f1d1d", color: "#fff", border: "1px solid rgba(239,68,68,0.3)" }}
+                >
+                  {closeEventBusy ? "Closing…" : "Confirm — this can't be undone, polls will lock"}
+                </button>
+                <button
+                  onClick={() => setCloseEventConfirm(false)}
+                  disabled={closeEventBusy}
+                  className="px-4 py-3 rounded-2xl text-sm font-semibold text-[#8B949E] hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setCloseEventConfirm(true)}
+                className="w-full font-bold text-base rounded-2xl transition-all"
+                style={{ background: "#7f1d1d", color: "#fff", border: "1px solid rgba(239,68,68,0.3)", minHeight: "56px" }}
+              >
+                Close Event
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* End Session — sticky bottom */}
       <div

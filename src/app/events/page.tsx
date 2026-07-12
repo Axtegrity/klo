@@ -107,6 +107,7 @@ interface SpotlightPayload {
 
 interface PollResult {
   id: string;
+  event_id: string | null;
   question: string;
   options: string[];
   votes: number[];
@@ -209,7 +210,12 @@ function eventEnd(event: Pick<EventItem, "event_date" | "event_time" | "end_date
   return isNaN(eod.getTime()) ? null : eod;
 }
 
-function isLiveNow(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode">): boolean {
+function isLiveNow(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode" | "event_status">): boolean {
+  // "Ended" is its own lifecycle bucket (see isEndedWithOpenPolls below) — it
+  // must never re-qualify as live/today/upcoming/past via the time-based
+  // fallback checks below, or the event would show up twice (once here, once
+  // in the Open Polls section) and undermine the whole point of the state.
+  if (event.event_status === "ended") return false;
   // Explicit seminar_mode flag takes precedence over time-based detection
   if (event.seminar_mode) return true;
   const start = eventStart(event);
@@ -222,6 +228,7 @@ function isLiveNow(event: Pick<EventItem, "event_date" | "event_time" | "end_dat
 function isPastEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode" | "event_status">): boolean {
   if (event.event_date === "SAVE THE DATE") return false;
   if (event.seminar_mode) return false;
+  if (event.event_status === "ended") return false;
   if (event.event_status === "past") return true;
   const end = eventEnd(event);
   if (end && end < new Date()) return true;
@@ -229,6 +236,7 @@ function isPastEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_d
 }
 
 function isUpcomingEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode" | "event_status">): boolean {
+  if (event.event_status === "ended") return false;
   if (event.seminar_mode) return false;
   if (event.event_date === "SAVE THE DATE") return true;
   if (isTodayEvent(event)) return false;
@@ -236,6 +244,7 @@ function isUpcomingEvent(event: Pick<EventItem, "event_date" | "event_time" | "e
 }
 
 function isTodayEvent(event: Pick<EventItem, "event_date" | "event_time" | "end_date" | "session_end_time" | "seminar_mode" | "event_status"> & { start_date?: string | null }): boolean {
+  if (event.event_status === "ended") return false;
   if (event.seminar_mode) return false; // live takes priority
   if (event.event_date === "SAVE THE DATE") return false;
   if (isPastEvent(event)) return false;
@@ -253,6 +262,13 @@ function isMultiDaySpan(event: Pick<EventItem, "event_date" | "end_date"> & { st
   const start = event.start_date || event.event_date;
   const end = event.end_date || event.event_date;
   return !!end && end !== start;
+}
+
+// "Ended" is a distinct lifecycle state from "Past": the event is off the
+// home/live list, but its polls may still be open for stragglers. See the
+// Open Polls section below — it's the only place this state surfaces.
+function isEndedWithOpenPolls(event: Pick<EventItem, "event_status">): boolean {
+  return event.event_status === "ended";
 }
 
 const fileTypeColors: Record<string, string> = {
@@ -275,6 +291,7 @@ export default function EventsPage() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventPolls, setEventPolls] = useState<PollResult[]>([]);
   const [pollsLoading, setPollsLoading] = useState(false);
+  const [openPollsByEvent, setOpenPollsByEvent] = useState<Record<string, PollResult[]>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<"all" | "upcoming" | "past">("upcoming");
   // Tick every second so event_start/end windows roll the UI through
@@ -289,11 +306,21 @@ export default function EventsPage() {
     Promise.all([
       fetch("/api/events"),
       fetch("/api/spotlight"),
+      fetch("/api/conference/polls?status=open"),
     ])
-      .then(([evRes, spRes]) => Promise.all([evRes.json(), spRes.json()]))
-      .then(([eventsData, spotlightData]) => {
+      .then(([evRes, spRes, pollsRes]) => Promise.all([evRes.json(), spRes.json(), pollsRes.json()]))
+      .then(([eventsData, spotlightData, openPollsData]) => {
         if (Array.isArray(eventsData)) setEvents(eventsData);
         if (spotlightData) setSpotlight(spotlightData as SpotlightPayload);
+        if (Array.isArray(openPollsData)) {
+          const grouped: Record<string, PollResult[]> = {};
+          for (const poll of openPollsData as PollResult[]) {
+            if (!poll.event_id) continue;
+            if (!grouped[poll.event_id]) grouped[poll.event_id] = [];
+            grouped[poll.event_id].push(poll);
+          }
+          setOpenPollsByEvent(grouped);
+        }
       })
       .finally(() => setLoading(false));
   }, []);
@@ -370,6 +397,12 @@ export default function EventsPage() {
     }).sort((a, b) => sortDate(b.event_date) - sortDate(a.event_date)),
     [events, sortDate]);
 
+  // Ended events that still have at least one open poll — a distinct,
+  // in-between lifecycle state (off the home page, but stragglers can still
+  // vote). Shows ALL matching events, not just the most recent.
+  const endedEventsWithOpenPolls = useMemo(() =>
+    events.filter((e) => isEndedWithOpenPolls(e) && (openPollsByEvent[e.id]?.length ?? 0) > 0),
+    [events, openPollsByEvent]);
 
   const matchesSearch = useCallback((ev: EventItem) => {
     const q = searchQuery.trim().toLowerCase();
@@ -798,6 +831,66 @@ export default function EventsPage() {
           )}
         </motion.div>
       </section>
+      )}
+
+      {/* Open Polls — ended events whose polls are still open for stragglers.
+          Deliberately no countdown/urgency chrome: name + Take Poll only. */}
+      {endedEventsWithOpenPolls.length > 0 && (
+        <section className="px-6 py-16 md:py-24">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={staggerContainer}
+            className="max-w-4xl mx-auto"
+          >
+            <motion.div variants={fadeUp} custom={0} className="mb-10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-[#2764FF]/10 flex items-center justify-center">
+                  <BarChart3 size={20} className="text-[#2764FF]" />
+                </div>
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-klo-text">
+                  Open Polls
+                </h2>
+              </div>
+              <p className="text-klo-muted text-sm">
+                These events have ended, but their polls are still open.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={staggerContainer}
+              className="space-y-4"
+            >
+              {endedEventsWithOpenPolls.map((event, i) => {
+                const displayName =
+                  event.display_name_mode === "session" && event.session_name
+                    ? event.session_name
+                    : event.title;
+                return (
+                  <motion.div key={event.id} variants={fadeUp} custom={i + 1}>
+                    <Card>
+                      <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        <h3 className="text-lg font-semibold text-klo-text flex-1">
+                          {displayName}
+                        </h3>
+                        <Link
+                          href={event.slug ? `/conference/${event.slug}` : "/conference"}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#2764FF] to-[#21B8CD] text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-colors shrink-0"
+                        >
+                          Take Poll
+                          <ArrowRight size={14} />
+                        </Link>
+                      </div>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </motion.div>
+        </section>
       )}
 
       {/* Past Events */}

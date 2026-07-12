@@ -153,8 +153,12 @@ export const adminEventCreateSchema = z.object({
   session_name: z.string().max(500).optional(),
   room_location: z.string().max(500).optional(),
   is_guest_presenter: z.boolean().optional(),
-  session_end_time: z.string().max(50).optional(),
+  // Required — every new event must set an end time (session lifecycle feature,
+  // 2026-07). No .nullable() either: an empty string is rejected by nonEmptyString
+  // (min length 1), so the create form must collect a real HH:MM value.
+  session_end_time: nonEmptyString.max(50),
   access_code: z.string().max(50).optional(),
+  event_status: z.enum(["upcoming", "live", "ended", "past"]).optional(),
 });
 
 // ----------------------------------------------------------------
@@ -182,8 +186,11 @@ export const adminEventUpdateSchema = z.object({
   session_name: z.string().max(500).nullable().optional(),
   room_location: z.string().max(500).nullable().optional(),
   is_guest_presenter: z.boolean().optional(),
-  session_end_time: z.string().max(50).nullable().optional(),
-  event_status: z.string().max(50).nullable().optional(),
+  // Optional so partial PUTs (seminar_mode toggle, pinned_as_next, End/Close
+  // Event, etc.) can omit it — but no longer .nullable(): once a value has
+  // been set, it can't be explicitly cleared back to null via this endpoint.
+  session_end_time: z.string().max(50).optional(),
+  event_status: z.enum(["upcoming", "live", "ended", "past"]).nullable().optional(),
   event_status_override: z.string().max(50).nullable().optional(),
   display_name_mode: z.string().max(50).optional(),
   hosting_entity: z.string().max(500).nullable().optional(),
