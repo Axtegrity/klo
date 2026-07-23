@@ -1,6 +1,6 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
+  "configVersion": 1,
   "workspaces": {
     "": {
       "name": "klo-app",
@@ -76,6 +76,12 @@
       },
     },
   },
+  "trustedDependencies": [
+    "protobufjs",
+    "@firebase/util",
+    "unrs-resolver",
+    "@sentry/cli",
+  ],
   "overrides": {
     "@xmldom/xmldom": "^0.9.10",
     "brace-expansion": "^5.0.6",

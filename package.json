@@ -106,5 +106,11 @@
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
     "vitest": "^4.1.2"
-  }
+  },
+  "trustedDependencies": [
+    "@firebase/util",
+    "@sentry/cli",
+    "protobufjs",
+    "unrs-resolver"
+  ]
 }
