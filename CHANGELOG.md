@@ -4,6 +4,14 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [Unreleased] — July 23, 2026 Session
+
+### Security
+- **Next.js upgraded 16.2.7 → 16.2.11** — patches 5 HIGH-severity advisories disclosed 2026-07-22 (cache confusion of response bodies, Turbopack/single-locale middleware bypass, Server Actions SSRF, Server Actions DoS, rewrites SSRF via attacker-controlled hostname). All five affected the `>=16.0.0 <16.2.11` range.
+
+### Added
+- **`firebase-admin` dependency** — added for upcoming server-side Firebase Cloud Messaging work.
+
 ## [Unreleased] — July 11, 2026 Session
 
 ### Added
