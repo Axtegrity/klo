@@ -60,6 +60,8 @@ import {
   Check,
   X,
   Layers,
+  Paperclip,
+  AlertCircle,
 } from "lucide-react";
 
 // ------------------------------------------------------------
@@ -310,8 +312,13 @@ const TRAINING_SECTIONS: TrainingSection[] = [
     adminTab: "content-automation",
     steps: [
       { icon: Zap, label: "Weekly Batch", detail: "A background job runs every Monday at 9am UTC and generates new draft Vault articles across your active topic lanes (5 lanes by default). Drafts land in the Draft Review Queue with status \"pending\" — they are never shown to the public and never appear in the Vault until published." },
+      { icon: Sparkles, label: "Generate Drafts Now (on-demand)", detail: "Click the \"Generate Drafts\" button at the top of the Draft Review Queue any time you don't want to wait for Monday. It runs the same generation process across every active topic lane immediately, and any new drafts appear in the queue below within moments — no page refresh needed." },
+      { icon: Pencil, label: "Direction (optional)", detail: "Before clicking Generate, type a short note in the Direction box to steer what gets written — e.g. \"AI and the Black Church, focus on youth unemployment.\" Leave it blank to let each topic lane generate its normal way." },
+      { icon: Paperclip, label: "Attach a Reference File (optional)", detail: "Click \"Attach reference\" to upload a PDF or Word document (max 10MB) that the AI should use as supporting background for this one generation run — a report, an article, or notes you want reflected in the draft. The attachment only affects the next Generate click; it isn't saved or reused automatically." },
       { icon: Check, label: "Publish a Draft", detail: "In the Draft Review Queue, read the preview and click the green \"Publish\" button. This copies the draft into the live Vault immediately — no confirmation step, since the action only affects that one draft and can be followed up with a normal edit/hide/archive afterward like any other Vault item." },
       { icon: X, label: "Discard a Draft", detail: "Click the red \"Discard\" button to reject a draft you don't want published. This is low-stakes and reversible — discarding does not delete the topic, and a similar draft can always be regenerated next week. No confirmation step is required." },
+      { icon: AlertCircle, label: "\"Insufficient Sources\" Warning", detail: "After a Generate run, an amber banner may appear saying a topic lane didn't have enough reputable sources to write from and skipped that lane this time — no draft was created for it. This is routine and self-resolving, not an error to fix; it just means try again later or add a Direction note to help the search find something more current." },
+      { icon: BookOpen, label: "Sources on Each Draft", detail: "Every draft card has a collapsible \"Sources\" row at the bottom — click it to see the reputable articles and sites the AI drew from, each linking out to the original. If a draft shows \"No sources listed\" instead, review it a little more carefully before publishing." },
       { icon: Layers, label: "Topic Lanes", detail: "Switch to the Topic Lanes sub-section to see every lane that feeds the weekly generator. Each lane has a name, an optional description, and an Active / Inactive toggle." },
       { icon: Power, label: "Toggle a Lane Active / Inactive", detail: "Click Inactive on any lane to stop it from generating new drafts — the lane and its past drafts are not deleted, generation just pauses. Click Active to resume. Inactive lanes are shown dimmed in the list." },
       { icon: Plus, label: "Add a New Lane", detail: "Use the form at the bottom of the Topic Lanes list — pick a Vault category from the dropdown (only categories that don't already have a lane are shown) and optionally add a description, then click Add Lane. New lanes default to active and are picked up by the next Monday batch. If all 7 Vault categories already have a lane, retire an existing one first." },
@@ -319,7 +326,8 @@ const TRAINING_SECTIONS: TrainingSection[] = [
     tips: [
       "Nothing Keith's team generates here reaches the public Vault without an explicit Publish click — treat the Draft Review Queue like an inbox that needs to hit zero (or be intentionally discarded) each week.",
       "There is no delete option for topic lanes in this version — toggling Inactive is the only way to stop a lane from generating. This is intentional so past drafts always stay traceable to the lane that produced them.",
-      "If the queue is empty, that's expected between Monday batches — check back after the next scheduled run, or ask an engineer to trigger an on-demand generation run if you need drafts sooner.",
+      "If the queue is empty, that's expected between Monday batches — click \"Generate Drafts\" to run a batch immediately instead of waiting.",
+      "An \"Insufficient Sources\" banner is normal, not a bug — it means that lane's topic didn't have enough credible current coverage to write a well-sourced article this run.",
     ],
   },
   {
