@@ -116,6 +116,7 @@ export async function GET() {
         (meta.duration as string) ??
         (wordCount > 0 ? `${minutes} min read` : "Quick read"),
       publishedAt: row.published_at ?? row.created_at,
+      createdAt: row.created_at,
       author: row.author_name ?? "Keith L. Odom",
     };
   });

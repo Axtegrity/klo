@@ -18,6 +18,14 @@ export interface VaultItem {
   description: string;
   duration: string;
   publishedAt: string;
+  /**
+   * Raw DB created_at, when known. Optional because the static seed array
+   * below and other VaultItem producers (vault-events.ts) don't have a
+   * real creation timestamp — only /api/content/vault populates this.
+   * Consumers that need "most recently added" ordering (Vault Featured
+   * section) should fall back to publishedAt when this is absent.
+   */
+  createdAt?: string;
   author: string;
   conferenceName?: string;
   conferenceLocation?: string;
