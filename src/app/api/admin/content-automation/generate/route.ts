@@ -51,7 +51,10 @@ export async function POST(req: NextRequest) {
     const summary = await runContentAutomationGenerate(lane, guidance, referenceText);
     const warnings = summary.laneResults
       .filter((result) => result.status === "insufficient_sources")
-      .map((result) => `Insufficient reputable sources found for ${result.lane}. No draft created.`);
+      .map(
+        (result) =>
+          `Not enough reputable sources found for ${result.lane} this run. Try adding more specific direction or try again next week.`
+      );
 
     // Audit trail entry (Avery review, PR #226, should-fix #2). This route
     // triggers a cost-incurring external LLM call and can optionally attach

@@ -20,6 +20,20 @@ import type { VaultDraft } from "@/lib/supabase";
 const MAX_REFERENCE_FILE_SIZE = 10 * 1024 * 1024; // 10MB — matches contentAutomationSignUploadSchema
 const ALLOWED_REFERENCE_EXTENSIONS = ["pdf", "docx"];
 
+// Client-side-only cooldown between Generate runs — a UX safeguard against
+// accidental repeat-clicking, not a security boundary (a single research
+// call has been measured at 137K-193K input tokens, so repeat clicks have a
+// real cost). Applies after both success AND failure — a failed run still
+// spent tokens if it got partway through.
+const GENERATE_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
+
+function formatCooldown(ms: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
 // 300-char preview, truncated in JS before render (per Vera design brief) —
 // prefer the excerpt (already a short summary) and fall back to the body.
 function previewText(draft: VaultDraft, max = 300): string {
@@ -82,6 +96,28 @@ export default function DraftReviewQueue() {
   const [generating, setGenerating] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Generate cooldown — set to a future timestamp when a run completes
+  // (success or failure); ticks down every second and clears itself once
+  // expired. See GENERATE_COOLDOWN_MS above.
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [cooldownRemainingMs, setCooldownRemainingMs] = useState(0);
+
+  useEffect(() => {
+    if (cooldownUntil === null) return;
+    const tick = () => {
+      const remaining = cooldownUntil - Date.now();
+      if (remaining <= 0) {
+        setCooldownRemainingMs(0);
+        setCooldownUntil(null);
+      } else {
+        setCooldownRemainingMs(remaining);
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [cooldownUntil]);
 
   const fetchDrafts = useCallback(async () => {
     setLoading(true);
@@ -198,11 +234,26 @@ export default function DraftReviewQueue() {
           ? `Generated ${json.generated} new draft${json.generated !== 1 ? "s" : ""}.`
           : "Generation run finished — no new drafts (see warnings below)."
       );
+
+      // Guidance/reference-file apply to a single Generate click only — clear
+      // them after a successful run so stale direction/attachments don't get
+      // silently resent on the next click (spec: "Clear the textarea and
+      // file after a successful generation run"). Do NOT clear on failure —
+      // a failed run should let the admin retry as-is without re-entering
+      // everything.
+      setGuidance("");
+      setReferenceFilePath(null);
+      setReferenceFileName(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+
       await fetchDrafts();
     } catch (err) {
       toast("error", err instanceof Error ? err.message : "Generation run failed");
     } finally {
       setGenerating(false);
+      // Start the cooldown regardless of outcome — a failed run still cost
+      // tokens if it got partway through the research call.
+      setCooldownUntil(Date.now() + GENERATE_COOLDOWN_MS);
     }
   };
 
@@ -265,11 +316,15 @@ export default function DraftReviewQueue() {
 
       <button
         onClick={handleGenerate}
-        disabled={generating || uploading}
+        disabled={generating || uploading || cooldownRemainingMs > 0}
         className="inline-flex items-center gap-2 bg-klo-accent text-white px-4 py-2.5 rounded-xl text-sm font-medium min-h-[44px] disabled:opacity-50"
       >
         {generating ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
-        {generating ? "Generating..." : "Generate Drafts"}
+        {generating
+          ? "Generating..."
+          : cooldownRemainingMs > 0
+            ? `Available in ${formatCooldown(cooldownRemainingMs)}`
+            : "Generate Drafts"}
       </button>
 
       {warnings.length > 0 && (
