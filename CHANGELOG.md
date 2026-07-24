@@ -13,6 +13,9 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 - **`firebase-admin` dependency** — added for upcoming server-side Firebase Cloud Messaging work.
 - **Native push (iOS/Android) now actually sends** — `src/lib/push-server.ts` previously logged native tokens without sending. Now sends real notifications via `firebase-admin`'s FCM client, using `FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY`. Invalid/expired tokens (`messaging/registration-token-not-registered`, `messaging/invalid-registration-token`) are cleaned up from `push_subscriptions` the same way expired web push subscriptions already were.
 
+### Fixed
+- **iOS native push no longer sent through FCM (and no longer deletes valid subscriptions)** — `@capacitor/push-notifications` returns a raw APNs token on iOS, not an FCM registration token. Sending it via `firebase-admin`'s FCM client was failing with `messaging/invalid-registration-token`, which the cleanup logic incorrectly treated as a dead subscription and deleted. iOS tokens are now skipped (logged, counted as failed, subscription preserved) until real APNs delivery is wired up. Android is unaffected — it already returns a valid FCM token and continues to send via FCM exactly as before.
+
 ## [Unreleased] — July 11, 2026 Session
 
 ### Added

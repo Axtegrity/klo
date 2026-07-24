@@ -110,6 +110,13 @@ async function sendToSubscriptions(
           const subscription = JSON.parse(sub.token);
           await webpush.sendNotification(subscription, notificationPayload);
           sent++;
+        } else if (sub.platform === "ios") {
+          // @capacitor/push-notifications returns a raw APNs token on iOS, not an FCM
+          // registration token — sending it via FCM would fail with
+          // messaging/invalid-registration-token and incorrectly delete a valid subscription.
+          // Skip until native APNs (or Firebase iOS SDK) delivery is wired up.
+          console.warn(`[Push] Skipping iOS subscription ${sub.id} — APNs delivery not yet configured`);
+          failed++;
         } else {
           try {
             ensureFirebase();
