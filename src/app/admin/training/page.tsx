@@ -57,6 +57,9 @@ import {
   Save,
   Monitor,
   Clock,
+  Check,
+  X,
+  Layers,
 } from "lucide-react";
 
 // ------------------------------------------------------------
@@ -105,12 +108,12 @@ const TRAINING_SECTIONS: TrainingSection[] = [
     id: "getting-started",
     title: "Getting Started",
     icon: PlayCircle,
-    description: "How to access the admin dashboard and navigate its 15 tabs.",
+    description: "How to access the admin dashboard and navigate its 16 tabs.",
     steps: [
       { icon: Globe, label: "Sign In", detail: "Go to keithlodom.ai and click Sign In, or navigate directly to /auth/signin" },
       { icon: Users, label: "Use Admin Credentials", detail: "Enter your admin email and password. Only owner and admin roles can access the dashboard." },
       { icon: Star, label: "Find the Admin Link", detail: "Once signed in, the gold \"Admin\" link appears in the top navigation bar" },
-      { icon: LayoutDashboard, label: "Explore 15 Tabs", detail: "Overview, Creative Studio, Customize, Content (Manager), Testimonials, Surveys, Events, Conference, Inquiries, Notifications, Presentations, Users, Analytics, Revenue, and Tools" },
+      { icon: LayoutDashboard, label: "Explore 16 Tabs", detail: "Overview, Creative Studio, Customize, Content (Manager), Content Automation, Testimonials, Surveys, Events, Conference, Inquiries, Notifications, Presentations, Users, Analytics, Revenue, and Tools" },
       { icon: Zap, label: "Header Utilities", detail: "Four buttons in the top-right: Changelog (version history), Request Update (submit change requests), Training Guide (this page), and Refresh (reload data)" },
     ],
     tips: [
@@ -297,6 +300,26 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       "To feature a vault article on the Executive Intelligence Feed (/feed), open its edit modal and enable the 'Feature in Executive Feed' toggle. Only articles with that toggle on will appear in the public feed.",
       "The feed category comes directly from the vault article's Category field — no mapping needed. Set a consistent category name (e.g., 'AI & Ethics') and it appears as-is in the feed filter tabs.",
       "Rule of thumb: Content Manager = words. Creative Studio = pictures, fonts, animations, and hero backgrounds. The edit modal here won't let you change the home page's background photo — that's by design.",
+    ],
+  },
+  {
+    id: "content-automation",
+    title: "Content Automation",
+    icon: Sparkles,
+    description: "AI-assisted draft generation for the Vault, organized into topic lanes. Nothing publishes automatically — every draft waits for a human review before it goes live.",
+    adminTab: "content-automation",
+    steps: [
+      { icon: Zap, label: "Weekly Batch", detail: "A background job runs every Monday at 9am UTC and generates new draft Vault articles across your active topic lanes (5 lanes by default). Drafts land in the Draft Review Queue with status \"pending\" — they are never shown to the public and never appear in the Vault until published." },
+      { icon: Check, label: "Publish a Draft", detail: "In the Draft Review Queue, read the preview and click the green \"Publish\" button. This copies the draft into the live Vault immediately — no confirmation step, since the action only affects that one draft and can be followed up with a normal edit/hide/archive afterward like any other Vault item." },
+      { icon: X, label: "Discard a Draft", detail: "Click the red \"Discard\" button to reject a draft you don't want published. This is low-stakes and reversible — discarding does not delete the topic, and a similar draft can always be regenerated next week. No confirmation step is required." },
+      { icon: Layers, label: "Topic Lanes", detail: "Switch to the Topic Lanes sub-section to see every lane that feeds the weekly generator. Each lane has a name, an optional description, and an Active / Inactive toggle." },
+      { icon: Power, label: "Toggle a Lane Active / Inactive", detail: "Click Inactive on any lane to stop it from generating new drafts — the lane and its past drafts are not deleted, generation just pauses. Click Active to resume. Inactive lanes are shown dimmed in the list." },
+      { icon: Plus, label: "Add a New Lane", detail: "Use the form at the bottom of the Topic Lanes list — enter a name and optional description, then click Add Lane. New lanes default to active and are picked up by the next Monday batch." },
+    ],
+    tips: [
+      "Nothing Keith's team generates here reaches the public Vault without an explicit Publish click — treat the Draft Review Queue like an inbox that needs to hit zero (or be intentionally discarded) each week.",
+      "There is no delete option for topic lanes in this version — toggling Inactive is the only way to stop a lane from generating. This is intentional so past drafts always stay traceable to the lane that produced them.",
+      "If the queue is empty, that's expected between Monday batches — check back after the next scheduled run, or ask an engineer to trigger an on-demand generation run if you need drafts sooner.",
     ],
   },
   {
@@ -741,6 +764,7 @@ const TAB_MAP: { id: string; label: string; icon: React.ElementType; color: stri
   { id: "creative-studio", label: "Creative Studio", icon: Wand2, color: "#8840FF", category: "Content" },
   { id: "customize", label: "Customize", icon: Paintbrush, color: "#C8A84E", category: "Settings" },
   { id: "content-manager", label: "Content", icon: FileEdit, color: "#21B8CD", category: "Content" },
+  { id: "content-automation", label: "Content Automation", icon: Sparkles, color: "#8840FF", category: "Content" },
   { id: "testimonials", label: "Testimonials", icon: MessageSquareQuote, color: "#F77A81", category: "Content" },
   { id: "surveys", label: "Surveys", icon: ClipboardCheck, color: "#6ECF55", category: "Content" },
   { id: "events", label: "Events", icon: Vote, color: "#6ECF55", category: "Events" },
@@ -947,7 +971,7 @@ export default function TrainingPage() {
                   Quick Start
                 </h2>
                 <p className="text-sm text-klo-muted leading-relaxed mb-4">
-                  Your admin dashboard has <span className="text-klo-text font-semibold">15 tabs</span> organized into functional groups.
+                  Your admin dashboard has <span className="text-klo-text font-semibold">16 tabs</span> organized into functional groups.
                   Tap any tab below to jump to its detailed guide, or use the header buttons for Changelog, Request Update, and this Training Guide.
                 </p>
                 <div className="flex flex-wrap gap-2">

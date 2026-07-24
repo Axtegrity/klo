@@ -34,6 +34,7 @@ import {
   X,
   Copy,
   Check,
+  Sparkles,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import {
@@ -63,6 +64,7 @@ import PresentationsAdminTab from "@/features/admin/PresentationsAdminTab";
 import NotificationsAdminTab from "@/features/admin/NotificationsAdminTab";
 import CustomizeAdminTab from "@/features/admin/CustomizeAdminTab";
 import ContentManagerTab from "@/features/admin/ContentManagerTab";
+import ContentAutomationTab from "@/features/admin/ContentAutomationTab";
 import SurveysAdminTab from "@/features/admin/SurveysAdminTab";
 import TestimonialsAdminTab from "@/features/admin/TestimonialsAdminTab";
 import { CreativeStudioTab } from "@/features/admin/creative-studio";
@@ -138,13 +140,14 @@ function StatCard({
 // Tab definitions
 // ------------------------------------------------------------
 
-type TabId = "overview" | "users" | "content" | "revenue" | "events" | "presentations" | "inquiries" | "notifications" | "tools" | "customize" | "content-manager" | "surveys" | "creative-studio" | "testimonials" | "leads";
+type TabId = "overview" | "users" | "content" | "revenue" | "events" | "presentations" | "inquiries" | "notifications" | "tools" | "customize" | "content-manager" | "content-automation" | "surveys" | "creative-studio" | "testimonials" | "leads";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "creative-studio", label: "Creative Studio", icon: Wand2 },
   { id: "customize", label: "Customize", icon: Paintbrush },
   { id: "content-manager", label: "Content", icon: FileEdit },
+  { id: "content-automation", label: "Content Automation", icon: Sparkles },
   { id: "testimonials", label: "Testimonials", icon: MessageSquareQuote },
   { id: "surveys", label: "Surveys", icon: ClipboardCheck },
   { id: "events", label: "Events", icon: Vote },
@@ -160,7 +163,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
 
 const TAB_GROUPS: { label: string; ids: TabId[] }[] = [
   { label: "Dashboard", ids: ["overview"] },
-  { label: "Content", ids: ["creative-studio", "customize", "content-manager", "testimonials", "surveys"] },
+  { label: "Content", ids: ["creative-studio", "customize", "content-manager", "content-automation", "testimonials", "surveys"] },
   { label: "Events", ids: ["events"] },
   { label: "Engagement", ids: ["inquiries", "notifications", "presentations"] },
   { label: "Platform", ids: ["users", "leads", "content", "revenue", "tools"] },
@@ -1631,6 +1634,11 @@ export default function AdminPage() {
         {/* CONTENT MANAGER TAB */}
         {activeTab === "content-manager" && (
           <ContentManagerTab />
+        )}
+
+        {/* CONTENT AUTOMATION TAB */}
+        {activeTab === "content-automation" && (
+          <ContentAutomationTab />
         )}
 
         {/* SURVEYS TAB */}

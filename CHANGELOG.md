@@ -7,6 +7,7 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 ## [Unreleased] — July 23, 2026 Session
 
 ### Added
+- **Content Automation pipeline** — a new "Content Automation" admin tab lets Keith's team review AI-generated Vault article drafts before anything goes live. A weekly batch job (Mondays 9am UTC) generates drafts across configurable topic lanes using web search + Claude; nothing auto-publishes. The Draft Review Queue shows each pending draft with a preview, category, and source, with one-click Publish (copies into the live Vault) or Discard (no confirmation needed — low-stakes and reversible). A Topic Lanes sub-section lets admins add new lanes and toggle existing ones active/inactive to control what the weekly generator covers.
 - **Vault page split into Featured + Library sections** — the top of `/vault` now always shows the 6 most recently added resources (unfiltered); below it, a new "Library" section holds the full archive in a dense searchable/paginated row list (12 per page), with the search bar and category filter relocated there and the level/type/free-only dropdowns removed for that view.
 - **Vault "Featured" eyebrow label** — a small icon + uppercase kicker now sits above the Featured card grid so it reads as a distinct, lighter-weight section from Library's full heading treatment below it.
 
