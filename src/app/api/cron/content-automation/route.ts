@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { runContentAutomationGenerate } from "@/lib/content-automation";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 // Weekly content automation run. Same CRON_SECRET bearer-auth pattern as
 // the other cron routes (sync-events, auto-end-sessions) — see
