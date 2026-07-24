@@ -15,6 +15,7 @@ import {
   Lock,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import CategoryTabs from "@/components/vault/CategoryTabs";
 import ContentCard from "@/components/vault/ContentCard";
@@ -189,13 +190,28 @@ export default function VaultPage() {
           </motion.p>
         </motion.div>
 
-        {/* Featured — fixed 6 most recent items, never filtered */}
+        {/* Featured — fixed 6 most recent items, never filtered.
+            Eyebrow label only (not a full section header, that's Library's
+            treatment) — keeps this from competing visually with Library. */}
         {featuredItems.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredItems.map((item, i) => (
-              <ContentCard key={item.id} item={item} index={i} />
-            ))}
-          </div>
+          <>
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" as const }}
+              className="flex items-center gap-2 mb-4"
+            >
+              <Sparkles size={14} className="text-[#8BA3D4]" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-[#8BA3D4]">
+                Featured
+              </span>
+            </motion.div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredItems.map((item, i) => (
+                <ContentCard key={item.id} item={item} index={i} />
+              ))}
+            </div>
+          </>
         )}
 
         {/* Library — full archive, search + category scoped here only */}
