@@ -1,4 +1,6 @@
 import webpush from "web-push";
+import { cert, getApps, initializeApp } from "firebase-admin/app";
+import { getMessaging } from "firebase-admin/messaging";
 import { getServiceSupabase } from "@/lib/supabase";
 
 // Configure web-push with VAPID keys (lazy — env vars unavailable at build time)
@@ -14,6 +16,18 @@ function ensureVapid() {
   }
   webpush.setVapidDetails(subject, publicKey, privateKey);
   vapidConfigured = true;
+}
+
+// Configure firebase-admin for native (iOS/Android) push (lazy — env vars unavailable at build time)
+function ensureFirebase() {
+  if (getApps().length > 0) return;
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  if (!projectId || !clientEmail || !privateKey) {
+    throw new Error("Firebase credentials not configured");
+  }
+  initializeApp({ credential: cert({ projectId, clientEmail, privateKey }) });
 }
 
 export interface PushPayload {
@@ -97,9 +111,29 @@ async function sendToSubscriptions(
           await webpush.sendNotification(subscription, notificationPayload);
           sent++;
         } else {
-          // Native tokens (iOS/Android) — log for now, FCM integration later
-          console.log(`[Push] Native ${sub.platform} token — FCM send not yet configured`);
-          sent++;
+          try {
+            ensureFirebase();
+            await getMessaging().send({
+              token: sub.token,
+              notification: {
+                title: payload.title,
+                body: payload.body,
+              },
+              data: { url: payload.url || "/" },
+            });
+            sent++;
+          } catch (fcmErr: unknown) {
+            const code = (fcmErr as { code?: string })?.code;
+            if (
+              code === "messaging/registration-token-not-registered" ||
+              code === "messaging/invalid-registration-token"
+            ) {
+              staleIds.push(sub.id);
+            } else {
+              console.error(`[Push] FCM send failed for ${sub.platform} subscription ${sub.id}`, fcmErr);
+            }
+            failed++;
+          }
         }
       } catch (err: unknown) {
         const statusCode = (err as { statusCode?: number })?.statusCode;
