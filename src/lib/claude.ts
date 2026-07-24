@@ -182,7 +182,9 @@ export async function searchLaneTopics(
   const data = await callAnthropicMessages({
     model: CONTENT_AUTOMATION_MODEL,
     max_tokens: 2048,
-    temperature: 0.2,
+    // No temperature/top_p/top_k: claude-sonnet-5 rejects any non-default
+    // sampling parameter with a 400 (breaking change vs older models) —
+    // steer determinism via the prompt instead.
     system: systemPrompt,
     tools: [{ type: WEB_SEARCH_TOOL_TYPE, name: "web_search", max_uses: 5 }],
     messages: [{ role: "user", content: userPrompt }],
@@ -237,7 +239,9 @@ ${styleBlock || "(no style references available — use Keith L. Odom's establis
   const data = await callAnthropicMessages({
     model: CONTENT_AUTOMATION_MODEL,
     max_tokens: 4096,
-    temperature: 0.5,
+    // No temperature/top_p/top_k: claude-sonnet-5 rejects any non-default
+    // sampling parameter with a 400 (breaking change vs older models) —
+    // steer variation via the prompt instead.
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],
   });
