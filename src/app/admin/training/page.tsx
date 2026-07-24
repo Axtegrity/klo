@@ -314,7 +314,7 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       { icon: X, label: "Discard a Draft", detail: "Click the red \"Discard\" button to reject a draft you don't want published. This is low-stakes and reversible — discarding does not delete the topic, and a similar draft can always be regenerated next week. No confirmation step is required." },
       { icon: Layers, label: "Topic Lanes", detail: "Switch to the Topic Lanes sub-section to see every lane that feeds the weekly generator. Each lane has a name, an optional description, and an Active / Inactive toggle." },
       { icon: Power, label: "Toggle a Lane Active / Inactive", detail: "Click Inactive on any lane to stop it from generating new drafts — the lane and its past drafts are not deleted, generation just pauses. Click Active to resume. Inactive lanes are shown dimmed in the list." },
-      { icon: Plus, label: "Add a New Lane", detail: "Use the form at the bottom of the Topic Lanes list — enter a name and optional description, then click Add Lane. New lanes default to active and are picked up by the next Monday batch." },
+      { icon: Plus, label: "Add a New Lane", detail: "Use the form at the bottom of the Topic Lanes list — pick a Vault category from the dropdown (only categories that don't already have a lane are shown) and optionally add a description, then click Add Lane. New lanes default to active and are picked up by the next Monday batch. If all 7 Vault categories already have a lane, retire an existing one first." },
     ],
     tips: [
       "Nothing Keith's team generates here reaches the public Vault without an explicit Publish click — treat the Draft Review Queue like an inbox that needs to hit zero (or be intentionally discarded) each week.",
