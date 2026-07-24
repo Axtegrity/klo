@@ -11,6 +11,7 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ### Added
 - **`firebase-admin` dependency** — added for upcoming server-side Firebase Cloud Messaging work.
+- **Native push (iOS/Android) now actually sends** — `src/lib/push-server.ts` previously logged native tokens without sending. Now sends real notifications via `firebase-admin`'s FCM client, using `FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY`. Invalid/expired tokens (`messaging/registration-token-not-registered`, `messaging/invalid-registration-token`) are cleaned up from `push_subscriptions` the same way expired web push subscriptions already were.
 
 ## [Unreleased] — July 11, 2026 Session
 
