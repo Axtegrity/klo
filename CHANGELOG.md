@@ -18,6 +18,7 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ### Security
 - **Next.js upgraded 16.2.7 → 16.2.11** — patches 5 HIGH-severity advisories disclosed 2026-07-22 (cache confusion of response bodies, Turbopack/single-locale middleware bypass, Server Actions SSRF, Server Actions DoS, rewrites SSRF via attacker-controlled hostname). All five affected the `>=16.0.0 <16.2.11` range.
+- **Content Automation `referenceFilePath` now constrained to this feature's own signed-upload paths** — the generate endpoint previously accepted any string as `referenceFilePath` and downloaded it from the shared `documents` Storage bucket with no ownership/prefix check, so a direct API call (bypassing the UI) could point it at any other object in that bucket (e.g. a different feature's uploaded document) and have its contents forwarded into the Anthropic prompt. `contentAutomationGenerateSchema` now requires the path to match the exact `content-automation-refs/...` shape `sign-upload/route.ts` mints, rejecting anything else with a 400. Also added `admin_activity_log` entries for reference-file uploads and on-demand generate runs, matching the audit-trail pattern already used elsewhere in this feature.
 
 ### Added
 - **`firebase-admin` dependency** — added for upcoming server-side Firebase Cloud Messaging work.

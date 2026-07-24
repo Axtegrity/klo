@@ -837,10 +837,41 @@ export const vaultTopicLaneToggleSchema = z.object({
   active: z.boolean(),
 });
 
+// referenceFilePath is downloaded server-side from the shared `documents`
+// Supabase Storage bucket (src/lib/document-extraction.ts) and its extracted
+// text is forwarded into the Anthropic prompt — so this field must be
+// constrained to paths this feature's own sign-upload route could actually
+// have minted, not merely any string. sign-upload/route.ts always produces
+// `content-automation-refs/${Date.now()}-${sanitized}`, where `sanitized` is
+// the client fileName with every character outside [a-zA-Z0-9._-] replaced
+// by "_" (see that route). The regex below mirrors that exact character
+// set so it accepts every path sign-upload can produce while rejecting a
+// path aimed at any other object in the bucket (e.g. Creative Studio's
+// `briefs/` folder):
+//   - fixed, case-sensitive `content-automation-refs/` prefix — no other
+//     folder in the bucket matches
+//   - `[\w.-]+` only — excludes `/`, so no second path segment is reachable
+//     (this alone rules out `../` traversal, since a literal `/` can never
+//     appear after the prefix)
+//   - `(?!.*\.\.)` belt-and-suspenders: explicitly rejects a literal `..`
+//     anywhere in the remainder, even though the character-class exclusion
+//     of `/` already makes `..` non-traversing on its own
+//   - required `.pdf`/`.docx` extension (case-insensitive, matching
+//     contentAutomationSignUploadSchema's own extension check below)
+// (Avery review, PR #226, BLOCKING finding #1.)
+const REFERENCE_FILE_PATH_REGEX = /^content-automation-refs\/(?!.*\.\.)[\w.-]+\.(?:pdf|docx)$/i;
+
 export const contentAutomationGenerateSchema = z.object({
   lane: z.string().max(200).optional(),
   guidance: z.string().max(2000).optional(),
-  referenceFilePath: z.string().max(2000).optional(),
+  referenceFilePath: z
+    .string()
+    .max(2000)
+    .regex(REFERENCE_FILE_PATH_REGEX, {
+      message:
+        "referenceFilePath must be a path minted by /api/admin/content-automation/sign-upload",
+    })
+    .optional(),
 });
 
 // ----------------------------------------------------------------

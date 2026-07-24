@@ -46,5 +46,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Audit trail entry (Avery review, PR #226, should-fix #2). There's no
+  // vault_topic_lanes-style DB row minted by this route — the browser
+  // uploads the actual bytes directly to Storage using the signed URL
+  // returned below, with no callback route to confirm that upload
+  // succeeded — so entity_id is null and the storage path itself carries
+  // the identifying detail, same as how drafts/[id]/route.ts and
+  // lanes/route.ts log against this table.
+  await supabase.from("admin_activity_log").insert({
+    admin_user_id: (session.user as { id?: string }).id ?? null,
+    admin_email: session.user?.email ?? "unknown",
+    action: "UPLOAD",
+    entity_type: "content_automation_reference_file",
+    entity_id: null,
+    details: `Minted signed upload URL for content automation reference file: ${fileName}`,
+    metadata: { path, fileSize: parsed.data.fileSize },
+  });
+
   return NextResponse.json({ path, token: data.token });
 }
