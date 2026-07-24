@@ -5,6 +5,12 @@ import { runContentAutomationGenerate } from "@/lib/content-automation";
 import { extractReferenceFileText } from "@/lib/document-extraction";
 import { getServiceSupabase } from "@/lib/supabase";
 
+// 300s (5 min) — the max allowed on Vercel Pro. A run loops web-search +
+// generation calls across every active lane sequentially; a single research
+// call alone has been measured running well past the platform's 10s
+// default, so the default timeout isn't enough headroom for multiple lanes.
+export const maxDuration = 300;
+
 // POST /api/admin/content-automation/generate — run the content generation
 // pipeline on demand (the same core logic also runs weekly via
 // src/app/api/cron/content-automation/route.ts, which imports
