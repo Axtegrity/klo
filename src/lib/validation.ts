@@ -839,6 +839,27 @@ export const vaultTopicLaneToggleSchema = z.object({
 
 export const contentAutomationGenerateSchema = z.object({
   lane: z.string().max(200).optional(),
+  guidance: z.string().max(2000).optional(),
+  referenceFilePath: z.string().max(2000).optional(),
+});
+
+// ----------------------------------------------------------------
+// Content Automation Pipeline — reference-file signed upload
+// (mirrors src/app/api/admin/events/[id]/files/sign-upload/route.ts's
+// signed-upload pattern against the existing `documents` bucket; this
+// feature only wants PDF/DOCX, narrower than the bucket's own broader
+// allowed_mime_types, enforced here at the route/schema level)
+// ----------------------------------------------------------------
+
+export const contentAutomationSignUploadSchema = z.object({
+  fileName: z.string().min(1).max(500).regex(/\.(pdf|docx)$/i, {
+    message: "Only .pdf and .docx files are allowed",
+  }),
+  fileSize: z
+    .number()
+    .int()
+    .positive()
+    .max(10 * 1024 * 1024, { message: "File exceeds 10 MB limit" }),
 });
 
 export const pageConfigUpdateSchema = z.object({

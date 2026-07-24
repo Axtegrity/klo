@@ -22,11 +22,17 @@ import type { VaultTopicLane } from "@/lib/supabase";
 /*  self-fetch between them.                                            */
 /* ------------------------------------------------------------------ */
 
+export type LaneRunStatus = "generated" | "failed" | "insufficient_sources";
+
 export interface LaneRunResult {
   lane: string;
-  status: "generated" | "failed";
+  status: LaneRunStatus;
   draftId?: string;
   error?: string;
+  // Present on "insufficient_sources" results — the count of reputable
+  // sources actually found, for the caller's warning message and any
+  // future UI display.
+  sourcesFound?: number;
 }
 
 export interface GenerateRunSummary {
@@ -34,6 +40,14 @@ export interface GenerateRunSummary {
   drafts: string[];
   laneResults: LaneRunResult[];
 }
+
+// Reputable-source quality gate: a lane must have at least this many
+// distinct reputable domains from searchLaneTopics() before generation is
+// even attempted — checked BEFORE the style-reference fetch and BEFORE
+// generateVaultArticle() runs, so a thin-source lane doesn't spend a
+// generation call it can't responsibly use. generateVaultArticle() itself
+// never needs to produce an "insufficient_sources" shape because of this.
+const MIN_REPUTABLE_SOURCES = 3;
 
 function slugify(input: string): string {
   return input
@@ -46,7 +60,13 @@ function slugify(input: string): string {
 }
 
 export async function runContentAutomationGenerate(
-  laneFilter?: string
+  laneFilter?: string,
+  // Both undefined on the weekly cron path (src/app/api/cron/content-automation/
+  // route.ts calls this with no arguments) — behavior there is unchanged.
+  // The manual on-demand admin endpoint resolves referenceText from a
+  // storage path via src/lib/document-extraction.ts before calling this.
+  guidance?: string,
+  referenceText?: string
 ): Promise<GenerateRunSummary> {
   const supabase = getServiceSupabase();
 
@@ -73,6 +93,36 @@ export async function runContentAutomationGenerate(
       // 1. Research 2-3 current, vetted topics for this lane via web search.
       const research = await searchLaneTopics(lane.name, lane.description);
 
+      // 1a. Reputable-source quality gate — runs for every lane regardless
+      //     of whether guidance/a reference file was supplied, on both the
+      //     manual and weekly-cron paths. Skips the style-reference fetch
+      //     and generation call entirely when the gate fails, so a
+      //     thin-source lane doesn't spend a generation call it can't
+      //     responsibly use.
+      const reputableSources = research.sources.filter((source) => source.reputable);
+      if (reputableSources.length < MIN_REPUTABLE_SOURCES) {
+        console.warn(
+          `[content-automation:generate] lane "${lane.name}" has only ${reputableSources.length} reputable source(s) (need ${MIN_REPUTABLE_SOURCES}) — skipping generation`
+        );
+        Sentry.captureMessage(
+          `Content automation: insufficient reputable sources for lane "${lane.name}"`,
+          {
+            level: "warning",
+            extra: {
+              lane: lane.name,
+              sourcesFound: reputableSources.length,
+              source: "content-automation-generate",
+            },
+          }
+        );
+        laneResults.push({
+          lane: lane.name,
+          status: "insufficient_sources",
+          sourcesFound: reputableSources.length,
+        });
+        continue;
+      }
+
       // 2. Style references — 3 existing published vault_content rows in
       //    the same category, used so the generated article matches
       //    Keith's established tone/cadence rather than a generic voice.
@@ -92,8 +142,14 @@ export async function runContentAutomationGenerate(
         (row) => ({ title: String(row.title), body: String(row.body) })
       );
 
-      // 3. Generate the article in Keith's voice from the research + style refs.
-      const article = await generateVaultArticle(research, styleReferences, lane.name);
+      // 3. Generate the article in Keith's voice from the research + style
+      //    refs, constrained to the reputable-source closed list, with
+      //    guidance/reference-file context injected when present (both
+      //    undefined on the weekly cron path — no behavior change there).
+      const article = await generateVaultArticle(research, styleReferences, lane.name, reputableSources, {
+        guidance,
+        referenceText,
+      });
 
       // Slug collision guard against both vault_drafts and vault_content —
       // the DB unique constraint is the backstop, but retrying here avoids
