@@ -9,6 +9,10 @@
     {
       "path": "/api/cron/auto-end-sessions",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/content-automation",
+      "schedule": "0 9 * * 1"
     }
   ]
 }
