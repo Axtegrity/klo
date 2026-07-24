@@ -11,6 +11,10 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 - **Vault page split into Featured + Library sections** — the top of `/vault` now always shows the 6 most recently added resources (unfiltered); below it, a new "Library" section holds the full archive in a dense searchable/paginated row list (12 per page), with the search bar and category filter relocated there and the level/type/free-only dropdowns removed for that view.
 - **Vault "Featured" eyebrow label** — a small icon + uppercase kicker now sits above the Featured card grid so it reads as a distinct, lighter-weight section from Library's full heading treatment below it.
 
+### Fixed
+- **Content Automation topic lanes constrained to Vault categories** — the "Add Lane" form previously accepted any free-form name; a lane name outside the 7 fixed `VAULT_CATEGORIES` would have published articles with no reachable category filter on `/vault`. The form is now a dropdown limited to categories that don't already have a lane, with an appropriate empty state once all 7 are taken, and both the Zod schema and the lanes API return a clear 409 (rather than a raw DB error) on a duplicate.
+- **Content Automation cron failures are now visible** — the weekly cron route previously discarded per-lane failure detail entirely, so a lane silently failing every week would have gone unnoticed by anyone. Per-lane failures are now reported to Sentry, and the cron response includes the full `laneResults` plus a `failed` lane-name list for anyone checking Vercel's cron logs.
+
 ### Security
 - **Next.js upgraded 16.2.7 → 16.2.11** — patches 5 HIGH-severity advisories disclosed 2026-07-22 (cache confusion of response bodies, Turbopack/single-locale middleware bypass, Server Actions SSRF, Server Actions DoS, rewrites SSRF via attacker-controlled hostname). All five affected the `>=16.0.0 <16.2.11` range.
 

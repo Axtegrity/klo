@@ -16,7 +16,20 @@ export async function GET(request: NextRequest) {
 
   try {
     const summary = await runContentAutomationGenerate();
-    return NextResponse.json({ success: true, generated: summary.generated });
+    // Surface per-lane results on the cron response too — not just the
+    // manual /generate endpoint. Sentry.captureException (in
+    // runContentAutomationGenerate's catch block) is the primary visibility
+    // mechanism for this unattended weekly path, but including the failure
+    // list here is cheap and useful for anyone checking Vercel's cron logs.
+    const failed = summary.laneResults
+      .filter((r) => r.status === "failed")
+      .map((r) => r.lane);
+    return NextResponse.json({
+      success: true,
+      generated: summary.generated,
+      laneResults: summary.laneResults,
+      failed,
+    });
   } catch (error) {
     console.error("[GET /api/cron/content-automation]", error);
     return NextResponse.json(

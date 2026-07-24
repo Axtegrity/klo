@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
 import type { VaultTopicLane } from "@/lib/supabase";
+import { VAULT_CATEGORIES } from "@/lib/vault-data";
 
 // Two-state active/inactive toggle — extends VisibilityToggle's existing
 // segmented-button pattern (src/features/admin/content-manager/VisibilityToggle.tsx),
@@ -51,6 +52,26 @@ export default function TopicLanes() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [creating, setCreating] = useState(false);
+
+  // Topic lanes are constrained to VAULT_CATEGORIES (Avery review, PR #225,
+  // finding A) — a lane exists to drive category-based content generation,
+  // and vault-page.tsx's category filter tabs only recognize this fixed
+  // enum. The add-lane form can only offer categories that don't already
+  // have a lane; the DB's UNIQUE(name) constraint is the backstop, but a
+  // filtered dropdown is better UX than a 409 on submit.
+  const availableCategories = useMemo(
+    () => VAULT_CATEGORIES.filter((cat) => !lanes.some((l) => l.name === cat)),
+    [lanes]
+  );
+
+  // Keep the selected category valid as lanes load/change — reset to the
+  // first still-available option (or clear it) rather than leaving a
+  // stale/no-longer-available selection in place.
+  useEffect(() => {
+    if (!availableCategories.includes(name as (typeof availableCategories)[number])) {
+      setName(availableCategories[0] ?? "");
+    }
+  }, [availableCategories, name]);
 
   const fetchLanes = useCallback(async () => {
     setLoading(true);
@@ -103,8 +124,9 @@ export default function TopicLanes() {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error ?? "Failed to create topic lane");
+      // Updating `lanes` here re-runs the availableCategories effect above,
+      // which resets `name` to the next open category automatically.
       setLanes((prev) => [...prev, json.data as VaultTopicLane].sort((a, b) => a.name.localeCompare(b.name)));
-      setName("");
       setDescription("");
       toast("success", "Topic lane added.");
     } catch (err) {
@@ -156,34 +178,50 @@ export default function TopicLanes() {
       )}
 
       {/* Add-lane inline form */}
-      <div className="p-4 rounded-xl bg-klo-dark/30 border border-white/5 space-y-3">
-        <label className="block">
-          <span className="text-xs text-klo-muted mb-1 block">Name</span>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. AI & Ethics"
-            className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px] placeholder:text-klo-muted focus:outline-none focus:border-klo-accent/50"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs text-klo-muted mb-1 block">Description</span>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={2}
-            placeholder="What this lane covers — helps guide what gets generated"
-            className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm resize-none placeholder:text-klo-muted focus:outline-none focus:border-klo-accent/50"
-          />
-        </label>
-        <button
-          onClick={handleCreate}
-          disabled={creating || !name.trim()}
-          className="bg-klo-accent text-white px-4 py-2.5 rounded-xl text-sm font-medium min-h-[44px] disabled:opacity-50"
-        >
-          {creating ? "Adding..." : "Add Lane"}
-        </button>
-      </div>
+      {availableCategories.length === 0 ? (
+        !loading && (
+          <div className="text-center py-8 px-4 text-klo-muted text-sm glass rounded-2xl border border-white/5">
+            All 7 Vault categories already have a topic lane. To add a new
+            one, retire an existing lane first — lane names are tied 1:1 to
+            Vault categories so generated content always has a reachable
+            category filter.
+          </div>
+        )
+      ) : (
+        <div className="p-4 rounded-xl bg-klo-dark/30 border border-white/5 space-y-3">
+          <label className="block">
+            <span className="text-xs text-klo-muted mb-1 block">Category</span>
+            <select
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm min-h-[44px] focus:outline-none focus:border-klo-accent/50"
+            >
+              {availableCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-xs text-klo-muted mb-1 block">Description</span>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              placeholder="What this lane covers — helps guide what gets generated"
+              className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm resize-none placeholder:text-klo-muted focus:outline-none focus:border-klo-accent/50"
+            />
+          </label>
+          <button
+            onClick={handleCreate}
+            disabled={creating || !name}
+            className="bg-klo-accent text-white px-4 py-2.5 rounded-xl text-sm font-medium min-h-[44px] disabled:opacity-50"
+          >
+            {creating ? "Adding..." : "Add Lane"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -45,6 +45,18 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error("[POST /api/admin/content-automation/lanes]", error);
+    // Defense-in-depth: the Topic Lanes UI filters its category dropdown to
+    // only categories without an existing lane, so this shouldn't be
+    // reachable in normal use — but the DB's UNIQUE(name) constraint is the
+    // real backstop. Match the same 23505 -> 409 pattern used in
+    // src/app/api/admin/surveys/route.ts rather than surfacing the raw
+    // Postgres error message to the client.
+    if (error.code === "23505") {
+      return NextResponse.json(
+        { error: "A topic lane for this category already exists" },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

@@ -819,7 +819,15 @@ export const vaultDraftListQuerySchema = z.object({
 });
 
 export const vaultTopicLaneSchema = z.object({
-  name: z.string().min(1).max(200),
+  // Constrained to VAULT_CATEGORIES (via vaultDraftCategorySchema, defined
+  // above) — not free text. Lanes exist to drive category-based content
+  // generation; the pipeline inserts `category: lane.name` verbatim into
+  // vault_content on publish (see content-automation.ts), and
+  // src/app/vault/page.tsx's category filter tabs are built only from the
+  // fixed VAULT_CATEGORIES enum. A lane name outside that enum would
+  // publish articles with no reachable category tab. (Avery review, PR
+  // #225, finding A.)
+  name: vaultDraftCategorySchema,
   description: z.string().max(2000).optional(),
   active: z.boolean().optional(),
 });

@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { getServiceSupabase } from "@/lib/supabase";
 import {
   searchLaneTopics,
@@ -133,8 +134,18 @@ export async function runContentAutomationGenerate(
       laneResults.push({ lane: lane.name, status: "generated", draftId: inserted.id });
     } catch (error) {
       // Partial-failure tolerance: one lane's Anthropic/DB error is logged
-      // and the run continues to the next lane rather than aborting.
+      // and the run continues to the next lane rather than aborting. Also
+      // reported to Sentry (matching the Sentry.captureException pattern
+      // used in src/app/global-error.tsx) because this function is called
+      // from the unattended weekly cron route as well as the manual
+      // on-demand admin endpoint — console.error alone is invisible on the
+      // cron path, since nothing forwards console output to Sentry here
+      // (no captureConsoleIntegration configured) and Vercel function logs
+      // aren't a monitored channel per this repo's conventions.
       console.error(`[content-automation:generate] lane "${lane.name}" failed`, error);
+      Sentry.captureException(error, {
+        extra: { lane: lane.name, source: "content-automation-generate" },
+      });
       laneResults.push({
         lane: lane.name,
         status: "failed",
