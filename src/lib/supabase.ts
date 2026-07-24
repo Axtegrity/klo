@@ -42,6 +42,31 @@ export interface VaultContent {
   updated_at: string;
 }
 
+export interface VaultDraft {
+  id: string;
+  title: string;
+  slug: string;
+  body: string;
+  excerpt: string | null;
+  category: string;
+  content_type: string;
+  tier_required: string;
+  topic_source: string | null;
+  status: "pending" | "published" | "discarded";
+  generated_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  created_at: string;
+}
+
+export interface VaultTopicLane {
+  id: string;
+  name: string;
+  description: string | null;
+  active: boolean;
+  created_at: string;
+}
+
 export interface StrategySessionRow {
   id: string;
   slug: string;
@@ -107,6 +132,8 @@ export interface Database {
       profiles: { Row: Profile };
       assessment_results: { Row: AssessmentResult };
       vault_content: { Row: VaultContent };
+      vault_drafts: { Row: VaultDraft };
+      vault_topic_lanes: { Row: VaultTopicLane };
       subscriptions: { Row: Subscription };
       push_subscriptions: { Row: PushSubscription };
     };

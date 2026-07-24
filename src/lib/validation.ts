@@ -780,6 +780,59 @@ const sectionImageConfigSchema = z.object({
   overlayOpacity: z.number().min(0).max(1).optional(),
 });
 
+// ----------------------------------------------------------------
+// Content Automation Pipeline — vault_drafts + vault_topic_lanes
+// ----------------------------------------------------------------
+
+// Kept in sync with VAULT_CATEGORIES in src/lib/vault-data.ts. This is a
+// separate literal list (not an import) because validation.ts has no
+// dependency today on vault-data.ts and Zod enums need a literal tuple —
+// if VAULT_CATEGORIES ever changes, update this list in the same commit.
+export const vaultDraftCategorySchema = z.enum([
+  "AI & Ethics",
+  "Church & Tech",
+  "Governance",
+  "Leadership",
+  "Youth & Workforce",
+  "Previous Events",
+  "Current Events",
+]);
+
+export const vaultDraftInsertSchema = z.object({
+  title: z.string().min(1).max(500),
+  slug: z.string().min(1).max(500).regex(/^[a-z0-9-]+$/),
+  body: z.string().min(1).max(100000),
+  excerpt: z.string().max(2000).optional(),
+  category: vaultDraftCategorySchema,
+  content_type: z.string().max(50).optional(),
+  tier_required: z.enum(["free", "essentials", "professional", "enterprise"]).optional(),
+  topic_source: z.string().max(500).optional(),
+  status: z.enum(["pending", "published", "discarded"]).optional(),
+});
+
+export const vaultDraftReviewSchema = z.object({
+  action: z.enum(["publish", "discard"]),
+});
+
+export const vaultDraftListQuerySchema = z.object({
+  status: z.enum(["pending", "published", "discarded"]).optional(),
+});
+
+export const vaultTopicLaneSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(2000).optional(),
+  active: z.boolean().optional(),
+});
+
+export const vaultTopicLaneToggleSchema = z.object({
+  id: uuidSchema,
+  active: z.boolean(),
+});
+
+export const contentAutomationGenerateSchema = z.object({
+  lane: z.string().max(200).optional(),
+});
+
 export const pageConfigUpdateSchema = z.object({
   hero_config: z.object({
     label: z.string().max(200).optional(),
