@@ -8,6 +8,7 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ### Added
 - **Vault page split into Featured + Library sections** — the top of `/vault` now always shows the 6 most recently added resources (unfiltered); below it, a new "Library" section holds the full archive in a dense searchable/paginated row list (12 per page), with the search bar and category filter relocated there and the level/type/free-only dropdowns removed for that view.
+- **Vault "Featured" eyebrow label** — a small icon + uppercase kicker now sits above the Featured card grid so it reads as a distinct, lighter-weight section from Library's full heading treatment below it.
 
 ### Security
 - **Next.js upgraded 16.2.7 → 16.2.11** — patches 5 HIGH-severity advisories disclosed 2026-07-22 (cache confusion of response bodies, Turbopack/single-locale middleware bypass, Server Actions SSRF, Server Actions DoS, rewrites SSRF via attacker-controlled hostname). All five affected the `>=16.0.0 <16.2.11` range.
