@@ -62,6 +62,7 @@ import {
   Layers,
   Paperclip,
   AlertCircle,
+  CalendarClock,
 } from "lucide-react";
 
 // ------------------------------------------------------------
@@ -318,6 +319,8 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       { icon: Eye, label: "Preview the Full Draft", detail: "Click the \"Preview\" button on a draft card to open the complete article — not just the short excerpt on the card — in a scrollable window. Publish and Discard are both available right there in the preview, so you can read the whole piece and decide without closing the window first." },
       { icon: Check, label: "Publish a Draft", detail: "In the Draft Review Queue, read the preview and click the green \"Publish\" button. This copies the draft into the live Vault immediately — no confirmation step, since the action only affects that one draft and can be followed up with a normal edit/hide/archive afterward like any other Vault item." },
       { icon: X, label: "Discard a Draft", detail: "Click the red \"Discard\" button to reject a draft you don't want published. This is low-stakes and reversible — discarding does not delete the topic, and a similar draft can always be regenerated next week. No confirmation step is required." },
+      { icon: CalendarClock, label: "Schedule a Draft to Publish Later", detail: "Instead of publishing immediately, pick a future date and time in the \"Schedule publish\" field on a draft card (or inside the Preview window) and click the \"Schedule\" button that appears once a date is set. The draft moves out of the normal Publish/Discard state and shows a \"Scheduled for [date]\" badge. An automated check runs every hour and publishes it to the live Vault on its own once that time arrives — no one needs to be online when it happens." },
+      { icon: X, label: "Cancel a Scheduled Draft", detail: "On a scheduled draft, click \"Cancel Schedule\" next to the badge to undo it — the draft goes back to its normal pending state with Publish/Discard buttons, and nothing publishes automatically. Use this if plans change or the date needs to move; just cancel and set a new one." },
       { icon: AlertCircle, label: "\"Insufficient Sources\" Warning", detail: "After a Generate run, an amber banner may appear saying a topic lane didn't have enough reputable sources to write from and skipped that lane this time — no draft was created for it. This is routine and self-resolving, not an error to fix; it just means try again later or add a Direction note to help the search find something more current." },
       { icon: BookOpen, label: "Sources on Each Draft", detail: "Every draft card has a collapsible \"Sources\" row at the bottom — click it to see the reputable articles and sites the AI drew from, each linking out to the original. If a draft shows \"No sources listed\" instead, review it a little more carefully before publishing." },
       { icon: Layers, label: "Topic Lanes", detail: "Switch to the Topic Lanes sub-section to see every lane that feeds the weekly generator. Each lane has a name, an optional description, and an Active / Inactive toggle." },
@@ -329,6 +332,7 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       "There is no delete option for topic lanes in this version — toggling Inactive is the only way to stop a lane from generating. This is intentional so past drafts always stay traceable to the lane that produced them.",
       "If the queue is empty, that's expected between Monday batches — click \"Generate Drafts\" to run a batch immediately instead of waiting.",
       "An \"Insufficient Sources\" banner is normal, not a bug — it means that lane's topic didn't have enough credible current coverage to write a well-sourced article this run.",
+      "Scheduled drafts stay visible in the Draft Review Queue (with their badge) so they're never out of sight — they just move out of the normal Publish/Discard flow until the scheduled time arrives or the schedule is cancelled.",
     ],
   },
   {
