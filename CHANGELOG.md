@@ -4,6 +4,11 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [Unreleased] — July 25, 2026 Session
+
+### Added
+- **Content Automation: full-article preview modal** — each draft card in the Draft Review Queue now has a "Preview" button that opens the complete draft body (not just the 300-char excerpt) in a scrollable modal, using the shared `Modal` component. Publish and Discard are also available directly in the modal's footer and call the exact same handlers as the card's own buttons — no duplicated fetch logic, same loading/toast/removal behavior. The modal closes itself immediately when Publish/Discard is clicked from inside it, before the request resolves, since the draft card unmounts from the list on success.
+
 ## [Unreleased] — July 24, 2026 Session
 
 ### Changed
