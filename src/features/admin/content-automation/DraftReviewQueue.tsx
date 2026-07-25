@@ -13,6 +13,7 @@ import {
   AlertCircle,
   ChevronDown,
   Eye,
+  CalendarClock,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useToast } from "@/contexts/ToastContext";
@@ -52,6 +53,18 @@ function formatGeneratedAt(iso: string): string {
   });
 }
 
+function formatScheduledFor(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+type ReviewAction = "publish" | "discard" | "schedule" | "cancel_schedule";
+
 // Client-side mirror of extractCitedSourceUrls() in src/lib/claude.ts — same
 // `## Sources` heading + `- [Label](URL)` link shape the backend validates
 // against, but also captures the label text (the server-side helper only
@@ -84,9 +97,9 @@ export default function DraftReviewQueue() {
   const { toast } = useToast();
   const [drafts, setDrafts] = useState<VaultDraft[]>([]);
   const [loading, setLoading] = useState(true);
-  // Tracks which draft id currently has a publish/discard request in flight,
-  // and which action, so the correct button shows its own loading state.
-  const [actingOn, setActingOn] = useState<{ id: string; action: "publish" | "discard" } | null>(null);
+  // Tracks which draft id currently has a review request in flight, and
+  // which action, so the correct button shows its own loading state.
+  const [actingOn, setActingOn] = useState<{ id: string; action: ReviewAction } | null>(null);
 
   // Generate run controls — guidance/reference-file are optional inputs on
   // an on-demand run only; the weekly cron path is unaffected by any of
@@ -122,13 +135,27 @@ export default function DraftReviewQueue() {
     return () => clearInterval(interval);
   }, [cooldownUntil]);
 
+  // The queue shows both pending and scheduled drafts (scheduled ones with
+  // a badge + Cancel Schedule instead of Publish/Discard) — two requests
+  // merged client-side rather than widening the GET route to accept
+  // multiple statuses in one call.
   const fetchDrafts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/content-automation/drafts?status=pending");
-      if (!res.ok) throw new Error("Failed to load drafts");
-      const json = await res.json();
-      setDrafts((json.data ?? []) as VaultDraft[]);
+      const [pendingRes, scheduledRes] = await Promise.all([
+        fetch("/api/admin/content-automation/drafts?status=pending"),
+        fetch("/api/admin/content-automation/drafts?status=scheduled"),
+      ]);
+      if (!pendingRes.ok || !scheduledRes.ok) throw new Error("Failed to load drafts");
+      const [pendingJson, scheduledJson] = await Promise.all([
+        pendingRes.json(),
+        scheduledRes.json(),
+      ]);
+      const merged = [
+        ...((pendingJson.data ?? []) as VaultDraft[]),
+        ...((scheduledJson.data ?? []) as VaultDraft[]),
+      ].sort((a, b) => new Date(b.generated_at).getTime() - new Date(a.generated_at).getTime());
+      setDrafts(merged);
     } catch (err) {
       toast("error", err instanceof Error ? err.message : "Failed to load drafts");
     } finally {
@@ -140,29 +167,47 @@ export default function DraftReviewQueue() {
     fetchDrafts();
   }, [fetchDrafts]);
 
-  const handleReview = async (draft: VaultDraft, action: "publish" | "discard") => {
+  const reviewMessages: Record<ReviewAction, string> = {
+    publish: "Draft published — now live in the Vault.",
+    discard: "Draft discarded.",
+    schedule: "Draft scheduled.",
+    cancel_schedule: "Schedule cancelled — draft is pending again.",
+  };
+
+  const handleReview = async (
+    draft: VaultDraft,
+    action: ReviewAction,
+    scheduledPublishAt?: string
+  ) => {
     setActingOn({ id: draft.id, action });
     try {
       const res = await fetch(`/api/admin/content-automation/drafts/${draft.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify(
+          action === "schedule" ? { action, scheduled_publish_at: scheduledPublishAt } : { action }
+        ),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         // 404 (not found) or 409 (already reviewed by someone else) both mean
-        // this draft no longer belongs in the pending queue — drop it from
+        // this draft no longer belongs in the queue as shown — drop it from
         // the list either way so the UI doesn't show a stale actionable card.
         if (res.status === 404 || res.status === 409) {
           setDrafts((prev) => prev.filter((d) => d.id !== draft.id));
         }
-        throw new Error(json.error ?? `Failed to ${action} draft`);
+        const fieldError = json.details?.fieldErrors?.scheduled_publish_at?.[0];
+        throw new Error(fieldError ?? json.error ?? `Failed to ${action} draft`);
       }
-      setDrafts((prev) => prev.filter((d) => d.id !== draft.id));
-      toast(
-        "success",
-        action === "publish" ? "Draft published — now live in the Vault." : "Draft discarded."
-      );
+
+      if (action === "schedule" || action === "cancel_schedule") {
+        // Status changed but the draft stays in this queue — update it in
+        // place instead of removing it.
+        setDrafts((prev) => prev.map((d) => (d.id === draft.id ? (json.data as VaultDraft) : d)));
+      } else {
+        setDrafts((prev) => prev.filter((d) => d.id !== draft.id));
+      }
+      toast("success", reviewMessages[action]);
     } catch (err) {
       toast("error", err instanceof Error ? err.message : `Failed to ${action} draft`);
     } finally {
@@ -260,11 +305,16 @@ export default function DraftReviewQueue() {
     }
   };
 
+  const pendingCount = drafts.filter((d) => d.status === "pending").length;
+  const scheduledCount = drafts.filter((d) => d.status === "scheduled").length;
+
   return (
     <div className="space-y-4">
       <div>
         <p className="text-sm text-klo-muted">
-          {drafts.length} pending draft{drafts.length !== 1 ? "s" : ""}
+          {pendingCount} pending draft{pendingCount !== 1 ? "s" : ""}
+          {scheduledCount > 0 &&
+            ` · ${scheduledCount} scheduled draft${scheduledCount !== 1 ? "s" : ""}`}
         </p>
       </div>
 
@@ -352,7 +402,7 @@ export default function DraftReviewQueue() {
         </div>
       ) : drafts.length === 0 ? (
         <div className="text-center py-12 text-klo-muted text-sm glass rounded-2xl border border-white/5">
-          No pending drafts. The next batch generates Monday at 9am, or click Generate Drafts above to run now.
+          No pending or scheduled drafts. The next batch generates Monday at 9am, or click Generate Drafts above to run now.
         </div>
       ) : (
         <div className="space-y-2">
@@ -363,9 +413,13 @@ export default function DraftReviewQueue() {
                 draft={draft}
                 isPublishing={actingOn?.id === draft.id && actingOn.action === "publish"}
                 isDiscarding={actingOn?.id === draft.id && actingOn.action === "discard"}
+                isScheduling={actingOn?.id === draft.id && actingOn.action === "schedule"}
+                isCancellingSchedule={actingOn?.id === draft.id && actingOn.action === "cancel_schedule"}
                 disabled={actingOn !== null && actingOn.id !== draft.id}
                 onPublish={() => handleReview(draft, "publish")}
                 onDiscard={() => handleReview(draft, "discard")}
+                onSchedule={(scheduledPublishAt) => handleReview(draft, "schedule", scheduledPublishAt)}
+                onCancelSchedule={() => handleReview(draft, "cancel_schedule")}
               />
             ))}
           </AnimatePresence>
@@ -379,27 +433,45 @@ function DraftCard({
   draft,
   isPublishing,
   isDiscarding,
+  isScheduling,
+  isCancellingSchedule,
   disabled,
   onPublish,
   onDiscard,
+  onSchedule,
+  onCancelSchedule,
 }: {
   draft: VaultDraft;
   isPublishing: boolean;
   isDiscarding: boolean;
+  isScheduling: boolean;
+  isCancellingSchedule: boolean;
   disabled: boolean;
   onPublish: () => void;
   onDiscard: () => void;
+  onSchedule: (scheduledPublishAt: string) => void;
+  onCancelSchedule: () => void;
 }) {
-  const busy = isPublishing || isDiscarding;
+  const busy = isPublishing || isDiscarding || isScheduling || isCancellingSchedule;
+  const isScheduled = draft.status === "scheduled";
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  // datetime-local input value — shared between the card and the preview
+  // modal's picker so picking a date in either place carries over.
+  const [scheduleInput, setScheduleInput] = useState("");
   const sources = useMemo(() => parseDraftSources(draft.body), [draft.body]);
 
-  // The draft gets removed from the parent list on a successful publish/discard,
-  // which would unmount this card mid-request. Close the modal synchronously
-  // here (before the async PATCH resolves) rather than relying on the list
-  // re-render to make it moot — avoids a "state update on unmounted component"
-  // warning from Modal's own isOpen-driven effects.
+  const handleScheduleClick = () => {
+    if (!scheduleInput) return;
+    onSchedule(new Date(scheduleInput).toISOString());
+  };
+
+  // The draft gets removed from (or updated in) the parent list on a
+  // successful review action, which would unmount this card mid-request.
+  // Close the modal synchronously here (before the async PATCH resolves)
+  // rather than relying on the list re-render to make it moot — avoids a
+  // "state update on unmounted component" warning from Modal's own
+  // isOpen-driven effects.
   const handleModalPublish = () => {
     setPreviewOpen(false);
     onPublish();
@@ -407,6 +479,15 @@ function DraftCard({
   const handleModalDiscard = () => {
     setPreviewOpen(false);
     onDiscard();
+  };
+  const handleModalSchedule = () => {
+    if (!scheduleInput) return;
+    setPreviewOpen(false);
+    onSchedule(new Date(scheduleInput).toISOString());
+  };
+  const handleModalCancelSchedule = () => {
+    setPreviewOpen(false);
+    onCancelSchedule();
   };
 
   return (
@@ -436,26 +517,74 @@ function DraftCard({
         </div>
 
         <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-          <div className="flex gap-2">
-            <button
-              onClick={onPublish}
-              disabled={disabled || busy}
-              className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
-            >
-              {isPublishing ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
-              Publish
-            </button>
-            <button
-              onClick={onDiscard}
-              disabled={disabled || busy}
-              className="inline-flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
-            >
-              {isDiscarding ? <RefreshCw size={14} className="animate-spin" /> : <X size={14} />}
-              Discard
-            </button>
-          </div>
+          {isScheduled ? (
+            <div className="flex flex-col items-end gap-2">
+              <span className="inline-flex items-center gap-1.5 text-[10px] px-2 py-1 rounded bg-klo-accent/10 text-klo-accent font-medium">
+                <CalendarClock size={12} />
+                Scheduled for {formatScheduledFor(draft.scheduled_publish_at!)}
+              </span>
+              <button
+                onClick={onCancelSchedule}
+                disabled={disabled || busy}
+                className="inline-flex items-center gap-1.5 text-klo-muted hover:text-klo-text hover:bg-white/5 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+              >
+                {isCancellingSchedule ? (
+                  <RefreshCw size={14} className="animate-spin" />
+                ) : (
+                  <X size={14} />
+                )}
+                Cancel Schedule
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={onPublish}
+                disabled={disabled || busy}
+                className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+              >
+                {isPublishing ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
+                Publish
+              </button>
+              <button
+                onClick={onDiscard}
+                disabled={disabled || busy}
+                className="inline-flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+              >
+                {isDiscarding ? <RefreshCw size={14} className="animate-spin" /> : <X size={14} />}
+                Discard
+              </button>
+              {scheduleInput && (
+                <button
+                  onClick={handleScheduleClick}
+                  disabled={disabled || busy}
+                  className="inline-flex items-center gap-1.5 bg-klo-accent/10 border border-klo-accent/20 text-klo-accent hover:bg-klo-accent/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+                >
+                  {isScheduling ? (
+                    <RefreshCw size={14} className="animate-spin" />
+                  ) : (
+                    <CalendarClock size={14} />
+                  )}
+                  Schedule
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {!isScheduled && (
+        <label className="block mt-3">
+          <span className="text-[10px] text-klo-muted mb-1 block">Schedule publish (optional)</span>
+          <input
+            type="datetime-local"
+            value={scheduleInput}
+            onChange={(e) => setScheduleInput(e.target.value)}
+            disabled={disabled || busy}
+            className="px-3 py-2 rounded-lg bg-klo-dark/50 border border-white/5 text-klo-text text-xs disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+          />
+        </label>
+      )}
 
       <div className="mt-3">
         <button
@@ -489,24 +618,71 @@ function DraftCard({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 pt-4 mt-4 border-t border-white/5">
-          <button
-            onClick={handleModalPublish}
-            disabled={disabled || busy}
-            className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
-          >
-            {isPublishing ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
-            Publish
-          </button>
-          <button
-            onClick={handleModalDiscard}
-            disabled={disabled || busy}
-            className="inline-flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
-          >
-            {isDiscarding ? <RefreshCw size={14} className="animate-spin" /> : <X size={14} />}
-            Discard
-          </button>
-        </div>
+        {isScheduled ? (
+          <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-white/5">
+            <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded bg-klo-accent/10 text-klo-accent font-medium">
+              <CalendarClock size={13} />
+              Scheduled for {formatScheduledFor(draft.scheduled_publish_at!)}
+            </span>
+            <button
+              onClick={handleModalCancelSchedule}
+              disabled={disabled || busy}
+              className="inline-flex items-center gap-1.5 text-klo-muted hover:text-klo-text hover:bg-white/5 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+            >
+              {isCancellingSchedule ? (
+                <RefreshCw size={14} className="animate-spin" />
+              ) : (
+                <X size={14} />
+              )}
+              Cancel Schedule
+            </button>
+          </div>
+        ) : (
+          <div className="pt-4 mt-4 border-t border-white/5 space-y-3">
+            <label className="block">
+              <span className="text-xs text-klo-muted mb-1 block">Schedule publish (optional)</span>
+              <input
+                type="datetime-local"
+                value={scheduleInput}
+                onChange={(e) => setScheduleInput(e.target.value)}
+                disabled={disabled || busy}
+                className="px-3 py-2 rounded-lg bg-klo-dark/50 border border-white/5 text-klo-text text-xs disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+              />
+            </label>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={handleModalPublish}
+                disabled={disabled || busy}
+                className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+              >
+                {isPublishing ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
+                Publish
+              </button>
+              <button
+                onClick={handleModalDiscard}
+                disabled={disabled || busy}
+                className="inline-flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+              >
+                {isDiscarding ? <RefreshCw size={14} className="animate-spin" /> : <X size={14} />}
+                Discard
+              </button>
+              {scheduleInput && (
+                <button
+                  onClick={handleModalSchedule}
+                  disabled={disabled || busy}
+                  className="inline-flex items-center gap-1.5 bg-klo-accent/10 border border-klo-accent/20 text-klo-accent hover:bg-klo-accent/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+                >
+                  {isScheduling ? (
+                    <RefreshCw size={14} className="animate-spin" />
+                  ) : (
+                    <CalendarClock size={14} />
+                  )}
+                  Schedule
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </Modal>
 
       <div className="border-t border-white/5 mt-3 pt-2">
