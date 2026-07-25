@@ -52,10 +52,11 @@ export interface VaultDraft {
   content_type: string;
   tier_required: string;
   topic_source: string | null;
-  status: "pending" | "published" | "discarded";
+  status: "pending" | "published" | "discarded" | "scheduled";
   generated_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
+  scheduled_publish_at: string | null;
   created_at: string;
 }
 

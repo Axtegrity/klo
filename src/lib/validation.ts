@@ -810,12 +810,33 @@ export const vaultDraftInsertSchema = z.object({
   status: z.enum(["pending", "published", "discarded"]).optional(),
 });
 
-export const vaultDraftReviewSchema = z.object({
-  action: z.enum(["publish", "discard"]),
-});
+// Reused wherever a client supplies a future publish timestamp — currently
+// just the "schedule" action below, but kept standalone since the
+// future-datetime check is the meaningful validation, not the action shape.
+export const scheduledPublishSchema = z.string().datetime().refine(
+  (val) => new Date(val).getTime() > Date.now(),
+  { message: "scheduled_publish_at must be a future datetime" }
+);
 
+// "cancel_schedule" isn't in the original spec's action list but is
+// required to support the Draft Review Queue's "Cancel Schedule" control
+// (resets a scheduled draft back to pending) — there's no other way to
+// reverse a "schedule" action once applied. Flagged as an addition, not a
+// silent one.
+export const vaultDraftReviewSchema = z
+  .object({
+    action: z.enum(["publish", "discard", "schedule", "cancel_schedule"]),
+    scheduled_publish_at: scheduledPublishSchema.optional(),
+  })
+  .refine((data) => data.action !== "schedule" || data.scheduled_publish_at !== undefined, {
+    message: 'scheduled_publish_at is required when action is "schedule"',
+    path: ["scheduled_publish_at"],
+  });
+
+// "scheduled" included alongside the three original statuses so the Draft
+// Review Queue UI can filter to it — see DraftReviewQueue.tsx.
 export const vaultDraftListQuerySchema = z.object({
-  status: z.enum(["pending", "published", "discarded"]).optional(),
+  status: z.enum(["pending", "published", "discarded", "scheduled"]).optional(),
 });
 
 export const vaultTopicLaneSchema = z.object({

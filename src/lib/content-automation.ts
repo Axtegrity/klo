@@ -1,11 +1,12 @@
 import * as Sentry from "@sentry/nextjs";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServiceSupabase } from "@/lib/supabase";
 import {
   searchLaneTopics,
   generateVaultArticle,
   type VaultStyleReference,
 } from "@/lib/claude";
-import type { VaultTopicLane } from "@/lib/supabase";
+import type { VaultDraft, VaultTopicLane } from "@/lib/supabase";
 
 /* ------------------------------------------------------------------ */
 /*  Content Automation Pipeline — shared generation logic              */
@@ -211,4 +212,90 @@ export async function runContentAutomationGenerate(
   }
 
   return { generated: draftIds.length, drafts: draftIds, laneResults };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Publish — shared between the manual PATCH review endpoint          */
+/*  (src/app/api/admin/content-automation/drafts/[id]/route.ts,        */
+/*  "publish" action) and the hourly scheduled-publish cron             */
+/*  (src/app/api/cron/publish-scheduled-drafts/route.ts). Both callers  */
+/*  are expected to have already atomically claimed the draft (an       */
+/*  UPDATE ... WHERE status = <expected> ... SET status = 'published'   */
+/*  that only succeeds if nothing else got there first) before calling  */
+/*  this — this function only does the vault_content insert + activity  */
+/*  log + revert-on-failure, it does not re-check the draft's status.   */
+/* ------------------------------------------------------------------ */
+
+export interface PublishClaimedDraftResult {
+  success: boolean;
+  // Full inserted vault_content row — callers that don't need it (the cron)
+  // can ignore it; the manual PATCH route returns it verbatim in its
+  // response body, matching the pre-refactor response shape exactly.
+  published?: Record<string, unknown>;
+  error?: string;
+}
+
+export async function publishClaimedDraft(
+  supabase: SupabaseClient,
+  draft: VaultDraft,
+  actor: { email: string; userId: string | null },
+  // What to revert the draft's row back to if the vault_content insert
+  // fails, so it isn't left stuck "published" with no corresponding
+  // vault_content row. The manual publish path (claimed from "pending")
+  // reverts to pending; the scheduled-publish cron (claimed from
+  // "scheduled") reverts to scheduled with its original timestamp intact,
+  // so it's simply retried on the next hourly run instead of losing the
+  // schedule.
+  revertOnFailureTo: { status: VaultDraft["status"]; scheduled_publish_at: string | null }
+): Promise<PublishClaimedDraftResult> {
+  const now = new Date().toISOString();
+
+  // Publish: copy the draft's shared fields into vault_content, matching the
+  // create pattern in src/app/api/admin/content-manager/vault/route.ts (both
+  // the legacy `published` boolean and the `visibility` enum are set — see
+  // that route for why both columns exist).
+  const { data: published, error: publishError } = await supabase
+    .from("vault_content")
+    .insert({
+      title: draft.title,
+      slug: draft.slug,
+      body: draft.body,
+      excerpt: draft.excerpt,
+      category: draft.category,
+      content_type: draft.content_type,
+      tier_required: draft.tier_required,
+      author_name: "Keith L. Odom",
+      visibility: "published",
+      published: true,
+      published_at: now,
+    })
+    .select()
+    .single();
+
+  if (publishError) {
+    console.error("[content-automation:publish] insert into vault_content failed, reverting claim", publishError);
+    await supabase
+      .from("vault_drafts")
+      .update({
+        status: revertOnFailureTo.status,
+        reviewed_at: null,
+        reviewed_by: null,
+        scheduled_publish_at: revertOnFailureTo.scheduled_publish_at,
+      })
+      .eq("id", draft.id);
+
+    return { success: false, error: publishError.message };
+  }
+
+  await supabase.from("admin_activity_log").insert({
+    admin_user_id: actor.userId,
+    admin_email: actor.email,
+    action: "PUBLISH",
+    entity_type: "vault_draft",
+    entity_id: draft.id,
+    details: `Published content automation draft as vault_content: ${draft.title}`,
+    metadata: { vault_content_id: published.id },
+  });
+
+  return { success: true, published };
 }

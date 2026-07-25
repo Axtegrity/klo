@@ -2,19 +2,27 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { verifyCreativeStudioAdmin } from "@/lib/creative-studio-auth";
 import { vaultDraftReviewSchema } from "@/lib/validation";
+import { publishClaimedDraft } from "@/lib/content-automation";
 import type { VaultDraft } from "@/lib/supabase";
 
-// PATCH /api/admin/content-automation/drafts/[id] — publish or discard a draft.
+// PATCH /api/admin/content-automation/drafts/[id] — publish, schedule, or
+// discard a draft.
 //
 // This route is action-gated, not a general field-update endpoint: the body
-// is validated against vaultDraftReviewSchema, which accepts exactly one
-// field ({ action: "publish" | "discard" }). Nothing from the request body
-// is ever spread into a DB update object — every column written below is
-// chosen by server-side logic based on which action ran. The ALLOWED_FIELDS
-// allowlist pattern used in src/app/api/admin/events/[id]/route.ts exists to
-// stop an arbitrary client-supplied field from reaching an update() call;
-// there is no such arbitrary field surface here, so that pattern does not
-// apply to this route.
+// is validated against vaultDraftReviewSchema, which accepts only
+// { action: "publish" | "discard" | "schedule", scheduled_publish_at? }.
+// Nothing from the request body is ever spread into a DB update object —
+// every column written below is chosen by server-side logic based on which
+// action ran. The ALLOWED_FIELDS allowlist pattern used in
+// src/app/api/admin/events/[id]/route.ts exists to stop an arbitrary
+// client-supplied field from reaching an update() call; there is no such
+// arbitrary field surface here, so that pattern does not apply to this route.
+//
+// "publish" shares its vault_content-insert + activity-log logic with the
+// scheduled-publish cron (src/app/api/cron/publish-scheduled-drafts/route.ts)
+// via publishClaimedDraft() in src/lib/content-automation.ts — see that
+// function's comment for why the atomic claim stays here rather than moving
+// into the shared helper.
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -34,8 +42,95 @@ export async function PATCH(
 
   const supabase = getServiceSupabase();
   const email = session.user?.email ?? "unknown";
+  const userId = (session.user as { id?: string }).id ?? null;
   const now = new Date().toISOString();
-  const targetStatus = parsed.data.action === "publish" ? "published" : "discarded";
+  const action = parsed.data.action;
+
+  // Shared "the atomic claim below matched 0 rows" handler — either the
+  // draft doesn't exist, or it's not in the status this action expects to
+  // claim from (already reviewed / already scheduled / not scheduled).
+  async function notClaimedResponse() {
+    const { data: existing } = await supabase
+      .from("vault_drafts")
+      .select("id, status")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (!existing) {
+      return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+    }
+    return NextResponse.json(
+      { error: `Draft already reviewed (status: ${existing.status})` },
+      { status: 409 }
+    );
+  }
+
+  if (action === "cancel_schedule") {
+    const { data: claimed, error: claimError } = await supabase
+      .from("vault_drafts")
+      .update({ status: "pending", scheduled_publish_at: null, reviewed_at: null, reviewed_by: null })
+      .eq("id", id)
+      .eq("status", "scheduled")
+      .select("*")
+      .maybeSingle();
+
+    if (claimError) {
+      console.error("[PATCH /api/admin/content-automation/drafts/[id]]", claimError);
+      return NextResponse.json({ error: claimError.message }, { status: 500 });
+    }
+    if (!claimed) return notClaimedResponse();
+
+    await supabase.from("admin_activity_log").insert({
+      admin_user_id: userId,
+      admin_email: email,
+      action: "CANCEL_SCHEDULE",
+      entity_type: "vault_draft",
+      entity_id: claimed.id,
+      details: `Cancelled scheduled publish for content automation draft: ${claimed.title}`,
+    });
+
+    return NextResponse.json({ data: claimed as VaultDraft });
+  }
+
+  if (action === "schedule") {
+    // scheduled_publish_at's presence + future-datetime-ness is already
+    // enforced by vaultDraftReviewSchema — safe to assert non-null here.
+    const scheduledPublishAt = parsed.data.scheduled_publish_at as string;
+
+    const { data: claimed, error: claimError } = await supabase
+      .from("vault_drafts")
+      .update({
+        status: "scheduled",
+        scheduled_publish_at: scheduledPublishAt,
+        reviewed_at: null,
+        reviewed_by: null,
+      })
+      .eq("id", id)
+      .eq("status", "pending")
+      .select("*")
+      .maybeSingle();
+
+    if (claimError) {
+      console.error("[PATCH /api/admin/content-automation/drafts/[id]]", claimError);
+      return NextResponse.json({ error: claimError.message }, { status: 500 });
+    }
+    if (!claimed) return notClaimedResponse();
+
+    await supabase.from("admin_activity_log").insert({
+      admin_user_id: userId,
+      admin_email: email,
+      action: "SCHEDULE",
+      entity_type: "vault_draft",
+      entity_id: claimed.id,
+      details: `Scheduled content automation draft to publish at ${scheduledPublishAt}: ${claimed.title}`,
+    });
+
+    return NextResponse.json({ data: claimed as VaultDraft });
+  }
+
+  // action is "publish" | "discard" — unchanged from the pre-scheduling
+  // behavior: a single atomic claim from "pending", then act on the result.
+  const targetStatus = action === "publish" ? "published" : "discarded";
 
   // Atomically claim the draft: only succeeds if it's still "pending". This
   // closes the race where two admins click publish/discard on the same
@@ -55,28 +150,13 @@ export async function PATCH(
     return NextResponse.json({ error: claimError.message }, { status: 500 });
   }
 
-  if (!claimed) {
-    // Either the draft doesn't exist, or it's already been reviewed.
-    const { data: existing } = await supabase
-      .from("vault_drafts")
-      .select("id, status")
-      .eq("id", id)
-      .maybeSingle();
-
-    if (!existing) {
-      return NextResponse.json({ error: "Draft not found" }, { status: 404 });
-    }
-    return NextResponse.json(
-      { error: `Draft already reviewed (status: ${existing.status})` },
-      { status: 409 }
-    );
-  }
+  if (!claimed) return notClaimedResponse();
 
   const draft = claimed as VaultDraft;
 
-  if (parsed.data.action === "discard") {
+  if (action === "discard") {
     await supabase.from("admin_activity_log").insert({
-      admin_user_id: (session.user as { id?: string }).id ?? null,
+      admin_user_id: userId,
       admin_email: email,
       action: "DISCARD",
       entity_type: "vault_draft",
@@ -87,49 +167,16 @@ export async function PATCH(
     return NextResponse.json({ data: draft });
   }
 
-  // Publish: copy the draft's shared fields into vault_content, matching the
-  // create pattern in src/app/api/admin/content-manager/vault/route.ts (both
-  // the legacy `published` boolean and the `visibility` enum are set — see
-  // that route for why both columns exist).
-  const { data: published, error: publishError } = await supabase
-    .from("vault_content")
-    .insert({
-      title: draft.title,
-      slug: draft.slug,
-      body: draft.body,
-      excerpt: draft.excerpt,
-      category: draft.category,
-      content_type: draft.content_type,
-      tier_required: draft.tier_required,
-      author_name: "Keith L. Odom",
-      visibility: "published",
-      published: true,
-      published_at: now,
-    })
-    .select()
-    .single();
+  const result = await publishClaimedDraft(
+    supabase,
+    draft,
+    { email, userId },
+    { status: "pending", scheduled_publish_at: null }
+  );
 
-  if (publishError) {
-    console.error("[PATCH /api/admin/content-automation/drafts/[id]] publish failed, reverting claim", publishError);
-    // Revert the claim so the draft isn't stuck "published" with no
-    // corresponding vault_content row — leaves it reviewable again.
-    await supabase
-      .from("vault_drafts")
-      .update({ status: "pending", reviewed_at: null, reviewed_by: null })
-      .eq("id", draft.id);
-
-    return NextResponse.json({ error: publishError.message }, { status: 500 });
+  if (!result.success) {
+    return NextResponse.json({ error: result.error }, { status: 500 });
   }
 
-  await supabase.from("admin_activity_log").insert({
-    admin_user_id: (session.user as { id?: string }).id ?? null,
-    admin_email: email,
-    action: "PUBLISH",
-    entity_type: "vault_draft",
-    entity_id: draft.id,
-    details: `Published content automation draft as vault_content: ${draft.title}`,
-    metadata: { vault_content_id: published.id },
-  });
-
-  return NextResponse.json({ data: draft, published });
+  return NextResponse.json({ data: draft, published: result.published });
 }
