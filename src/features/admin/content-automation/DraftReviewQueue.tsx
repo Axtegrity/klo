@@ -12,10 +12,13 @@ import {
   Loader2,
   AlertCircle,
   ChevronDown,
+  Eye,
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { useToast } from "@/contexts/ToastContext";
 import { getSupabase } from "@/lib/supabase";
 import type { VaultDraft } from "@/lib/supabase";
+import Modal from "@/components/shared/Modal";
 
 const MAX_REFERENCE_FILE_SIZE = 10 * 1024 * 1024; // 10MB — matches contentAutomationSignUploadSchema
 const ALLOWED_REFERENCE_EXTENSIONS = ["pdf", "docx"];
@@ -389,7 +392,22 @@ function DraftCard({
 }) {
   const busy = isPublishing || isDiscarding;
   const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const sources = useMemo(() => parseDraftSources(draft.body), [draft.body]);
+
+  // The draft gets removed from the parent list on a successful publish/discard,
+  // which would unmount this card mid-request. Close the modal synchronously
+  // here (before the async PATCH resolves) rather than relying on the list
+  // re-render to make it moot — avoids a "state update on unmounted component"
+  // warning from Modal's own isOpen-driven effects.
+  const handleModalPublish = () => {
+    setPreviewOpen(false);
+    onPublish();
+  };
+  const handleModalDiscard = () => {
+    setPreviewOpen(false);
+    onDiscard();
+  };
 
   return (
     <motion.div
@@ -438,6 +456,58 @@ function DraftCard({
           </div>
         </div>
       </div>
+
+      <div className="mt-3">
+        <button
+          onClick={() => setPreviewOpen(true)}
+          disabled={disabled || busy}
+          className="inline-flex items-center gap-1.5 text-klo-muted hover:text-klo-text hover:bg-white/5 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+        >
+          <Eye size={14} />
+          Preview
+        </button>
+      </div>
+
+      <Modal
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title={draft.title}
+        size="lg"
+      >
+        <div className="max-h-[70vh] overflow-y-auto pr-1">
+          <div className="text-sm text-klo-muted leading-relaxed prose-invert">
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                strong: ({ children }) => (
+                  <strong className="text-klo-text font-semibold">{children}</strong>
+                ),
+              }}
+            >
+              {draft.body}
+            </ReactMarkdown>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 pt-4 mt-4 border-t border-white/5">
+          <button
+            onClick={handleModalPublish}
+            disabled={disabled || busy}
+            className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+          >
+            {isPublishing ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
+            Publish
+          </button>
+          <button
+            onClick={handleModalDiscard}
+            disabled={disabled || busy}
+            className="inline-flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+          >
+            {isDiscarding ? <RefreshCw size={14} className="animate-spin" /> : <X size={14} />}
+            Discard
+          </button>
+        </div>
+      </Modal>
 
       <div className="border-t border-white/5 mt-3 pt-2">
         <button
