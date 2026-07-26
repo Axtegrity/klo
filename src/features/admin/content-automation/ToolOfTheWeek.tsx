@@ -2,11 +2,27 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, X, RefreshCw, Wrench, ExternalLink } from "lucide-react";
+import { Check, X, RefreshCw, Wrench, ExternalLink, Sparkles, AlertCircle } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
 import type { VaultPendingToolUpdate } from "@/lib/supabase";
 
 type ReviewAction = "publish" | "discard";
+
+// Client-side-only cooldown between Generate runs — same safeguard and same
+// duration as DraftReviewQueue.tsx's GENERATE_COOLDOWN_MS (a UX guard against
+// accidental repeat-clicking on a cost-incurring external LLM call, not a
+// security boundary). Not shared/imported because DraftReviewQueue's copy has
+// its own module-local reasoning comment tied to vault-draft token costs —
+// duplicating the constant here keeps each feature's cooldown independently
+// tunable without coupling the two files together.
+const GENERATE_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
+
+function formatCooldown(ms: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
 
 // Defense-in-depth alongside the server-side vaultPendingToolSchema check
 // (src/lib/content-automation.ts) — this card renders a suggestion's link
@@ -36,6 +52,30 @@ export default function ToolOfTheWeek() {
   const [loading, setLoading] = useState(true);
   const [actingOn, setActingOn] = useState<{ id: string; action: ReviewAction } | null>(null);
 
+  // Generate run controls — mirrors DraftReviewQueue.tsx's generate state
+  // (see GENERATE_COOLDOWN_MS above for why the cooldown constant itself
+  // isn't shared).
+  const [generating, setGenerating] = useState(false);
+  const [warning, setWarning] = useState<string | null>(null);
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [cooldownRemainingMs, setCooldownRemainingMs] = useState(0);
+
+  useEffect(() => {
+    if (cooldownUntil === null) return;
+    const tick = () => {
+      const remaining = cooldownUntil - Date.now();
+      if (remaining <= 0) {
+        setCooldownRemainingMs(0);
+        setCooldownUntil(null);
+      } else {
+        setCooldownRemainingMs(remaining);
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [cooldownUntil]);
+
   const fetchSuggestions = useCallback(async () => {
     setLoading(true);
     try {
@@ -57,6 +97,32 @@ export default function ToolOfTheWeek() {
   const reviewMessages: Record<ReviewAction, string> = {
     publish: "Published — the homepage AI Tool of the Week updates immediately.",
     discard: "Suggestion discarded.",
+  };
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    setWarning(null);
+    try {
+      const res = await fetch("/api/admin/content-automation/tool-updates/generate", {
+        method: "POST",
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Generation run failed");
+
+      if (json.generated) {
+        toast("success", "Generated a new tool suggestion — check the queue below.");
+        await fetchSuggestions();
+      } else {
+        setWarning(json.warning ?? "No suggestion was generated.");
+      }
+    } catch (err) {
+      toast("error", err instanceof Error ? err.message : "Generation run failed");
+    } finally {
+      setGenerating(false);
+      // Start the cooldown regardless of outcome — a failed run still cost
+      // tokens if it got partway through the research call.
+      setCooldownUntil(Date.now() + GENERATE_COOLDOWN_MS);
+    }
   };
 
   const handleReview = async (suggestion: VaultPendingToolUpdate, action: ReviewAction) => {
@@ -90,6 +156,28 @@ export default function ToolOfTheWeek() {
           {suggestions.length} pending suggestion{suggestions.length !== 1 ? "s" : ""}
         </p>
       </div>
+
+      <button
+        onClick={handleGenerate}
+        disabled={generating || cooldownRemainingMs > 0}
+        className="inline-flex items-center gap-2 bg-klo-accent text-white px-4 py-2.5 rounded-xl text-sm font-medium min-h-[44px] disabled:opacity-50"
+      >
+        {generating ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
+        {generating
+          ? "Generating..."
+          : cooldownRemainingMs > 0
+            ? `Available in ${formatCooldown(cooldownRemainingMs)}`
+            : "Generate Suggestion"}
+      </button>
+
+      {warning && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-amber-500/5 border-amber-500/20 mt-3">
+          <AlertCircle size={16} className="text-amber-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-amber-300">{warning}</p>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center h-48">

@@ -4,6 +4,11 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [Unreleased]
+
+### Added
+- **On-demand "Generate Suggestion" button for AI Tool of the Week** — the Tool of the Week admin sub-section now has a Generate Suggestion button (same pattern as Draft Review Queue's Generate Drafts), so an admin can run the tool-suggestion search immediately instead of waiting for the Monday 9am batch. New `POST /api/admin/content-automation/tool-updates/generate` route calls the existing `generateAIToolSuggestion()` and logs an `admin_activity_log` audit entry. Same 2-minute client-side cooldown and amber "no suggestion generated" banner pattern as the vault-draft generator.
+
 ## [Unreleased] — July 26, 2026 Session
 
 ### Added
