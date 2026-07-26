@@ -7,6 +7,7 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 ## [Unreleased] — July 26, 2026 Session
 
 ### Changed
+- **Homepage "Featured Insight" now auto-populates from the latest published Vault article** — the section previously only showed admin-configured content (`page_configs.insight_config`). It now fetches the most recently published `vault_content` row (by `created_at`) server-side and renders from it — title, excerpt, category, a Premium badge only when the article's `tier_required` isn't "free", and a link to `/vault/[slug]`. Purely additive: when no vault article is published yet, the section falls back to the existing admin-configured content exactly as before.
 - **Content Automation: Preview button icon restyled** — the Draft Review Queue's Preview button eye icon is now larger (18px, up from 14px) and colored with the `klo-accent` token, giving it more visual weight relative to the Publish/Discard buttons. Label and click behavior unchanged.
 
 ## [Unreleased] — July 25, 2026 Session
