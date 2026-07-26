@@ -4,6 +4,11 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [Unreleased] — July 26, 2026 Session
+
+### Changed
+- **Content Automation: Preview button icon restyled** — the Draft Review Queue's Preview button eye icon is now larger (18px, up from 14px) and colored with the `klo-accent` token, giving it more visual weight relative to the Publish/Discard buttons. Label and click behavior unchanged.
+
 ## [Unreleased] — July 25, 2026 Session
 
 ### Added
