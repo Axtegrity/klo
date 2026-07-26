@@ -94,6 +94,15 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid data", details: parsed.error.flatten() }, { status: 400 });
   }
 
+  // Stamp the server's own current time onto brief_config.last_updated,
+  // overwriting whatever (if anything) the client sent — this is what
+  // src/app/api/admin/content-automation/brief-status/route.ts reads to
+  // compute staleness, so it must reflect an actual save, not a
+  // client-supplied value.
+  if (parsed.data.brief_config) {
+    parsed.data.brief_config.last_updated = new Date().toISOString();
+  }
+
   const supabase = getServiceSupabase();
   const email = session.user?.email ?? "unknown";
 

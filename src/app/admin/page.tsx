@@ -68,6 +68,7 @@ import ContentAutomationTab from "@/features/admin/ContentAutomationTab";
 import SurveysAdminTab from "@/features/admin/SurveysAdminTab";
 import TestimonialsAdminTab from "@/features/admin/TestimonialsAdminTab";
 import { CreativeStudioTab } from "@/features/admin/creative-studio";
+import BriefStalenessAlert from "@/features/admin/BriefStalenessAlert";
 import { Paintbrush, FileEdit, Wand2, MessageSquareQuote } from "lucide-react";
 
 // ------------------------------------------------------------
@@ -754,6 +755,13 @@ export default function AdminPage() {
                 icon={BotMessageSquare}
                 sub={`${stats.advisor.totalTokens.toLocaleString()} tokens used`}
               />
+            </motion.div>
+
+            {/* Latest Intelligence Brief staleness reminder — only renders
+                when the brief hasn't been updated in 30+ days; see
+                BriefStalenessAlert.tsx */}
+            <motion.div variants={fadeUp} custom={2.2}>
+              <BriefStalenessAlert />
             </motion.div>
 
             {/* Poll stat cards */}
