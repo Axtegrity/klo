@@ -592,7 +592,7 @@ function DraftCard({
           disabled={disabled || busy}
           className="inline-flex items-center gap-1.5 text-klo-muted hover:text-klo-text hover:bg-white/5 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
         >
-          <Eye size={14} />
+          <Eye size={18} className="text-klo-accent" />
           Preview
         </button>
       </div>
