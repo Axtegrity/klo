@@ -68,6 +68,15 @@ export interface VaultTopicLane {
   created_at: string;
 }
 
+export interface VaultTrustedSource {
+  id: string;
+  name: string;
+  domain: string;
+  category: string | null;
+  active: boolean;
+  created_at: string;
+}
+
 export interface StrategySessionRow {
   id: string;
   slug: string;
@@ -135,6 +144,7 @@ export interface Database {
       vault_content: { Row: VaultContent };
       vault_drafts: { Row: VaultDraft };
       vault_topic_lanes: { Row: VaultTopicLane };
+      vault_trusted_sources: { Row: VaultTrustedSource };
       subscriptions: { Row: Subscription };
       push_subscriptions: { Row: PushSubscription };
     };

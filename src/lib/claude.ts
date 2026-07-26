@@ -3,6 +3,7 @@
 /* ------------------------------------------------------------------ */
 
 import * as Sentry from "@sentry/nextjs";
+import { getServiceSupabase } from "@/lib/supabase";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 
@@ -292,6 +293,35 @@ export async function searchLaneTopics(
 
   const userPrompt = `Topic lane: ${laneName}${laneDescription ? `\nLane description: ${laneDescription}` : ""}\n\nFind 2-3 current, vetted topics from the past 30 days in this lane.`;
 
+  // Trusted Sources: restrict the hosted web_search tool to admin-approved
+  // domains when any are active. A fetch error here is treated the same as
+  // "no trusted sources active" (fall back to unrestricted search) rather
+  // than failing the whole lane — an outage in this optional allowlist
+  // shouldn't take down generation, but it's surfaced to Sentry so a
+  // persistent failure doesn't go unnoticed.
+  let allowedDomains: string[] = [];
+  try {
+    const { data: trustedSources, error: trustedSourcesError } = await getServiceSupabase()
+      .from("vault_trusted_sources")
+      .select("domain")
+      .eq("active", true);
+
+    if (trustedSourcesError) throw trustedSourcesError;
+    allowedDomains = (trustedSources ?? []).map((s) => s.domain as string);
+  } catch (error) {
+    console.error("[searchLaneTopics] failed to load trusted sources, proceeding without domain restriction", error);
+    Sentry.captureException(error, { extra: { source: "search-lane-topics-trusted-sources" } });
+  }
+
+  const webSearchTool: Record<string, unknown> = {
+    type: WEB_SEARCH_TOOL_TYPE,
+    name: "web_search",
+    max_uses: 5,
+  };
+  if (allowedDomains.length > 0) {
+    webSearchTool.allowed_domains = allowedDomains;
+  }
+
   const data = await callAnthropicMessages({
     model: CONTENT_AUTOMATION_MODEL,
     // 8192, not 2048: verified this session via a live test call that 2048
@@ -310,7 +340,7 @@ export async function searchLaneTopics(
     // sampling parameter with a 400 (breaking change vs older models) —
     // steer determinism via the prompt instead.
     system: systemPrompt,
-    tools: [{ type: WEB_SEARCH_TOOL_TYPE, name: "web_search", max_uses: 5 }],
+    tools: [webSearchTool],
     messages: [{ role: "user", content: userPrompt }],
   });
 
