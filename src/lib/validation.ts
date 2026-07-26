@@ -1045,6 +1045,11 @@ export const pageConfigUpdateSchema = z.object({
     excerpt: z.string().max(500),
     link: z.string().max(500),
     cta: z.string().max(40),
+    // Accepted here only so it round-trips through GET→edit→PATCH without
+    // being stripped — the PATCH route always overwrites this with the
+    // server's own current timestamp regardless of what's submitted, so a
+    // client can't spoof freshness by sending its own value.
+    last_updated: z.string().datetime().optional(),
   }).nullable().optional(),
   trending_config: z.object({
     date: z.string().max(60).optional(),

@@ -37,6 +37,13 @@ export interface BriefConfig {
   excerpt: string;
   link: string;
   cta: string;
+  // Server-stamped ISO timestamp of the last save — see the PATCH handler in
+  // src/app/api/admin/creative-studio/pages/[slug]/route.ts, which always
+  // overwrites this with the current time rather than trusting any
+  // client-supplied value. Optional because existing rows saved before this
+  // field existed won't have it; consumers (brief-status/route.ts) treat a
+  // missing value as "unknown," not "fresh" or "stale."
+  last_updated?: string;
 }
 
 export interface TrendingConfig {
