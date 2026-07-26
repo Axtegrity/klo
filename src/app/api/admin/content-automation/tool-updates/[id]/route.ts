@@ -1,8 +1,91 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServiceSupabase } from "@/lib/supabase";
 import { verifyCreativeStudioAdmin } from "@/lib/creative-studio-auth";
 import { vaultPendingToolReviewSchema, toolConfigSchema } from "@/lib/validation";
+import { generateUniqueSlug } from "@/lib/vault-slug";
+import { VAULT_CATEGORIES } from "@/lib/vault-data";
 import type { VaultPendingToolUpdate } from "@/lib/supabase";
+import type { ToolConfig } from "@/lib/page-config-server";
+
+// Maps a suggestion's freeform `category` (e.g. "Productivity", "Research")
+// onto the closest VAULT_CATEGORIES value so the archived vault_content row
+// lands in a category the public Vault's filter tabs actually recognize —
+// same reasoning as vaultTopicLaneSchema's `name` constraint in
+// validation.ts. Case-insensitive exact match only (the tool-category and
+// VAULT_CATEGORIES vocabularies barely overlap, so anything fancier than an
+// exact match would be guessing); falls back to "AI & Ethics" per spec.
+function mapToVaultCategory(toolCategory: string): (typeof VAULT_CATEGORIES)[number] {
+  const normalized = toolCategory.trim().toLowerCase();
+  const match = VAULT_CATEGORIES.find((c) => c.toLowerCase() === normalized);
+  return match ?? "AI & Ethics";
+}
+
+// Archives the currently-live AI Tool of the Week into vault_content before
+// it gets overwritten, so a past week's pick isn't just lost — it becomes a
+// browsable Vault article. Never throws: any failure here is logged/reported
+// to Sentry and swallowed, since losing the archive copy must never block
+// publishing the new tool (spec: "the tool still goes live, the archive
+// failure is non-blocking").
+async function archiveCurrentTool(
+  supabase: SupabaseClient,
+  actor: { email: string; userId: string | null }
+): Promise<void> {
+  try {
+    const { data: pageConfig, error: pageConfigError } = await supabase
+      .from("page_configs")
+      .select("tool_config")
+      .eq("page_slug", "home")
+      .maybeSingle();
+
+    if (pageConfigError) {
+      throw new Error(`Failed to load current tool_config: ${pageConfigError.message}`);
+    }
+
+    const currentTool = pageConfig?.tool_config as ToolConfig | null;
+    if (!currentTool?.name) return; // nothing live yet — nothing to archive
+
+    const slug = await generateUniqueSlug(currentTool.name, "-tool-review", supabase);
+    const body = `## What It Is\n${currentTool.description}\n\n## Why It Matters for Faith Leaders\n${currentTool.why}\n\n## Try It\n${currentTool.link}`;
+
+    const { data: archived, error: archiveError } = await supabase
+      .from("vault_content")
+      .insert({
+        title: currentTool.name,
+        slug,
+        body,
+        excerpt: currentTool.description.slice(0, 150),
+        category: mapToVaultCategory(currentTool.category),
+        content_type: "guide",
+        tier_required: "free",
+        author_name: "Keith L. Odom",
+        visibility: "published",
+        published: true,
+        published_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+
+    if (archiveError) {
+      throw new Error(`Failed to archive previous tool: ${archiveError.message}`);
+    }
+
+    await supabase.from("admin_activity_log").insert({
+      admin_user_id: actor.userId,
+      admin_email: actor.email,
+      action: "ARCHIVE",
+      entity_type: "vault_content",
+      entity_id: archived.id,
+      details: `Archived previous AI Tool of the Week to Vault: ${currentTool.name}`,
+    });
+  } catch (error) {
+    console.error("[PATCH /api/admin/content-automation/tool-updates/[id]] archive failed, continuing publish", error);
+    Sentry.captureException(error, {
+      extra: { source: "tool-of-the-week-archive" },
+    });
+  }
+}
 
 // PATCH /api/admin/content-automation/tool-updates/[id] — publish or
 // discard an AI Tool of the Week suggestion.
@@ -117,6 +200,11 @@ export async function PATCH(
       { status: 422 }
     );
   }
+
+  // Archive whatever tool is currently live before it gets overwritten below
+  // — non-blocking (see archiveCurrentTool's own try/catch): the new tool
+  // still goes live even if the archive copy fails to save.
+  await archiveCurrentTool(supabase, { email, userId });
 
   const { error: publishError } = await supabase
     .from("page_configs")

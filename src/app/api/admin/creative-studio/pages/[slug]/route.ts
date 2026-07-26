@@ -1,7 +1,65 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServiceSupabase } from "@/lib/supabase";
 import { verifyCreativeStudioAdmin } from "@/lib/creative-studio-auth";
 import { pageConfigUpdateSchema } from "@/lib/validation";
+import { generateUniqueSlug } from "@/lib/vault-slug";
+import type { BriefConfig } from "@/lib/page-config-server";
+
+// Archives the currently-live Latest Intelligence Brief into vault_content
+// before it gets replaced, so a past brief isn't just lost — it becomes a
+// browsable Vault article. Never throws: any failure here is logged/reported
+// to Sentry and swallowed, since losing the archive copy must never block
+// saving the new brief (same non-blocking contract as
+// archiveCurrentTool() in src/app/api/admin/content-automation/
+// tool-updates/[id]/route.ts).
+async function archiveCurrentBrief(
+  supabase: SupabaseClient,
+  currentBrief: BriefConfig,
+  actor: { email: string; userId: string | null }
+): Promise<void> {
+  try {
+    const slug = await generateUniqueSlug(currentBrief.title, "-intelligence-brief", supabase);
+    const body = `## Overview\n${currentBrief.excerpt}\n\n## Read the Full Brief\n${currentBrief.link}`;
+
+    const { data: archived, error: archiveError } = await supabase
+      .from("vault_content")
+      .insert({
+        title: currentBrief.title,
+        slug,
+        body,
+        excerpt: currentBrief.excerpt.slice(0, 150),
+        category: "Leadership",
+        content_type: "briefing",
+        tier_required: "free",
+        author_name: "Keith L. Odom",
+        visibility: "published",
+        published: true,
+        published_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+
+    if (archiveError) {
+      throw new Error(`Failed to archive previous brief: ${archiveError.message}`);
+    }
+
+    await supabase.from("admin_activity_log").insert({
+      admin_user_id: actor.userId,
+      admin_email: actor.email,
+      action: "ARCHIVE",
+      entity_type: "vault_content",
+      entity_id: archived.id,
+      details: `Archived previous Latest Intelligence Brief to Vault: ${currentBrief.title}`,
+    });
+  } catch (error) {
+    console.error("[PATCH /api/admin/creative-studio/pages/[slug]] brief archive failed, continuing update", error);
+    Sentry.captureException(error, {
+      extra: { source: "intelligence-brief-archive" },
+    });
+  }
+}
 
 export async function GET(
   _req: NextRequest,
@@ -47,6 +105,22 @@ export async function PATCH(
     .select("*")
     .eq("page_slug", slug)
     .maybeSingle();
+
+  // Archive the currently-live Latest Intelligence Brief before it gets
+  // replaced below — only when this request is actually touching
+  // brief_config, and only when a real brief is currently live. Non-blocking
+  // (see archiveCurrentBrief's own try/catch): the new brief still saves
+  // even if the archive copy fails.
+  if ("brief_config" in parsed.data) {
+    const currentBrief = (current as Record<string, unknown> | null)?.brief_config as
+      | BriefConfig
+      | null
+      | undefined;
+    if (currentBrief?.title) {
+      const userId = (session.user as { id?: string }).id ?? null;
+      await archiveCurrentBrief(supabase, currentBrief, { email, userId });
+    }
+  }
 
   const mergedData: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(parsed.data)) {
