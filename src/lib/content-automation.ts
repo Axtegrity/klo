@@ -9,6 +9,7 @@ import {
 } from "@/lib/claude";
 import type { VaultDraft, VaultTopicLane } from "@/lib/supabase";
 import { vaultPendingToolSchema } from "@/lib/validation";
+import { upsertVaultEmbedding, searchSimilarVaultContent, buildRagContextBlock } from "@/lib/vault-embeddings";
 
 /* ------------------------------------------------------------------ */
 /*  Content Automation Pipeline — shared generation logic              */
@@ -145,6 +146,19 @@ export async function runContentAutomationGenerate(
         (row) => ({ title: String(row.title), body: String(row.body) })
       );
 
+      // 2a. RAG lookup — surface Keith's existing published thinking related
+      // to this lane/guidance so the new article builds on it rather than
+      // repeating it. searchSimilarVaultContent() already degrades to []
+      // on any failure (embeddings provider down, RPC error, etc.), and
+      // buildRagContextBlock() returns "" for an empty result — so a failed
+      // or empty lookup simply omits the RAG section from the prompt
+      // entirely rather than affecting generation any other way.
+      const similarContent = await searchSimilarVaultContent(
+        `${lane.name} ${guidance || ""}`.trim(),
+        3
+      );
+      const ragContext = buildRagContextBlock(similarContent);
+
       // 3. Generate the article in Keith's voice from the research + style
       //    refs, constrained to the reputable-source closed list, with
       //    guidance/reference-file context injected when present (both
@@ -152,6 +166,7 @@ export async function runContentAutomationGenerate(
       const article = await generateVaultArticle(research, styleReferences, lane.name, reputableSources, {
         guidance,
         referenceText,
+        ragContext,
       });
 
       // Slug collision guard against both vault_drafts and vault_content —
@@ -277,7 +292,19 @@ export async function generateAIToolSuggestion(): Promise<GenerateToolSuggestion
     const currentToolName =
       (pageConfig?.tool_config as { name?: string } | null)?.name ?? null;
 
-    const suggestion = await findAIToolSuggestion(currentToolName);
+    // RAG lookup — there's no "lane" concept for tool suggestions (unlike
+    // vault-article generation), so this uses a fixed topic query rather
+    // than lane.name + guidance. Surfaces any prior Vault content Keith has
+    // published about AI tools (including past archived Tool of the Week
+    // picks — see archiveCurrentTool() in tool-updates/[id]/route.ts) so the
+    // write-up stays consistent with his established voice on the subject.
+    const similarContent = await searchSimilarVaultContent(
+      "AI tools for faith leaders and executives",
+      3
+    );
+    const ragContext = buildRagContextBlock(similarContent);
+
+    const suggestion = await findAIToolSuggestion(currentToolName, ragContext);
 
     // Trim text fields to their schema maximums BEFORE validating — a
     // model that runs a little long on `why_it_matters` (or any other text
@@ -415,6 +442,18 @@ export async function publishClaimedDraft(
     details: `Published content automation draft as vault_content: ${draft.title}`,
     metadata: { vault_content_id: published.id },
   });
+
+  // Embed for the RAG knowledge base — non-blocking. A failed/misconfigured
+  // embeddings provider (see src/lib/vault-embeddings.ts's known-gap note on
+  // OPENAI_API_KEY) must never prevent the article itself from publishing.
+  try {
+    await upsertVaultEmbedding(published.id, draft.title, draft.body, draft.excerpt ?? "");
+  } catch (error) {
+    console.error("[content-automation:publish] embedding failed, publish still succeeded", error);
+    Sentry.captureException(error, {
+      extra: { source: "content-automation-publish-embedding", vault_content_id: published.id },
+    });
+  }
 
   return { success: true, published };
 }

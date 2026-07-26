@@ -6,6 +6,7 @@ import DraftReviewQueue from "./content-automation/DraftReviewQueue";
 import TopicLanes from "./content-automation/TopicLanes";
 import TrustedSources from "./content-automation/TrustedSources";
 import ToolOfTheWeek from "./content-automation/ToolOfTheWeek";
+import EmbeddingsBackfillButton from "./content-automation/EmbeddingsBackfillButton";
 
 type Section = "drafts" | "lanes" | "trusted-sources" | "tool-updates";
 
@@ -57,6 +58,11 @@ export default function ContentAutomationTab() {
       {activeSection === "lanes" && <TopicLanes />}
       {activeSection === "trusted-sources" && <TrustedSources />}
       {activeSection === "tool-updates" && <ToolOfTheWeek />}
+
+      {/* Backfill Embeddings — sits below all sub-sections regardless of
+          which one is active; only renders itself once a status check
+          confirms it's actually needed (see EmbeddingsBackfillButton.tsx) */}
+      <EmbeddingsBackfillButton />
     </div>
   );
 }
