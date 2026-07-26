@@ -77,6 +77,21 @@ export interface VaultTrustedSource {
   created_at: string;
 }
 
+export interface VaultPendingToolUpdate {
+  id: string;
+  tool_name: string;
+  category: string;
+  description: string;
+  why_it_matters: string;
+  link: string;
+  cta: string;
+  status: "pending" | "published" | "discarded";
+  generated_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  created_at: string;
+}
+
 export interface StrategySessionRow {
   id: string;
   slug: string;
@@ -145,6 +160,7 @@ export interface Database {
       vault_drafts: { Row: VaultDraft };
       vault_topic_lanes: { Row: VaultTopicLane };
       vault_trusted_sources: { Row: VaultTrustedSource };
+      vault_pending_tool_updates: { Row: VaultPendingToolUpdate };
       subscriptions: { Row: Subscription };
       push_subscriptions: { Row: PushSubscription };
     };

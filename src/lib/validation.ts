@@ -907,6 +907,29 @@ export const vaultTrustedSourceToggleSchema = z.object({
   active: z.boolean(),
 });
 
+// ----------------------------------------------------------------
+// Content Automation Pipeline — AI Tool of the Week suggestions
+// (vault_pending_tool_updates)
+// ----------------------------------------------------------------
+
+export const vaultPendingToolSchema = z.object({
+  tool_name: z.string().min(1).max(200),
+  category: z.string().min(1).max(100),
+  description: z.string().min(1).max(1000),
+  why_it_matters: z.string().min(1).max(1000),
+  link: z.string().url().max(2000),
+  cta: z.string().min(1).max(60).optional(),
+  status: z.enum(["pending", "published", "discarded"]).optional(),
+});
+
+export const vaultPendingToolReviewSchema = z.object({
+  action: z.enum(["publish", "discard"]),
+});
+
+export const vaultPendingToolListQuerySchema = z.object({
+  status: z.enum(["pending", "published", "discarded"]).optional(),
+});
+
 // referenceFilePath is downloaded server-side from the shared `documents`
 // Supabase Storage bucket (src/lib/document-extraction.ts) and its extracted
 // text is forwarded into the Anthropic prompt — so this field must be

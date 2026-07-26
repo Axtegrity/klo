@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runContentAutomationGenerate } from "@/lib/content-automation";
+import { runContentAutomationGenerate, generateAIToolSuggestion } from "@/lib/content-automation";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -25,11 +25,27 @@ export async function GET(request: NextRequest) {
     const failed = summary.laneResults
       .filter((r) => r.status === "failed")
       .map((r) => r.lane);
+
+    // AI Tool of the Week suggestion — runs after the vault-article batch,
+    // wrapped separately so a failure here (web search, DB) never fails the
+    // cron response or masks the vault-article results above.
+    // generateAIToolSuggestion() itself already catches internally and
+    // returns { generated: false } rather than throwing; this try/catch is
+    // belt-and-suspenders against an unexpected throw.
+    let toolSuggestion: { generated: boolean; draft_id?: string } = { generated: false };
+    try {
+      toolSuggestion = await generateAIToolSuggestion();
+      console.log("[cron/content-automation] tool suggestion result", toolSuggestion);
+    } catch (toolError) {
+      console.error("[cron/content-automation] tool suggestion run failed", toolError);
+    }
+
     return NextResponse.json({
       success: true,
       generated: summary.generated,
       laneResults: summary.laneResults,
       failed,
+      toolSuggestion,
     });
   } catch (error) {
     console.error("[GET /api/cron/content-automation]", error);

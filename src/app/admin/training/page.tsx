@@ -59,6 +59,7 @@ import {
   Clock,
   Check,
   X,
+  Wrench,
   Layers,
   Paperclip,
   AlertCircle,
@@ -330,6 +331,9 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       { icon: ShieldCheck, label: "Trusted Sources", detail: "Switch to the Trusted Sources sub-section to manage the list of approved domains (e.g. technologyreview.com) the research step is allowed to pull from. Each source has a name, a domain, an optional category tag, and an Active / Inactive toggle." },
       { icon: Power, label: "Toggle a Trusted Source Active / Inactive", detail: "Click Inactive on any source to stop the research step from using it — it stays in the list, just not consulted. Click Active to resume. Inactive sources are shown dimmed. If every source is turned off, research goes back to searching the open web with no domain restriction — the feature quietly steps aside rather than blocking generation." },
       { icon: Plus, label: "Add a Trusted Source", detail: "Use the form at the bottom of the Trusted Sources list — enter a display name, the bare domain (no \"https://\", no \"www.\"), and optionally pick a Vault category to tag it with, then click Add Source. New sources are active immediately." },
+      { icon: Wrench, label: "Tool of the Week Suggestions", detail: "Switch to the Tool of the Week sub-section to review AI-suggested tools for the homepage AI Tool of the Week section. The same Monday 9am batch that generates Vault drafts also searches for one current AI tool relevant to faith leaders or executives — different from whatever is currently featured — and lands it here as a pending suggestion with a name, category, description, a \"why it matters\" write-up in Keith's voice, and a link." },
+      { icon: Check, label: "Publish a Tool Suggestion", detail: "Click the green \"Publish\" button on a suggestion card. The homepage AI Tool of the Week section updates immediately to show this tool — no confirmation step, and it can always be changed again next week or by publishing a different suggestion." },
+      { icon: X, label: "Discard a Tool Suggestion", detail: "Click the red \"Discard\" button to reject a suggestion you don't want featured. This is low-stakes and reversible — discarding doesn't affect the homepage, and a new suggestion generates automatically next Monday." },
     ],
     tips: [
       "Nothing Keith's team generates here reaches the public Vault without an explicit Publish click — treat the Draft Review Queue like an inbox that needs to hit zero (or be intentionally discarded) each week.",
@@ -338,6 +342,7 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       "An \"Insufficient Sources\" banner is normal, not a bug — it means that lane's topic didn't have enough credible current coverage to write a well-sourced article this run.",
       "Scheduled drafts stay visible in the Draft Review Queue (with their badge) so they're never out of sight — they just move out of the normal Publish/Discard flow until the scheduled time arrives or the schedule is cancelled.",
       "Trusted Sources is an allowlist, not a requirement — with zero active sources, research works exactly like it always has, searching the open web.",
+      "If the Tool of the Week queue is empty, that's expected between Monday batches — a new suggestion always arrives with the next weekly run, same schedule as Vault drafts.",
     ],
   },
   {

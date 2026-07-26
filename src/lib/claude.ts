@@ -497,6 +497,89 @@ ${styleBlock || "(no style references available — use Keith L. Odom's establis
 }
 
 /* ------------------------------------------------------------------ */
+/*  AI Tool of the Week — web-search-enabled tool discovery            */
+/*                                                                      */
+/*  Same shape as searchLaneTopics(): a single hosted-web_search call   */
+/*  that both researches and returns the final JSON answer directly,    */
+/*  restricted to active vault_trusted_sources when any are set. Unlike */
+/*  the vault-article pipeline this is one call, not a research call    */
+/*  followed by a separate generation call — the write-up here (a name, */
+/*  a category, two short paragraphs) doesn't need the citation-gated   */
+/*  multi-source synthesis generateVaultArticle() does.                 */
+/* ------------------------------------------------------------------ */
+
+export interface AIToolSuggestion {
+  tool_name: string;
+  category: string;
+  description: string;
+  why_it_matters: string;
+  link: string;
+  cta: string;
+}
+
+/**
+ * Uses Anthropic's hosted web_search tool to find one current, real AI tool
+ * relevant to faith leaders or executives, distinct from whatever is
+ * currently featured, and returns a Keith L. Odom-voiced write-up ready to
+ * land in vault_pending_tool_updates for admin review.
+ */
+export async function findAIToolSuggestion(
+  excludeToolName: string | null
+): Promise<AIToolSuggestion> {
+  const systemPrompt = `You are a research assistant for a faith-leadership content platform. Use web search to find ONE current, real AI tool (a SaaS product, app, or platform — not a research paper or general trend) that would be genuinely useful for faith leaders or executives, something they could realistically start using today. Prefer tools with mainstream awareness or notable recent adoption/coverage over obscure or unlaunched products.${
+    excludeToolName ? ` Do NOT suggest "${excludeToolName}" — it is already featured.` : ""
+  } After researching, respond with ONLY a single JSON object (no prose before or after, no markdown fences) in this exact shape:
+{"tool_name": "<the tool's real name>", "category": "<a short label, e.g. Productivity, Research, Communication>", "description": "<2-3 sentences explaining what the tool does>", "why_it_matters": "<2-3 sentences written as Keith L. Odom, Technology Innovator, Speaker & Pastor, explaining in his voice why faith leaders or executives should care>", "link": "<the tool's real, working homepage URL>", "cta": "<a short button label, e.g. Learn More or Try It Free — default to Learn More if unsure>"}`;
+
+  const userPrompt = excludeToolName
+    ? `Find a current AI tool for faith leaders/executives. It must not be "${excludeToolName}".`
+    : "Find a current AI tool for faith leaders/executives.";
+
+  // Trusted Sources: same allowlist-if-any-active pattern as
+  // searchLaneTopics() — a fetch error here falls back to unrestricted
+  // search rather than failing the whole suggestion run.
+  let allowedDomains: string[] = [];
+  try {
+    const { data: trustedSources, error: trustedSourcesError } = await getServiceSupabase()
+      .from("vault_trusted_sources")
+      .select("domain")
+      .eq("active", true);
+
+    if (trustedSourcesError) throw trustedSourcesError;
+    allowedDomains = (trustedSources ?? []).map((s) => s.domain as string);
+  } catch (error) {
+    console.error("[findAIToolSuggestion] failed to load trusted sources, proceeding without domain restriction", error);
+    Sentry.captureException(error, { extra: { source: "find-ai-tool-suggestion-trusted-sources" } });
+  }
+
+  const webSearchTool: Record<string, unknown> = {
+    type: WEB_SEARCH_TOOL_TYPE,
+    name: "web_search",
+    max_uses: 5,
+  };
+  if (allowedDomains.length > 0) {
+    webSearchTool.allowed_domains = allowedDomains;
+  }
+
+  const data = await callAnthropicMessages({
+    model: CONTENT_AUTOMATION_MODEL,
+    // 8192 for the same reason as searchLaneTopics(): claude-sonnet-5's
+    // hosted web_search tool runs an internal agentic code_execution loop
+    // whose tool-orchestration tokens consume the budget well before the
+    // visible JSON answer at lower limits.
+    max_tokens: 8192,
+    // No temperature/top_p/top_k: claude-sonnet-5 rejects any non-default
+    // sampling parameter with a 400.
+    system: systemPrompt,
+    tools: [webSearchTool],
+    messages: [{ role: "user", content: userPrompt }],
+  });
+
+  const text = extractText(data.content);
+  return extractJsonObject<AIToolSuggestion>(text);
+}
+
+/* ------------------------------------------------------------------ */
 /*  Streaming request                                                  */
 /* ------------------------------------------------------------------ */
 

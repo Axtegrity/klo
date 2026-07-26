@@ -4,6 +4,7 @@ import { getServiceSupabase } from "@/lib/supabase";
 import {
   searchLaneTopics,
   generateVaultArticle,
+  findAIToolSuggestion,
   type VaultStyleReference,
 } from "@/lib/claude";
 import type { VaultDraft, VaultTopicLane } from "@/lib/supabase";
@@ -212,6 +213,70 @@ export async function runContentAutomationGenerate(
   }
 
   return { generated: draftIds.length, drafts: draftIds, laneResults };
+}
+
+/* ------------------------------------------------------------------ */
+/*  AI Tool of the Week — weekly suggestion generation                 */
+/*                                                                      */
+/*  Called from both the weekly cron (src/app/api/cron/content-        */
+/*  automation/route.ts, after runContentAutomationGenerate()) and can  */
+/*  be invoked on-demand the same way vault-article generation is.      */
+/*  Never throws — any failure is logged/reported to Sentry and         */
+/*  returns { generated: false } so a bad web-search or DB error here   */
+/*  never blocks the weekly vault-article batch.                       */
+/* ------------------------------------------------------------------ */
+
+export interface GenerateToolSuggestionResult {
+  generated: boolean;
+  draft_id?: string;
+}
+
+export async function generateAIToolSuggestion(): Promise<GenerateToolSuggestionResult> {
+  const supabase = getServiceSupabase();
+
+  try {
+    // Read the currently-live tool so the suggestion doesn't just repeat it.
+    const { data: pageConfig, error: pageConfigError } = await supabase
+      .from("page_configs")
+      .select("tool_config")
+      .eq("page_slug", "home")
+      .maybeSingle();
+
+    if (pageConfigError) {
+      throw new Error(`Failed to load current tool_config: ${pageConfigError.message}`);
+    }
+
+    const currentToolName =
+      (pageConfig?.tool_config as { name?: string } | null)?.name ?? null;
+
+    const suggestion = await findAIToolSuggestion(currentToolName);
+
+    const { data: inserted, error: insertError } = await supabase
+      .from("vault_pending_tool_updates")
+      .insert({
+        tool_name: suggestion.tool_name,
+        category: suggestion.category,
+        description: suggestion.description,
+        why_it_matters: suggestion.why_it_matters,
+        link: suggestion.link,
+        cta: suggestion.cta || "Learn More",
+        status: "pending",
+      })
+      .select("id")
+      .single();
+
+    if (insertError) {
+      throw new Error(`Failed to insert tool suggestion: ${insertError.message}`);
+    }
+
+    return { generated: true, draft_id: inserted.id };
+  } catch (error) {
+    console.error("[content-automation:tool-suggestion] failed", error);
+    Sentry.captureException(error, {
+      extra: { source: "content-automation-tool-suggestion" },
+    });
+    return { generated: false };
+  }
 }
 
 /* ------------------------------------------------------------------ */
