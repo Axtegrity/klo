@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Layers } from "lucide-react";
+import { FileText, Layers, ShieldCheck } from "lucide-react";
 import DraftReviewQueue from "./content-automation/DraftReviewQueue";
 import TopicLanes from "./content-automation/TopicLanes";
+import TrustedSources from "./content-automation/TrustedSources";
 
-type Section = "drafts" | "lanes";
+type Section = "drafts" | "lanes" | "trusted-sources";
 
 const sections: { id: Section; label: string; icon: React.ElementType }[] = [
   { id: "drafts", label: "Draft Review Queue", icon: FileText },
   { id: "lanes", label: "Topic Lanes", icon: Layers },
+  { id: "trusted-sources", label: "Trusted Sources", icon: ShieldCheck },
 ];
 
 export default function ContentAutomationTab() {
@@ -28,7 +30,7 @@ export default function ContentAutomationTab() {
       </div>
 
       {/* Section Selector */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {sections.map((section) => {
           const Icon = section.icon;
           return (
@@ -51,6 +53,7 @@ export default function ContentAutomationTab() {
       {/* Content */}
       {activeSection === "drafts" && <DraftReviewQueue />}
       {activeSection === "lanes" && <TopicLanes />}
+      {activeSection === "trusted-sources" && <TrustedSources />}
     </div>
   );
 }

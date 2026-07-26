@@ -858,6 +858,55 @@ export const vaultTopicLaneToggleSchema = z.object({
   active: z.boolean(),
 });
 
+// Bare domain only — no scheme, no path, no whitespace. This is what gets
+// passed verbatim into the Anthropic web_search tool's `allowed_domains`
+// array (src/lib/claude.ts), which expects bare hostnames like
+// "technologyreview.com", not full URLs.
+//
+// Validated by splitting on "." and checking each label with plain string
+// operations (length/startsWith/endsWith) plus a single flat, ungrouped
+// character-class regex — deliberately avoiding any quantified group
+// wrapping another quantified/optional group, since even a *bounded*
+// version of that shape (e.g. `(x{0,61})?`) still trips
+// eslint-plugin-security's detect-unsafe-regex heuristic.
+function isValidDomainLabel(label: string): boolean {
+  if (label.length < 1 || label.length > 63) return false;
+  if (label.startsWith("-") || label.endsWith("-")) return false;
+  return /^[a-z0-9-]+$/.test(label);
+}
+
+const domainSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(3)
+  .max(255)
+  .refine(
+    (val) => {
+      if (/[\s/:]/.test(val)) return false;
+      const labels = val.split(".");
+      return labels.length >= 2 && labels.every(isValidDomainLabel);
+    },
+    { message: "Must be a bare domain (e.g. example.com) with no scheme, path, or whitespace" }
+  );
+
+// `category` is intentionally NOT constrained to VAULT_CATEGORIES at the
+// schema level (unlike vaultTopicLaneSchema's `name`) — it's a free-form
+// organizational tag on a source, not something that drives a public
+// category filter tab the way a topic lane's name does. The admin UI's
+// add-source form limits its dropdown to VAULT_CATEGORIES for consistency,
+// but the schema itself only bounds length.
+export const vaultTrustedSourceSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  domain: domainSchema,
+  category: z.string().trim().max(100).optional(),
+});
+
+export const vaultTrustedSourceToggleSchema = z.object({
+  id: uuidSchema,
+  active: z.boolean(),
+});
+
 // referenceFilePath is downloaded server-side from the shared `documents`
 // Supabase Storage bucket (src/lib/document-extraction.ts) and its extracted
 // text is forwarded into the Anthropic prompt — so this field must be
