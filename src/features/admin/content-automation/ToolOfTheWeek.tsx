@@ -8,6 +8,20 @@ import type { VaultPendingToolUpdate } from "@/lib/supabase";
 
 type ReviewAction = "publish" | "discard";
 
+// Defense-in-depth alongside the server-side vaultPendingToolSchema check
+// (src/lib/content-automation.ts) — this card renders a suggestion's link
+// before it has ever been published, so it gets its own render-time guard
+// too rather than trusting the server validation alone. (Avery review, PR
+// #234 follow-up.)
+function isSafeHttpUrl(val: string): boolean {
+  try {
+    const parsed = new URL(val);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function formatGeneratedAt(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
     month: "short",
@@ -152,15 +166,21 @@ function ToolSuggestionCard({
               {suggestion.category}
             </span>
             <span className="text-[10px] text-klo-muted">{formatGeneratedAt(suggestion.generated_at)}</span>
-            <a
-              href={suggestion.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[10px] text-klo-muted hover:text-klo-text transition-colors"
-            >
-              <ExternalLink size={10} />
-              {suggestion.link}
-            </a>
+            {isSafeHttpUrl(suggestion.link) ? (
+              <a
+                href={suggestion.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[10px] text-klo-muted hover:text-klo-text transition-colors"
+              >
+                <ExternalLink size={10} />
+                {suggestion.link}
+              </a>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 font-medium">
+                Invalid link — do not publish
+              </span>
+            )}
           </div>
         </div>
 

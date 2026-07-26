@@ -8,6 +8,24 @@ const uuidSchema = z.string().uuid();
 const emailSchema = z.string().email().max(320);
 const nonEmptyString = z.string().min(1).max(5000);
 
+// Strict http(s)-only URL: z.string().url() alone accepts any WHATWG-parseable
+// scheme (javascript:, data:, etc.), not just http/https — insufficient on its
+// own for any URL that ends up bound to an href. Use this instead of a bare
+// .url() wherever the value can render as a link. (Avery review, PR #234
+// follow-up — a web-search-derived `link` field reached two href bindings
+// with no scheme check.)
+function isHttpUrl(val: string): boolean {
+  try {
+    const parsed = new URL(val);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+const httpUrlSchema = (max: number) =>
+  z.string().url().max(max).refine(isHttpUrl, { message: "Must be an http(s) URL" });
+
 // ----------------------------------------------------------------
 // Assessment download (PDF, PPTX, DOCX — all share the same shape)
 // ----------------------------------------------------------------
@@ -912,13 +930,35 @@ export const vaultTrustedSourceToggleSchema = z.object({
 // (vault_pending_tool_updates)
 // ----------------------------------------------------------------
 
+// Shared shape for page_configs.tool_config (the homepage AI Tool of the
+// Week section) — used both by pageConfigUpdateSchema below and by the
+// tool-updates publish route, which re-validates a vault_pending_tool_updates
+// row against this exact schema before writing it into page_configs. Extracted
+// to a standalone export (rather than left inline in pageConfigUpdateSchema)
+// specifically so the publish route can import and reuse it instead of
+// duplicating — or silently skipping — the same validation. (Avery review,
+// PR #234 follow-up.)
+export const toolConfigSchema = z.object({
+  date: z.string().max(60).optional(),
+  name: z.string().min(1).max(100),
+  category: z.string().max(60),
+  description: z.string().max(500),
+  why: z.string().max(500),
+  link: httpUrlSchema(500),
+  cta: z.string().max(40).optional(),
+});
+
+// Max lengths match toolConfigSchema above (name/category/description/why/
+// cta) — a suggestion that passes this schema at insert time must also be
+// able to pass toolConfigSchema unchanged at publish time. `link` uses the
+// same strict http(s)-only check for the same reason (see httpUrlSchema).
 export const vaultPendingToolSchema = z.object({
-  tool_name: z.string().min(1).max(200),
-  category: z.string().min(1).max(100),
-  description: z.string().min(1).max(1000),
-  why_it_matters: z.string().min(1).max(1000),
-  link: z.string().url().max(2000),
-  cta: z.string().min(1).max(60).optional(),
+  tool_name: z.string().min(1).max(100),
+  category: z.string().min(1).max(60),
+  description: z.string().min(1).max(500),
+  why_it_matters: z.string().min(1).max(500),
+  link: httpUrlSchema(500),
+  cta: z.string().min(1).max(40).optional(),
   status: z.enum(["pending", "published", "discarded"]).optional(),
 });
 
@@ -1023,15 +1063,7 @@ export const pageConfigUpdateSchema = z.object({
     link: z.string().max(500),
     cta: z.string().max(60),
   }).nullable().optional(),
-  tool_config: z.object({
-    date: z.string().max(60).optional(),
-    name: z.string().min(1).max(100),
-    category: z.string().max(60),
-    description: z.string().max(500),
-    why: z.string().max(500),
-    link: z.string().max(500),
-    cta: z.string().max(40).optional(),
-  }).nullable().optional(),
+  tool_config: toolConfigSchema.nullable().optional(),
   assessment_config: z.object({
     heading: z.string().min(1).max(100),
     subheading: z.string().max(200),

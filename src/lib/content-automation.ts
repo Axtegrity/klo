@@ -8,6 +8,7 @@ import {
   type VaultStyleReference,
 } from "@/lib/claude";
 import type { VaultDraft, VaultTopicLane } from "@/lib/supabase";
+import { vaultPendingToolSchema } from "@/lib/validation";
 
 /* ------------------------------------------------------------------ */
 /*  Content Automation Pipeline — shared generation logic              */
@@ -251,17 +252,34 @@ export async function generateAIToolSuggestion(): Promise<GenerateToolSuggestion
 
     const suggestion = await findAIToolSuggestion(currentToolName);
 
+    // Validate before persisting — findAIToolSuggestion()'s output comes
+    // from an open web-search-driven model response (extractJsonObject() is
+    // a naive JSON.parse with no runtime shape/content checks), so nothing
+    // about it is trusted until it passes this schema. In particular
+    // vaultPendingToolSchema's link field enforces an http(s)-only URL —
+    // this row's `link` later gets bound directly to an href in both the
+    // admin review card and (once published) the public homepage, so a
+    // javascript:/data: URI must be rejected here, not downstream at render
+    // time. (Avery review, PR #234 follow-up.)
+    const parsed = vaultPendingToolSchema.safeParse({
+      tool_name: suggestion.tool_name,
+      category: suggestion.category,
+      description: suggestion.description,
+      why_it_matters: suggestion.why_it_matters,
+      link: suggestion.link,
+      cta: suggestion.cta || "Learn More",
+      status: "pending",
+    });
+
+    if (!parsed.success) {
+      throw new Error(
+        `AI tool suggestion failed validation: ${parsed.error.message}`
+      );
+    }
+
     const { data: inserted, error: insertError } = await supabase
       .from("vault_pending_tool_updates")
-      .insert({
-        tool_name: suggestion.tool_name,
-        category: suggestion.category,
-        description: suggestion.description,
-        why_it_matters: suggestion.why_it_matters,
-        link: suggestion.link,
-        cta: suggestion.cta || "Learn More",
-        status: "pending",
-      })
+      .insert(parsed.data)
       .select("id")
       .single();
 
