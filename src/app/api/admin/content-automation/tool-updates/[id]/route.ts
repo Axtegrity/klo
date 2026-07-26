@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { verifyCreativeStudioAdmin } from "@/lib/creative-studio-auth";
-import { vaultPendingToolReviewSchema } from "@/lib/validation";
+import { vaultPendingToolReviewSchema, toolConfigSchema } from "@/lib/validation";
 import type { VaultPendingToolUpdate } from "@/lib/supabase";
 
 // PATCH /api/admin/content-automation/tool-updates/[id] — publish or
@@ -85,19 +85,42 @@ export async function PATCH(
 
   // Publish: write the suggestion into page_configs.tool_config for the
   // home page — same field names as ToolConfig (src/lib/page-config-server.ts)
-  // and its `tool_config` Zod shape in validation.ts (pageConfigUpdateSchema).
+  // and its shared `toolConfigSchema` (validation.ts, also used by
+  // pageConfigUpdateSchema). Re-validated here rather than trusted as-is:
+  // this row was already schema-checked once at insert time
+  // (generateAIToolSuggestion(), src/lib/content-automation.ts), but this is
+  // the point where it actually reaches the public-facing tool_config
+  // column that the homepage renders an href from, so it gets a second,
+  // independent check immediately before that write rather than relying on
+  // the insert-time check alone. (Avery review, PR #234 follow-up.)
+  const toolConfigParsed = toolConfigSchema.safeParse({
+    name: suggestion.tool_name,
+    category: suggestion.category,
+    description: suggestion.description,
+    why: suggestion.why_it_matters,
+    link: suggestion.link,
+    cta: suggestion.cta,
+  });
+
+  if (!toolConfigParsed.success) {
+    console.error(
+      "[PATCH /api/admin/content-automation/tool-updates/[id]] suggestion failed tool_config validation, reverting claim",
+      toolConfigParsed.error.flatten()
+    );
+    await supabase
+      .from("vault_pending_tool_updates")
+      .update({ status: "pending", reviewed_at: null, reviewed_by: null })
+      .eq("id", suggestion.id);
+
+    return NextResponse.json(
+      { error: "Suggestion failed validation and cannot be published", details: toolConfigParsed.error.flatten() },
+      { status: 422 }
+    );
+  }
+
   const { error: publishError } = await supabase
     .from("page_configs")
-    .update({
-      tool_config: {
-        name: suggestion.tool_name,
-        category: suggestion.category,
-        description: suggestion.description,
-        why: suggestion.why_it_matters,
-        link: suggestion.link,
-        cta: suggestion.cta,
-      },
-    })
+    .update({ tool_config: toolConfigParsed.data })
     .eq("page_slug", "home");
 
   if (publishError) {

@@ -6,6 +6,21 @@ import { motion } from "framer-motion";
 import { Wrench, ArrowRight, Star } from "lucide-react";
 import type { ToolConfig } from "@/lib/page-config-server";
 
+// Defense-in-depth alongside the server-side toolConfigSchema check applied
+// when this value is written (src/app/api/admin/content-automation/
+// tool-updates/[id]/route.ts) — this is the public homepage, so the render
+// path gets its own guard too rather than trusting that write-time
+// validation is the only thing standing between an untrusted value and this
+// href. (Avery review, PR #234 follow-up.)
+function isSafeHttpUrl(val: string): boolean {
+  try {
+    const parsed = new URL(val);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 const DEFAULTS: ToolConfig = {
   name: "NotebookLM by Google",
   category: "Productivity",
@@ -93,7 +108,10 @@ export default function AIToolOfTheWeek({ toolConfig }: AIToolOfTheWeekProps = {
               </p>
             </div>
 
-            {/* CTA */}
+            {/* CTA — only rendered as a link when the URL is actually
+                http(s); an invalid/unsafe link degrades to plain text
+                rather than a clickable href. */}
+            {isSafeHttpUrl(tool.link) ? (
             <Link
               href={tool.link}
               target="_blank"
@@ -103,6 +121,7 @@ export default function AIToolOfTheWeek({ toolConfig }: AIToolOfTheWeekProps = {
               {tool.cta ?? "Learn More"}
               <ArrowRight className="w-4 h-4" />
             </Link>
+            ) : null}
           </div>
         </div>
       </motion.div>
