@@ -232,6 +232,33 @@ export interface GenerateToolSuggestionResult {
   draft_id?: string;
 }
 
+// Must match vaultPendingToolSchema's own max lengths exactly
+// (src/lib/validation.ts) — these are pre-validation cleanup, not a
+// replacement for that schema, which stays the hard backstop. Keeping the
+// numbers here rather than deriving them from the schema is a deliberate
+// tradeoff: simple and explicit, at the cost of needing to update both
+// places if either changes (exactly the kind of drift that caused a good
+// suggestion to be discarded over a `why_it_matters` overshoot in the first
+// place — see the PATCH history for context).
+const TOOL_NAME_MAX = 100;
+const CATEGORY_MAX = 60;
+const TEXT_FIELD_MAX = 500;
+
+// Truncates at the last complete word before `max` (so the model's own
+// sentence isn't cut mid-word), appending "..." — total length is always
+// <= max. A word-free string longer than max (no spaces) falls back to a
+// hard slice.
+function truncateAtWord(text: string, max: number): string {
+  if (text.length <= max) return text;
+
+  const sliceLength = Math.max(0, max - 3);
+  const sliced = text.slice(0, sliceLength);
+  const lastSpace = sliced.lastIndexOf(" ");
+  const base = lastSpace > 0 ? sliced.slice(0, lastSpace) : sliced;
+
+  return `${base}...`;
+}
+
 export async function generateAIToolSuggestion(): Promise<GenerateToolSuggestionResult> {
   const supabase = getServiceSupabase();
 
@@ -252,20 +279,29 @@ export async function generateAIToolSuggestion(): Promise<GenerateToolSuggestion
 
     const suggestion = await findAIToolSuggestion(currentToolName);
 
+    // Trim text fields to their schema maximums BEFORE validating — a
+    // model that runs a little long on `why_it_matters` (or any other text
+    // field) shouldn't cost an entire web-search + generation call over a
+    // formatting nit. Word-boundary truncation only touches length, never
+    // content correctness, so it's safe to apply before the schema runs;
+    // link is never touched here — that check stays a hard reject (Avery
+    // review, PR #234 follow-up — a javascript:/data: URI must never reach
+    // the href this row's link later gets bound to).
+    const trimmedSuggestion = {
+      tool_name: truncateAtWord(suggestion.tool_name, TOOL_NAME_MAX),
+      category: truncateAtWord(suggestion.category, CATEGORY_MAX),
+      description: truncateAtWord(suggestion.description, TEXT_FIELD_MAX),
+      why_it_matters: truncateAtWord(suggestion.why_it_matters, TEXT_FIELD_MAX),
+    };
+
     // Validate before persisting — findAIToolSuggestion()'s output comes
     // from an open web-search-driven model response (extractJsonObject() is
     // a naive JSON.parse with no runtime shape/content checks), so nothing
-    // about it is trusted until it passes this schema. In particular
-    // vaultPendingToolSchema's link field enforces an http(s)-only URL —
-    // this row's `link` later gets bound directly to an href in both the
-    // admin review card and (once published) the public homepage, so a
-    // javascript:/data: URI must be rejected here, not downstream at render
-    // time. (Avery review, PR #234 follow-up.)
+    // about it is trusted until it passes this schema. This is still the
+    // hard backstop even after the truncation above — e.g. the link check
+    // below, or any future field this function doesn't pre-clean.
     const parsed = vaultPendingToolSchema.safeParse({
-      tool_name: suggestion.tool_name,
-      category: suggestion.category,
-      description: suggestion.description,
-      why_it_matters: suggestion.why_it_matters,
+      ...trimmedSuggestion,
       link: suggestion.link,
       cta: suggestion.cta || "Learn More",
       status: "pending",
