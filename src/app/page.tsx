@@ -3,7 +3,7 @@ import LiveSessionGate from "@/components/home/LiveSessionGate";
 import SurveyCTA from "@/components/home/SurveyCTA";
 import LatestBrief from "@/components/home/LatestBrief";
 import TrendingTopics from "@/components/home/TrendingTopics";
-import FeaturedInsight from "@/components/home/FeaturedInsight";
+import FeaturedInsight, { type LatestVaultItem } from "@/components/home/FeaturedInsight";
 import AIToolOfTheWeek from "@/components/home/AIToolOfTheWeek";
 import QuickAssessmentCTA from "@/components/home/QuickAssessmentCTA";
 import UpcomingKeynote from "@/components/home/UpcomingKeynote";
@@ -70,6 +70,33 @@ async function getTrendingTopicsFromFeaturedArticles(
   }
 }
 
+// Featured Insight: auto-populate from the most recently published Vault
+// article instead of relying solely on admin-configured content. Purely
+// additive — src/components/home/FeaturedInsight.tsx falls back to
+// insight_config/DEFAULTS exactly as before whenever this returns null
+// (e.g. no vault_content rows are published yet).
+async function getLatestVaultItem(): Promise<LatestVaultItem | null> {
+  try {
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase
+      .from("vault_content")
+      .select("title, excerpt, slug, category, tier_required")
+      .eq("visibility", "published")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error("[getLatestVaultItem]", error);
+      return null;
+    }
+
+    return data as LatestVaultItem | null;
+  } catch (err) {
+    console.error("[getLatestVaultItem]", err);
+    return null;
+  }
+}
 
 export default async function Home() {
   const pageConfig = await getPageConfig("home");
@@ -93,6 +120,7 @@ export default async function Home() {
     sectionImages?.featuredInsight?.backgroundType === "image"
       ? (sectionImages.featuredInsight.backgroundRef ?? null)
       : null;
+  const latestVaultItem = await getLatestVaultItem();
 
   return (
     <>
@@ -125,7 +153,11 @@ export default async function Home() {
             <TrendingTopics trendingConfig={trendingConfig} />
           </FadeInOnScroll>
           <FadeInOnScroll delay={0.05}>
-            <FeaturedInsight backgroundImage={featuredInsightImage} insightConfig={insightConfig} />
+            <FeaturedInsight
+              backgroundImage={featuredInsightImage}
+              insightConfig={insightConfig}
+              latestVaultItem={latestVaultItem}
+            />
           </FadeInOnScroll>
           <FadeInOnScroll delay={0.1}>
             <AIToolOfTheWeek toolConfig={toolConfig} />
