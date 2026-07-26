@@ -7,6 +7,7 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 ## [Unreleased] — July 26, 2026 Session
 
 ### Added
+- **Automatic Vault archiving for replaced homepage content** — publishing a new AI Tool of the Week, or saving a new Latest Intelligence Brief, now archives whatever was previously live into the public Vault as a browsable article first, so past picks/briefs aren't just overwritten and lost. Tool archives use category `AI & Ethics` (or the closest match to the tool's own category), content type `guide`; brief archives use category `Leadership`, content type `briefing`. Archiving is non-blocking — a failure to archive is logged (and reported to Sentry) but never blocks the actual publish/save. New shared `generateUniqueSlug()` helper (`src/lib/vault-slug.ts`) avoids slug collisions in the Vault.
 - **AI Tool of the Week automation** — the weekly content-automation cron now also web-searches for a current AI tool relevant to faith leaders/executives (distinct from whatever is currently featured) and lands a suggestion in a new "Tool of the Week" admin review queue (alongside Draft Review Queue, Topic Lanes, and Trusted Sources). Publishing a suggestion updates the homepage AI Tool of the Week immediately; discarding removes it from the queue. New `vault_pending_tool_updates` table (migration only — not yet applied to prod).
 
 ### Changed
