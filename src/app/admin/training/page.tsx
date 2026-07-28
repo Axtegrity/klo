@@ -139,10 +139,12 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       { icon: BarChart3, label: "User Signups Chart", detail: "Line chart showing new user signups over the last 30 days" },
       { icon: BarChart3, label: "Subscription Tiers", detail: "Bar chart showing the distribution of Free, Pro, and Executive subscribers" },
       { icon: BarChart3, label: "AI Advisor Usage", detail: "Line chart showing AI chat usage trends over time" },
+      { icon: Clock, label: "Latest Intelligence Brief Reminder", detail: "If the Latest Intelligence Brief hasn't been updated in 30+ days, an amber banner appears below the stat cards reminding you to publish a new one, with a link straight to the Content tab. It's a nudge, not an error — dismiss it for the session with the X, or just publish a new brief and it clears itself automatically." },
     ],
     tips: [
       "All charts auto-refresh when you click the Refresh button in the header.",
       "Stat cards show growth indicators — green arrows mean positive week-over-week change.",
+      "The Latest Intelligence Brief reminder only shows up when it's actually needed — no banner means the brief is current, or dismissed for this session.",
     ],
   },
   {
