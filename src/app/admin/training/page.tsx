@@ -335,6 +335,7 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       { icon: Sparkles, label: "Generate Suggestion Now (on-demand)", detail: "Click the \"Generate Suggestion\" button at the top of the Tool of the Week sub-section any time you don't want to wait for Monday. It runs the same suggestion search immediately, and a new pending suggestion appears below within moments — no page refresh needed. After a run finishes, the button shows a short \"Available in...\" countdown (about 2 minutes) before you can click it again — this is just a safeguard against accidentally running it twice in a row, not an error." },
       { icon: Check, label: "Publish a Tool Suggestion", detail: "Click the green \"Publish\" button on a suggestion card. The homepage AI Tool of the Week section updates immediately to show this tool — no confirmation step, and it can always be changed again next week or by publishing a different suggestion." },
       { icon: X, label: "Discard a Tool Suggestion", detail: "Click the red \"Discard\" button to reject a suggestion you don't want featured. This is low-stakes and reversible — discarding doesn't affect the homepage, and a new suggestion generates automatically next Monday." },
+      { icon: RefreshCw, label: "Backfill Embeddings", detail: "New content-generation runs automatically compare against Keith's existing published Vault articles so they build on his established thinking instead of repeating it. A small \"Backfill Embeddings\" button appears at the very bottom of this page (below all four sub-sections) whenever older articles haven't been indexed yet — click it once to catch them up. It only shows up when needed; if you don't see it, everything is already current." },
     ],
     tips: [
       "Nothing Keith's team generates here reaches the public Vault without an explicit Publish click — treat the Draft Review Queue like an inbox that needs to hit zero (or be intentionally discarded) each week.",
@@ -344,6 +345,7 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       "Scheduled drafts stay visible in the Draft Review Queue (with their badge) so they're never out of sight — they just move out of the normal Publish/Discard flow until the scheduled time arrives or the schedule is cancelled.",
       "Trusted Sources is an allowlist, not a requirement — with zero active sources, research works exactly like it always has, searching the open web.",
       "If the Tool of the Week queue is empty, that's expected between Monday batches — a new suggestion always arrives with the next weekly run, same schedule as Vault drafts.",
+      "Backfill Embeddings is a one-time catch-up action, not something you need to run regularly — new articles are indexed automatically the moment they're published.",
     ],
   },
   {
