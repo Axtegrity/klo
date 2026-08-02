@@ -369,6 +369,11 @@ export interface GenerateVaultArticleOptions {
   // Extracted text from an admin-uploaded PDF/DOCX reference file (see
   // src/lib/document-extraction.ts). Undefined on the weekly cron path.
   referenceText?: string;
+  // Pre-built "Keith's existing thinking" system-prompt block from
+  // buildRagContextBlock() (src/lib/vault-embeddings.ts) — "" or undefined
+  // when searchSimilarVaultContent() found nothing above the similarity
+  // threshold, in which case RAG is never mentioned in the prompt at all.
+  ragContext?: string;
 }
 
 // Extracts the URLs cited inside the article body's closing `## Sources`
@@ -450,7 +455,8 @@ export async function generateVaultArticle(
 ${approvedSourcesList}
 5. The article body MUST end with a section starting with the exact heading \`## Sources\` (markdown H2, nothing else on that line), followed by one list item per source in the exact format \`- [Publication Name](URL)\` — one per line, no additional commentary in that section. Every URL must be copied exactly, character-for-character, from the approved list above.`;
 
-  const systemPrompt = `${baseSystemPrompt}\n\n${qualityGateBlock}`;
+  const ragBlock = options.ragContext ? `\n\n${options.ragContext}` : "";
+  const systemPrompt = `${baseSystemPrompt}\n\n${qualityGateBlock}${ragBlock}`;
 
   const styleBlock = styleReferences
     .map(
@@ -524,12 +530,18 @@ export interface AIToolSuggestion {
  * land in vault_pending_tool_updates for admin review.
  */
 export async function findAIToolSuggestion(
-  excludeToolName: string | null
+  excludeToolName: string | null,
+  // Pre-built "Keith's existing thinking" block from buildRagContextBlock()
+  // (src/lib/vault-embeddings.ts) — "" or undefined when nothing relevant
+  // was found, in which case RAG is never mentioned in the prompt.
+  ragContext?: string
 ): Promise<AIToolSuggestion> {
-  const systemPrompt = `You are a research assistant for a faith-leadership content platform. Use web search to find ONE current, real AI tool (a SaaS product, app, or platform — not a research paper or general trend) that would be genuinely useful for faith leaders or executives, something they could realistically start using today. Prefer tools with mainstream awareness or notable recent adoption/coverage over obscure or unlaunched products.${
+  const baseSystemPrompt = `You are a research assistant for a faith-leadership content platform. Use web search to find ONE current, real AI tool (a SaaS product, app, or platform — not a research paper or general trend) that would be genuinely useful for faith leaders or executives, something they could realistically start using today. Prefer tools with mainstream awareness or notable recent adoption/coverage over obscure or unlaunched products.${
     excludeToolName ? ` Do NOT suggest "${excludeToolName}" — it is already featured.` : ""
   } After researching, respond with ONLY a single JSON object (no prose before or after, no markdown fences) in this exact shape:
 {"tool_name": "<the tool's real name>", "category": "<a short label, e.g. Productivity, Research, Communication>", "description": "<2-3 sentences explaining what the tool does>", "why_it_matters": "<2-3 sentences written as Keith L. Odom, Technology Innovator, Speaker & Pastor, explaining in his voice why faith leaders or executives should care>", "link": "<the tool's real, working homepage URL>", "cta": "<a short button label, e.g. Learn More or Try It Free — default to Learn More if unsure>"}`;
+
+  const systemPrompt = ragContext ? `${baseSystemPrompt}\n\n${ragContext}` : baseSystemPrompt;
 
   const userPrompt = excludeToolName
     ? `Find a current AI tool for faith leaders/executives. It must not be "${excludeToolName}".`

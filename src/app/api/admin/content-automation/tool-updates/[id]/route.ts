@@ -8,6 +8,7 @@ import { generateUniqueSlug } from "@/lib/vault-slug";
 import { VAULT_CATEGORIES } from "@/lib/vault-data";
 import type { VaultPendingToolUpdate } from "@/lib/supabase";
 import type { ToolConfig } from "@/lib/page-config-server";
+import { upsertVaultEmbedding } from "@/lib/vault-embeddings";
 
 // Maps a suggestion's freeform `category` (e.g. "Productivity", "Research")
 // onto the closest VAULT_CATEGORIES value so the archived vault_content row
@@ -79,6 +80,24 @@ async function archiveCurrentTool(
       entity_id: archived.id,
       details: `Archived previous AI Tool of the Week to Vault: ${currentTool.name}`,
     });
+
+    // Embed for the RAG knowledge base — own try/catch (not folded into the
+    // outer one) so a failure here is attributed accurately: the archive
+    // itself already succeeded by this point, only the embedding step
+    // failed, and the log/Sentry message should say so rather than implying
+    // the archive didn't happen. Still just as non-blocking either way.
+    try {
+      const excerpt = currentTool.description.slice(0, 150);
+      await upsertVaultEmbedding(archived.id, currentTool.name, body, excerpt);
+    } catch (embeddingError) {
+      console.error(
+        "[PATCH /api/admin/content-automation/tool-updates/[id]] archive succeeded but embedding failed",
+        embeddingError
+      );
+      Sentry.captureException(embeddingError, {
+        extra: { source: "tool-of-the-week-archive-embedding", vault_content_id: archived.id },
+      });
+    }
   } catch (error) {
     console.error("[PATCH /api/admin/content-automation/tool-updates/[id]] archive failed, continuing publish", error);
     Sentry.captureException(error, {
