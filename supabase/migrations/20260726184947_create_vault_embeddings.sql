@@ -15,18 +15,25 @@
 -- access by default (default-deny) and only the service-role client
 -- (getServiceSupabase(), which bypasses RLS entirely) can read or write.
 --
--- CREATE EXTENSION IF NOT EXISTS is idempotent/safe even though pgvector is
--- already confirmed installed on prod (verified via
--- `SELECT extname FROM pg_extension WHERE extname = 'vector'` this session)
--- — included so this migration is portable to a fresh dev/local instance.
+-- CREATE EXTENSION IF NOT EXISTS is idempotent/safe. Schema corrected to
+-- `public` 2026-08 after `supabase db push` failed on prod with
+-- `type "extensions.vector" does not exist` (SQLSTATE 42704) — verified via
+-- Supabase Management API `database/query` against project
+-- yrztblvazkrzxgztfzzn: `SELECT extname, nspname FROM pg_extension e JOIN
+-- pg_namespace n ON n.oid = e.extnamespace WHERE extname = 'vector'` returned
+-- schema = public, not extensions. Column/function signatures below use the
+-- unqualified `vector(1536)` type name (resolved via search_path, which
+-- always includes public) so this migration works whether the extension
+-- lives in public (this prod instance) or extensions (a fresh instance where
+-- this CREATE EXTENSION statement below is the one doing the installing).
 -- ============================================================
 
-CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;
 
 CREATE TABLE IF NOT EXISTS vault_embeddings (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vault_content_id UUID NOT NULL UNIQUE REFERENCES vault_content(id) ON DELETE CASCADE,
-  embedding        extensions.vector(1536) NOT NULL,  -- 1536 dims matches text-embedding-3-small
+  embedding        vector(1536) NOT NULL,  -- 1536 dims matches text-embedding-3-small
   content_hash     TEXT NOT NULL,                      -- SHA-256 of the text embedded, for cache invalidation
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -49,7 +56,7 @@ ALTER TABLE vault_embeddings ENABLE ROW LEVEL SECURITY;
 -- article can never surface in a generation prompt via RAG.
 -- ------------------------------------------------------------
 CREATE OR REPLACE FUNCTION match_vault_content (
-  query_embedding extensions.vector(1536),
+  query_embedding vector(1536),
   match_threshold float,
   match_count int
 )
