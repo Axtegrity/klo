@@ -5,10 +5,12 @@ import {
   searchLaneTopics,
   generateVaultArticle,
   findAIToolSuggestion,
+  searchIntelligenceBriefTopic,
+  generateIntelligenceBriefArticle,
   type VaultStyleReference,
 } from "@/lib/claude";
 import type { VaultDraft, VaultTopicLane } from "@/lib/supabase";
-import { vaultPendingToolSchema } from "@/lib/validation";
+import { vaultPendingToolSchema, vaultPendingBriefSchema } from "@/lib/validation";
 import { upsertVaultEmbedding, searchSimilarVaultContent, buildRagContextBlock } from "@/lib/vault-embeddings";
 
 /* ------------------------------------------------------------------ */
@@ -355,6 +357,122 @@ export async function generateAIToolSuggestion(): Promise<GenerateToolSuggestion
     console.error("[content-automation:tool-suggestion] failed", error);
     Sentry.captureException(error, {
       extra: { source: "content-automation-tool-suggestion" },
+    });
+    return { generated: false };
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Intelligence Brief — weekly full-article generation                */
+/*                                                                      */
+/*  Called from both the weekly cron (src/app/api/cron/content-        */
+/*  automation/route.ts, after generateAIToolSuggestion()) and on-      */
+/*  demand from src/app/api/admin/content-automation/brief-updates/     */
+/*  generate/route.ts. Never throws — any failure is logged/reported to */
+/*  Sentry and returns { generated: false } so a bad web-search, quality*/
+/*  gate, or DB error here never blocks the weekly vault-article/tool   */
+/*  batch.                                                              */
+/* ------------------------------------------------------------------ */
+
+export interface GenerateIntelligenceBriefResult {
+  generated: boolean;
+  draft_id?: string;
+  warning?: string;
+}
+
+// Same reputable-source quality gate as runContentAutomationGenerate()'s
+// MIN_REPUTABLE_SOURCES — a separate constant (not a shared import) because
+// an Intelligence Brief and a lane article are independently tunable
+// features that happen to share a threshold today, same reasoning as
+// TOOL_NAME_MAX/CATEGORY_MAX/TEXT_FIELD_MAX below being their own copy
+// rather than derived from vaultPendingToolSchema.
+const BRIEF_MIN_REPUTABLE_SOURCES = 3;
+
+// Must match vaultPendingBriefSchema's own max lengths exactly
+// (src/lib/validation.ts) — pre-validation cleanup, not a replacement for
+// that schema, which stays the hard backstop.
+const BRIEF_TITLE_MAX = 200;
+const BRIEF_EXCERPT_MAX = 500;
+
+export async function generateIntelligenceBrief(
+  guidance?: string
+): Promise<GenerateIntelligenceBriefResult> {
+  const supabase = getServiceSupabase();
+
+  try {
+    // 1. Research the most current AI/technology topic for faith leaders
+    //    and executives, optionally steered by admin-supplied guidance.
+    const research = await searchIntelligenceBriefTopic(guidance);
+
+    // 2. Reputable-source quality gate — same shape as
+    //    runContentAutomationGenerate()'s lane gate: skips the generation
+    //    call entirely (and its cost) when the research can't responsibly
+    //    support a fully-cited article, surfacing a warning for the admin
+    //    UI instead of inserting a thin/uncited draft.
+    const reputableSources = research.sources.filter((source) => source.reputable);
+    if (reputableSources.length < BRIEF_MIN_REPUTABLE_SOURCES) {
+      console.warn(
+        `[content-automation:intelligence-brief] only ${reputableSources.length} reputable source(s) found (need ${BRIEF_MIN_REPUTABLE_SOURCES}) — skipping generation`
+      );
+      Sentry.captureMessage(
+        "Content automation: insufficient reputable sources for Intelligence Brief",
+        {
+          level: "warning",
+          extra: { sourcesFound: reputableSources.length, source: "content-automation-intelligence-brief" },
+        }
+      );
+      return {
+        generated: false,
+        warning: `Insufficient reputable sources found (${reputableSources.length} of ${BRIEF_MIN_REPUTABLE_SOURCES} required) — no brief was generated.`,
+      };
+    }
+
+    // 3. Generate the article in Keith's voice, constrained to the
+    //    reputable-source closed list — validateCitedSources() (inside
+    //    generateIntelligenceBriefArticle()) throws on any uncited or
+    //    unapproved-source claim, caught by this function's own try/catch
+    //    below like any other generation failure.
+    const article = await generateIntelligenceBriefArticle(research, reputableSources, guidance);
+
+    // Trim text fields to their schema maximums BEFORE validating — a model
+    // that runs a little long on title/excerpt shouldn't cost an entire
+    // web-search + generation call over a formatting nit. Word-boundary
+    // truncation only touches length, never content correctness.
+    const trimmedTitle = truncateAtWord(article.title, BRIEF_TITLE_MAX);
+    const trimmedExcerpt = truncateAtWord(article.excerpt, BRIEF_EXCERPT_MAX);
+
+    // Validate before persisting — generateIntelligenceBriefArticle()'s
+    // output comes from an open web-search-driven model response
+    // (extractJsonObject() is a naive JSON.parse with no runtime shape/
+    // content checks), so nothing about it is trusted until it passes this
+    // schema.
+    const parsed = vaultPendingBriefSchema.safeParse({
+      title: trimmedTitle,
+      excerpt: trimmedExcerpt,
+      body: article.body,
+      status: "pending",
+      topic_source: research.primaryTopic,
+    });
+
+    if (!parsed.success) {
+      throw new Error(`Intelligence Brief failed validation: ${parsed.error.message}`);
+    }
+
+    const { data: inserted, error: insertError } = await supabase
+      .from("vault_pending_brief_updates")
+      .insert(parsed.data)
+      .select("id")
+      .single();
+
+    if (insertError) {
+      throw new Error(`Failed to insert Intelligence Brief: ${insertError.message}`);
+    }
+
+    return { generated: true, draft_id: inserted.id };
+  } catch (error) {
+    console.error("[content-automation:intelligence-brief] failed", error);
+    Sentry.captureException(error, {
+      extra: { source: "content-automation-intelligence-brief" },
     });
     return { generated: false };
   }

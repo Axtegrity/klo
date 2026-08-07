@@ -1,20 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Layers, ShieldCheck, Wrench } from "lucide-react";
+import { FileText, Layers, ShieldCheck, Wrench, Newspaper } from "lucide-react";
 import DraftReviewQueue from "./content-automation/DraftReviewQueue";
 import TopicLanes from "./content-automation/TopicLanes";
 import TrustedSources from "./content-automation/TrustedSources";
 import ToolOfTheWeek from "./content-automation/ToolOfTheWeek";
+import IntelligenceBrief from "./content-automation/IntelligenceBrief";
 import EmbeddingsBackfillButton from "./content-automation/EmbeddingsBackfillButton";
 
-type Section = "drafts" | "lanes" | "trusted-sources" | "tool-updates";
+type Section = "drafts" | "lanes" | "trusted-sources" | "tool-updates" | "brief-updates";
 
 const sections: { id: Section; label: string; icon: React.ElementType }[] = [
   { id: "drafts", label: "Draft Review Queue", icon: FileText },
   { id: "lanes", label: "Topic Lanes", icon: Layers },
   { id: "trusted-sources", label: "Trusted Sources", icon: ShieldCheck },
   { id: "tool-updates", label: "Tool of the Week", icon: Wrench },
+  { id: "brief-updates", label: "Intelligence Brief", icon: Newspaper },
 ];
 
 export default function ContentAutomationTab() {
@@ -33,7 +35,7 @@ export default function ContentAutomationTab() {
       </div>
 
       {/* Section Selector */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {sections.map((section) => {
           const Icon = section.icon;
           return (
@@ -58,6 +60,7 @@ export default function ContentAutomationTab() {
       {activeSection === "lanes" && <TopicLanes />}
       {activeSection === "trusted-sources" && <TrustedSources />}
       {activeSection === "tool-updates" && <ToolOfTheWeek />}
+      {activeSection === "brief-updates" && <IntelligenceBrief />}
 
       {/* Backfill Embeddings — sits below all sub-sections regardless of
           which one is active; only renders itself once a status check

@@ -970,6 +970,27 @@ export const vaultPendingToolListQuerySchema = z.object({
   status: z.enum(["pending", "published", "discarded"]).optional(),
 });
 
+// Max lengths match src/lib/content-automation.ts's word-boundary truncation
+// (BRIEF_TITLE_MAX / BRIEF_EXCERPT_MAX) — a generated brief that runs a
+// little long on title/excerpt is trimmed to these limits before this schema
+// ever runs; this stays the hard backstop regardless. `body` has no upper
+// bound here (the 600-900 word target is prompt-enforced, not schema-
+// enforced) but must be non-empty. `link` is optional — an Intelligence
+// Brief is Keith's own original writing, not a pointer to an external tool,
+// so unlike vaultPendingToolSchema's required `link` this one may be absent.
+export const vaultPendingBriefSchema = z.object({
+  title: z.string().min(1).max(200),
+  excerpt: z.string().min(1).max(500),
+  body: z.string().min(1),
+  link: httpUrlSchema(500).nullable().optional(),
+  status: z.enum(["pending", "published", "discarded"]).optional(),
+  topic_source: z.string().max(500).nullable().optional(),
+});
+
+export const vaultPendingBriefReviewSchema = z.object({
+  action: z.enum(["publish", "discard"]),
+});
+
 // referenceFilePath is downloaded server-side from the shared `documents`
 // Supabase Storage bucket (src/lib/document-extraction.ts) and its extracted
 // text is forwarded into the Anthropic prompt — so this field must be

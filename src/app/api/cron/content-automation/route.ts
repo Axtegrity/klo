@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runContentAutomationGenerate, generateAIToolSuggestion } from "@/lib/content-automation";
+import {
+  runContentAutomationGenerate,
+  generateAIToolSuggestion,
+  generateIntelligenceBrief,
+} from "@/lib/content-automation";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -40,12 +44,29 @@ export async function GET(request: NextRequest) {
       console.error("[cron/content-automation] tool suggestion run failed", toolError);
     }
 
+    // Intelligence Brief — runs after the AI Tool of the Week suggestion,
+    // wrapped separately so a failure here (web search, quality gate, DB)
+    // never fails the cron response or masks the results above.
+    // generateIntelligenceBrief() itself already catches internally and
+    // returns { generated: false } rather than throwing; this try/catch is
+    // belt-and-suspenders against an unexpected throw.
+    let intelligenceBrief: { generated: boolean; draft_id?: string; warning?: string } = {
+      generated: false,
+    };
+    try {
+      intelligenceBrief = await generateIntelligenceBrief();
+      console.log("[cron/content-automation] intelligence brief result", intelligenceBrief);
+    } catch (briefError) {
+      console.error("[cron/content-automation] intelligence brief run failed", briefError);
+    }
+
     return NextResponse.json({
       success: true,
       generated: summary.generated,
       laneResults: summary.laneResults,
       failed,
       toolSuggestion,
+      intelligenceBrief,
     });
   } catch (error) {
     console.error("[GET /api/cron/content-automation]", error);
