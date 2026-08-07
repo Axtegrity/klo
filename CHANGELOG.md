@@ -39,6 +39,11 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 - **Training documentation for the Intelligence Brief staleness reminder** (PR #241, merged 2026-07-28) — the Overview Dashboard training section now explains the reminder banner added in PR #237.
 - **Fixed the database setup bug blocking RAG knowledge base (PR #240)** — the setup script assumed a database extension lived in a location it doesn't on this server; corrected to the actual location. Dev-tooling fix only, no user-facing change; the RAG feature still needs the outstanding API key added before it goes live.
 
+## [August 7, 2026] — Intelligence Brief Generation
+
+### Added
+- **"Latest Intelligence Brief" automation added** — the weekly automated job now also researches the most current AI/technology topic for faith leaders and executives and writes a full 600-900 word draft article in Keith's voice, landing it in a new "Intelligence Brief" review queue alongside the existing Draft Review Queue, Topic Lanes, Trusted Sources, and Tool of the Week tabs. A draft that can't find at least 3 reputable sources is skipped with a warning instead of being generated with weak sourcing, matching the same quality gate used for Vault article drafts. Admins can trigger a run on demand with an optional Direction note to steer the topic, same pattern as Generate Drafts and Generate Suggestion. Publishing a brief archives whatever brief was previously live into the Vault, publishes the new one as a Vault article, and updates the homepage "Latest Intelligence Brief" card to link to it — all in one click, with no confirmation step.
+
 ## [Unreleased] — July 11, 2026 Session
 
 ### Added

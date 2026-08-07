@@ -592,6 +592,148 @@ export async function findAIToolSuggestion(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Intelligence Brief — web-search-enabled research + style-matched   */
+/*  generation                                                         */
+/*                                                                      */
+/*  Two-call shape like searchLaneTopics()/generateVaultArticle() (not  */
+/*  findAIToolSuggestion()'s single call) — an Intelligence Brief is a  */
+/*  full 600-900 word cited article, not a short blurb, so it needs the */
+/*  same reputable-source quality gate and validateCitedSources() guard */
+/*  the vault-article pipeline already has, reusing both as-is rather   */
+/*  than duplicating them. The web_search call itself (trusted-source   */
+/*  allowed_domains restriction) follows findAIToolSuggestion()'s       */
+/*  pattern: a single fixed-audience query (no lane concept), optionally*/
+/*  steered by admin-supplied guidance instead of a lane name.          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Uses Anthropic's hosted web_search tool to find the most current,
+ * relevant AI/technology topic for faith leaders and executives (past 30
+ * days), optionally steered by admin-supplied guidance. Same
+ * research-summary + deduped-source shape as searchLaneTopics() — reuses
+ * LaneTopicResearch/LaneSource rather than a parallel type, since
+ * generateIntelligenceBriefArticle() below needs exactly what
+ * generateVaultArticle() needs.
+ */
+export async function searchIntelligenceBriefTopic(
+  guidance?: string
+): Promise<LaneTopicResearch> {
+  const systemPrompt = `You are a research assistant for a faith-leadership content platform. Use web search to find the single most current, credible, and specific AI or technology development from the past 30 days that faith leaders and executives need to know about. Prefer named events, publications, product launches, regulatory actions, or reports over generic trend commentary. When multiple comparable sources cover the same development, prefer wire services (Reuters, AP), national/major press, established trade press, and .gov/.edu sources over blogs, social media, or unvetted sites — this is a tiebreaker, not a requirement to skip the most relevant result. After researching, respond with ONLY a single JSON object (no prose before or after, no markdown fences) in this exact shape:
+{"primaryTopic": "<the single most compelling, specific topic to write about>", "supportingTopics": ["<topic 2>", "<topic 3>"], "summary": "<3-6 sentences synthesizing what you found, with enough specifics (names, dates, sources) that a writer who did not do the search could write an informed, current article>"}`;
+
+  const userPrompt = guidance
+    ? `Find the most current AI/technology topic for faith leaders and executives, focused specifically on: ${guidance}`
+    : "Find the most current AI/technology topic for faith leaders and executives from the past 30 days.";
+
+  // Trusted Sources: same allowlist-if-any-active pattern as
+  // searchLaneTopics()/findAIToolSuggestion() — a fetch error here falls
+  // back to unrestricted search rather than failing the whole brief run.
+  let allowedDomains: string[] = [];
+  try {
+    const { data: trustedSources, error: trustedSourcesError } = await getServiceSupabase()
+      .from("vault_trusted_sources")
+      .select("domain")
+      .eq("active", true);
+
+    if (trustedSourcesError) throw trustedSourcesError;
+    allowedDomains = (trustedSources ?? []).map((s) => s.domain as string);
+  } catch (error) {
+    console.error("[searchIntelligenceBriefTopic] failed to load trusted sources, proceeding without domain restriction", error);
+    Sentry.captureException(error, { extra: { source: "search-intelligence-brief-topic-trusted-sources" } });
+  }
+
+  const webSearchTool: Record<string, unknown> = {
+    type: WEB_SEARCH_TOOL_TYPE,
+    name: "web_search",
+    max_uses: 5,
+  };
+  if (allowedDomains.length > 0) {
+    webSearchTool.allowed_domains = allowedDomains;
+  }
+
+  const data = await callAnthropicMessages({
+    model: CONTENT_AUTOMATION_MODEL,
+    // 8192 for the same reason as searchLaneTopics(): claude-sonnet-5's
+    // hosted web_search tool runs an internal agentic code_execution loop
+    // whose tool-orchestration tokens consume the budget well before the
+    // visible JSON answer at lower limits.
+    max_tokens: 8192,
+    // No temperature/top_p/top_k: claude-sonnet-5 rejects any non-default
+    // sampling parameter with a 400.
+    system: systemPrompt,
+    tools: [webSearchTool],
+    messages: [{ role: "user", content: userPrompt }],
+  });
+
+  const text = extractText(data.content);
+  const parsed = extractJsonObject<Omit<LaneTopicResearch, "sources">>(text);
+  const sources = extractLaneSources(data.content);
+  return { ...parsed, sources };
+}
+
+export interface GeneratedBriefArticle {
+  title: string;
+  excerpt: string;
+  body: string;
+}
+
+/**
+ * Generates a full Intelligence Brief in Keith L. Odom's voice from fresh
+ * research, constrained to a closed list of pre-vetted reputable sources —
+ * same citation-gated shape as generateVaultArticle() (qualityGateBlock +
+ * `## Sources` requirement), reusing validateCitedSources() as-is rather
+ * than duplicating it. No slug (vault_pending_brief_updates has no slug
+ * column — one is only minted at publish time via generateUniqueSlug(),
+ * mirroring archiveCurrentTool()'s pattern).
+ */
+export async function generateIntelligenceBriefArticle(
+  research: LaneTopicResearch,
+  reputableSources: LaneSource[],
+  guidance?: string
+): Promise<GeneratedBriefArticle> {
+  const approvedSourcesList = reputableSources
+    .map((source) => `${source.title ?? source.domain}: ${source.url}`)
+    .join("\n");
+
+  const systemPrompt = `You are writing as Keith L. Odom — Technology Innovator, Speaker & Pastor. Write the "Latest Intelligence Brief" — a flagship article connecting a current AI/technology development to purpose, leadership, and people through a faith-leadership lens. The article must be 600-900 words, include practical takeaways for faith leaders and executives, and match Keith's established tone: direct, warm, grounded in scripture-informed conviction without being preachy. Respond with ONLY a single JSON object (no prose before or after, no markdown fences) in this exact shape:
+{"title": "<compelling headline>", "excerpt": "<2-3 sentence executive summary, max 400 characters>", "body": "<full article body, 600-900 words, markdown formatting allowed>"}
+
+QUALITY REQUIREMENTS — these are non-negotiable:
+1. Every factual claim must come from a source you were given below. Do not state facts from memory without a source.
+2. Only cite reputable sources: major news publications, academic institutions, government sites, established nonprofit or faith organizations, or peer-reviewed research. Do not cite blogs, social media, or unverified sites.
+3. If you cannot find a reputable source for a claim, either remove the claim or explicitly label it as Keith's perspective with the phrase 'In my view,' or 'From a faith-leadership perspective,'
+4. Approved sources (cite ONLY these — do not invent, alter, shorten, or add any other URL or publication name). Copy each URL character-for-character:
+${approvedSourcesList}
+5. The article body MUST end with a section starting with the exact heading \`## Sources\` (markdown H2, nothing else on that line), followed by one list item per source in the exact format \`- [Publication Name](URL)\` — one per line, no additional commentary in that section. Every URL must be copied exactly, character-for-character, from the approved list above.`;
+
+  const guidanceBlock = guidance
+    ? `\n\nThe user has requested this specific focus: ${guidance}. Write specifically around this angle within the researched topic.`
+    : "";
+
+  const userPrompt = `Primary topic to write about: ${research.primaryTopic}
+Supporting context: ${research.supportingTopics.join("; ")}
+Research summary: ${research.summary}${guidanceBlock}`;
+
+  const data = await callAnthropicMessages({
+    model: CONTENT_AUTOMATION_MODEL,
+    max_tokens: 4096,
+    // No temperature/top_p/top_k: claude-sonnet-5 rejects any non-default
+    // sampling parameter with a 400 — steer variation via the prompt instead.
+    system: systemPrompt,
+    messages: [{ role: "user", content: userPrompt }],
+  });
+
+  const text = extractText(data.content);
+  const article = extractJsonObject<GeneratedBriefArticle>(text);
+
+  if (reputableSources.length > 0) {
+    validateCitedSources(article.body, reputableSources);
+  }
+
+  return article;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Streaming request                                                  */
 /* ------------------------------------------------------------------ */
 

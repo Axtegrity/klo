@@ -65,6 +65,7 @@ import {
   AlertCircle,
   CalendarClock,
   ShieldCheck,
+  Newspaper,
 } from "lucide-react";
 
 // ------------------------------------------------------------
@@ -337,7 +338,12 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       { icon: Sparkles, label: "Generate Suggestion Now (on-demand)", detail: "Click the \"Generate Suggestion\" button at the top of the Tool of the Week sub-section any time you don't want to wait for Monday. It runs the same suggestion search immediately, and a new pending suggestion appears below within moments — no page refresh needed. After a run finishes, the button shows a short \"Available in...\" countdown (about 2 minutes) before you can click it again — this is just a safeguard against accidentally running it twice in a row, not an error." },
       { icon: Check, label: "Publish a Tool Suggestion", detail: "Click the green \"Publish\" button on a suggestion card. The homepage AI Tool of the Week section updates immediately to show this tool — no confirmation step, and it can always be changed again next week or by publishing a different suggestion." },
       { icon: X, label: "Discard a Tool Suggestion", detail: "Click the red \"Discard\" button to reject a suggestion you don't want featured. This is low-stakes and reversible — discarding doesn't affect the homepage, and a new suggestion generates automatically next Monday." },
-      { icon: RefreshCw, label: "Backfill Embeddings", detail: "New content-generation runs automatically compare against Keith's existing published Vault articles so they build on his established thinking instead of repeating it. A small \"Backfill Embeddings\" button appears at the very bottom of this page (below all four sub-sections) whenever older articles haven't been indexed yet — click it once to catch them up. It only shows up when needed; if you don't see it, everything is already current." },
+      { icon: Newspaper, label: "Intelligence Brief Drafts", detail: "Switch to the Intelligence Brief sub-section to review AI-generated drafts for the homepage \"Latest Intelligence Brief\" card. The same Monday 9am batch that generates Vault drafts and the Tool of the Week suggestion also researches the most current AI/technology topic for faith leaders and executives and writes a full 600-900 word article in Keith's voice, landing here as a pending draft with a title, an executive-summary excerpt, and sourced claims." },
+      { icon: Sparkles, label: "Generate Brief Now (on-demand)", detail: "Click the \"Generate Brief\" button at the top of the Intelligence Brief sub-section any time you don't want to wait for Monday. Optionally type a note in the Direction box first to steer the topic search — e.g. \"focus on AI regulation in California.\" A new pending brief appears below within moments — no page refresh needed. After a run finishes, the button shows a short \"Available in...\" countdown (about 2 minutes) before you can click it again — this is just a safeguard against accidentally running it twice in a row, not an error." },
+      { icon: Eye, label: "Preview the Full Brief", detail: "Click the \"Preview\" button on a brief card to open the complete article — not just the excerpt on the card — in a scrollable window. Publish and Discard are both available right there in the preview, so you can read the whole piece and decide without closing the window first." },
+      { icon: Check, label: "Publish a Brief", detail: "Click the green \"Publish\" button on a brief card. This does three things at once: archives whatever brief is currently live into the Vault so it isn't lost, publishes the new brief as a Vault article, and updates the homepage \"Latest Intelligence Brief\" card to link to it — all immediately, with no confirmation step." },
+      { icon: X, label: "Discard a Brief", detail: "Click the red \"Discard\" button to reject a brief you don't want featured. This is low-stakes and reversible — discarding doesn't affect the homepage, and a new brief generates automatically next Monday." },
+      { icon: RefreshCw, label: "Backfill Embeddings", detail: "New content-generation runs automatically compare against Keith's existing published Vault articles so they build on his established thinking instead of repeating it. A small \"Backfill Embeddings\" button appears at the very bottom of this page (below all five sub-sections) whenever older articles haven't been indexed yet — click it once to catch them up. It only shows up when needed; if you don't see it, everything is already current." },
     ],
     tips: [
       "Nothing Keith's team generates here reaches the public Vault without an explicit Publish click — treat the Draft Review Queue like an inbox that needs to hit zero (or be intentionally discarded) each week.",
@@ -347,6 +353,7 @@ const TRAINING_SECTIONS: TrainingSection[] = [
       "Scheduled drafts stay visible in the Draft Review Queue (with their badge) so they're never out of sight — they just move out of the normal Publish/Discard flow until the scheduled time arrives or the schedule is cancelled.",
       "Trusted Sources is an allowlist, not a requirement — with zero active sources, research works exactly like it always has, searching the open web.",
       "If the Tool of the Week queue is empty, that's expected between Monday batches — a new suggestion always arrives with the next weekly run, same schedule as Vault drafts.",
+      "If the Intelligence Brief queue is empty, that's expected between Monday batches — a new brief always arrives with the next weekly run, same schedule as Vault drafts and Tool of the Week.",
       "Backfill Embeddings is a one-time catch-up action, not something you need to run regularly — new articles are indexed automatically the moment they're published.",
     ],
   },
