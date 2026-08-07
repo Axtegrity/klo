@@ -44,6 +44,15 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 ### Added
 - **"Latest Intelligence Brief" automation added** — the weekly automated job now also researches the most current AI/technology topic for faith leaders and executives and writes a full 600-900 word draft article in Keith's voice, landing it in a new "Intelligence Brief" review queue alongside the existing Draft Review Queue, Topic Lanes, Trusted Sources, and Tool of the Week tabs. A draft that can't find at least 3 reputable sources is skipped with a warning instead of being generated with weak sourcing, matching the same quality gate used for Vault article drafts. Admins can trigger a run on demand with an optional Direction note to steer the topic, same pattern as Generate Drafts and Generate Suggestion. Publishing a brief archives whatever brief was previously live into the Vault, publishes the new one as a Vault article, and updates the homepage "Latest Intelligence Brief" card to link to it — all in one click, with no confirmation step.
 
+## [August 7, 2026] — Voice Rule Fix + Inline Editing
+
+### Fixed
+- **AI-generated content no longer introduces Keith by name** — every generation prompt (Vault article drafts, AI Tool of the Week suggestions, Intelligence Briefs) now explicitly instructs the model to write naturally in first person without a self-introduction ("As Keith L. Odom, I..."). The platform already establishes his identity elsewhere; content should simply speak as him.
+- **Corrected the live "Pulpit AI" Tool of the Week write-up** — its "why it matters" text had shipped with exactly this self-introduction problem; rewritten in place on the homepage, no other fields touched.
+
+### Added
+- **Inline editing for all three Content Automation review queues** — Draft Review Queue, Tool of the Week, and Intelligence Brief cards (and, where a Preview modal exists, the modal too) now have an "Edit" button. Editing lets an admin fix a title, excerpt, body, description, "why it matters," or category wording issue in place — click Save to keep the change or Cancel to discard it — instead of discarding a good draft over a small wording problem and waiting for a new one. Only available while an item is still pending (or scheduled, for Vault drafts) — an already-published or discarded item can't be edited.
+
 ## [Unreleased] — July 11, 2026 Session
 
 ### Added

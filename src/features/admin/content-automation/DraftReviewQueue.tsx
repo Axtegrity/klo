@@ -14,6 +14,7 @@ import {
   ChevronDown,
   Eye,
   CalendarClock,
+  Pencil,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useToast } from "@/contexts/ToastContext";
@@ -63,7 +64,7 @@ function formatScheduledFor(iso: string): string {
   });
 }
 
-type ReviewAction = "publish" | "discard" | "schedule" | "cancel_schedule";
+type ReviewAction = "publish" | "discard" | "schedule" | "cancel_schedule" | "edit";
 
 // Client-side mirror of extractCitedSourceUrls() in src/lib/claude.ts — same
 // `## Sources` heading + `- [Label](URL)` link shape the backend validates
@@ -172,6 +173,12 @@ export default function DraftReviewQueue() {
     discard: "Draft discarded.",
     schedule: "Draft scheduled.",
     cancel_schedule: "Schedule cancelled — draft is pending again.",
+    // Never actually read — edits go through handleEditSave, which has its
+    // own "Changes saved." toast, not handleReview/reviewMessages. Present
+    // only so this object satisfies Record<ReviewAction, string> now that
+    // "edit" is part of the action union (actingOn needs it to disable the
+    // right card's buttons while a save is in flight).
+    edit: "Changes saved.",
   };
 
   const handleReview = async (
@@ -210,6 +217,35 @@ export default function DraftReviewQueue() {
       toast("success", reviewMessages[action]);
     } catch (err) {
       toast("error", err instanceof Error ? err.message : `Failed to ${action} draft`);
+    } finally {
+      setActingOn(null);
+    }
+  };
+
+  // Saves an in-place edit (title/body/excerpt) to a still-pending/scheduled
+  // draft — distinct from handleReview above, which only ever transitions
+  // status. Returns a boolean so the card knows whether to exit edit mode
+  // (stays open on failure so the admin doesn't lose their typed changes).
+  const handleEditSave = async (
+    draft: VaultDraft,
+    fields: { title?: string; body?: string; excerpt?: string }
+  ): Promise<boolean> => {
+    setActingOn({ id: draft.id, action: "edit" });
+    try {
+      const res = await fetch(`/api/admin/content-automation/drafts/${draft.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "edit", ...fields }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Failed to save changes");
+
+      setDrafts((prev) => prev.map((d) => (d.id === draft.id ? (json.data as VaultDraft) : d)));
+      toast("success", "Changes saved.");
+      return true;
+    } catch (err) {
+      toast("error", err instanceof Error ? err.message : "Failed to save changes");
+      return false;
     } finally {
       setActingOn(null);
     }
@@ -415,11 +451,13 @@ export default function DraftReviewQueue() {
                 isDiscarding={actingOn?.id === draft.id && actingOn.action === "discard"}
                 isScheduling={actingOn?.id === draft.id && actingOn.action === "schedule"}
                 isCancellingSchedule={actingOn?.id === draft.id && actingOn.action === "cancel_schedule"}
+                isSavingEdit={actingOn?.id === draft.id && actingOn.action === "edit"}
                 disabled={actingOn !== null && actingOn.id !== draft.id}
                 onPublish={() => handleReview(draft, "publish")}
                 onDiscard={() => handleReview(draft, "discard")}
                 onSchedule={(scheduledPublishAt) => handleReview(draft, "schedule", scheduledPublishAt)}
                 onCancelSchedule={() => handleReview(draft, "cancel_schedule")}
+                onSaveEdit={(fields) => handleEditSave(draft, fields)}
               />
             ))}
           </AnimatePresence>
@@ -435,24 +473,28 @@ function DraftCard({
   isDiscarding,
   isScheduling,
   isCancellingSchedule,
+  isSavingEdit,
   disabled,
   onPublish,
   onDiscard,
   onSchedule,
   onCancelSchedule,
+  onSaveEdit,
 }: {
   draft: VaultDraft;
   isPublishing: boolean;
   isDiscarding: boolean;
   isScheduling: boolean;
   isCancellingSchedule: boolean;
+  isSavingEdit: boolean;
   disabled: boolean;
   onPublish: () => void;
   onDiscard: () => void;
   onSchedule: (scheduledPublishAt: string) => void;
   onCancelSchedule: () => void;
+  onSaveEdit: (fields: { title?: string; body?: string; excerpt?: string }) => Promise<boolean>;
 }) {
-  const busy = isPublishing || isDiscarding || isScheduling || isCancellingSchedule;
+  const busy = isPublishing || isDiscarding || isScheduling || isCancellingSchedule || isSavingEdit;
   const isScheduled = draft.status === "scheduled";
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -460,6 +502,34 @@ function DraftCard({
   // modal's picker so picking a date in either place carries over.
   const [scheduleInput, setScheduleInput] = useState("");
   const sources = useMemo(() => parseDraftSources(draft.body), [draft.body]);
+
+  // Edit mode — shared between the inline card and the Preview modal (both
+  // toggle the same `editing` flag) so there's a single source of truth
+  // rather than two independent edit states that could drift out of sync.
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editBody, setEditBody] = useState("");
+  const [editExcerpt, setEditExcerpt] = useState("");
+
+  const handleEditStart = () => {
+    setEditTitle(draft.title);
+    setEditBody(draft.body);
+    setEditExcerpt(draft.excerpt ?? "");
+    setEditing(true);
+  };
+  const handleEditCancel = () => setEditing(false);
+  const handleEditSaveClick = async () => {
+    const fields: { title?: string; body?: string; excerpt?: string } = {};
+    if (editTitle !== draft.title) fields.title = editTitle;
+    if (editBody !== draft.body) fields.body = editBody;
+    if (editExcerpt !== (draft.excerpt ?? "")) fields.excerpt = editExcerpt;
+    if (Object.keys(fields).length === 0) {
+      setEditing(false);
+      return;
+    }
+    const ok = await onSaveEdit(fields);
+    if (ok) setEditing(false);
+  };
 
   const handleScheduleClick = () => {
     if (!scheduleInput) return;
@@ -489,6 +559,73 @@ function DraftCard({
     setPreviewOpen(false);
     onCancelSchedule();
   };
+
+  // Inline card-level edit mode — a lighter-weight surface than the Preview
+  // modal's own edit mode below, for a quick fix without opening the full
+  // preview. Gated on `!previewOpen` so this never fights with the modal:
+  // if the modal is open (editing was started from its own header button
+  // instead), the modal itself renders the edit fields further down and
+  // this card body just sits unchanged behind the modal backdrop.
+  if (editing && !previewOpen) {
+    return (
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 4 }}
+        className="p-4 rounded-xl bg-klo-dark/30 border border-klo-accent/30 space-y-3"
+      >
+        <label className="block">
+          <span className="text-xs text-klo-muted mb-1 block">Title</span>
+          <input
+            type="text"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            disabled={busy}
+            className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs text-klo-muted mb-1 block">Excerpt</span>
+          <textarea
+            value={editExcerpt}
+            onChange={(e) => setEditExcerpt(e.target.value)}
+            rows={2}
+            disabled={busy}
+            className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm resize-none disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs text-klo-muted mb-1 block">Body</span>
+          <textarea
+            value={editBody}
+            onChange={(e) => setEditBody(e.target.value)}
+            rows={10}
+            disabled={busy}
+            className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm font-mono disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+          />
+        </label>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={handleEditCancel}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 text-klo-muted hover:text-klo-text hover:bg-white/5 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+          >
+            <X size={14} />
+            Cancel
+          </button>
+          <button
+            onClick={handleEditSaveClick}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 bg-klo-accent/10 border border-klo-accent/20 text-klo-accent hover:bg-klo-accent/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+          >
+            {isSavingEdit ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
+            Save
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -586,7 +723,7 @@ function DraftCard({
         </label>
       )}
 
-      <div className="mt-3">
+      <div className="mt-3 flex items-center gap-2">
         <button
           onClick={() => setPreviewOpen(true)}
           disabled={disabled || busy}
@@ -595,6 +732,14 @@ function DraftCard({
           <Eye size={18} className="text-klo-accent" />
           Preview
         </button>
+        <button
+          onClick={handleEditStart}
+          disabled={disabled || busy}
+          className="inline-flex items-center gap-1.5 text-klo-muted hover:text-klo-text hover:bg-white/5 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+        >
+          <Pencil size={14} />
+          Edit
+        </button>
       </div>
 
       <Modal
@@ -602,23 +747,88 @@ function DraftCard({
         onClose={() => setPreviewOpen(false)}
         title={draft.title}
         size="lg"
-      >
-        <div className="max-h-[70vh] overflow-y-auto pr-1">
-          <div className="text-sm text-klo-muted leading-relaxed prose-invert">
-            <ReactMarkdown
-              components={{
-                p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
-                strong: ({ children }) => (
-                  <strong className="text-klo-text font-semibold">{children}</strong>
-                ),
-              }}
+        headerActions={
+          !editing ? (
+            <button
+              onClick={handleEditStart}
+              disabled={disabled || busy}
+              className="p-2 rounded-lg text-klo-muted hover:text-klo-text hover:bg-white/5 transition-colors disabled:opacity-50"
+              aria-label="Edit"
             >
-              {draft.body}
-            </ReactMarkdown>
+              <Pencil size={16} />
+            </button>
+          ) : undefined
+        }
+      >
+        {editing ? (
+          <div className="space-y-3">
+            <label className="block">
+              <span className="text-xs text-klo-muted mb-1 block">Title</span>
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                disabled={busy}
+                className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs text-klo-muted mb-1 block">Excerpt</span>
+              <textarea
+                value={editExcerpt}
+                onChange={(e) => setEditExcerpt(e.target.value)}
+                rows={2}
+                disabled={busy}
+                className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm resize-none disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs text-klo-muted mb-1 block">Body</span>
+              <textarea
+                value={editBody}
+                onChange={(e) => setEditBody(e.target.value)}
+                rows={16}
+                disabled={busy}
+                className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm font-mono disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+              />
+            </label>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={handleEditCancel}
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 text-klo-muted hover:text-klo-text hover:bg-white/5 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+              >
+                <X size={14} />
+                Cancel
+              </button>
+              <button
+                onClick={handleEditSaveClick}
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 bg-klo-accent/10 border border-klo-accent/20 text-klo-accent hover:bg-klo-accent/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+              >
+                {isSavingEdit ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
+                Save
+              </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="max-h-[70vh] overflow-y-auto pr-1">
+              <div className="text-sm text-klo-muted leading-relaxed prose-invert">
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                    strong: ({ children }) => (
+                      <strong className="text-klo-text font-semibold">{children}</strong>
+                    ),
+                  }}
+                >
+                  {draft.body}
+                </ReactMarkdown>
+              </div>
+            </div>
 
-        {isScheduled ? (
+            {isScheduled ? (
           <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-white/5">
             <span className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded bg-klo-accent/10 text-klo-accent font-medium">
               <CalendarClock size={13} />
@@ -682,6 +892,8 @@ function DraftCard({
               )}
             </div>
           </div>
+        )}
+          </>
         )}
       </Modal>
 

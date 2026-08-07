@@ -857,6 +857,27 @@ export const vaultDraftListQuerySchema = z.object({
   status: z.enum(["pending", "published", "discarded", "scheduled"]).optional(),
 });
 
+// Standalone from vaultDraftReviewSchema rather than folded into its action
+// enum — "edit" carries an entirely different field shape (title/body/
+// excerpt, all optional-but-at-least-one-present) than the review actions'
+// scheduling fields, and the route branches on the raw action string before
+// picking which schema to validate against. Max lengths match
+// vaultDraftEditSchema's sibling — the insert-time shape in
+// vaultDraftCreateSchema above (title max 500, body max 100000, excerpt max
+// 2000) — an edit must stay within the same bounds the row was created
+// under. The route only applies this when the draft's current status is
+// "pending" or "scheduled" (checked server-side, not by this schema).
+export const vaultDraftEditSchema = z
+  .object({
+    action: z.literal("edit"),
+    title: z.string().min(1).max(500).optional(),
+    body: z.string().min(1).max(100000).optional(),
+    excerpt: z.string().max(2000).optional(),
+  })
+  .refine((data) => data.title !== undefined || data.body !== undefined || data.excerpt !== undefined, {
+    message: "At least one of title, body, or excerpt must be provided",
+  });
+
 export const vaultTopicLaneSchema = z.object({
   // Constrained to VAULT_CATEGORIES (via vaultDraftCategorySchema, defined
   // above) — not free text. Lanes exist to drive category-based content
@@ -970,6 +991,33 @@ export const vaultPendingToolListQuerySchema = z.object({
   status: z.enum(["pending", "published", "discarded"]).optional(),
 });
 
+// Standalone from vaultPendingToolReviewSchema for the same reason as
+// vaultDraftEditSchema above — a different field shape than the review
+// actions, validated by the route only after it branches on the raw action
+// string. Max lengths match vaultPendingToolSchema exactly (tool_name/
+// category/description/why_it_matters) — an edit must stay within the same
+// bounds the row was inserted under, since it's re-validated against
+// toolConfigSchema again at publish time regardless. `link`/`cta` are
+// deliberately not editable here — spec scope is title/description/why_it_
+// matters/category text fields only; link stays subject to the stricter
+// httpUrlSchema publish-time check, unchanged by this endpoint.
+export const vaultPendingToolEditSchema = z
+  .object({
+    action: z.literal("edit"),
+    tool_name: z.string().min(1).max(100).optional(),
+    description: z.string().min(1).max(500).optional(),
+    why_it_matters: z.string().min(1).max(500).optional(),
+    category: z.string().min(1).max(60).optional(),
+  })
+  .refine(
+    (data) =>
+      data.tool_name !== undefined ||
+      data.description !== undefined ||
+      data.why_it_matters !== undefined ||
+      data.category !== undefined,
+    { message: "At least one of tool_name, description, why_it_matters, or category must be provided" }
+  );
+
 // Max lengths match src/lib/content-automation.ts's word-boundary truncation
 // (BRIEF_TITLE_MAX / BRIEF_EXCERPT_MAX) — a generated brief that runs a
 // little long on title/excerpt is trimmed to these limits before this schema
@@ -990,6 +1038,23 @@ export const vaultPendingBriefSchema = z.object({
 export const vaultPendingBriefReviewSchema = z.object({
   action: z.enum(["publish", "discard"]),
 });
+
+// Standalone from vaultPendingBriefReviewSchema for the same reason as
+// vaultDraftEditSchema/vaultPendingToolEditSchema above. Max lengths match
+// vaultPendingBriefSchema exactly (title/excerpt) — `body` has no upper
+// bound there either, matching the 600-900-word target being prompt-
+// enforced, not schema-enforced. `link`/`topic_source` are deliberately not
+// editable here — spec scope is title/excerpt/body only.
+export const vaultPendingBriefEditSchema = z
+  .object({
+    action: z.literal("edit"),
+    title: z.string().min(1).max(200).optional(),
+    excerpt: z.string().min(1).max(500).optional(),
+    body: z.string().min(1).optional(),
+  })
+  .refine((data) => data.title !== undefined || data.excerpt !== undefined || data.body !== undefined, {
+    message: "At least one of title, excerpt, or body must be provided",
+  });
 
 // referenceFilePath is downloaded server-side from the shared `documents`
 // Supabase Storage bucket (src/lib/document-extraction.ts) and its extracted

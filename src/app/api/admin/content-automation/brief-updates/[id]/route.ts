@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServiceSupabase } from "@/lib/supabase";
 import { verifyCreativeStudioAdmin } from "@/lib/creative-studio-auth";
-import { vaultPendingBriefReviewSchema } from "@/lib/validation";
+import { vaultPendingBriefReviewSchema, vaultPendingBriefEditSchema } from "@/lib/validation";
 import { generateUniqueSlug } from "@/lib/vault-slug";
 import type { VaultPendingBriefUpdate } from "@/lib/supabase";
 import type { BriefConfig } from "@/lib/page-config-server";
@@ -106,6 +106,14 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json().catch(() => null);
+
+  // "edit" is validated against its own schema (different field shape than
+  // publish/discard) — branch on the raw action string before picking which
+  // schema applies, same pattern used in drafts/[id] and tool-updates/[id].
+  if ((body as { action?: unknown } | null)?.action === "edit") {
+    return handleEdit(id, body, session);
+  }
+
   const parsed = vaultPendingBriefReviewSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -279,4 +287,72 @@ export async function PATCH(
   });
 
   return NextResponse.json({ data: draft });
+}
+
+// Handles { action: "edit", title?, excerpt?, body? } — lets an admin
+// correct AI-generated copy in place before publishing, rather than
+// discarding and regenerating. Only allowed while the draft is still
+// "pending" (no "scheduled" concept exists for Intelligence Briefs, unlike
+// vault_drafts); enforced via the UPDATE's WHERE clause, not a separate
+// SELECT-then-check, to avoid a race between the check and the write.
+// `link`/`topic_source` stay out of scope, matching vaultPendingBriefEditSchema.
+async function handleEdit(
+  id: string,
+  body: unknown,
+  session: NonNullable<Awaited<ReturnType<typeof verifyCreativeStudioAdmin>>>
+) {
+  const parsed = vaultPendingBriefEditSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid data", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const supabase = getServiceSupabase();
+  const email = session.user?.email ?? "unknown";
+  const userId = (session.user as { id?: string }).id ?? null;
+
+  const { action, ...fields } = parsed.data;
+  void action;
+
+  const { data: updated, error: updateError } = await supabase
+    .from("vault_pending_brief_updates")
+    .update(fields)
+    .eq("id", id)
+    .eq("status", "pending")
+    .select("*")
+    .maybeSingle();
+
+  if (updateError) {
+    console.error("[PATCH /api/admin/content-automation/brief-updates/[id]] edit failed", updateError);
+    return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+
+  if (!updated) {
+    const { data: existing } = await supabase
+      .from("vault_pending_brief_updates")
+      .select("id, status")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (!existing) {
+      return NextResponse.json({ error: "Brief not found" }, { status: 404 });
+    }
+    return NextResponse.json(
+      { error: `Brief cannot be edited (status: ${existing.status})` },
+      { status: 409 }
+    );
+  }
+
+  await supabase.from("admin_activity_log").insert({
+    admin_user_id: userId,
+    admin_email: email,
+    action: "EDIT",
+    entity_type: "vault_pending_brief_update",
+    entity_id: updated.id,
+    details: `Edited Intelligence Brief (${Object.keys(fields).join(", ")}): ${updated.title}`,
+  });
+
+  return NextResponse.json({ data: updated as VaultPendingBriefUpdate });
 }
