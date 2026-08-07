@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { verifyCreativeStudioAdmin } from "@/lib/creative-studio-auth";
-import { vaultDraftReviewSchema } from "@/lib/validation";
+import { vaultDraftReviewSchema, vaultDraftEditSchema } from "@/lib/validation";
 import { publishClaimedDraft } from "@/lib/content-automation";
 import type { VaultDraft } from "@/lib/supabase";
 
@@ -32,6 +32,15 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json().catch(() => null);
+
+  // "edit" is validated against its own schema (different field shape than
+  // the review actions below) — branch on the raw action string before
+  // picking which schema applies, same pattern used for "schedule" vs
+  // "cancel_schedule" further down.
+  if ((body as { action?: unknown } | null)?.action === "edit") {
+    return handleEdit(id, body, session);
+  }
+
   const parsed = vaultDraftReviewSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -179,4 +188,72 @@ export async function PATCH(
   }
 
   return NextResponse.json({ data: draft, published: result.published });
+}
+
+// Handles { action: "edit", title?, body?, excerpt? } — lets an admin correct
+// AI-generated copy in place before publishing, rather than discarding and
+// regenerating over a small wording issue. Only allowed while the draft is
+// still "pending" or "scheduled" (an already-published/discarded draft is
+// immutable here — same reviewed-once posture as the publish/discard
+// actions above); enforced via the UPDATE's WHERE clause, not a separate
+// SELECT-then-check, to avoid a race between the check and the write.
+async function handleEdit(
+  id: string,
+  body: unknown,
+  session: NonNullable<Awaited<ReturnType<typeof verifyCreativeStudioAdmin>>>
+) {
+  const parsed = vaultDraftEditSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid data", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const supabase = getServiceSupabase();
+  const email = session.user?.email ?? "unknown";
+  const userId = (session.user as { id?: string }).id ?? null;
+
+  const { action, ...fields } = parsed.data;
+  void action;
+
+  const { data: updated, error: updateError } = await supabase
+    .from("vault_drafts")
+    .update(fields)
+    .eq("id", id)
+    .in("status", ["pending", "scheduled"])
+    .select("*")
+    .maybeSingle();
+
+  if (updateError) {
+    console.error("[PATCH /api/admin/content-automation/drafts/[id]] edit failed", updateError);
+    return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+
+  if (!updated) {
+    const { data: existing } = await supabase
+      .from("vault_drafts")
+      .select("id, status")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (!existing) {
+      return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+    }
+    return NextResponse.json(
+      { error: `Draft cannot be edited (status: ${existing.status})` },
+      { status: 409 }
+    );
+  }
+
+  await supabase.from("admin_activity_log").insert({
+    admin_user_id: userId,
+    admin_email: email,
+    action: "EDIT",
+    entity_type: "vault_draft",
+    entity_id: updated.id,
+    details: `Edited content automation draft (${Object.keys(fields).join(", ")}): ${updated.title}`,
+  });
+
+  return NextResponse.json({ data: updated as VaultDraft });
 }

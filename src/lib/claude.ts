@@ -98,6 +98,15 @@ export async function sendAdvisorMessage(
 const CONTENT_AUTOMATION_MODEL = "claude-sonnet-5";
 const WEB_SEARCH_TOOL_TYPE = "web_search_20260209";
 
+// Shared across every prompt that instructs the model to write as Keith —
+// generateVaultArticle(), findAIToolSuggestion(), and
+// generateIntelligenceBriefArticle() — one constant rather than three copies
+// so the rule can't drift out of sync between them again. Added after a live
+// published AI Tool of the Week write-up shipped with a self-introduction
+// ("As Keith L. Odom...") that read as off-voice for a platform that already
+// establishes his identity elsewhere.
+const VOICE_RULE = `CRITICAL VOICE RULE: Never introduce Keith by name. Never write "I, Keith L. Odom" or "As Keith L. Odom" or "My name is Keith" or any variation. Write naturally in first person as if the reader already knows who is speaking. The platform already establishes Keith's identity — the content should simply speak as him, not announce him.`;
+
 // Anthropic content blocks vary by type (text, server_tool_use,
 // web_search_tool_result, code_execution_tool_result, etc.). `content` is
 // typed loosely (unknown) because its shape depends entirely on `type` —
@@ -440,7 +449,7 @@ export async function generateVaultArticle(
   reputableSources: LaneSource[],
   options: GenerateVaultArticleOptions = {}
 ): Promise<GeneratedVaultArticle> {
-  const baseSystemPrompt = `You are writing as Keith L. Odom — Technology Innovator, Speaker & Pastor. Write in his voice: connect technology to purpose and people through a faith-leadership lens. Match the tone, cadence, and structure of the style-reference articles provided (their length of sentence, use of subheadings, level of formality). The article must be 600-900 words and include a clearly-marked practical takeaway for faith leaders or executives near the end. Respond with ONLY a single JSON object (no prose before or after, no markdown fences) in this exact shape:
+  const baseSystemPrompt = `You are writing as Keith L. Odom — Technology Innovator, Speaker & Pastor. Write in his voice: connect technology to purpose and people through a faith-leadership lens. Match the tone, cadence, and structure of the style-reference articles provided (their length of sentence, use of subheadings, level of formality). The article must be 600-900 words and include a clearly-marked practical takeaway for faith leaders or executives near the end. ${VOICE_RULE} Respond with ONLY a single JSON object (no prose before or after, no markdown fences) in this exact shape:
 {"title": "<article title>", "slug": "<lowercase-hyphenated-slug, letters/numbers/hyphens only>", "excerpt": "<1-2 sentence summary, max 300 characters>", "body": "<full article body, 600-900 words, markdown formatting allowed>"}`;
 
   const approvedSourcesList = reputableSources
@@ -538,7 +547,7 @@ export async function findAIToolSuggestion(
 ): Promise<AIToolSuggestion> {
   const baseSystemPrompt = `You are a research assistant for a faith-leadership content platform. Use web search to find ONE current, real AI tool (a SaaS product, app, or platform — not a research paper or general trend) that would be genuinely useful for faith leaders or executives, something they could realistically start using today. Prefer tools with mainstream awareness or notable recent adoption/coverage over obscure or unlaunched products.${
     excludeToolName ? ` Do NOT suggest "${excludeToolName}" — it is already featured.` : ""
-  } After researching, respond with ONLY a single JSON object (no prose before or after, no markdown fences) in this exact shape:
+  } ${VOICE_RULE} After researching, respond with ONLY a single JSON object (no prose before or after, no markdown fences) in this exact shape:
 {"tool_name": "<the tool's real name>", "category": "<a short label, e.g. Productivity, Research, Communication>", "description": "<2-3 sentences explaining what the tool does>", "why_it_matters": "<2-3 sentences written as Keith L. Odom, Technology Innovator, Speaker & Pastor, explaining in his voice why faith leaders or executives should care>", "link": "<the tool's real, working homepage URL>", "cta": "<a short button label, e.g. Learn More or Try It Free — default to Learn More if unsure>"}`;
 
   const systemPrompt = ragContext ? `${baseSystemPrompt}\n\n${ragContext}` : baseSystemPrompt;
@@ -695,7 +704,7 @@ export async function generateIntelligenceBriefArticle(
     .map((source) => `${source.title ?? source.domain}: ${source.url}`)
     .join("\n");
 
-  const systemPrompt = `You are writing as Keith L. Odom — Technology Innovator, Speaker & Pastor. Write the "Latest Intelligence Brief" — a flagship article connecting a current AI/technology development to purpose, leadership, and people through a faith-leadership lens. The article must be 600-900 words, include practical takeaways for faith leaders and executives, and match Keith's established tone: direct, warm, grounded in scripture-informed conviction without being preachy. Respond with ONLY a single JSON object (no prose before or after, no markdown fences) in this exact shape:
+  const systemPrompt = `You are writing as Keith L. Odom — Technology Innovator, Speaker & Pastor. Write the "Latest Intelligence Brief" — a flagship article connecting a current AI/technology development to purpose, leadership, and people through a faith-leadership lens. The article must be 600-900 words, include practical takeaways for faith leaders and executives, and match Keith's established tone: direct, warm, grounded in scripture-informed conviction without being preachy. ${VOICE_RULE} Respond with ONLY a single JSON object (no prose before or after, no markdown fences) in this exact shape:
 {"title": "<compelling headline>", "excerpt": "<2-3 sentence executive summary, max 400 characters>", "body": "<full article body, 600-900 words, markdown formatting allowed>"}
 
 QUALITY REQUIREMENTS — these are non-negotiable:

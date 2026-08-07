@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, X, RefreshCw, Wrench, ExternalLink, Sparkles, AlertCircle } from "lucide-react";
+import { Check, X, RefreshCw, Wrench, ExternalLink, Sparkles, AlertCircle, Pencil } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
 import type { VaultPendingToolUpdate } from "@/lib/supabase";
 
-type ReviewAction = "publish" | "discard";
+type ReviewAction = "publish" | "discard" | "edit";
 
 // Client-side-only cooldown between Generate runs — same safeguard and same
 // duration as DraftReviewQueue.tsx's GENERATE_COOLDOWN_MS (a UX guard against
@@ -97,6 +97,11 @@ export default function ToolOfTheWeek() {
   const reviewMessages: Record<ReviewAction, string> = {
     publish: "Published — the homepage AI Tool of the Week updates immediately.",
     discard: "Suggestion discarded.",
+    // Never actually read — edits go through handleEditSave, which has its
+    // own "Changes saved." toast, not handleReview/reviewMessages. Present
+    // only so this object satisfies Record<ReviewAction, string> now that
+    // "edit" is part of the action union.
+    edit: "Changes saved.",
   };
 
   const handleGenerate = async () => {
@@ -122,6 +127,38 @@ export default function ToolOfTheWeek() {
       // Start the cooldown regardless of outcome — a failed run still cost
       // tokens if it got partway through the research call.
       setCooldownUntil(Date.now() + GENERATE_COOLDOWN_MS);
+    }
+  };
+
+  // Saves an in-place edit (tool_name/description/why_it_matters/category)
+  // to a still-pending suggestion — distinct from handleReview below, which
+  // only ever transitions status. Returns a boolean so the card knows
+  // whether to exit edit mode (stays open on failure so the admin doesn't
+  // lose their typed changes).
+  const handleEditSave = async (
+    suggestion: VaultPendingToolUpdate,
+    fields: { tool_name?: string; description?: string; why_it_matters?: string; category?: string }
+  ): Promise<boolean> => {
+    setActingOn({ id: suggestion.id, action: "edit" });
+    try {
+      const res = await fetch(`/api/admin/content-automation/tool-updates/${suggestion.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "edit", ...fields }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Failed to save changes");
+
+      setSuggestions((prev) =>
+        prev.map((s) => (s.id === suggestion.id ? (json.data as VaultPendingToolUpdate) : s))
+      );
+      toast("success", "Changes saved.");
+      return true;
+    } catch (err) {
+      toast("error", err instanceof Error ? err.message : "Failed to save changes");
+      return false;
+    } finally {
+      setActingOn(null);
     }
   };
 
@@ -196,9 +233,11 @@ export default function ToolOfTheWeek() {
                 suggestion={suggestion}
                 isPublishing={actingOn?.id === suggestion.id && actingOn.action === "publish"}
                 isDiscarding={actingOn?.id === suggestion.id && actingOn.action === "discard"}
+                isSavingEdit={actingOn?.id === suggestion.id && actingOn.action === "edit"}
                 disabled={actingOn !== null && actingOn.id !== suggestion.id}
                 onPublish={() => handleReview(suggestion, "publish")}
                 onDiscard={() => handleReview(suggestion, "discard")}
+                onSaveEdit={(fields) => handleEditSave(suggestion, fields)}
               />
             ))}
           </AnimatePresence>
@@ -212,18 +251,135 @@ function ToolSuggestionCard({
   suggestion,
   isPublishing,
   isDiscarding,
+  isSavingEdit,
   disabled,
   onPublish,
   onDiscard,
+  onSaveEdit,
 }: {
   suggestion: VaultPendingToolUpdate;
   isPublishing: boolean;
   isDiscarding: boolean;
+  isSavingEdit: boolean;
   disabled: boolean;
   onPublish: () => void;
   onDiscard: () => void;
+  onSaveEdit: (fields: {
+    tool_name?: string;
+    description?: string;
+    why_it_matters?: string;
+    category?: string;
+  }) => Promise<boolean>;
 }) {
-  const busy = isPublishing || isDiscarding;
+  const busy = isPublishing || isDiscarding || isSavingEdit;
+
+  // No Preview modal exists for this card type (unlike Draft Review Queue/
+  // Intelligence Brief) — every field already renders in full on the card,
+  // nothing is truncated, so there's nothing a preview would add. Edit is a
+  // single inline toggle on the card itself instead.
+  const [editing, setEditing] = useState(false);
+  const [editToolName, setEditToolName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editWhyItMatters, setEditWhyItMatters] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+
+  const handleEditStart = () => {
+    setEditToolName(suggestion.tool_name);
+    setEditDescription(suggestion.description);
+    setEditWhyItMatters(suggestion.why_it_matters);
+    setEditCategory(suggestion.category);
+    setEditing(true);
+  };
+  const handleEditCancel = () => setEditing(false);
+  const handleEditSaveClick = async () => {
+    const fields: {
+      tool_name?: string;
+      description?: string;
+      why_it_matters?: string;
+      category?: string;
+    } = {};
+    if (editToolName !== suggestion.tool_name) fields.tool_name = editToolName;
+    if (editDescription !== suggestion.description) fields.description = editDescription;
+    if (editWhyItMatters !== suggestion.why_it_matters) fields.why_it_matters = editWhyItMatters;
+    if (editCategory !== suggestion.category) fields.category = editCategory;
+    if (Object.keys(fields).length === 0) {
+      setEditing(false);
+      return;
+    }
+    const ok = await onSaveEdit(fields);
+    if (ok) setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 4 }}
+        className="p-4 rounded-xl bg-klo-dark/30 border border-klo-accent/30 space-y-3"
+      >
+        <label className="block">
+          <span className="text-xs text-klo-muted mb-1 block">Tool Name</span>
+          <input
+            type="text"
+            value={editToolName}
+            onChange={(e) => setEditToolName(e.target.value)}
+            disabled={busy}
+            className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs text-klo-muted mb-1 block">Category</span>
+          <input
+            type="text"
+            value={editCategory}
+            onChange={(e) => setEditCategory(e.target.value)}
+            disabled={busy}
+            className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs text-klo-muted mb-1 block">Description</span>
+          <textarea
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            rows={3}
+            disabled={busy}
+            className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm resize-none disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs text-klo-muted mb-1 block">Why It Matters</span>
+          <textarea
+            value={editWhyItMatters}
+            onChange={(e) => setEditWhyItMatters(e.target.value)}
+            rows={3}
+            disabled={busy}
+            className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm resize-none disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+          />
+        </label>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={handleEditCancel}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 text-klo-muted hover:text-klo-text hover:bg-white/5 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+          >
+            <X size={14} />
+            Cancel
+          </button>
+          <button
+            onClick={handleEditSaveClick}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 bg-klo-accent/10 border border-klo-accent/20 text-klo-accent hover:bg-klo-accent/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+          >
+            {isSavingEdit ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
+            Save
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -289,6 +445,14 @@ function ToolSuggestionCard({
             >
               {isDiscarding ? <RefreshCw size={14} className="animate-spin" /> : <X size={14} />}
               Discard
+            </button>
+            <button
+              onClick={handleEditStart}
+              disabled={disabled || busy}
+              className="inline-flex items-center gap-1.5 text-klo-muted hover:text-klo-text hover:bg-white/5 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+            >
+              <Pencil size={14} />
+              Edit
             </button>
           </div>
         </div>

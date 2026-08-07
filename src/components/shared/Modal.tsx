@@ -13,6 +13,10 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   size?: ModalSize;
+  // Optional extra controls rendered in the header, between the title and
+  // the close (X) button — e.g. an Edit button on a content-preview modal.
+  // Additive/optional so every existing caller is unaffected.
+  headerActions?: React.ReactNode;
 }
 
 const sizeStyles: Record<ModalSize, string> = {
@@ -55,6 +59,7 @@ export default function Modal({
   title,
   children,
   size = "md",
+  headerActions,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<Element | null>(null);
@@ -155,13 +160,16 @@ export default function Modal({
                     {title}
                   </h2>
                 )}
-                <button
-                  onClick={onClose}
-                  className="ml-auto p-2 rounded-lg text-klo-muted hover:text-klo-text hover:bg-white/5 transition-colors cursor-pointer"
-                  aria-label="Close modal"
-                >
-                  <X size={20} />
-                </button>
+                <div className="ml-auto flex items-center gap-1">
+                  {headerActions}
+                  <button
+                    onClick={onClose}
+                    className="p-2 rounded-lg text-klo-muted hover:text-klo-text hover:bg-white/5 transition-colors cursor-pointer"
+                    aria-label="Close modal"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
             )}
 

@@ -11,13 +11,14 @@ import {
   AlertCircle,
   ChevronDown,
   Eye,
+  Pencil,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useToast } from "@/contexts/ToastContext";
 import type { VaultPendingBriefUpdate } from "@/lib/supabase";
 import Modal from "@/components/shared/Modal";
 
-type ReviewAction = "publish" | "discard";
+type ReviewAction = "publish" | "discard" | "edit";
 
 // Client-side-only cooldown between Generate runs — same safeguard and same
 // duration as DraftReviewQueue.tsx's / ToolOfTheWeek.tsx's GENERATE_COOLDOWN_MS
@@ -109,6 +110,11 @@ export default function IntelligenceBrief() {
   const reviewMessages: Record<ReviewAction, string> = {
     publish: "Published — the homepage Latest Intelligence Brief updates immediately.",
     discard: "Brief discarded.",
+    // Never actually read — edits go through handleEditSave, which has its
+    // own "Changes saved." toast, not handleReview/reviewMessages. Present
+    // only so this object satisfies Record<ReviewAction, string> now that
+    // "edit" is part of the action union.
+    edit: "Changes saved.",
   };
 
   const handleGenerate = async () => {
@@ -159,6 +165,35 @@ export default function IntelligenceBrief() {
       toast("success", reviewMessages[action]);
     } catch (err) {
       toast("error", err instanceof Error ? err.message : `Failed to ${action} brief`);
+    } finally {
+      setActingOn(null);
+    }
+  };
+
+  // Saves an in-place edit (title/excerpt/body) to a still-pending brief —
+  // distinct from handleReview above, which only ever transitions status.
+  // Returns a boolean so the card knows whether to exit edit mode (stays
+  // open on failure so the admin doesn't lose their typed changes).
+  const handleEditSave = async (
+    brief: VaultPendingBriefUpdate,
+    fields: { title?: string; excerpt?: string; body?: string }
+  ): Promise<boolean> => {
+    setActingOn({ id: brief.id, action: "edit" });
+    try {
+      const res = await fetch(`/api/admin/content-automation/brief-updates/${brief.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "edit", ...fields }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Failed to save changes");
+
+      setBriefs((prev) => prev.map((b) => (b.id === brief.id ? (json.data as VaultPendingBriefUpdate) : b)));
+      toast("success", "Changes saved.");
+      return true;
+    } catch (err) {
+      toast("error", err instanceof Error ? err.message : "Failed to save changes");
+      return false;
     } finally {
       setActingOn(null);
     }
@@ -225,9 +260,11 @@ export default function IntelligenceBrief() {
                 brief={brief}
                 isPublishing={actingOn?.id === brief.id && actingOn.action === "publish"}
                 isDiscarding={actingOn?.id === brief.id && actingOn.action === "discard"}
+                isSavingEdit={actingOn?.id === brief.id && actingOn.action === "edit"}
                 disabled={actingOn !== null && actingOn.id !== brief.id}
                 onPublish={() => handleReview(brief, "publish")}
                 onDiscard={() => handleReview(brief, "discard")}
+                onSaveEdit={(fields) => handleEditSave(brief, fields)}
               />
             ))}
           </AnimatePresence>
@@ -241,21 +278,53 @@ function BriefCard({
   brief,
   isPublishing,
   isDiscarding,
+  isSavingEdit,
   disabled,
   onPublish,
   onDiscard,
+  onSaveEdit,
 }: {
   brief: VaultPendingBriefUpdate;
   isPublishing: boolean;
   isDiscarding: boolean;
+  isSavingEdit: boolean;
   disabled: boolean;
   onPublish: () => void;
   onDiscard: () => void;
+  onSaveEdit: (fields: { title?: string; excerpt?: string; body?: string }) => Promise<boolean>;
 }) {
-  const busy = isPublishing || isDiscarding;
+  const busy = isPublishing || isDiscarding || isSavingEdit;
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const sources = useMemo(() => parseBriefSources(brief.body), [brief.body]);
+
+  // Edit mode — shared between the inline card and the Preview modal (both
+  // toggle the same `editing` flag), same pattern as DraftReviewQueue.tsx's
+  // DraftCard.
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editExcerpt, setEditExcerpt] = useState("");
+  const [editBody, setEditBody] = useState("");
+
+  const handleEditStart = () => {
+    setEditTitle(brief.title);
+    setEditExcerpt(brief.excerpt);
+    setEditBody(brief.body);
+    setEditing(true);
+  };
+  const handleEditCancel = () => setEditing(false);
+  const handleEditSaveClick = async () => {
+    const fields: { title?: string; excerpt?: string; body?: string } = {};
+    if (editTitle !== brief.title) fields.title = editTitle;
+    if (editExcerpt !== brief.excerpt) fields.excerpt = editExcerpt;
+    if (editBody !== brief.body) fields.body = editBody;
+    if (Object.keys(fields).length === 0) {
+      setEditing(false);
+      return;
+    }
+    const ok = await onSaveEdit(fields);
+    if (ok) setEditing(false);
+  };
 
   // The brief gets removed from the parent list on a successful review
   // action, which would unmount this card mid-request. Close the modal
@@ -270,6 +339,72 @@ function BriefCard({
     setPreviewOpen(false);
     onDiscard();
   };
+
+  // Inline card-level edit mode — a lighter-weight surface than the Preview
+  // modal's own edit mode below. Gated on `!previewOpen` so this never
+  // fights with the modal: if the modal is open (editing was started from
+  // its own header button instead), the modal renders the edit fields
+  // further down and this card body just sits unchanged behind the backdrop.
+  if (editing && !previewOpen) {
+    return (
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 4 }}
+        className="p-4 rounded-xl bg-klo-dark/30 border border-klo-accent/30 space-y-3"
+      >
+        <label className="block">
+          <span className="text-xs text-klo-muted mb-1 block">Title</span>
+          <input
+            type="text"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            disabled={busy}
+            className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs text-klo-muted mb-1 block">Excerpt</span>
+          <textarea
+            value={editExcerpt}
+            onChange={(e) => setEditExcerpt(e.target.value)}
+            rows={2}
+            disabled={busy}
+            className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm resize-none disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs text-klo-muted mb-1 block">Body</span>
+          <textarea
+            value={editBody}
+            onChange={(e) => setEditBody(e.target.value)}
+            rows={10}
+            disabled={busy}
+            className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm font-mono disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+          />
+        </label>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={handleEditCancel}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 text-klo-muted hover:text-klo-text hover:bg-white/5 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+          >
+            <X size={14} />
+            Cancel
+          </button>
+          <button
+            onClick={handleEditSaveClick}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 bg-klo-accent/10 border border-klo-accent/20 text-klo-accent hover:bg-klo-accent/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+          >
+            {isSavingEdit ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
+            Save
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -316,7 +451,7 @@ function BriefCard({
         </div>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3 flex items-center gap-2">
         <button
           onClick={() => setPreviewOpen(true)}
           disabled={disabled || busy}
@@ -325,42 +460,122 @@ function BriefCard({
           <Eye size={18} className="text-klo-accent" />
           Preview
         </button>
+        <button
+          onClick={handleEditStart}
+          disabled={disabled || busy}
+          className="inline-flex items-center gap-1.5 text-klo-muted hover:text-klo-text hover:bg-white/5 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+        >
+          <Pencil size={14} />
+          Edit
+        </button>
       </div>
 
-      <Modal isOpen={previewOpen} onClose={() => setPreviewOpen(false)} title={brief.title} size="lg">
-        <div className="max-h-[70vh] overflow-y-auto pr-1">
-          <div className="text-sm text-klo-muted leading-relaxed prose-invert">
-            <ReactMarkdown
-              components={{
-                p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
-                strong: ({ children }) => (
-                  <strong className="text-klo-text font-semibold">{children}</strong>
-                ),
-              }}
+      <Modal
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title={brief.title}
+        size="lg"
+        headerActions={
+          !editing ? (
+            <button
+              onClick={handleEditStart}
+              disabled={disabled || busy}
+              className="p-2 rounded-lg text-klo-muted hover:text-klo-text hover:bg-white/5 transition-colors disabled:opacity-50"
+              aria-label="Edit"
             >
-              {brief.body}
-            </ReactMarkdown>
+              <Pencil size={16} />
+            </button>
+          ) : undefined
+        }
+      >
+        {editing ? (
+          <div className="space-y-3">
+            <label className="block">
+              <span className="text-xs text-klo-muted mb-1 block">Title</span>
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                disabled={busy}
+                className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs text-klo-muted mb-1 block">Excerpt</span>
+              <textarea
+                value={editExcerpt}
+                onChange={(e) => setEditExcerpt(e.target.value)}
+                rows={2}
+                disabled={busy}
+                className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm resize-none disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs text-klo-muted mb-1 block">Body</span>
+              <textarea
+                value={editBody}
+                onChange={(e) => setEditBody(e.target.value)}
+                rows={16}
+                disabled={busy}
+                className="w-full px-3 py-2.5 rounded-xl bg-klo-dark/50 border border-white/5 text-klo-text text-sm font-mono disabled:opacity-50 focus:outline-none focus:border-klo-accent/50"
+              />
+            </label>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={handleEditCancel}
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 text-klo-muted hover:text-klo-text hover:bg-white/5 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+              >
+                <X size={14} />
+                Cancel
+              </button>
+              <button
+                onClick={handleEditSaveClick}
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 bg-klo-accent/10 border border-klo-accent/20 text-klo-accent hover:bg-klo-accent/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+              >
+                {isSavingEdit ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
+                Save
+              </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="max-h-[70vh] overflow-y-auto pr-1">
+              <div className="text-sm text-klo-muted leading-relaxed prose-invert">
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                    strong: ({ children }) => (
+                      <strong className="text-klo-text font-semibold">{children}</strong>
+                    ),
+                  }}
+                >
+                  {brief.body}
+                </ReactMarkdown>
+              </div>
+            </div>
 
-        <div className="flex items-center justify-end gap-2 pt-4 mt-4 border-t border-white/5">
-          <button
-            onClick={handleModalPublish}
-            disabled={disabled || busy}
-            className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
-          >
-            {isPublishing ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
-            Publish
-          </button>
-          <button
-            onClick={handleModalDiscard}
-            disabled={disabled || busy}
-            className="inline-flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
-          >
-            {isDiscarding ? <RefreshCw size={14} className="animate-spin" /> : <X size={14} />}
-            Discard
-          </button>
-        </div>
+            <div className="flex items-center justify-end gap-2 pt-4 mt-4 border-t border-white/5">
+              <button
+                onClick={handleModalPublish}
+                disabled={disabled || busy}
+                className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+              >
+                {isPublishing ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
+                Publish
+              </button>
+              <button
+                onClick={handleModalDiscard}
+                disabled={disabled || busy}
+                className="inline-flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 rounded-lg px-3 py-1.5 text-xs font-medium min-h-[36px] disabled:opacity-50"
+              >
+                {isDiscarding ? <RefreshCw size={14} className="animate-spin" /> : <X size={14} />}
+                Discard
+              </button>
+            </div>
+          </>
+        )}
       </Modal>
 
       <div className="border-t border-white/5 mt-3 pt-2">

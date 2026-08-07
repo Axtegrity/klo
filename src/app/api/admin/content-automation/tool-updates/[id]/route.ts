@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServiceSupabase } from "@/lib/supabase";
 import { verifyCreativeStudioAdmin } from "@/lib/creative-studio-auth";
-import { vaultPendingToolReviewSchema, toolConfigSchema } from "@/lib/validation";
+import { vaultPendingToolReviewSchema, vaultPendingToolEditSchema, toolConfigSchema } from "@/lib/validation";
 import { generateUniqueSlug } from "@/lib/vault-slug";
 import { VAULT_CATEGORIES } from "@/lib/vault-data";
 import type { VaultPendingToolUpdate } from "@/lib/supabase";
@@ -124,6 +124,14 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json().catch(() => null);
+
+  // "edit" is validated against its own schema (different field shape than
+  // publish/discard) — branch on the raw action string before picking which
+  // schema applies, same pattern used in drafts/[id]/route.ts.
+  if ((body as { action?: unknown } | null)?.action === "edit") {
+    return handleEdit(id, body, session);
+  }
+
   const parsed = vaultPendingToolReviewSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -253,4 +261,74 @@ export async function PATCH(
   });
 
   return NextResponse.json({ data: suggestion });
+}
+
+// Handles { action: "edit", tool_name?, description?, why_it_matters?,
+// category? } — lets an admin correct AI-generated copy in place (e.g. an
+// off-voice self-introduction) before publishing, rather than discarding and
+// regenerating. Only allowed while the suggestion is still "pending" (an
+// already-published/discarded suggestion is immutable here); enforced via
+// the UPDATE's WHERE clause, not a separate SELECT-then-check, to avoid a
+// race between the check and the write. `link`/`cta` stay out of scope —
+// link is re-validated against the stricter httpUrlSchema at publish time
+// regardless (Avery review, PR #234 follow-up), unaffected by this route.
+async function handleEdit(
+  id: string,
+  body: unknown,
+  session: NonNullable<Awaited<ReturnType<typeof verifyCreativeStudioAdmin>>>
+) {
+  const parsed = vaultPendingToolEditSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid data", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const supabase = getServiceSupabase();
+  const email = session.user?.email ?? "unknown";
+  const userId = (session.user as { id?: string }).id ?? null;
+
+  const { action, ...fields } = parsed.data;
+  void action;
+
+  const { data: updated, error: updateError } = await supabase
+    .from("vault_pending_tool_updates")
+    .update(fields)
+    .eq("id", id)
+    .eq("status", "pending")
+    .select("*")
+    .maybeSingle();
+
+  if (updateError) {
+    console.error("[PATCH /api/admin/content-automation/tool-updates/[id]] edit failed", updateError);
+    return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+
+  if (!updated) {
+    const { data: existing } = await supabase
+      .from("vault_pending_tool_updates")
+      .select("id, status")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (!existing) {
+      return NextResponse.json({ error: "Suggestion not found" }, { status: 404 });
+    }
+    return NextResponse.json(
+      { error: `Suggestion cannot be edited (status: ${existing.status})` },
+      { status: 409 }
+    );
+  }
+
+  await supabase.from("admin_activity_log").insert({
+    admin_user_id: userId,
+    admin_email: email,
+    action: "EDIT",
+    entity_type: "vault_pending_tool_update",
+    entity_id: updated.id,
+    details: `Edited AI Tool of the Week suggestion (${Object.keys(fields).join(", ")}): ${updated.tool_name}`,
+  });
+
+  return NextResponse.json({ data: updated as VaultPendingToolUpdate });
 }
