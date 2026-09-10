@@ -4,6 +4,11 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 
 ---
 
+## [Unreleased]
+
+### Security
+- **Security patch — Next.js updated to 16.3.3 to close critical AVIF image-processing RCE (GHSA-2xp9-vwfh-vxw4)** — the app was on next@16.2.11 with AVIF images explicitly enabled, exposing an unauthenticated remote code execution vulnerability in the built-in Image Optimization API; upgraded to the patched release.
+
 ## [2026-09-10] — Content Automation Reputable-Source Fix
 
 ### Fixed

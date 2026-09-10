@@ -288,3 +288,29 @@ Examples that do NOT require training updates:
 - Feature flags/constants in `src/lib/constants.ts`
 - No `dangerouslySetInnerHTML` with unsanitized content
 - Playwright tests deprecated path: `~/Developer/keithodom-web` — ignore it, use `~/klo-app` only
+
+## Maven-learned rules
+*(moved here from global `~/.claude/CLAUDE.md` 2026-08-28 — these are KLO-specific, not general Maven rules)*
+
+### Debugging Rules
+- When a write operation appears broken, check the database state first before modifying any code. Confirm whether the data changed or not — that alone narrows the problem to either the API call not firing, the API failing, or the UI not reflecting the change.
+- Never assume a feature is broken in code without first confirming what the database actually contains.
+- Before wiring any new button to an existing API endpoint, read that endpoint's full route handler and note any guards, locks, or conditional error returns. Document them as comments near the call site so future changes don't trigger silent failures.
+- When adding realtime listening to any page, immediately ask: "what other pages display this same data?" Fix all of them in the same commit. Never fix one surface and leave others stale.
+- After every feature ship that changes attendee flow, host flow, or admin flow — update the corresponding context block in `src/app/api/conference/guide/route.ts`. The `ATTENDEE_CONTEXT`, `HOST_CONTEXT`, and `ADMIN_CONTEXT` strings must always reflect the current state of the app. This is a required step, not optional.
+
+### API Rules
+- Before adding any new field to a database table or API route, first confirm it exists in the corresponding Zod validation schema. Schema first, always.
+- Never add a field to ALLOWED_FIELDS in a route without also adding it to the Zod schema in the same step.
+
+### Component State Rules
+- State that affects both parent and child must live in the parent and flow down as props. Child components never independently fetch state that the parent already owns.
+- Before adding any useState or useEffect fetch to a component, check if the parent already has that data. If yes, add a prop instead.
+- When a child component needs to react to a user action in the parent (e.g. mode switch), that reaction must happen via props, not a separate fetch.
+
+### Hard-learned rules
+1. **Zod + allowlist always together**: When adding any field to event_presentations or any API PUT endpoint, add it to BOTH the ALLOWED_FIELDS array in the route file AND the Zod schema in src/lib/validation.ts. Missing either causes silent 400 errors.
+2. **seminar_mode gates everything**: The poll API, conference page, and real-time features all check seminar_mode on event_presentations. Any mode that needs attendees to see polls (including rehearsal) must set seminar_mode: true.
+3. **New DB columns flow through 5 layers**: Migration → API allowlist → Zod schema → TypeScript type → UI. Missing any layer causes silent failures. Check all 5 before closing a PR.
+4. **Always verify attendee view after poll changes**: After any poll-related change, open /conference/[slug] as a non-admin and confirm polls appear. If not, check: seminar_mode, session is_active, poll is_deployed + is_active, and the poll API gate.
+5. **Validation errors surface as 400 Bad Request**: When a PUT to /api/admin/events/[id] returns 400 "invalid request", the field is either missing from ALLOWED_FIELDS or missing from adminEventUpdateSchema in validation.ts.
