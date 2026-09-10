@@ -9,6 +9,11 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 ### Security
 - **Security patch — Next.js updated to 16.3.3 to close critical AVIF image-processing RCE (GHSA-2xp9-vwfh-vxw4)** — the app was on next@16.2.11 with AVIF images explicitly enabled, exposing an unauthenticated remote code execution vulnerability in the built-in Image Optimization API; upgraded to the patched release.
 
+## [2026-09-10] — Content Automation Reputable-Source Fix
+
+### Fixed
+- **Weekly content automation cron restored — was producing zero drafts since 7/25** — the Trusted Sources allowlist feature (PR #231, 7/26) restricted web research to admin-curated domains, but the sourcing quality check was still comparing results against the old hardcoded list from before Trusted Sources existed, so it discarded almost every trusted-source result as "non-reputable." That starved each lane of the sources it needs to generate a draft and caused the retries/timeouts (`504`, "Runtime Timeout Error: Task timed out after 300 seconds") seen in production. The quality check now judges reputability against the same active Trusted Sources list the search itself is restricted to, falling back to the original hardcoded list only when no trusted sources are configured.
+
 ## [July 24, 2026] — Native iOS/Android Push Notifications
 
 ### Added

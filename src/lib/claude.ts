@@ -213,6 +213,15 @@ function isReputableDomain(domain: string): boolean {
   );
 }
 
+// Exact-or-subdomain match against a caller-supplied domain list — same
+// suffix-matching style as isReputableDomain() above (e.g. an allowlisted
+// "openai.com" also matches "cdn.openai.com").
+function matchesDomainList(domain: string, list: string[]): boolean {
+  return list.some(
+    (allowed) => domain === allowed || domain.endsWith(`.${allowed}`)
+  );
+}
+
 // Parses `web_search_tool_result` blocks out of an Anthropic Messages
 // response into a deduped (by domain), reputability-tagged source list.
 //
@@ -231,7 +240,24 @@ function isReputableDomain(domain: string): boolean {
 // web_search_tool_result blocks total, one run truncated at max_tokens:
 // 2048, one completed at max_tokens: 8192 — see searchLaneTopics() below for
 // why max_tokens was raised).
-function extractLaneSources(content: AnthropicContentBlock[]): LaneSource[] {
+// `allowedDomains` is the same active vault_trusted_sources list the caller
+// already passed to the web_search tool's `allowed_domains` restriction
+// (see searchLaneTopics() / searchIntelligenceBriefTopic()). When non-empty,
+// the search itself is hard-restricted to those domains, so reputability
+// MUST be judged against that same list — not the stale hardcoded
+// REPUTABLE_SOURCE_DOMAINS list, which predates the Trusted Sources feature
+// (PR #231) and only overlaps it by one domain (barna.com). Judging against
+// the wrong list meant nearly every result from a trusted-sources-restricted
+// search was discarded as "non-reputable", starving every lane of the
+// MIN_REPUTABLE_SOURCES it needs and driving the retries that timed out
+// content-automation's Vercel function at 300s. When `allowedDomains` is
+// empty (no trusted sources configured — search is unrestricted), fall back
+// to the hardcoded-list behavior so quality control isn't dropped entirely
+// before an admin has curated any sources.
+function extractLaneSources(
+  content: AnthropicContentBlock[],
+  allowedDomains: string[]
+): LaneSource[] {
   const seenDomains = new Set<string>();
   const sources: LaneSource[] = [];
 
@@ -256,7 +282,10 @@ function extractLaneSources(content: AnthropicContentBlock[]): LaneSource[] {
       if (!domain || seenDomains.has(domain)) continue;
       seenDomains.add(domain);
 
-      const reputable = isReputableDomain(domain);
+      const reputable =
+        allowedDomains.length > 0
+          ? matchesDomainList(domain, allowedDomains)
+          : isReputableDomain(domain);
       if (!reputable) {
         console.error(`[content-automation:sources] non-reputable domain discarded: ${domain}`);
         Sentry.addBreadcrumb({
@@ -355,7 +384,7 @@ export async function searchLaneTopics(
 
   const text = extractText(data.content);
   const parsed = extractJsonObject<Omit<LaneTopicResearch, "sources">>(text);
-  const sources = extractLaneSources(data.content);
+  const sources = extractLaneSources(data.content, allowedDomains);
   return { ...parsed, sources };
 }
 
@@ -676,7 +705,7 @@ export async function searchIntelligenceBriefTopic(
 
   const text = extractText(data.content);
   const parsed = extractJsonObject<Omit<LaneTopicResearch, "sources">>(text);
-  const sources = extractLaneSources(data.content);
+  const sources = extractLaneSources(data.content, allowedDomains);
   return { ...parsed, sources };
 }
 
