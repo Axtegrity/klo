@@ -7,6 +7,7 @@ All notable changes to the KLO platform. Format follows [Keep a Changelog](https
 ## [Unreleased]
 
 ### Security
+- **Security patch — Next.js updated 16.3.8 to 16.4.2** — closes GHSA-2464-fhr4-w9xw (critical RCE, Image Optimization API with SVG files), GHSA-673q-mjm6-r5xr (critical RCE, `use cache` functions returning typed arrays) and GHSA-p3m5-59mp-jv5r (high DoS, App Router server actions); 16.4.1 is the first fixed release and 16.4.2 is a bug-fix backport on top. Only the `next` package changed. No `use cache` and no server actions found in `src`; `next/image` is used and `dangerouslyAllowSVG` is not set. Not deployed.
 - **Security patch — Next.js updated 16.3.3 to 16.3.8** — closes the Image Optimization server-side request forgery (CVE-2026-94483) plus five medium/low framework advisories fixed in 16.3.8 (CVE-2026-94485, -94544, -94543, -94484 and a dev-server information disclosure) and includes the 16.3.6 `next/og` remote-code-execution fix. Only the `next` package changed; image configuration is unchanged (the wildcard `images.remotePatterns` hosts should be narrowed in a follow-up).
 - **Security patch — Next.js updated to 16.3.3 to close critical AVIF image-processing RCE (GHSA-2xp9-vwfh-vxw4)** — the app was on next@16.2.11 with AVIF images explicitly enabled, exposing an unauthenticated remote code execution vulnerability in the built-in Image Optimization API; upgraded to the patched release.
 
